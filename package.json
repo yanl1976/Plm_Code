@@ -1,0 +1,23 @@
+{
+  "name": "plm-material-governance",
+  "version": "0.1.0",
+  "description": "ERP 物料主数据治理：全量提取 + 型号规格结构化 + 强制查重（一物多号清洗）",
+  "type": "module",
+  "scripts": {
+    "gen:classification": "python scripts/gen_classification.py",
+    "extract": "node src/cli.js extract",
+    "classify": "node src/cli.js classify",
+    "dedup": "node src/cli.js dedup",
+    "validate": "node src/cli.js validate",
+    "report": "node src/cli.js report",
+    "server": "node src/server.js",
+    "plm": "node src/plm-server.js",
+    "verify:plm": "node scripts/verify-plm-plugin.mjs"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "mssql": "^11.0.1",
+    "xlsx": "^0.18.5",
+    "xlsx-js-style": "^1.2.0"
+  }
+}

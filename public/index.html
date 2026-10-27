@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ERP 物料主数据治理 · 一物多号清洗</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="title">
+      <h1>ERP 物料主数据治理</h1>
+      <span class="subtitle">型号规格结构化 · 强制查重 · 存量一物多号清洗</span>
+    </div>
+    <div class="actions">
+      <button id="btnRerunDedup">重跑查重</button>
+      <button id="btnRerunExtract">重跑提取</button>
+      <span id="jobStatus" class="job"></span>
+    </div>
+  </header>
+
+  <!-- 全流程阶段 -->
+  <section class="pipeline" id="pipeline"></section>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="overview">概览</button>
+    <button class="tab" data-tab="materials">物料特征</button>
+    <button class="tab" data-tab="dedup">一物多号查重</button>
+    <button class="tab" data-tab="classify">分类树</button>
+    <button class="tab" data-tab="cleanup">存量清洗</button>
+    <button class="tab" data-tab="settings">系统设置</button>
+    <button class="tab" data-tab="feature">特征参数录入</button>
+    <button class="tab" data-tab="newmat">新增物料</button>
+  </nav>
+
+  <main>
+    <!-- 概览 -->
+    <section class="panel active" id="tab-overview">
+      <div class="cards" id="metricCards"></div>
+      <div class="findings" id="findings"></div>
+    </section>
+
+    <!-- 物料特征 -->
+    <section class="panel" id="tab-materials">
+      <div class="findings" id="matMeta"></div>
+      <div class="filters">
+        <label>校验状态
+          <select id="mStatus">
+            <option value="">全部</option>
+            <option value="ok">通过</option>
+            <option value="missing">有缺项</option>
+            <option value="error">有缺陷</option>
+          </select>
+        </label>
+        <label>小类/编码 <input id="mSub" list="subList" placeholder="如 断路器 或 100105" /><datalist id="subList"></datalist></label>
+        <label>关键词 <input id="mQ" placeholder="编码/名称/规格" /></label>
+        <button id="btnMSearch">查询</button>
+        <span id="matCount" class="muted"></span>
+      </div>
+      <table id="matTable" class="mat">
+        <thead><tr><th>编码</th><th>小类</th><th>名称</th><th>规格原文（<mark class="src">黄底</mark>=特征提取来源）</th><th>特征参数（策略提取·已校验）</th><th>ERP 参数字段</th><th>校验</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="pager" id="matPager"></div>
+    </section>
+
+    <!-- 一物多号查重 -->
+    <section class="panel" id="tab-dedup">
+      <div class="filters">
+        <label>置信度
+          <select id="fConfidence">
+            <option value="">全部</option>
+            <option value="high">高（含规格差异）</option>
+            <option value="low">低（仅同名待核查）</option>
+          </select>
+        </label>
+        <label>小类/编码 <input id="fSub" placeholder="如 100105 或 断路器" /></label>
+        <label>关键词 <input id="fQ" placeholder="名称/规格/编码" /></label>
+        <button id="btnSearch">查询</button>
+        <span id="dedupCount" class="muted"></span>
+      </div>
+      <table id="clusterTable">
+        <thead><tr><th>#</th><th>小类</th><th>归一签名</th><th>置信度</th><th>不同编码</th><th>成员数</th><th>编码样例</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="pager" id="dedupPager"></div>
+    </section>
+
+    <!-- 分类树 -->
+    <section class="panel" id="tab-classify">
+      <div id="tree" class="tree"></div>
+    </section>
+
+    <!-- 存量清洗 -->
+    <section class="panel" id="tab-cleanup">
+      <div class="cleanup-grid">
+        <div>
+          <h3>新增映射（旧编码 → 主编码）</h3>
+          <div class="form">
+            <input id="mOld" placeholder="冗余编码" />
+            <input id="mNew" placeholder="主编码" />
+            <input id="mReason" placeholder="原因（同物…规格差异）" />
+            <input id="mBy" placeholder="处理人" value="web" />
+            <button id="btnAddMap">添加映射</button>
+          </div>
+          <h3>映射表（映射法）</h3>
+          <table id="mapTable"><thead><tr><th>旧编码</th><th>主编码</th><th>原因</th><th>处理人</th><th>时间</th><th></th></tr></thead><tbody></tbody></table>
+          <h3>冻结表（冷冻法）</h3>
+          <table id="freezeTable"><thead><tr><th>编码</th><th>原因</th><th>处理人</th><th>时间</th><th></th></tr></thead><tbody></tbody></table>
+        </div>
+        <div>
+          <h3>统一物料视图（已归并）</h3>
+          <div class="filters">
+            <input id="uQ" placeholder="搜索编码/名称" />
+            <label><input type="checkbox" id="uMerged" checked /> 仅看已归并</label>
+            <button id="btnUSearch">查询</button>
+            <span id="uCount" class="muted"></span>
+          </div>
+          <table id="unifiedTable"><thead><tr><th>主编码</th><th>名称</th><th>来源数</th><th>合并自</th></tr></thead><tbody></tbody></table>
+          <div class="pager" id="uPager"></div>
+        </div>
+      </div>
+    </section>
+    <!-- 系统设置 -->
+    <section class="panel" id="tab-settings">
+      <div class="settings-card">
+        <h3>提取物料范围（编码前缀过滤）</h3>
+        <p class="muted">仅提取「包含前缀」开头的物料；「排除前缀」在包含结果上再剔除。修改后需<strong>重新提取</strong>（顶部「重跑提取」）方可生效。</p>
+        <div class="set-row">
+          <label>包含前缀（白名单，留空=全部）</label>
+          <div id="setInclude" class="chips"></div>
+          <input id="setIncludeInput" placeholder="如 13" />
+          <button id="btnAddInclude">添加</button>
+        </div>
+        <div class="set-row">
+          <label>排除前缀（黑名单）</label>
+          <div id="setExclude" class="chips"></div>
+          <input id="setExcludeInput" placeholder="如 20" />
+          <button id="btnAddExclude">添加</button>
+        </div>
+        <h3 style="margin-top:22px">筛查组织</h3>
+        <p class="muted">仅提取「使用组织」为该组织的物料（按 FUSEORGID 过滤）。留空 = 不过滤（全部组织）。修改后需<strong>重新提取</strong>生效。</p>
+        <div class="set-row">
+          <label>筛查组织</label>
+          <select id="setOrg"></select>
+        </div>
+        <button id="btnSaveSettings" class="primary">保存设置</button>
+        <span id="settingsMsg" class="muted"></span>
+      </div>
+
+      <div class="settings-card" style="margin-top:18px">
+        <h3>名称同义词字典 <span class="syn-tip">只提示不阻断保存 · 改这里即时生效，列表可直接编辑</span></h3>
+        <div class="syn-bar">
+          <input id="synAlias" placeholder="非标准叫法" autocomplete="off" />
+          <span class="syn-arrow">→</span>
+          <input id="synStd" placeholder="标准名称" autocomplete="off" />
+          <select id="synSub"><option value="">全局</option></select>
+          <button id="btnAddSyn" class="primary">添加</button>
+          <input id="synSearch" placeholder="搜索叫法 / 标准名" autocomplete="off" />
+          <span id="synStats" class="syn-stats"></span>
+        </div>
+        <div id="synMsg" class="syn-msg"></div>
+        <div id="synList" class="syn-list"></div>
+      </div>
+    </section>
+    <!-- 特征参数录入（新增菜单，不动其它页） -->
+    <section class="panel" id="tab-feature">
+      <div class="feat-tabs">
+        <button class="feat-tab" data-feat="tpl">① 中类标准模板</button>
+        <button class="feat-tab active" data-feat="work">② 参数录入工作台</button>
+      </div>
+      <div id="feat-tpl" class="feat-pane"></div>
+      <div id="feat-work" class="feat-pane active"></div>
+    </section>
+    <!-- 新增物料（按小类生成编码 + 规格查重/联想 + 库存占位 + 本地草稿） -->
+    <section class="panel" id="tab-newmat">
+      <div class="nm-grid">
+        <div class="nm-form">
+          <h3>新增物料</h3>
+          <p class="muted">编码规则：小类6位 + 5位流水（与存量一致）。规格型号会做同小类查重，并支持输入联想。</p>
+          <div id="nmSnapTip" class="nm-snap"></div>
+          <div class="nm-row"><label>大类</label><select id="nmBig"></select></div>
+          <div class="nm-row"><label>中类</label><select id="nmMid"></select></div>
+          <div class="nm-row"><label>小类</label><select id="nmSub"></select></div>
+          <div class="nm-row"><label>物料编码</label><span id="nmCode" class="nm-code">-</span><span id="nmCodeMsg" class="muted"></span></div>
+          <div class="nm-row"><label>默认仓库</label><span id="nmWh" class="muted">-</span></div>
+          <div class="nm-row"><label>物料名称</label>
+            <div class="nm-name-wrap">
+              <input id="nmName" placeholder="如 断路器" autocomplete="off" />
+              <div id="nmNameTip" class="nm-name-tip"></div>
+            </div>
+          </div>
+          <div class="nm-row nm-spec"><label>规格型号</label>
+            <div class="nm-spec-wrap">
+              <input id="nmSpec" placeholder="如 C65N-C16/3P AC400V" autocomplete="off" />
+              <div id="nmSuggest" class="nm-suggest"></div>
+            </div>
+            <span id="nmSpecStock" class="nm-spec-stock">现有库存 -</span>
+            <button id="nmSimilar" class="ghost nm-similar-btn">类似型号</button>
+          </div>
+          <div class="nm-row"><label>单位</label><input id="nmUnit" placeholder="如 台 / 个 / 米" /></div>
+          <div class="nm-row"><label>备注</label><input id="nmRemark" placeholder="选填" /></div>
+          <div id="nmRuleCheck" class="nm-rule"></div>
+          <div id="nmSpecCheck" class="nm-check"></div>
+          <div id="nmInv"></div>
+          <div class="nm-actions">
+            <button id="nmSave" class="primary">加入待新增清单</button>
+            <span id="nmMsg" class="muted"></span>
+          </div>
+        </div>
+        <div class="nm-list">
+          <div class="nm-list-head">
+            <h3>待新增清单</h3>
+            <button id="nmExport" class="ghost">导出 Excel</button>
+          </div>
+          <table id="nmTable" class="mat">
+            <thead><tr><th>编码</th><th>名称</th><th>规格型号</th><th>小类</th><th>单位</th><th>仓库</th><th>时间</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 簇详情弹窗 -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-box">
+      <button class="close" id="modalClose">×</button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- 物料参数录入抽屉（左右双栏联动） -->
+  <div id="drawerMask" class="drawer-mask"></div>
+  <div id="drawer" class="drawer">
+    <div class="drawer-head" id="drawerHead"></div>
+    <div class="drawer-body">
+      <div class="dw-left" id="dwLeft"></div>
+      <div class="dw-right" id="dwRight"></div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,1389 @@
+{
+  "version": "v10",
+  "_comment": "品牌型号编码语义解码表：对照生产商编码规则，把型号逐段解码为「参数→数值→含义」。detect 命中品牌后 segments 逐段解析；segment.key 与 spec-fields.json 特征参数同名时按 fill-when-empty 回填（绝不覆盖文本提取值）。只收录可核实的编码，未知编码不解释（宁缺勿错）。table 段用 literalKey 保留原文代号（如 iC65N 的 N=分断等级），保证原文内容在参数中完整体现、可反向拼回。table 仅含高置信映射；_note 标注依据。",
+  "decoders": [
+    {
+      "id": "schneider-c65",
+      "detect": "C65",
+      "brand": "施耐德",
+      "series": "C65 / Acti9 iC65 小型断路器（IEC 60898）",
+      "segments": [
+        {
+          "key": "系列",
+          "regex": "[iI]?C65",
+          "value": "C65 / iC65",
+          "meaning": "施耐德小型断路器 C65 系列（Acti9 iC65 为其新一代），壳架电流 63A"
+        },
+        {
+          "key": "分断能力",
+          "literalKey": "分断等级",
+          "regex": "(?<=[iI]C65)(N|H|L)",
+          "table": {
+            "N": {
+              "value": "6",
+              "meaning": "分断等级 N：额定短路分断能力 Icn=6kA（IEC 60898 @230/400V）"
+            },
+            "H": {
+              "value": "10",
+              "meaning": "分断等级 H：Icn=10kA（高性能型）"
+            },
+            "L": {
+              "value": "4.5",
+              "meaning": "分断等级 L：Icn=4.5kA（经济型）"
+            }
+          },
+          "_note": "施耐德 C65/iC65 标准分断等级表"
+        },
+        {
+          "key": "极数",
+          "regex": "(\\d)P",
+          "valueTemplate": "{{1}}P",
+          "meaning": "{{1}} 个保护极（1P=单极，2P=两极…）"
+        },
+        {
+          "key": "脱扣曲线",
+          "regex": "(?:^|[\\s\\-/,，（(])([BCD])\\s*型?(\\d{1,3}(?:\\.[0-9]+)?)",
+          "ratings": [
+            "0.5",
+            "1",
+            "2",
+            "3",
+            "4",
+            "6",
+            "10",
+            "13",
+            "16",
+            "20",
+            "25",
+            "32",
+            "40",
+            "50",
+            "63",
+            "80",
+            "100",
+            "125"
+          ],
+          "ratingsCap": 2,
+          "table": {
+            "B": {
+              "value": "B",
+              "meaning": "脱扣曲线 B：瞬时脱扣 3~5 倍 In，保护照明/半导体设备（抗浪涌误动）"
+            },
+            "C": {
+              "value": "C",
+              "meaning": "脱扣曲线 C：瞬时脱扣 5~10 倍 In，照明与配电通用（最常用）"
+            },
+            "D": {
+              "value": "D",
+              "meaning": "脱扣曲线 D：瞬时脱扣 10~20 倍 In，电动机/变压器等高浪涌负载"
+            }
+          },
+          "_note": "IEC 60898 脱扣曲线定义"
+        },
+        {
+          "key": "额定电流",
+          "regex": "(?:^|[\\s\\-/,，（(])([BCD])\\s*型?\\s*(\\d+\\.?\\d*)\\s*A?",
+          "ratings": [
+            "0.5",
+            "1",
+            "2",
+            "3",
+            "4",
+            "6",
+            "10",
+            "13",
+            "16",
+            "20",
+            "25",
+            "32",
+            "40",
+            "50",
+            "63",
+            "80",
+            "100",
+            "125"
+          ],
+          "ratingsCap": 2,
+          "valueTemplate": "{{2}}A",
+          "meaning": "脱扣曲线 {{1}} 型下额定电流 In={{2}}A"
+        },
+        {
+          "key": "额定电流",
+          "regex": "(?:^|[-\\s/,，型])(\\d+\\.?\\d*A)\\s*(?![A-Za-z])",
+          "valueTemplate": "{{1}}",
+          "meaning": "额定电流 In={{1}}A（无曲线代号时）"
+        },
+        {
+          "key": "附件",
+          "regex": "Vigi\\s*i?C65",
+          "value": "Vigi iC65",
+          "meaning": "施耐德 Acti9 剩余电流动作保护附件（漏电附件）；ELE=电子式 AC 类，ELEA/VEA=A 类"
+        },
+        {
+          "key": "剩余动作电流",
+          "regex": "(\\d+)\\s*(mA|MA)(?![0-9])",
+          "valueTemplate": "{{1}}mA",
+          "meaning": "剩余动作电流（漏电灵敏度）{{1}}mA；常见 30mA（人身防护）/100mA/300mA，300mA-S 为选择型"
+        },
+        {
+          "key": "附件类型",
+          "regex": "Vigi\\s*i?C65\\s*(ELEA|ELE|VEA|VE)",
+          "table": {
+            "ELE": {
+              "value": "电子式 AC类",
+              "meaning": "ELE=电子式剩余电流动作保护附件，AC 类（检测正弦交流剩余电流）"
+            },
+            "ELEA": {
+              "value": "电子式 A类",
+              "meaning": "ELEA=电子式剩余电流动作保护附件，A 类（含脉动直流分量）"
+            },
+            "VE": {
+              "value": "电子式 AC类",
+              "meaning": "VE=Vigi iC65 ELE 缩写，AC 类电子式漏电附件"
+            },
+            "VEA": {
+              "value": "电子式 A类",
+              "meaning": "VEA=Vigi iC65 ELE A 类缩写，A 类电子式漏电附件"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "schneider-nsx",
+      "detect": "NSX",
+      "brand": "施耐德",
+      "series": "Compact NSX 塑壳断路器（IEC 60947-2）",
+      "segments": [
+        {
+          "key": "系列",
+          "regex": "NSX",
+          "value": "Compact NSX",
+          "meaning": "施耐德 Compact NSX 系列塑壳断路器"
+        },
+        {
+          "key": "壳架电流",
+          "regex": "NSX\\s?(\\d{3})",
+          "valueTemplate": "{{1}}",
+          "meaning": "壳架电流 {{1}}A（实际额定电流由脱扣器 TMD/MA 整定，不超过壳架值）"
+        },
+        {
+          "key": "频率",
+          "regex": "(\\d{1,3})\\s*[Hh]z",
+          "valueTemplate": "{{1}}Hz",
+          "meaning": "额定频率 {{1}}Hz"
+        },
+        {
+          "key": "附件",
+          "regex": "\\+([A-Z0-9][A-Z0-9\\-/]*)",
+          "valueTemplate": "+{{1}}",
+          "meaning": "「+」后为附件/辅件订货代号（如辅助触头组、联锁模块），未逐码解释"
+        },
+        {
+          "key": "附件",
+          "regex": "(?<![A-Za-z])(OF|MX|MN)(?![A-Za-z])",
+          "table": {
+            "OF": {
+              "value": "OF",
+              "meaning": "OF=故障报警/辅助触头（施耐德 NSX 附件代号）"
+            },
+            "MX": {
+              "value": "MX",
+              "meaning": "MX=分励脱扣单元"
+            },
+            "MN": {
+              "value": "MN",
+              "meaning": "MN=欠压脱扣单元"
+            }
+          }
+        },
+        {
+          "key": "额定电流",
+          "regex": "MIC[\\d.]*\\s*(\\d{2,3})(?![0-9])",
+          "valueTemplate": "{{1}}",
+          "meaning": "电子脱扣器 MIC 整定额定电流 In={{1}}A"
+        },
+        {
+          "key": "额定电流",
+          "regex": "(?:MA|TMD)\\s*(\\d{1,3}(?:\\.\\d+)?)(?:D)?(?![0-9A-Za-z])",
+          "valueTemplate": "{{1}}",
+          "meaning": "脱扣器整定额定电流 In={{1}}A（MA=磁动式/仅瞬时保护，TMD=热磁式）"
+        },
+        {
+          "key": "额定电流",
+          "regex": "TM\\s*(\\d{1,3}(?:\\.\\d+)?)\\s*[DA](?![0-9])",
+          "valueTemplate": "{{1}}",
+          "meaning": "热磁脱扣器 TM…{{1}}D：整定额定电流 In={{1}}A"
+        },
+        {
+          "key": "分断能力",
+          "literalKey": "分断等级",
+          "regex": "NSX\\s?\\d{3}(B|F|N|H|S|L)",
+          "table": {
+            "B": {
+              "value": "16",
+              "meaning": "分断等级 B：Icu=16kA @415V AC"
+            },
+            "F": {
+              "value": "36",
+              "meaning": "分断等级 F：Icu=36kA @415V AC"
+            },
+            "N": {
+              "value": "50",
+              "meaning": "分断等级 N：Icu=50kA @415V AC"
+            },
+            "H": {
+              "value": "70",
+              "meaning": "分断等级 H：Icu=70kA @415V AC"
+            },
+            "S": {
+              "value": "100",
+              "meaning": "分断等级 S：Icu=100kA @415V AC"
+            },
+            "L": {
+              "value": "150",
+              "meaning": "分断等级 L：Icu=150kA @415V AC"
+            }
+          },
+          "_note": "Compact NSX 标准分断等级表（415V），如与目录有出入以目录为准"
+        },
+        {
+          "key": "中性线保护",
+          "regex": "(?<![0-9])(\\dD|D\\+N/2|OSN)(?![A-Za-z0-9])",
+          "table": {
+            "3D": {
+              "value": "中性线无保护",
+              "meaning": "3D=中性线无保护（Compact NSX 极数后缀，官方 FAQ FA150340）"
+            },
+            "4D": {
+              "value": "保护值=Ir",
+              "meaning": "4D=中性线的保护动作值以 Ir 为基准"
+            },
+            "D+N/2": {
+              "value": "0.5Ir",
+              "meaning": "3D+N/2=中性线的保护动作值以 0.5Ir 为基准"
+            },
+            "OSN": {
+              "value": "可整定1.6Ir",
+              "meaning": "OSN=中性线无保护，调节旋钮可整定至 1.6Ir"
+            }
+          },
+          "_note": "3P/4P 为极数，后缀 D 表示中性线保护动作值定义"
+        },
+        {
+          "key": "安装方式",
+          "regex": "\\s(F|P|D)(?=\\+|\\s*$)",
+          "table": {
+            "F": {
+              "value": "固定式",
+              "meaning": "F=固定式安装（可不标），Compact NSX 选型指南"
+            },
+            "P": {
+              "value": "插入式",
+              "meaning": "P=插入式安装（带底座）"
+            },
+            "D": {
+              "value": "抽出式",
+              "meaning": "D=抽出式安装（底座+两侧滑轨）"
+            }
+          }
+        },
+        {
+          "key": "剩余动作电流",
+          "regex": "(\\d+)\\s*(mA|MA)(?![0-9])",
+          "valueTemplate": "{{1}}mA",
+          "meaning": "剩余动作电流（漏电灵敏度）{{1}}mA；Vigi 漏电模块常见 30mA/100mA/300mA，带 S 为选择型"
+        }
+      ]
+    },
+    {
+      "id": "schneider-lc1d",
+      "detect": "LC1D",
+      "brand": "施耐德",
+      "series": "TeSys LC1D 交流接触器（IEC 60947-4-1）",
+      "segments": [
+        {
+          "key": "系列",
+          "regex": "LC1D",
+          "value": "TeSys LC1D",
+          "meaning": "施耐德 TeSys D 系列交流接触器；LC1D 后两位为电流代号"
+        },
+        {
+          "key": "额定电流",
+          "literalKey": "电流代号",
+          "regex": "LC1D(\\d{2})",
+          "table": {
+            "12": {
+              "value": "12",
+              "meaning": "电流代号 12：额定电流 12A（AC-3）"
+            },
+            "18": {
+              "value": "18",
+              "meaning": "电流代号 18：额定电流 18A（AC-3）"
+            },
+            "25": {
+              "value": "25",
+              "meaning": "电流代号 25：额定电流 25A（AC-3）"
+            },
+            "32": {
+              "value": "32",
+              "meaning": "电流代号 32：额定电流 32A（AC-3）"
+            },
+            "40": {
+              "value": "40",
+              "meaning": "电流代号 40：额定电流 40A（AC-3）"
+            },
+            "50": {
+              "value": "50",
+              "meaning": "电流代号 50：额定电流 50A（AC-3）"
+            },
+            "65": {
+              "value": "65",
+              "meaning": "电流代号 65：额定电流 65A（AC-3）"
+            },
+            "80": {
+              "value": "80",
+              "meaning": "电流代号 80：额定电流 80A（AC-3）"
+            },
+            "95": {
+              "value": "95",
+              "meaning": "电流代号 95：额定电流 95A（AC-3）"
+            },
+            "09": {
+              "value": "9",
+              "meaning": "电流代号 09：额定电流 9A（AC-3, 400/415V）"
+            }
+          }
+        },
+        {
+          "key": "线圈电压",
+          "literalKey": "线圈代号",
+          "regex": "LC1D\\d{2}([A-Z]\\d)",
+          "table": {
+            "M7": {
+              "value": "AC220V",
+              "meaning": "线圈代号 M7：AC 220V（50/60Hz）"
+            },
+            "C7": {
+              "value": "AC220V",
+              "meaning": "线圈代号 C7：AC 220V（50/60Hz）"
+            },
+            "B7": {
+              "value": "AC24V",
+              "meaning": "线圈代号 B7：AC 24V（50/60Hz）"
+            },
+            "D7": {
+              "value": "AC110V",
+              "meaning": "线圈代号 D7：AC 110V（50/60Hz）"
+            },
+            "E7": {
+              "value": "AC380V",
+              "meaning": "线圈代号 E7：AC 380V（50/60Hz）"
+            },
+            "F7": {
+              "value": "AC110V",
+              "meaning": "线圈代号 F7：AC 110V（50/60Hz）"
+            },
+            "K7": {
+              "value": "DC24V",
+              "meaning": "线圈代号 K7：DC 24V"
+            },
+            "N7": {
+              "value": "DC220V",
+              "meaning": "线圈代号 N7：DC 220V"
+            },
+            "P7": {
+              "value": "DC24V",
+              "meaning": "线圈代号 P7：DC 24V"
+            }
+          },
+          "_note": "M7 已用本库数据校准；其余取自施耐德标准线圈码表"
+        },
+        {
+          "key": "附件",
+          "regex": "LAD(8?N?)(\\d{2})C?",
+          "valueTemplate": "LAD{{1}}{{2}}",
+          "meaning": "施耐德 TeSys D 辅助触点模块：{{1}}（N=正面安装，8N=侧面安装），触点配置 {{2}}（首位=常开NO数、末位=常闭NC数；11=1NO+1NC、31=3NO+1NC）"
+        }
+      ]
+    },
+    {
+      "id": "chint-nxb",
+      "detect": "NXB",
+      "brand": "正泰",
+      "series": "NXB 小型断路器（IEC 60898，NB1 平台）",
+      "segments": [
+        {
+          "key": "系列",
+          "regex": "NXB",
+          "value": "NXB",
+          "meaning": "正泰 NXB 系列小型断路器；NXB-63 的 63 为壳架电流"
+        },
+        {
+          "key": "壳架电流",
+          "regex": "NXB-?(\\d{2})",
+          "valueTemplate": "{{1}}",
+          "meaning": "壳架电流 {{1}}A（该壳架下额定电流≤{{1}}A，由曲线代号+电流确定）"
+        },
+        {
+          "key": "极数",
+          "regex": "(\\d)P",
+          "valueTemplate": "{{1}}P",
+          "meaning": "{{1}} 个保护极"
+        },
+        {
+          "key": "脱扣曲线",
+          "regex": "(?:^|[\\s\\-/,，（(])([BCD])\\s*型?(\\d{1,3}(?:\\.[0-9]+)?)",
+          "ratings": [
+            "0.5",
+            "1",
+            "2",
+            "3",
+            "4",
+            "6",
+            "10",
+            "13",
+            "16",
+            "20",
+            "25",
+            "32",
+            "40",
+            "50",
+            "63",
+            "80",
+            "100",
+            "125"
+          ],
+          "ratingsCap": 2,
+          "table": {
+            "B": {
+              "value": "B",
+              "meaning": "脱扣曲线 B：3~5 倍 In（照明/半导体）"
+            },
+            "C": {
+              "value": "C",
+              "meaning": "脱扣曲线 C：5~10 倍 In（配电通用）"
+            },
+            "D": {
+              "value": "D",
+              "meaning": "脱扣曲线 D：10~20 倍 In（电动机/高浪流）"
+            }
+          }
+        },
+        {
+          "key": "额定电流",
+          "regex": "(?:^|[\\s\\-/,，（(])([BCD])\\s*型?\\s*(\\d+\\.?\\d*)\\s*A?",
+          "ratings": [
+            "0.5",
+            "1",
+            "2",
+            "3",
+            "4",
+            "6",
+            "10",
+            "13",
+            "16",
+            "20",
+            "25",
+            "32",
+            "40",
+            "50",
+            "63",
+            "80",
+            "100",
+            "125"
+          ],
+          "ratingsCap": 2,
+          "valueTemplate": "{{2}}A",
+          "meaning": "脱扣曲线 {{1}} 型下额定电流 In={{2}}A"
+        },
+        {
+          "key": "额定电流",
+          "regex": "(?:^|[-\\s/,，型])(\\d+\\.?\\d*A)\\s*(?![A-Za-z])",
+          "valueTemplate": "{{1}}",
+          "meaning": "额定电流 In={{1}}A（无曲线代号时）"
+        },
+        {
+          "key": "剩余动作电流",
+          "regex": "(\\d+)\\s*(mA|MA)(?![0-9])",
+          "valueTemplate": "{{1}}mA",
+          "meaning": "剩余动作电流（漏电灵敏度）{{1}}mA，NXBLE 为漏电保护型"
+        }
+      ]
+    },
+    {
+      "id": "chint-cjx2",
+      "detect": "CJX2",
+      "brand": "正泰",
+      "series": "CJX2 交流接触器（IEC 60947-4-1）",
+      "segments": [
+        {
+          "key": "系列",
+          "regex": "CJX2",
+          "value": "CJX2",
+          "meaning": "正泰 CJX2 系列交流接触器；后四位=电流代号(2位)+辅助触头配置(2位)"
+        },
+        {
+          "key": "额定电流",
+          "literalKey": "电流代号",
+          "regex": "CJX2-?(\\d{2})\\d{2}",
+          "cap": 1,
+          "table": {
+            "12": {
+              "value": "12",
+              "meaning": "电流代号 12：额定电流 12A（AC-3）"
+            },
+            "18": {
+              "value": "18",
+              "meaning": "电流代号 18：额定电流 18A（AC-3）"
+            },
+            "25": {
+              "value": "25",
+              "meaning": "电流代号 25：额定电流 25A（AC-3）"
+            },
+            "32": {
+              "value": "32",
+              "meaning": "电流代号 32：额定电流 32A（AC-3）"
+            },
+            "40": {
+              "value": "40",
+              "meaning": "电流代号 40：额定电流 40A（AC-3）"
+            },
+            "50": {
+              "value": "50",
+              "meaning": "电流代号 50：额定电流 50A（AC-3）"
+            },
+            "65": {
+              "value": "65",
+              "meaning": "电流代号 65：额定电流 65A（AC-3）"
+            },
+            "80": {
+              "value": "80",
+              "meaning": "电流代号 80：额定电流 80A（AC-3）"
+            },
+            "95": {
+              "value": "95",
+              "meaning": "电流代号 95：额定电流 95A（AC-3）"
+            },
+            "09": {
+              "value": "9",
+              "meaning": "电流代号 09：额定电流 9A（AC-3, 380/400V）"
+            }
+          }
+        },
+        {
+          "key": "辅助触头",
+          "literalKey": "触头代号",
+          "regex": "CJX2-?\\d{2}(\\d{2})",
+          "cap": 1,
+          "table": {
+            "10": {
+              "value": "1NO",
+              "meaning": "触头配置 10：1 常开(NO)+0 常闭(NC)"
+            },
+            "11": {
+              "value": "1NO+1NC",
+              "meaning": "触头配置 11：1 常开+1 常闭"
+            },
+            "01": {
+              "value": "1NC",
+              "meaning": "触头配置 01：0 常开+1 常闭(NC)"
+            }
+          },
+          "_note": "末两位：十位=常开NO数，个位=常闭NC数"
+        }
+      ]
+    },
+    {
+      "id": "chint-nxc",
+      "detect": "NXC",
+      "brand": "正泰",
+      "series": "NXC 交流接触器（IEC 60947-4-1）",
+      "segments": [
+        {
+          "key": "系列",
+          "regex": "NXC",
+          "value": "NXC",
+          "meaning": "正泰 NXC 系列交流接触器；后两位为电流代号"
+        },
+        {
+          "key": "额定电流",
+          "literalKey": "电流代号",
+          "regex": "NXC-?(\\d{2})",
+          "table": {
+            "12": {
+              "value": "12",
+              "meaning": "电流代号 12：额定电流 12A（AC-3）"
+            },
+            "18": {
+              "value": "18",
+              "meaning": "电流代号 18：额定电流 18A（AC-3）"
+            },
+            "25": {
+              "value": "25",
+              "meaning": "电流代号 25：额定电流 25A（AC-3）"
+            },
+            "32": {
+              "value": "32",
+              "meaning": "电流代号 32：额定电流 32A（AC-3）"
+            },
+            "40": {
+              "value": "40",
+              "meaning": "电流代号 40：额定电流 40A（AC-3）"
+            },
+            "50": {
+              "value": "50",
+              "meaning": "电流代号 50：额定电流 50A（AC-3）"
+            },
+            "65": {
+              "value": "65",
+              "meaning": "电流代号 65：额定电流 65A（AC-3）"
+            },
+            "80": {
+              "value": "80",
+              "meaning": "电流代号 80：额定电流 80A（AC-3）"
+            },
+            "95": {
+              "value": "95",
+              "meaning": "电流代号 95：额定电流 95A（AC-3）"
+            },
+            "09": {
+              "value": "9",
+              "meaning": "电流代号 09：额定电流 9A（AC-3）"
+            }
+          }
+        },
+        {
+          "key": "附件",
+          "regex": "AX-3([CXM])/(\\d)(\\d)",
+          "valueTemplate": "AX-3{{1}}/{{2}}{{3}}",
+          "meaning": "正泰 NXC 辅助触点附件：{{2}} 常开(NO)+{{3}} 常闭(NC)；安装方式 {{1}}（C=侧装、X=顶扣式、M=预装）"
+        },
+        {
+          "key": "频率",
+          "regex": "(\\d{2,3})\\s*/\\s*(\\d{2,3})\\s*[Hh]z|(\\d{2,3})\\s*[Hh]z",
+          "valueTemplate": "{{1}}{{2}}{{3}}Hz",
+          "meaning": "额定频率 {{1}}{{3}}{{2}}Hz"
+        }
+      ]
+    },
+    {
+      "id": "delixi-dz47",
+      "detect": "DZ47",
+      "brand": "德力西",
+      "series": "DZ47 小型断路器（IEC 60898）",
+      "segments": [
+        {
+          "key": "系列",
+          "regex": "DZ47",
+          "value": "DZ47",
+          "meaning": "德力西 DZ47 系列小型断路器；DZ47-60 的 60 为壳架电流"
+        },
+        {
+          "key": "壳架电流",
+          "regex": "DZ47-?(\\d{2})",
+          "valueTemplate": "{{1}}",
+          "meaning": "壳架电流 {{1}}A"
+        },
+        {
+          "key": "极数",
+          "regex": "(\\d)P",
+          "valueTemplate": "{{1}}P",
+          "meaning": "{{1}} 个保护极"
+        },
+        {
+          "key": "脱扣曲线",
+          "regex": "(?:^|[\\s\\-/,，（(])([BCD])\\s*型?(\\d{1,3}(?:\\.[0-9]+)?)",
+          "ratings": [
+            "0.5",
+            "1",
+            "2",
+            "3",
+            "4",
+            "6",
+            "10",
+            "13",
+            "16",
+            "20",
+            "25",
+            "32",
+            "40",
+            "50",
+            "63",
+            "80",
+            "100",
+            "125"
+          ],
+          "ratingsCap": 2,
+          "table": {
+            "B": {
+              "value": "B",
+              "meaning": "脱扣曲线 B：3~5 倍 In"
+            },
+            "C": {
+              "value": "C",
+              "meaning": "脱扣曲线 C：5~10 倍 In（配电通用）"
+            },
+            "D": {
+              "value": "D",
+              "meaning": "脱扣曲线 D：10~20 倍 In（电动机）"
+            }
+          }
+        },
+        {
+          "key": "额定电流",
+          "regex": "(?:^|[\\s\\-/,，（(])([BCD])\\s*型?\\s*(\\d+\\.?\\d*)\\s*A?",
+          "ratings": [
+            "0.5",
+            "1",
+            "2",
+            "3",
+            "4",
+            "6",
+            "10",
+            "13",
+            "16",
+            "20",
+            "25",
+            "32",
+            "40",
+            "50",
+            "63",
+            "80",
+            "100",
+            "125"
+          ],
+          "ratingsCap": 2,
+          "valueTemplate": "{{2}}A",
+          "meaning": "脱扣曲线 {{1}} 型下额定电流 In={{2}}A"
+        },
+        {
+          "key": "额定电流",
+          "regex": "(?:^|[-\\s/,，型])(\\d+\\.?\\d*A)\\s*(?![A-Za-z])",
+          "valueTemplate": "{{1}}",
+          "meaning": "额定电流 In={{1}}A（无曲线代号时）"
+        }
+      ]
+    },
+    {
+      "id": "cable-gb",
+      "detect": "(?:ZR|ZC|ZB|ZA|NH)[-]?(?:YJV|YJLV|VV|VVR|RVV|BVR|BV|YCW|YC|KVV)|\\b(?:YJV|YJLV|VVR|RVV|BVR|YCW|YC|KVV)\\b",
+      "brand": "国标/行业命名",
+      "series": "电线电缆型号（GB/T 5023、JB/T 8734 命名规则）",
+      "segments": [
+        {
+          "key": "阻燃等级",
+          "regex": "(ZR|ZC|ZB|ZA|NH)(?=[-\\s])",
+          "table": {
+            "ZR": {
+              "value": "阻燃",
+              "meaning": "ZR=阻燃型"
+            },
+            "ZC": {
+              "value": "C级阻燃",
+              "meaning": "ZC=C 级阻燃（阻燃分级 A/B/C/D）"
+            },
+            "ZB": {
+              "value": "B级阻燃",
+              "meaning": "ZB=B 级阻燃"
+            },
+            "ZA": {
+              "value": "A级阻燃",
+              "meaning": "ZA=A 级阻燃"
+            },
+            "NH": {
+              "value": "耐火",
+              "meaning": "NH=耐火型"
+            }
+          }
+        },
+        {
+          "key": "系列",
+          "regex": "(YJLV|YJV|VVR|RVV|BVR|BVV|BV|YCW|YC|KVV|VV)(?=[-\\s0-9]|$)",
+          "table": {
+            "YJV": {
+              "value": "YJV",
+              "meaning": "YJV=交联聚乙烯绝缘聚氯乙烯护套电力电缆"
+            },
+            "YJLV": {
+              "value": "YJLV",
+              "meaning": "YJLV=交联聚乙烯绝缘铝芯聚氯乙烯护套电力电缆"
+            },
+            "VV": {
+              "value": "VV",
+              "meaning": "VV=聚氯乙烯绝缘聚氯乙烯护套电力电缆"
+            },
+            "VVR": {
+              "value": "VVR",
+              "meaning": "VVR=聚氯乙烯绝缘护套软电缆"
+            },
+            "RVV": {
+              "value": "RVV",
+              "meaning": "RVV=聚氯乙烯绝缘护套软线（俗称护套线，R=软）"
+            },
+            "BVR": {
+              "value": "BVR",
+              "meaning": "BVR=铜芯聚氯乙烯绝缘软电缆（R=软）"
+            },
+            "BV": {
+              "value": "BV",
+              "meaning": "BV=铜芯聚氯乙烯绝缘电线"
+            },
+            "YC": {
+              "value": "YC",
+              "meaning": "YC=重型橡套软电缆（橡套电缆）"
+            },
+            "YCW": {
+              "value": "YCW",
+              "meaning": "YCW=户外型橡套电缆（W=耐气候/户外，YCW 450/750V 为国标常见规格）"
+            },
+            "KVV": {
+              "value": "KVV",
+              "meaning": "KVV=聚氯乙烯绝缘护套控制电缆"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "ct-bh",
+      "detect": "(?:^|[\\s（(])(?:BH|LMZ|LMK|SDH|CHL1|AKH)-?0?\\.?5|\\b(?:BH|CHL1|AKH)-?\\s*0?\\.?66",
+      "brand": "行业通用系列",
+      "series": "BH 系列电流互感器（BH=变流器·环形，0.66=额定绝缘水平 0.66kV）",
+      "segments": [
+        {
+          "key": "系列",
+          "regex": "\\b(BH|LMZ|LMK|SDH)\\b",
+          "table": {
+            "BH": {
+              "value": "BH",
+              "meaning": "BH=变流器—环形（电流互感器结构类型）"
+            },
+            "LMZ": {
+              "value": "LMZ",
+              "meaning": "LMZ=母线式电流互感器（L电流互感器/M母线/Z浇注绝缘）"
+            },
+            "LMK": {
+              "value": "LMK",
+              "meaning": "LMK=开口式电流互感器"
+            },
+            "SDH": {
+              "value": "SDH",
+              "meaning": "SDH=电流互感器系列（行业通用型号）"
+            }
+          }
+        },
+        {
+          "key": "额定电压",
+          "regex": "(?:BH|LMZ|LMK|SDH|CHL1|AKH)-?\\s*(0\\.66|0\\.5)",
+          "valueTemplate": "{{1}}",
+          "meaning": "额定绝缘水平 {{1}}kV（0.66kV≈660V 及以下回路）"
+        },
+        {
+          "key": "准确级",
+          "regex": "(\\d\\.\\d)\\s*级",
+          "valueTemplate": "{{1}}级",
+          "meaning": "测量/保护准确级 {{1}} 级"
+        },
+        {
+          "key": "额定输出",
+          "regex": "(\\d+)\\s*VA",
+          "valueTemplate": "{{1}}VA",
+          "meaning": "额定输出容量 {{1}}VA（二次回路额定负载）"
+        },
+        {
+          "key": "穿芯匝数",
+          "regex": "(\\d+)\\s*匝",
+          "valueTemplate": "{{1}}匝",
+          "meaning": "穿芯匝数 {{1}} 匝（一次导线穿过窗口次数）"
+        }
+      ]
+    },
+    {
+      "id": "lamp-ad11",
+      "detect": "\\b(?:AD11|AD16|ND16|AD17)\\b",
+      "brand": "行业通用系列",
+      "series": "AD11 系列信号灯（指示灯行业型号）",
+      "segments": [
+        {
+          "key": "系列",
+          "regex": "\\b(AD11|AD16|ND16|AD17)\\b",
+          "table": {
+            "AD11": {
+              "value": "AD11",
+              "meaning": "AD11=信号灯（LED 光源）行业通用系列"
+            },
+            "AD16": {
+              "value": "AD16",
+              "meaning": "AD16=信号灯系列"
+            },
+            "ND16": {
+              "value": "ND16",
+              "meaning": "ND16=信号灯/按钮系列"
+            },
+            "AD17": {
+              "value": "AD17",
+              "meaning": "AD17=信号灯系列"
+            }
+          }
+        },
+        {
+          "key": "安装孔径",
+          "regex": "(?:AD11|AD16|ND16|AD17)-?(\\d{2})\\b",
+          "valueTemplate": "φ{{1}}mm",
+          "meaning": "安装孔径 φ{{1}}mm（AD11-22=φ22mm，常见 22/25）"
+        }
+      ]
+    },
+    {
+      "id": "fastener-metric",
+      "detect": "(?:^|[\\s（(])M\\s*\\d+(?:\\.\\d+)?",
+      "brand": "GB/T 标准",
+      "series": "公制螺纹紧固件（GB/T 螺纹标记与性能等级）",
+      "segments": [
+        {
+          "key": "螺纹",
+          "regex": "(?:^|[\\s（(])(M\\s*\\d+(?:\\.\\d+)?)",
+          "valueTemplate": "{{1}}",
+          "meaning": "{{1}}=公制螺纹公称直径（GB/T，M 后数字为 mm）"
+        },
+        {
+          "key": "性能等级",
+          "regex": "(\\d{1,2}\\.\\d)\\s*级",
+          "valueTemplate": "{{1}}级",
+          "meaning": "紧固件性能等级 {{1}} 级（GB/T 3098，常见 4.8/8.8/10.9）"
+        },
+        {
+          "key": "长度",
+          "regex": "M\\s*\\d+(?:\\.\\d+)?\\s*[*×xX]\\s*(\\d+(?:\\.\\d+)?)",
+          "valueTemplate": "{{1}}mm",
+          "meaning": "公称长度 {{1}}mm（紧固件「M直径*长度」标记写法，GB/T）"
+        },
+        {
+          "key": "表面处理",
+          "regex": "(彩锌|白锌|蓝白锌|黑锌|镀彩锌|镀白锌)",
+          "valueTemplate": "{{1}}",
+          "meaning": "表面处理/镀锌类型 {{1}}（防腐蚀）"
+        },
+        {
+          "key": "镀层厚度",
+          "regex": "镀层厚\\s*(\\d+)\\s*[uU][mM]",
+          "valueTemplate": "{{1}}μm",
+          "meaning": "镀层厚度 {{1}}μm"
+        }
+      ]
+    },
+    {
+      "id": "busbar-tmy",
+      "detect": "(?:^|[\\s（(])(?:TM[YR]|TMR)\\b",
+      "brand": "国标/行业命名",
+      "series": "电工用铜/铝母线（GB/T 5585）",
+      "segments": [
+        {
+          "key": "系列",
+          "regex": "(TM[YR]|TMR)",
+          "table": {
+            "TMY": {
+              "value": "TMY",
+              "meaning": "TMY=硬态铜母线（T=铜/M=母线/Y=硬态）"
+            },
+            "TMR": {
+              "value": "TMR",
+              "meaning": "TMR=软态铜母线（R=软态，用于需弯曲走线）"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "resistor-gb",
+      "detect": "(?:^|[\\s（(])(?:RJ|RX|RT|RY|RS|RH)\\b\\s*\\d",
+      "brand": "国标/行业命名",
+      "series": "电阻器（GB/T 2470 命名规则）",
+      "segments": [
+        {
+          "key": "系列",
+          "regex": "(RJ|RX|RT|RY|RS|RH)",
+          "table": {
+            "RJ": {
+              "value": "金属膜",
+              "meaning": "RJ=金属膜电阻器"
+            },
+            "RX": {
+              "value": "线绕",
+              "meaning": "RX=线绕电阻器"
+            },
+            "RT": {
+              "value": "碳膜",
+              "meaning": "RT=碳膜电阻器"
+            },
+            "RY": {
+              "value": "氧化膜",
+              "meaning": "RY=氧化膜电阻器"
+            },
+            "RS": {
+              "value": "实心",
+              "meaning": "RS=实心电阻器"
+            },
+            "RH": {
+              "value": "合成膜",
+              "meaning": "RH=合成膜电阻器"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "ct-gb",
+      "detect": "(?:^|[\\s（(])(?:LZZBJ|LMZJ|LMK|BH|SDH)[-]?\\d",
+      "brand": "国标/行业命名",
+      "series": "电流互感器（国标型号命名）",
+      "segments": [
+        {
+          "key": "系列",
+          "regex": "(LZZBJ9-10|LZZBJ\\d*|LMZJ\\d*|LMK|BH|SDH)",
+          "table": {
+            "LZZBJ9-10": {
+              "value": "LZZBJ9-10",
+              "meaning": "LZZBJ9-10 电流互感器：L=电流互感器·Z=支柱式·Z=浇注·B=保护级·J=加大·9=设计序号·10=10kV"
+            },
+            "LZZBJ": {
+              "value": "LZZBJ",
+              "meaning": "LZZBJ=支柱式浇注保护级电流互感器（L/Z/Z=支柱浇注/B=保护级）"
+            },
+            "LMZJ": {
+              "value": "LMZJ",
+              "meaning": "LMZJ=母线式浇注电流互感器（L/M=母线/Z=浇注）"
+            },
+            "LMK": {
+              "value": "LMK",
+              "meaning": "LMK=开口式（母线式）电流互感器，0.66=0.66kV"
+            },
+            "BH": {
+              "value": "BH",
+              "meaning": "BH=变流器—环形（电流互感器），0.66=0.66kV"
+            },
+            "SDH": {
+              "value": "SDH",
+              "meaning": "SDH=电流互感器行业通用系列"
+            }
+          }
+        },
+        {
+          "key": "额定电压",
+          "regex": "(\\d\\.66|0\\.5|10)\\s*k?V?",
+          "valueTemplate": "{{1}}kV",
+          "meaning": "额定绝缘/额定电压 {{1}}kV"
+        },
+        {
+          "key": "准确级",
+          "regex": "(\\d\\.\\d)\\s*级",
+          "valueTemplate": "{{1}}级",
+          "meaning": "测量/保护准确级 {{1}} 级"
+        },
+        {
+          "key": "窗口尺寸",
+          "regex": "[ФΦ]\\s*(\\d+)",
+          "valueTemplate": "φ{{1}}mm",
+          "meaning": "穿心孔/窗口尺寸 φ{{1}}mm"
+        },
+        {
+          "key": "额定输出",
+          "regex": "(\\d+)\\s*VA",
+          "valueTemplate": "{{1}}VA",
+          "meaning": "额定输出容量 {{1}}VA（二次回路额定负载）"
+        },
+        {
+          "key": "穿芯匝数",
+          "regex": "(\\d+)\\s*匝",
+          "valueTemplate": "{{1}}匝",
+          "meaning": "穿芯匝数 {{1}} 匝（一次导线穿过窗口次数）"
+        },
+        {
+          "key": "保护级",
+          "regex": "(5P\\d+|10P\\d+|0\\.2S|0\\.5S|0\\.2|0\\.5)",
+          "valueTemplate": "{{1}}",
+          "meaning": "准确级组合 {{1}}（5P20=5P级/20倍额定准确限值；S=暂态特性；0.2/0.5=测量级）"
+        }
+      ]
+    },
+    {
+      "id": "mccb-gb",
+      "detect": "(?:^|[\\s（(])(?:GSB2|GSB1|GSM3|CVS|NM1|DZ20|CM1|RMM1|TM30)\\b\\s*[-]?\\d*",
+      "brand": "国标/行业命名",
+      "series": "塑壳断路器（含施耐德 EasyPact CVS、正泰/人民/常熟等系列）",
+      "segments": [
+        {
+          "key": "系列",
+          "regex": "(GSB2|GSB1|GSM3|CVS|NM1|DZ20|CM1|RMM1|TM30)",
+          "table": {
+            "GSB2": {
+              "value": "GSB2",
+              "meaning": "GSB2 系列塑壳断路器"
+            },
+            "GSB1": {
+              "value": "GSB1",
+              "meaning": "GSB1 系列小型/塑壳断路器（带漏电/不带）"
+            },
+            "GSM3": {
+              "value": "GSM3",
+              "meaning": "GSM3 系列塑壳断路器"
+            },
+            "CVS": {
+              "value": "EasyPact CVS",
+              "meaning": "施耐德 EasyPact CVS 固定式塑壳断路器"
+            },
+            "NM1": {
+              "value": "NM1",
+              "meaning": "NM1 系列塑壳断路器"
+            },
+            "DZ20": {
+              "value": "DZ20",
+              "meaning": "DZ20 系列塑壳断路器"
+            },
+            "CM1": {
+              "value": "CM1",
+              "meaning": "CM1 系列塑壳断路器（常熟开关）"
+            },
+            "RMM1": {
+              "value": "RMM1",
+              "meaning": "RMM1 系列塑壳断路器"
+            },
+            "TM30": {
+              "value": "TM30",
+              "meaning": "TM30 系列塑壳断路器"
+            }
+          }
+        },
+        {
+          "key": "极数",
+          "regex": "/(\\d)\\d{3}\\b",
+          "table": {
+            "2": {
+              "value": "2P"
+            },
+            "3": {
+              "value": "3P"
+            },
+            "4": {
+              "value": "4P"
+            }
+          },
+          "meaning": "尾部代号首位=极数（2=2极/3=3极/4=4极）"
+        },
+        {
+          "key": "脱扣方式",
+          "regex": "/\\d(\\d)\\d{2}\\b",
+          "table": {
+            "0": {
+              "value": "无脱扣"
+            },
+            "2": {
+              "value": "仅短路保护"
+            },
+            "3": {
+              "value": "过载+短路(热磁)"
+            }
+          },
+          "meaning": "尾部代号次位=脱扣方式（0无/2电磁/3热磁）"
+        }
+      ]
+    },
+    {
+      "id": "ct-naming",
+      "detect": "(?:BH-0\\.66|LMZ|LMK|SDH|LQZ|AKH|电流互感器|LZZBJ|LMZD|LA-10|JDZX|0\\.66)",
+      "brand": "通用/参数提取",
+      "series": "电流互感器（CT）",
+      "segments": [
+        {
+          "key": "额定输出",
+          "regex": "(\\d+)\\s*VA",
+          "meaning": "电流互感器额定输出容量（VA），如 10VA / 15VA / 30VA"
+        }
+      ]
+    },
+    {
+      "id": "fuse-gb",
+      "detect": "(?:^|[\\s（(])(?:RT36|RT\\d+|NT\\d+)",
+      "brand": "国标/行业命名",
+      "series": "熔断器（RT36/NT 系列）",
+      "segments": [
+        {
+          "key": "系列",
+          "regex": "(RT36|RT\\d+|NT\\d+)",
+          "table": {
+            "RT36": {
+              "value": "RT36",
+              "meaning": "RT36=刀型触头熔断器（NT 型）"
+            }
+          }
+        },
+        {
+          "key": "尺码",
+          "regex": "(?:-|\\()(?:NT)?(\\d{2})\\b",
+          "valueTemplate": "尺码{{1}}",
+          "meaning": "熔断器尺码（00/0/1/2/3…，决定额定电流档）"
+        }
+      ]
+    },
+    {
+      "id": "pipe-dn",
+      "detect": "(?:^|[\\s（(])DN\\s*\\d",
+      "brand": "国标/行业命名",
+      "series": "管道/管件公称通径（GB/T 1047）",
+      "segments": [
+        {
+          "key": "公称通径",
+          "regex": "DN\\s*(\\d+(?:\\.\\d+)?)",
+          "valueTemplate": "DN{{1}}",
+          "meaning": "公称通径 DN{{1}}（GB/T 1047，约 {{1}}mm 公称直径）"
+        },
+        {
+          "key": "公称压力",
+          "regex": "PN\\s*(\\d+\\.?\\d*)",
+          "valueTemplate": "PN{{1}}",
+          "meaning": "公称压力 PN{{1}}（如 PN16≈1.6MPa，管道/阀门/管件通用）"
+        },
+        {
+          "key": "压力等级",
+          "regex": "(\\d\\.\\d|\\d+)\\s*MPa",
+          "valueTemplate": "{{1}}MPa",
+          "meaning": "压力等级 {{1}}MPa（≈PN{{1*10}}，用于管道/阀门/管件）"
+        }
+      ]
+    },
+    {
+      "id": "valve-q",
+      "detect": "(?:^|[\\s（(])Q\\d{3,4}[A-Z]?-\\d{2}[A-Z]?",
+      "brand": "国标/行业命名",
+      "series": "工业阀门（JB/T 308 型号命名）",
+      "segments": [
+        {
+          "key": "系列",
+          "regex": "(Q\\d{3,4}[A-Z]?)-\\d{2}[A-Z]?",
+          "table": {
+            "Q361F": {
+              "value": "Q361F",
+              "meaning": "Q=球阀·3=三通·6=传动·1=内螺纹连接·F=氟塑料密封（Q361F=三通内螺纹球阀）"
+            }
+          },
+          "meaning": "阀门系列 {{1}}（JB/T 308：首位 Q=球阀/V=蝶阀/G=闸阀/Z=截止阀，二位=驱动/连接，末位=密封面材料）"
+        },
+        {
+          "key": "公称压力",
+          "regex": "-\\s*(\\d{2})\\s*([A-Z])\\b",
+          "valueTemplate": "PN{{1}}·阀体{{2}}",
+          "meaning": "公称压力 {{1}}×0.1MPa（如 16=1.6MPa），末字母=阀体材料（C=碳钢/P=不锈钢/R=铬钼钢）"
+        }
+      ]
+    },
+    {
+      "id": "siemens-6av",
+      "detect": "(?:^|[\\s（(])6AV",
+      "brand": "西门子(SIEMENS)",
+      "series": "SIMATIC 工业自动化（HMI/PLC/网络）",
+      "segments": [
+        {
+          "key": "系列",
+          "regex": "(6AV)",
+          "table": {
+            "6AV": {
+              "value": "SIMATIC HMI",
+              "meaning": "6AV=西门子 SIMATIC HMI 人机界面/操作面板（6ES=PLC、6GK=工业网络）"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "terminal-mark",
+      "detect": "(?:^|[\\s（(])(?:DEK|ZB\\d|ZB\\s*\\d|721-|SAK|UK\\d)",
+      "brand": "魏德米勒/菲尼克斯(端子附件)",
+      "series": "端子标记号 / 接线端子终端附件",
+      "segments": [
+        {
+          "key": "系列",
+          "regex": "(DEK|ZB\\d|ZB|721-|SAK|UK\\d)",
+          "table": {
+            "DEK": {
+              "value": "DEK 标记条",
+              "meaning": "魏德米勒 DEK 系列端子标记条/标号"
+            },
+            "ZB": {
+              "value": "ZB 接线端子",
+              "meaning": "菲尼克斯 ZB 系列接线端子/标记座"
+            },
+            "721-": {
+              "value": "端子件号",
+              "meaning": "魏德米勒/菲尼克斯 端子及附件件号（7xx 系列）"
+            },
+            "SAK": {
+              "value": "SAK 端子",
+              "meaning": "魏德米勒 SAK 系列接线端子"
+            },
+            "UK": {
+              "value": "UK 端子",
+              "meaning": "魏德米勒 UK 系列接线端子"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "misc-param",
+      "detect": "\\d",
+      "brand": "通用/参数提取",
+      "series": "非型号描述文本（尺寸/重量/电气量）",
+      "segments": [
+        {
+          "key": "外形尺寸",
+          "regex": "(\\d+(?:\\.\\d+)?)\\s*[×xX*]\\s*(\\d+(?:\\.\\d+)?)\\s*[×xX*]\\s*(\\d+(?:\\.\\d+)?)",
+          "valueTemplate": "长{{1}}×宽{{2}}×高{{3}}mm",
+          "meaning": "外形尺寸（长×宽×高）"
+        },
+        {
+          "key": "平面尺寸",
+          "regex": "(?<![\\d×xX*+A-Za-z\\-])(\\d+(?:\\.\\d+)?)\\s*[×xX*]\\s*(\\d+(?:\\.\\d+)?)(?![×xX*+]|\\d)",
+          "valueTemplate": "{{1}}×{{2}}mm",
+          "meaning": "平面尺寸（长×宽）；仅匹配独立尺寸串，排除型号/电缆芯×截面内部的 N*N"
+        },
+        {
+          "key": "直径",
+          "regex": "[Φφ]\\s*(\\d+(?:\\.\\d+)?)",
+          "valueTemplate": "φ{{1}}mm",
+          "meaning": "直径/孔径 φ{{1}}mm"
+        },
+        {
+          "key": "外径内径",
+          "regex": "外径\\s*(\\d+(?:\\.\\d+)?)\\s*[×xX*]?\\s*内径\\s*(\\d+(?:\\.\\d+)?)",
+          "valueTemplate": "外径{{1}}×内径{{2}}mm",
+          "meaning": "管材/环件 外径×内径"
+        },
+        {
+          "key": "重量",
+          "regex": "(\\d+(?:\\.\\d+)?)\\s*kg",
+          "valueTemplate": "{{1}}kg",
+          "meaning": "重量 {{1}}kg"
+        },
+        {
+          "key": "额定容量",
+          "regex": "(\\d+(?:\\.\\d+)?)\\s*VA\\b",
+          "valueTemplate": "{{1}}VA",
+          "meaning": "额定容量/额定输出 {{1}}VA"
+        },
+        {
+          "key": "电压比",
+          "regex": "(\\d+(?:\\.\\d+)?)\\s*V\\s*/\\s*(\\d+(?:\\.\\d+)?)\\s*V",
+          "valueTemplate": "{{1}}/{{2}}V",
+          "meaning": "电压比 {{1}}V/{{2}}V"
+        },
+        {
+          "key": "额定频率",
+          "regex": "(\\d+(?:\\.\\d+)?)\\s*Hz",
+          "valueTemplate": "{{1}}Hz",
+          "meaning": "额定频率 {{1}}Hz"
+        }
+      ]
+    }
+  ]
+}

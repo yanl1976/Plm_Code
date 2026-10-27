@@ -1,0 +1,30 @@
+node_modules/
+data/
+*.ndjson
+.env
+
+# ============================================================
+# PLM 平台目录：第三方产品 + 约 3.9GB，不入库
+# 只放行我们自己的二开内容（SecondaryDev/ItemSmartInput）
+# 注意：gitignore 的目录一旦被忽略，子项无法再用 ! 恢复，
+#       因此必须逐级放行，不能只写 PLMSOFT/
+# ============================================================
+PLMSOFT/*
+!PLMSOFT/Server/
+PLMSOFT/Server/*
+!PLMSOFT/Server/SecondaryDev/
+PLMSOFT/Server/SecondaryDev/*
+!PLMSOFT/Server/SecondaryDev/ItemSmartInput/
+
+# 二开目录里只保留脚本与注册表，排除可能的临时文件
+*.log
+*.tmp
+
+# 文档内的大体量二进制模板（约 158MB，按需本地保留，不入库）
+doc/**/*.xlsx
+doc/**/*.xls
+
+# 平台原始压缩包（Server.rar 1.4GB / DistributedFileServer.rar 605MB）
+*.rar
+*.zip
+*.7z

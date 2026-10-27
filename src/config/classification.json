@@ -1,0 +1,1660 @@
+{
+  "meta": {
+    "source": "doc/编码分类规则以及编码属性说明.xlsx / 生产物资-2023",
+    "encodingRule": "物料编码 = 小类编码(6位 = 大类2位+中类2位+小类序号2位) + 5位流水码 = 11位",
+    "generatedBy": "scripts/gen_classification.py",
+    "bigCount": 3,
+    "subCount": 209
+  },
+  "categories": [
+    {
+      "code": "10",
+      "name": "电气原件",
+      "mid": [
+        {
+          "code": "01",
+          "name": "断路器",
+          "sub": [
+            {
+              "code": "100101",
+              "name": "固定式框架断路器",
+              "pattern": "100101XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100102",
+              "name": "抽出式框架断路器",
+              "pattern": "100102XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100103",
+              "name": "固定式塑壳断路器",
+              "pattern": "100103XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100104",
+              "name": "抽出式塑壳断路器",
+              "pattern": "100104XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100105",
+              "name": "微型断路器",
+              "pattern": "100105XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100106",
+              "name": "漏电断路器",
+              "pattern": "100106XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100107",
+              "name": "断路器附件",
+              "pattern": "100107XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100108",
+              "name": "高压真空断路器",
+              "pattern": "100108XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            }
+          ]
+        },
+        {
+          "code": "02",
+          "name": "接触器",
+          "sub": [
+            {
+              "code": "100201",
+              "name": "交流接触器",
+              "pattern": "100201XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100202",
+              "name": "直流接触器",
+              "pattern": "100202XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100203",
+              "name": "交流接触器线圈",
+              "pattern": "100203XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100204",
+              "name": "接触器附件",
+              "pattern": "100204XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            }
+          ]
+        },
+        {
+          "code": "03",
+          "name": "刀开关",
+          "sub": [
+            {
+              "code": "100301",
+              "name": "刀熔开关",
+              "pattern": "100301XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100302",
+              "name": "熔断器开关",
+              "pattern": "100302XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100303",
+              "name": "单投刀开关",
+              "pattern": "100303XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100304",
+              "name": "双投刀开关",
+              "pattern": "100304XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100305",
+              "name": "低压负荷开关",
+              "pattern": "100305XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            }
+          ]
+        },
+        {
+          "code": "04",
+          "name": "保护器",
+          "sub": [
+            {
+              "code": "100401",
+              "name": "熔断器",
+              "pattern": "100401XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100402",
+              "name": "熔座",
+              "pattern": "100402XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100403",
+              "name": "熔芯",
+              "pattern": "100403XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100404",
+              "name": "避雷器",
+              "pattern": "100404XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "100405",
+              "name": "浪涌保护器",
+              "pattern": "100405XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100406",
+              "name": "交直流转换器",
+              "pattern": "100406XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100407",
+              "name": "适配器",
+              "pattern": "100407XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "100408",
+              "name": "其它",
+              "pattern": "100408XXXXX",
+              "unit": "",
+              "wh": ""
+            }
+          ]
+        },
+        {
+          "code": "05",
+          "name": "互感器/传感器",
+          "sub": [
+            {
+              "code": "100501",
+              "name": "电流互感器",
+              "pattern": "100501XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100502",
+              "name": "电压互感器",
+              "pattern": "100502XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100503",
+              "name": "零序电流互感器",
+              "pattern": "100503XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100504",
+              "name": "分流器",
+              "pattern": "100504XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "100505",
+              "name": "霍尔元件",
+              "pattern": "100505XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "100506",
+              "name": "热电偶",
+              "pattern": "100506XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "100507",
+              "name": "电流传感器",
+              "pattern": "100507XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "100508",
+              "name": "电压传感器",
+              "pattern": "100508XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "100509",
+              "name": "压力传感器",
+              "pattern": "100509XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "100510",
+              "name": "温湿度传感器",
+              "pattern": "100510XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            }
+          ]
+        },
+        {
+          "code": "06",
+          "name": "电抗器",
+          "sub": [
+            {
+              "code": "100601",
+              "name": "三相电抗器",
+              "pattern": "100601XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "100602",
+              "name": "单相电抗器",
+              "pattern": "100602XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            }
+          ]
+        },
+        {
+          "code": "07",
+          "name": "变压器",
+          "sub": [
+            {
+              "code": "100701",
+              "name": "三相变压器",
+              "pattern": "100701XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "100702",
+              "name": "单相变压器",
+              "pattern": "100702XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "100703",
+              "name": "脉冲变压器",
+              "pattern": "100703XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "100704",
+              "name": "其他变压器",
+              "pattern": "100704XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            }
+          ]
+        },
+        {
+          "code": "08",
+          "name": "继电器",
+          "sub": [
+            {
+              "code": "100801",
+              "name": "时间继电器",
+              "pattern": "100801XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100802",
+              "name": "中间继电器",
+              "pattern": "100802XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100803",
+              "name": "保护继电器",
+              "pattern": "100803XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100804",
+              "name": "继电器座",
+              "pattern": "100804XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100805",
+              "name": "热继电器",
+              "pattern": "100805XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            }
+          ]
+        },
+        {
+          "code": "09",
+          "name": "仪器仪表",
+          "sub": [
+            {
+              "code": "100901",
+              "name": "电压表",
+              "pattern": "100901XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100902",
+              "name": "电流表",
+              "pattern": "100902XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100903",
+              "name": "功率表",
+              "pattern": "100903XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100904",
+              "name": "频率表",
+              "pattern": "100904XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100905",
+              "name": "功率因数表",
+              "pattern": "100905XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100906",
+              "name": "同期表",
+              "pattern": "100906XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100907",
+              "name": "电度表",
+              "pattern": "100907XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100908",
+              "name": "绝缘检测表",
+              "pattern": "100908XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100909",
+              "name": "编码器",
+              "pattern": "100909XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100910",
+              "name": "多功能仪表",
+              "pattern": "100910XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100911",
+              "name": "压力表",
+              "pattern": "100911XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100912",
+              "name": "随机仪器",
+              "pattern": "100912XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100913",
+              "name": "仿真器",
+              "pattern": "100913XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "100914",
+              "name": "测温仪",
+              "pattern": "100914XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            }
+          ]
+        },
+        {
+          "code": "10",
+          "name": "主令电器",
+          "sub": [
+            {
+              "code": "101001",
+              "name": "按钮",
+              "pattern": "101001XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "101002",
+              "name": "带灯按钮",
+              "pattern": "101002XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "101003",
+              "name": "转换开关",
+              "pattern": "101003XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "101004",
+              "name": "特殊开关",
+              "pattern": "101004XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "101005",
+              "name": "钮子开关",
+              "pattern": "101005XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "101006",
+              "name": "微动开关",
+              "pattern": "101006XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "101007",
+              "name": "温度开关",
+              "pattern": "101007XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "101008",
+              "name": "行程开关",
+              "pattern": "101008XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "101009",
+              "name": "磁开关",
+              "pattern": "101009XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "101010",
+              "name": "附件",
+              "pattern": "101010XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            }
+          ]
+        },
+        {
+          "code": "11",
+          "name": "信号器件",
+          "sub": [
+            {
+              "code": "101101",
+              "name": "指示灯",
+              "pattern": "101101XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "101102",
+              "name": "电子牌",
+              "pattern": "101102XXXXX",
+              "unit": "",
+              "wh": ""
+            },
+            {
+              "code": "101103",
+              "name": "报警器件",
+              "pattern": "101103XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            }
+          ]
+        },
+        {
+          "code": "12",
+          "name": "变送器",
+          "sub": [
+            {
+              "code": "101201",
+              "name": "电压变送器",
+              "pattern": "101201XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101202",
+              "name": "电流变送器",
+              "pattern": "101202XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101203",
+              "name": "综合变送器",
+              "pattern": "101203XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101204",
+              "name": "功率变送器",
+              "pattern": "101204XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101205",
+              "name": "频率变送器",
+              "pattern": "101205XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101206",
+              "name": "隔离器",
+              "pattern": "101206XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            }
+          ]
+        },
+        {
+          "code": "13",
+          "name": "电阻",
+          "sub": [
+            {
+              "code": "101301",
+              "name": "普通电阻",
+              "pattern": "101301XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101302",
+              "name": "精密电阻",
+              "pattern": "101302XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101303",
+              "name": "可调电阻",
+              "pattern": "101303XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101304",
+              "name": "压敏电阻",
+              "pattern": "101304XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101305",
+              "name": "热敏电阻",
+              "pattern": "101305XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101306",
+              "name": "管型电阻",
+              "pattern": "101306XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101307",
+              "name": "铝壳电阻",
+              "pattern": "101307XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101308",
+              "name": "电位器",
+              "pattern": "101308XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            }
+          ]
+        },
+        {
+          "code": "14",
+          "name": "电容",
+          "sub": [
+            {
+              "code": "101401",
+              "name": "铝电解电容（CD）",
+              "pattern": "101401XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101402",
+              "name": "聚酯膜电容（CL）",
+              "pattern": "101402XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101403",
+              "name": "聚丙烯膜电容（CBB）",
+              "pattern": "101403XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101404",
+              "name": "鉏电解电容（CA、CQ）",
+              "pattern": "101404XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101405",
+              "name": "金属化纸介电容（CJ）",
+              "pattern": "101405XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101406",
+              "name": "复合介质电容（CH、CZ）",
+              "pattern": "101406XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101407",
+              "name": "瓷片电容（CT）",
+              "pattern": "101407XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101408",
+              "name": "突波吸收电容",
+              "pattern": "101408XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101409",
+              "name": "RS库号电容",
+              "pattern": "101409XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101410",
+              "name": "其它类型电容",
+              "pattern": "101410XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101411",
+              "name": "薄膜电容",
+              "pattern": "101411XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            }
+          ]
+        },
+        {
+          "code": "15",
+          "name": "电子器件",
+          "sub": [
+            {
+              "code": "101501",
+              "name": "二极管",
+              "pattern": "101501XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101502",
+              "name": "三极管",
+              "pattern": "101502XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101503",
+              "name": "场效应管",
+              "pattern": "101503XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101504",
+              "name": "晶闸管",
+              "pattern": "101504XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101505",
+              "name": "电子管",
+              "pattern": "101505XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101506",
+              "name": "其他器件",
+              "pattern": "101506XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101507",
+              "name": "整流器",
+              "pattern": "101507XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101508",
+              "name": "充电机",
+              "pattern": "101508XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101509",
+              "name": "电源模块",
+              "pattern": "101509XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101510",
+              "name": "电源",
+              "pattern": "101510XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101511",
+              "name": "集成电路",
+              "pattern": "101511XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101512",
+              "name": "电力模块",
+              "pattern": "101512XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101513",
+              "name": "IGBT",
+              "pattern": "101513XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101514",
+              "name": "滤波器",
+              "pattern": "101514XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101515",
+              "name": "交换机",
+              "pattern": "101515XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101516",
+              "name": "RS产品",
+              "pattern": "101516XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            }
+          ]
+        },
+        {
+          "code": "16",
+          "name": "连接器件",
+          "sub": [
+            {
+              "code": "101601",
+              "name": "端子",
+              "pattern": "101601XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "101602",
+              "name": "一次插件",
+              "pattern": "101602XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101603",
+              "name": "二次插件",
+              "pattern": "101603XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101604",
+              "name": "插头",
+              "pattern": "101604XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101605",
+              "name": "插座",
+              "pattern": "101605XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101606",
+              "name": "彩色排线",
+              "pattern": "101606XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101607",
+              "name": "接插件",
+              "pattern": "101607XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            }
+          ]
+        },
+        {
+          "code": "17",
+          "name": "绝缘件",
+          "sub": [
+            {
+              "code": "101701",
+              "name": "母线框",
+              "pattern": "101701XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "101702",
+              "name": "母线夹",
+              "pattern": "101702XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "101703",
+              "name": "高压绝缘子",
+              "pattern": "101703XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "101704",
+              "name": "低压绝缘子",
+              "pattern": "101704XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "101705",
+              "name": "绝缘套管",
+              "pattern": "101705XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "101706",
+              "name": "热缩管",
+              "pattern": "101706XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            }
+          ]
+        },
+        {
+          "code": "18",
+          "name": "其他器件",
+          "sub": [
+            {
+              "code": "101801",
+              "name": "散热器/加热器",
+              "pattern": "101801XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101802",
+              "name": "风机",
+              "pattern": "101802XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            },
+            {
+              "code": "101803",
+              "name": "磁环",
+              "pattern": "101803XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101804",
+              "name": "电池",
+              "pattern": "101804XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101805",
+              "name": "元器件附件",
+              "pattern": "101805XXXXX",
+              "unit": "",
+              "wh": ""
+            },
+            {
+              "code": "101806",
+              "name": "电工器件",
+              "pattern": "101806XXXXX",
+              "unit": "",
+              "wh": ""
+            },
+            {
+              "code": "101807",
+              "name": "照明器具",
+              "pattern": "101807XXXXX",
+              "unit": "",
+              "wh": "电线电缆库"
+            },
+            {
+              "code": "101808",
+              "name": "其它器件",
+              "pattern": "101808XXXXX",
+              "unit": "",
+              "wh": ""
+            },
+            {
+              "code": "101809",
+              "name": "电源线",
+              "pattern": "101809XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101810",
+              "name": "电机",
+              "pattern": "101810XXXXX",
+              "unit": "",
+              "wh": "元件1库"
+            }
+          ]
+        },
+        {
+          "code": "19",
+          "name": "外购成套产品",
+          "sub": [
+            {
+              "code": "101901",
+              "name": "变频柜",
+              "pattern": "101901XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101902",
+              "name": "防爆箱",
+              "pattern": "101902XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "101903",
+              "name": "变频器",
+              "pattern": "101903XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101904",
+              "name": "软启动器",
+              "pattern": "101904XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101905",
+              "name": "制动单元",
+              "pattern": "101905XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101906",
+              "name": "配电箱",
+              "pattern": "101906XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "101907",
+              "name": "控制柜",
+              "pattern": "101907XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "101908",
+              "name": "调速器",
+              "pattern": "101908XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "101909",
+              "name": "电阻箱",
+              "pattern": "101909XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "101910",
+              "name": "空调",
+              "pattern": "101910XXXXX",
+              "unit": "",
+              "wh": "电线电缆库"
+            },
+            {
+              "code": "101911",
+              "name": "电池箱",
+              "pattern": "101911XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "101912",
+              "name": "其它",
+              "pattern": "101912XXXXX",
+              "unit": "",
+              "wh": ""
+            },
+            {
+              "code": "101913",
+              "name": "安防设备",
+              "pattern": "101913XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            }
+          ]
+        },
+        {
+          "code": "20",
+          "name": "程控器件",
+          "sub": [
+            {
+              "code": "102001",
+              "name": "PC类",
+              "pattern": "102001XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "102002",
+              "name": "工控机",
+              "pattern": "102002XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "102003",
+              "name": "电器控制系统",
+              "pattern": "102003XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "102004",
+              "name": "电子控制器",
+              "pattern": "102004XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "102005",
+              "name": "触摸屏",
+              "pattern": "102005XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "102006",
+              "name": "驱动类",
+              "pattern": "102006XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "102007",
+              "name": "调节器",
+              "pattern": "102007XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "11",
+      "name": "原材料",
+      "mid": [
+        {
+          "code": "01",
+          "name": "黑色金属",
+          "sub": [
+            {
+              "code": "110101",
+              "name": "板材",
+              "pattern": "110101XXXXX",
+              "unit": "",
+              "wh": "原材料库"
+            },
+            {
+              "code": "110102",
+              "name": "管材",
+              "pattern": "110102XXXXX",
+              "unit": "",
+              "wh": "原材料库"
+            },
+            {
+              "code": "110103",
+              "name": "棒材",
+              "pattern": "110103XXXXX",
+              "unit": "",
+              "wh": "原材料库"
+            },
+            {
+              "code": "110104",
+              "name": "型材",
+              "pattern": "110104XXXXX",
+              "unit": "",
+              "wh": "原材料库"
+            },
+            {
+              "code": "110105",
+              "name": "带材",
+              "pattern": "110105XXXXX",
+              "unit": "",
+              "wh": "原材料库"
+            }
+          ]
+        },
+        {
+          "code": "02",
+          "name": "有色金属",
+          "sub": [
+            {
+              "code": "110201",
+              "name": "铜及其合金",
+              "pattern": "110201XXXXX",
+              "unit": "",
+              "wh": "原材料库"
+            },
+            {
+              "code": "110202",
+              "name": "铝及其合金",
+              "pattern": "110202XXXXX",
+              "unit": "",
+              "wh": "原材料库"
+            },
+            {
+              "code": "110203",
+              "name": "锌及其合金",
+              "pattern": "110203XXXXX",
+              "unit": "",
+              "wh": "原材料库"
+            },
+            {
+              "code": "110204",
+              "name": "其他金属及合金",
+              "pattern": "110204XXXXX",
+              "unit": "",
+              "wh": "原材料库"
+            }
+          ]
+        },
+        {
+          "code": "03",
+          "name": "电线、电缆",
+          "sub": [
+            {
+              "code": "110301",
+              "name": "电线",
+              "pattern": "110301XXXXX",
+              "unit": "",
+              "wh": "电线电缆库"
+            },
+            {
+              "code": "110302",
+              "name": "电缆",
+              "pattern": "110302XXXXX",
+              "unit": "",
+              "wh": "电线电缆库"
+            },
+            {
+              "code": "110303",
+              "name": "通讯线",
+              "pattern": "110303XXXXX",
+              "unit": "",
+              "wh": "电线电缆库"
+            }
+          ]
+        },
+        {
+          "code": "04",
+          "name": "非金属材料",
+          "sub": [
+            {
+              "code": "110401",
+              "name": "气体",
+              "pattern": "110401XXXXX",
+              "unit": "",
+              "wh": "原材料库"
+            },
+            {
+              "code": "110402",
+              "name": "玻璃",
+              "pattern": "110402XXXXX",
+              "unit": "",
+              "wh": "原材料库"
+            },
+            {
+              "code": "110403",
+              "name": "电工材料",
+              "pattern": "110403XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "110404",
+              "name": "辅料（走线槽/扎带/吸盘等）",
+              "pattern": "110404XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "110405",
+              "name": "化工试剂",
+              "pattern": "110405XXXXX",
+              "unit": "",
+              "wh": "原材料库"
+            },
+            {
+              "code": "110406",
+              "name": "橡胶制品",
+              "pattern": "110406XXXXX",
+              "unit": "",
+              "wh": "原材料库"
+            },
+            {
+              "code": "110407",
+              "name": "油漆",
+              "pattern": "110407XXXXX",
+              "unit": "",
+              "wh": "原材料库"
+            },
+            {
+              "code": "110408",
+              "name": "柴油",
+              "pattern": "110408XXXXX",
+              "unit": "",
+              "wh": "原材料库"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "12",
+      "name": "外购标准件",
+      "mid": [
+        {
+          "code": "01",
+          "name": "紧固件",
+          "sub": [
+            {
+              "code": "120102",
+              "name": "螺钉",
+              "pattern": "120102XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "120103",
+              "name": "螺杆",
+              "pattern": "120103XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "120104",
+              "name": "螺母",
+              "pattern": "120104XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "120105",
+              "name": "平垫",
+              "pattern": "120105XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "120106",
+              "name": "弹垫",
+              "pattern": "120106XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "120108",
+              "name": "销",
+              "pattern": "120108XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "120109",
+              "name": "铆钉",
+              "pattern": "120109XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "120110",
+              "name": "自攻螺钉",
+              "pattern": "120110XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "120111",
+              "name": "挡圈",
+              "pattern": "120111XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            }
+          ]
+        },
+        {
+          "code": "02",
+          "name": "杂品",
+          "sub": [
+            {
+              "code": "120201",
+              "name": "空柜（箱、台、屏）体",
+              "pattern": "120201XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "120202",
+              "name": "五金（锁/铰链/弹簧等）",
+              "pattern": "120202XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "120203",
+              "name": "端头",
+              "pattern": "120203XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "120204",
+              "name": "焊接材料",
+              "pattern": "120204XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "120205",
+              "name": "安装附件（导轨等）",
+              "pattern": "120205XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "120206",
+              "name": "标准箱体",
+              "pattern": "120206XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "120207",
+              "name": "非标柜体",
+              "pattern": "120207XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "120208",
+              "name": "随机工具",
+              "pattern": "120208XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            }
+          ]
+        },
+        {
+          "code": "03",
+          "name": "抽屉",
+          "sub": [
+            {
+              "code": "120301",
+              "name": "1/2单元抽屉",
+              "pattern": "120301XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "120302",
+              "name": "一单元抽屉",
+              "pattern": "120302XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "120303",
+              "name": "二单元抽屉",
+              "pattern": "120303XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "120304",
+              "name": "三单元抽屉",
+              "pattern": "120304XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "120305",
+              "name": "四单元抽屉",
+              "pattern": "120305XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "120306",
+              "name": "抽屉附件",
+              "pattern": "120306XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            },
+            {
+              "code": "120307",
+              "name": "其它",
+              "pattern": "120307XXXXX",
+              "unit": "",
+              "wh": "配套库"
+            }
+          ]
+        },
+        {
+          "code": "04",
+          "name": "其它",
+          "sub": [
+            {
+              "code": "120401",
+              "name": "系统软件",
+              "pattern": "120401XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "120402",
+              "name": "服务费",
+              "pattern": "120402XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "120403",
+              "name": "计算机",
+              "pattern": "120403XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "120404",
+              "name": "设备",
+              "pattern": "120404XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "120405",
+              "name": "其它",
+              "pattern": "120405XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "120406",
+              "name": "空调",
+              "pattern": "120406XXXXX",
+              "unit": "",
+              "wh": "电线电缆"
+            },
+            {
+              "code": "120407",
+              "name": "安防设备",
+              "pattern": "120407XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            },
+            {
+              "code": "120408",
+              "name": "计算机配件",
+              "pattern": "120408XXXXX",
+              "unit": "",
+              "wh": "元件2库"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

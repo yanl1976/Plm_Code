@@ -1,0 +1,258 @@
+{
+  "meta": {
+    "description": "物料「名称 + 型号规格」书写与录入规则（基本版 v1）。改本文件即可调整，无需改代码。",
+    "basis": "依据本库 22459 条物料实测：61.4% 规格归一化后发生变化；528 个一物多号簇 100% 为纯字面差异，其中 47.7% 仅规格写法不同、52.3% 仅名称不同。",
+    "levels": {
+      "error": "硬错误：阻断保存（明显错误、无法唯一识别的写法）",
+      "warn": "提示：允许保存，但会给出规范写法建议"
+    },
+    "version": "1.0"
+  },
+  "name": {
+    "minLen": 2,
+    "maxLen": 24,
+    "desc": "名称 = 实物名（小类标准词），只写“是什么”；型号、参数、材质、品牌、项目都不写进名称。",
+    "forbidPatterns": [
+      {
+        "re": "[Ss]20\\d{5}",
+        "msg": "名称里不要写项目号（S2026005 这类），项目号应写在项目字段"
+      },
+      {
+        "re": "TDQS\\d+",
+        "msg": "名称里不要写项目号（TDQS 这类）"
+      },
+      {
+        "re": "[Kk]20\\d{2}-\\d",
+        "msg": "名称里不要写产号/制造令号"
+      },
+      {
+        "re": "图号|图纸",
+        "msg": "名称里不要写图号"
+      }
+    ],
+    "forbidChars": [
+      "Φ",
+      "φ",
+      "*",
+      "×",
+      "/",
+      "\\",
+      "+"
+    ],
+    "warnIfContainsDigit": true,
+    "digitMsg": "名称里不要写阿拉伯数字（参数/型号写进规格，如“DI模块16点”应为“PLC模块”+规格）",
+    "modelGuard": {
+      "enabled": true,
+      "desc": "仅提示，不阻断、不自动改：名称建议用标准写法（实物名），型号/参数请写进规格。命中的型号片段只用于给出提示文案，不写入任何字段。",
+      "allowNames": [
+        "IGBT",
+        "MOSFET",
+        "UPS",
+        "UPS电源",
+        "PLC",
+        "PLC模块",
+        "PLC柜",
+        "CPU",
+        "CPU模块",
+        "PCB",
+        "MCC柜",
+        "LED灯",
+        "LED灯管",
+        "LED显示屏",
+        "LED配件",
+        "LCD显示单元"
+      ],
+      "allowAbbr": [
+        "UPS",
+        "PLC",
+        "CPU",
+        "IGBT",
+        "LED",
+        "LCD",
+        "PCB",
+        "FRP",
+        "MCC",
+        "PE",
+        "CF",
+        "AI",
+        "DI",
+        "DO",
+        "BU",
+        "DP",
+        "IT",
+        "MOS",
+        "MOSFET",
+        "SMC",
+        "AC",
+        "DC",
+        "RS",
+        "HMI",
+        "USB",
+        "TCP",
+        "IP",
+        "PID",
+        "CCD",
+        "IO"
+      ],
+      "allowNote": "allowNames = 整名白名单（通用缩写本身就是实物名）；allowAbbr = 通用缩写词（出现在名称任意位置都保留，如 室内LED显示屏 / PE端子 / AI模块）。两字母缩写默认视为通用缩写；三字母以上的英文串默认视为型号（TRVV/SITOP/COMBICON），除非在 allowAbbr 里。",
+      "unitSuffixes": [
+        "KV",
+        "MV",
+        "V",
+        "MA",
+        "A",
+        "KW",
+        "MW",
+        "W",
+        "HZ",
+        "MM",
+        "CM",
+        "KG",
+        "ML",
+        "L",
+        "芯",
+        "路",
+        "位",
+        "平方",
+        "转",
+        "次",
+        "P",
+        "米",
+        "寸",
+        "型",
+        "相",
+        "极"
+      ],
+      "minLetterModelLen": 3,
+      "hintMsg": "名称建议用标准写法「{core}」；型号/参数（{moved}）请写进规格",
+      "levels": "提示级（warning）：允许保存，不阻断、不自动改写",
+      "hintMsgNoCore": "名称里不要写型号/参数（{moved}），请补上实物名（是什么），把型号写进规格"
+    },
+    "warnChars": [
+      "(",
+      ")",
+      "（",
+      "）"
+    ],
+    "warnCharMsg": "名称里不要加括号等附加说明，补充信息写进规格",
+    "stripChars": [
+      " ",
+      "-",
+      "_",
+      "、",
+      ",",
+      "，",
+      ";",
+      "；",
+      "|",
+      "·",
+      ".",
+      "。",
+      ":",
+      "：",
+      "　"
+    ],
+    "stripMsg": "名称里不要用空格/分隔符",
+    "stripFixMsg": "一键去掉这些字符",
+    "trimMsg": "名称首尾不要留空格（保存时也会自动去掉）",
+    "materialWords": [
+      "镀锌",
+      "不锈钢",
+      "黄铜",
+      "紫铜",
+      "碳钢",
+      "铝合金",
+      "尼龙",
+      "聚四氟",
+      "橡胶"
+    ],
+    "materialMsg": "名称里不要写材质/表面处理，应写入规格（如“不锈钢平垫”应为“平垫”+规格含“不锈钢”）",
+    "brandWords": [
+      "西门子",
+      "施耐德",
+      "正泰",
+      "德力西",
+      "欧姆龙",
+      "三菱",
+      "菲尼克斯",
+      "魏德米勒",
+      "ABB",
+      "施耐德电气"
+    ],
+    "brandMsg": "名称里不要写品牌/系列，品牌写品牌字段、系列写型号",
+    "synonymMsg": "建议改用标准名称：{std}（同义词统一，避免同物不同名）",
+    "synonymNote": "同义词字典已独立为 src/config/name-synonyms.json（支持 global 全局 + bySub 小类两级作用域），改该文件即生效，无需重启。"
+  },
+  "spec": {
+    "minLen": 2,
+    "maxLen": 64,
+    "desc": "规格 = 型号 + 关键参数，按固定顺序、固定写法；只写能唯一确定实物的信息，不写项目/供应商/客户/图号。",
+    "halfWidthOnly": true,
+    "halfWidthMsg": "请使用半角字符（全角字母/数字/标点会导致同物不同码）",
+    "requireAlnum": true,
+    "requireAlnumMsg": "规格必须包含字母或数字，不能只写中文或符号",
+    "multiplyChar": "*",
+    "multiplyChars": [
+      "×",
+      "x",
+      "X"
+    ],
+    "multiplyMsg": "乘号统一用 *（如 6*80、3*25+1*16），不要用 × / x",
+    "bracketToHalf": true,
+    "forbidPatterns": [
+      {
+        "re": "[Ss]20\\d{5}",
+        "msg": "规格里不要写项目号（S2026005 这类）"
+      },
+      {
+        "re": "TDQS\\d+",
+        "msg": "规格里不要写项目号（TDQS 这类）"
+      },
+      {
+        "re": "[Kk]20\\d{2}-\\d",
+        "msg": "规格里不要写产号/制造令号"
+      }
+    ],
+    "forbidWords": [
+      "待定",
+      "待确认",
+      "见附件",
+      "同上",
+      "TBD",
+      "TBA",
+      "无",
+      "未知",
+      "?"
+    ],
+    "forbidWordMsg": "规格不能写“{w}”这类占位内容，必须能唯一确定实物",
+    "unitCase": {
+      "kv": "kV",
+      "KV": "kV",
+      "Kv": "kV",
+      "kva": "kVA",
+      "KVA": "kVA",
+      "Kva": "kVA",
+      "kw": "kW",
+      "KW": "kW",
+      "Kw": "kW",
+      "hz": "Hz",
+      "HZ": "Hz",
+      "mhz": "MHz",
+      "MHZ": "MHz",
+      "mm2": "mm²",
+      "MM2": "mm²",
+      "mm²": "mm²",
+      "ohm": "Ω",
+      "OHM": "Ω",
+      "ω": "Ω"
+    },
+    "spaceBeforeUnit": false,
+    "paramOrderHint": "型号 → 额定电压 → 极数 → 额定电流 → 附件/后缀",
+    "requireParamHit": 1,
+    "requireParamMsg": "该小类的关键参数一个都没识别到（{tokens}），请按“参数+数值”补全，否则无法与相似物料区分"
+  },
+  "material": {
+    "nameEqualsSpecMsg": "名称与规格完全相同，名称应写“是什么”，规格写“型号+参数”",
+    "requireUnit": false
+  }
+}

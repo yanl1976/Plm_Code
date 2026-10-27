@@ -1,0 +1,409 @@
+{
+  "meta": {
+    "description": "强制查重 / 一物多号清洗 的灵活规则配置。修改此文件即可调整归一化与查重口径，无需改代码。",
+    "signatureLogic": "同一小类内，signature = normalize(名称) + '|' + normalize(型号规格) + 关键特征 token；signature 相同的不同 FNUMBER 即「疑似一物多号」候选。",
+    "fuzzyLogic": "近重：对名称+规格做 token 集合 Jaccard 相似度，>= fuzzyThreshold 且不同 FNUMBER 计入近重候选。"
+  },
+  "normalize": {
+    "lowercase": true,
+    "fullwidthToHalf": true,
+    "removeSpaces": true,
+    "unifySeparators": [
+      "/",
+      "\\",
+      "*",
+      "×",
+      "x",
+      "X",
+      "－",
+      "—",
+      "，",
+      "、",
+      "；",
+      ";"
+    ],
+    "separatorTo": "/",
+    "stripBracketsContent": false
+  },
+  "defaultAttrs": [
+    "FNAME",
+    "FSPECIFICATION"
+  ],
+  "defaultTokens": [
+    "型号",
+    "直径",
+    "螺纹",
+    "长度",
+    "颜色",
+    "材质"
+  ],
+  "fuzzyThreshold": 0.8,
+  "heuristics": [
+    {
+      "match": [
+        "平垫"
+      ],
+      "attrs": [
+        "FSPECIFICATION"
+      ],
+      "tokens": [
+        "型号",
+        "螺纹",
+        "材质",
+        "表面处理",
+        "标准"
+      ]
+    },
+    {
+      "match": [
+        "调速器"
+      ],
+      "attrs": [
+        "FSPECIFICATION"
+      ],
+      "tokens": [
+        "型号",
+        "功率",
+        "额定电流",
+        "额定电压"
+      ]
+    },
+    {
+      "match": [
+        "断路器"
+      ],
+      "attrs": [
+        "FSPECIFICATION",
+        "F_ZXCV_ZYCS"
+      ],
+      "tokens": [
+        "型号",
+        "极数",
+        "额定电流",
+        "额定电压",
+        "分断能力",
+        "脱扣器",
+        "脱扣曲线",
+        "分断等级"
+      ]
+    },
+    {
+      "match": [
+        "接触器"
+      ],
+      "attrs": [
+        "FSPECIFICATION",
+        "F_ZXCV_ZYCS"
+      ],
+      "tokens": [
+        "型号",
+        "频率",
+        "极数",
+        "额定电流",
+        "线圈电压"
+      ]
+    },
+    {
+      "match": [
+        "继电器"
+      ],
+      "attrs": [
+        "FSPECIFICATION",
+        "F_ZXCV_ZYCS"
+      ],
+      "tokens": [
+        "型号",
+        "频率",
+        "线圈电压",
+        "额定电流",
+        "极数"
+      ]
+    },
+    {
+      "match": [
+        "电阻"
+      ],
+      "attrs": [
+        "FSPECIFICATION",
+        "F_ZXCV_ZYCS"
+      ],
+      "tokens": [
+        "型号",
+        "功率",
+        "阻值",
+        "精度"
+      ]
+    },
+    {
+      "match": [
+        "电容"
+      ],
+      "attrs": [
+        "FSPECIFICATION",
+        "F_ZXCV_ZYCS"
+      ],
+      "tokens": [
+        "型号",
+        "容值",
+        "额定电压",
+        "材质"
+      ]
+    },
+    {
+      "match": [
+        "电感",
+        "电抗"
+      ],
+      "attrs": [
+        "FSPECIFICATION"
+      ],
+      "tokens": [
+        "型号",
+        "频率",
+        "电感量",
+        "额定电流",
+        "额定电压",
+        "电抗率"
+      ]
+    },
+    {
+      "match": [
+        "二极管",
+        "三极管",
+        "电子器件",
+        "晶体管"
+      ],
+      "attrs": [
+        "FSPECIFICATION",
+        "F_ZXCV_JSCS"
+      ],
+      "tokens": [
+        "型号",
+        "额定电压",
+        "额定电流"
+      ]
+    },
+    {
+      "match": [
+        "断路器",
+        "接触器",
+        "继电器",
+        "开关",
+        "刀"
+      ],
+      "attrs": [
+        "FSPECIFICATION",
+        "F_ZXCV_ZYCS"
+      ],
+      "tokens": [
+        "型号",
+        "极数",
+        "额定电流",
+        "额定电压"
+      ]
+    },
+    {
+      "match": [
+        "螺钉",
+        "螺栓",
+        "紧固件",
+        "螺母",
+        "垫圈"
+      ],
+      "attrs": [
+        "FSPECIFICATION"
+      ],
+      "tokens": [
+        "型号",
+        "螺纹",
+        "长度",
+        "材质",
+        "头型",
+        "表面处理",
+        "标准"
+      ]
+    },
+    {
+      "match": [
+        "电缆",
+        "电线",
+        "导线",
+        "线束"
+      ],
+      "attrs": [
+        "FSPECIFICATION",
+        "F_ZXCV_ZYCS"
+      ],
+      "tokens": [
+        "型号",
+        "额定电压",
+        "芯数",
+        "截面",
+        "材质",
+        "颜色"
+      ]
+    },
+    {
+      "match": [
+        "钢板",
+        "板材",
+        "型材",
+        "钢管",
+        "型钢",
+        "母排",
+        "有色金属",
+        "铜排",
+        "铝排"
+      ],
+      "attrs": [
+        "FSPECIFICATION",
+        "F_ZXCV_ZYCS"
+      ],
+      "tokens": [
+        "型号",
+        "材质",
+        "截面",
+        "直径",
+        "尺寸(宽*深*高)"
+      ]
+    },
+    {
+      "match": [
+        "互感器",
+        "变压器",
+        "变送器",
+        "仪器仪表",
+        "表"
+      ],
+      "attrs": [
+        "FSPECIFICATION",
+        "F_ZXCV_JSCS"
+      ],
+      "tokens": [
+        "型号",
+        "频率",
+        "变比",
+        "精度",
+        "额定电压",
+        "结构形式"
+      ]
+    },
+    {
+      "match": [
+        "端子",
+        "连接器",
+        "接插件",
+        "连接器件"
+      ],
+      "attrs": [
+        "FSPECIFICATION"
+      ],
+      "tokens": [
+        "型号",
+        "截面",
+        "位数",
+        "间距",
+        "额定电流",
+        "额定电压",
+        "颜色"
+      ]
+    },
+    {
+      "match": [
+        "信号器件",
+        "指示灯",
+        "按钮"
+      ],
+      "attrs": [
+        "FSPECIFICATION"
+      ],
+      "tokens": [
+        "型号",
+        "频率",
+        "额定电压",
+        "颜色"
+      ]
+    },
+    {
+      "match": [
+        "熔断"
+      ],
+      "attrs": [
+        "FSPECIFICATION"
+      ],
+      "tokens": [
+        "型号",
+        "频率",
+        "额定电压",
+        "额定电流",
+        "结构形式/指示方式"
+      ]
+    },
+    {
+      "match": [
+        "保护",
+        "避雷器"
+      ],
+      "attrs": [
+        "FSPECIFICATION"
+      ],
+      "tokens": [
+        "型号",
+        "频率",
+        "额定电压",
+        "额定电流"
+      ]
+    },
+    {
+      "match": [
+        "柜",
+        "机箱",
+        "结构件"
+      ],
+      "attrs": [
+        "FSPECIFICATION"
+      ],
+      "tokens": [
+        "型号",
+        "尺寸(宽*深*高)"
+      ]
+    },
+    {
+      "match": [
+        "变频",
+        "驱动",
+        "PLC",
+        "程控"
+      ],
+      "attrs": [
+        "FSPECIFICATION",
+        "F_ZXCV_JSCS"
+      ],
+      "tokens": [
+        "型号",
+        "功率",
+        "额定电流",
+        "额定电压"
+      ]
+    },
+    {
+      "match": [
+        "管材",
+        "非金属",
+        "塑料",
+        "橡胶"
+      ],
+      "attrs": [
+        "FSPECIFICATION"
+      ],
+      "tokens": [
+        "型号",
+        "直径",
+        "材质",
+        "颜色",
+        "长度"
+      ]
+    }
+  ],
+  "subOverrides": {}
+}

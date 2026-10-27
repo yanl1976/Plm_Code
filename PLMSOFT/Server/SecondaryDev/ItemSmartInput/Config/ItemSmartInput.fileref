@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<root >
+  <!--
+    物料新增「智能录入助手」脚本注册表。
+    group 决定脚本被加载到哪个前端框架：
+      InforCenter —— 物料新增向导（PSEITEM-CREATE 页面）所在框架，必须注册
+      TSDC       —— 天水电传客制框架，若从 TSDC 入口打开新增页也需要
+    若不希望某一框架生效，删除对应行即可（无需改 JS）。
+  -->
+  <JSFile FileName ="~/SecondaryDev/ItemSmartInput/Config/Js/ItemSmartInput.js" group="InforCenter"/>
+  <JSFile FileName ="~/SecondaryDev/ItemSmartInput/Config/Js/ItemSmartInput.js" group="TSDC"/>
+</root>

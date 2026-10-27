@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  
+  <ExtensionToType Extension="init" TypeName="Hoteam.InforCenter.Service.Interface.Config.Packages" />
+  <ExtensionToType Extension="val" TypeName="Hoteam.InforCenter.Service.Interface.Config.Validations" />
+  <ExtensionToType Extension="vault" TypeName="Hoteam.InforCenter.Service.Interface.Config.Vaults" />
+  <ExtensionToType Extension="plugin" TypeName="Hoteam.InforCenter.Common.Plugin.Plugins" />
+  
+  <ExtensionToType Extension="activex" TypeName="Hoteam.InforCenter.UI.Base.Config.ActiveX" />
+  <ExtensionToType Extension="ctrl" TypeName="Hoteam.InforCenter.UI.Base.Config.ControlTypes" />
+  <ExtensionToType Extension="fileref" TypeName="Hoteam.InforCenter.UI.Base.Config.FileRefs" />
+  <ExtensionToType Extension="image" TypeName="Hoteam.InforCenter.UI.Base.Config.ImageConfigs" />
+  <ExtensionToType Extension="page" TypeName="Hoteam.InforCenter.UI.Base.Config.PageConfigs" />
+  <ExtensionToType Extension="filter" TypeName="Hoteam.InforCenter.UI.Base.Config.ServiceFilters" />
+  <ExtensionToType Extension="template" TypeName="Hoteam.InforCenter.UI.Base.Config.Templates" />
+  <ExtensionToType Extension="navintergartion" TypeName="Hoteam.InforCenter.NavIntegration.WebService.NavIntegrations" />
+  <ExtensionToType Extension="boardflow" TypeName="Hoteam.InforCenter.Common.UI.Config.BoardFlow" />
+  <ExtensionToType Extension="clienttimer" TypeName="Hoteam.InforCenter.Common.UI.Config.ClientTimers" />
+  <ExtensionToType Extension="editlist" TypeName="Hoteam.InforCenter.Common.UI.Config.EditListManagements" />
+  <ExtensionToType Extension="filterlist" TypeName="Hoteam.InforCenter.Common.UI.Config.FilterListManagements" />
+  <ExtensionToType Extension="guide" TypeName="Hoteam.InforCenter.Common.UI.Config.GuideManagements" />
+  <ExtensionToType Extension="ids" TypeName="Hoteam.InforCenter.Common.UI.Config.InfoDataSources" />
+  <ExtensionToType Extension="listquery" TypeName="Hoteam.InforCenter.Common.UI.Config.ListCommonQuerys" />
+  <ExtensionToType Extension="list" TypeName="Hoteam.InforCenter.Common.UI.Config.ListManagements" />
+  <ExtensionToType Extension="mainflat" TypeName="Hoteam.InforCenter.Common.UI.Config.MainFlat" />
+  <ExtensionToType Extension="mainflatflow" TypeName="Hoteam.InforCenter.Common.UI.Config.MainFlatFlow" />
+  <ExtensionToType Extension="menu" TypeName="Hoteam.InforCenter.Common.UI.Config.MenuItems" />
+  <ExtensionToType Extension="menurelation" TypeName="Hoteam.InforCenter.Common.UI.Config.MenuRelation" />
+  <ExtensionToType Extension="nav" TypeName="Hoteam.InforCenter.Common.UI.Config.NavigationItems" />
+  <ExtensionToType Extension="objbrowse" TypeName="Hoteam.InforCenter.Common.UI.Config.ObjectBrowses" />
+  <ExtensionToType Extension="objinspector" TypeName="Hoteam.InforCenter.Common.UI.Config.ObjectInspectors" />
+  <ExtensionToType Extension="link" TypeName="Hoteam.InforCenter.Common.UI.Config.PageLinkItems" />
+  <ExtensionToType Extension="smart" TypeName="Hoteam.InforCenter.Common.UI.Config.SmartManagements" />
+  <ExtensionToType Extension="treequery" TypeName="Hoteam.InforCenter.Common.UI.Config.TreeCommonQuerys" />
+  <ExtensionToType Extension="treelistquery" TypeName="Hoteam.InforCenter.Common.UI.Config.TreeListCommonQuerys" />
+  <ExtensionToType Extension="tree" TypeName="Hoteam.InforCenter.Common.UI.Config.TreeManagements" />
+  <ExtensionToType Extension="treetreelistquery" TypeName="Hoteam.InforCenter.Common.UI.Config.TreeTreeListCommonQuerys" />
+  <ExtensionToType Extension="vtab" TypeName="Hoteam.InforCenter.Common.UI.Config.VerticalTabMangements" />
+  
+
+  <ExtensionToType Extension="service" TypeName="Hoteam.InforCenter.Service.WCFInit.Config.ServiceSettings" />
+  <ExtensionToType Extension="database" TypeName="Hoteam.InforCenter.Persistence.Interface.PersistenceInit" />
+  <ExtensionToType Extension="dbtype" TypeName="Hoteam.InforCenter.Persistence.Interface.PersistenceInit" />
+  <ExtensionToType Extension="dataclear" TypeName="Hoteam.InforCenter.Persistence.Interface.Config.DataClears" />
+  <ExtensionToType Extension="schema" TypeName="Hoteam.InforCenter.Persistence.Interface.PersistenceInit" />
+  <ExtensionToType Extension="schemasql" TypeName="Hoteam.InforCenter.Persistence.Interface.PersistenceInit" />
+  <ExtensionToType Extension="datatype" TypeName="Hoteam.InforCenter.Persistence.Interface.PersistenceInit" />
+  <ExtensionToType Extension="dbdata" TypeName="Hoteam.InforCenter.Persistence.Interface.Config.DBDatas" />
+  <ExtensionToType Extension="cmdsql" TypeName="Hoteam.InforCenter.Persistence.Interface.PersistenceInit" />
+  <ExtensionToType Extension="listview" TypeName="Hoteam.InforCenter.Common.DataService.Config.WebListViews" />
+  <ExtensionToType Extension="treeview" TypeName="Hoteam.InforCenter.Common.DataService.Config.WebTreeViews" />
+  <ExtensionToType Extension="initdbdata" TypeName="Hoteam.InforCenter.Common.ImportInitData.ImportInitDatas" />
+  <ExtensionToType Extension="model" TypeName="Hoteam.InforCenter.Common.ObjectFactory.ObjectFactoryInit" />
+  <ExtensionToType Extension="life" TypeName="Hoteam.InforCenter.Common.ObjectFactory.ObjectFactoryInit" />
+  <ExtensionToType Extension="modelunion" TypeName="Hoteam.InforCenter.Common.ObjectFactory.ObjectFactoryInit" />
+  <ExtensionToType Extension="version" TypeName="Hoteam.InforCenter.Common.ObjectFactory.ObjectFactoryInit" />
+  <ExtensionToType Extension="objectvaluetyperelation" TypeName="Hoteam.InforCenter.Common.ObjectValue.Relation.ObjectValueTypeRelations" />
+  <ExtensionToType Extension="view" TypeName="Hoteam.InforCenter.Common.View.ViewInit" />
+  <ExtensionToType Extension="lifestate" TypeName="Hoteam.InforCenter.Common.ObjectFactory.ObjectFactoryInit" />
+  <ExtensionToType Extension="enum" TypeName="Hoteam.InforCenter.Enumeration.Business.Config.StaticEnumerations" />
+  <ExtensionToType Extension="modelsetting" TypeName="Hoteam.InforCenter.ModelGenerator.Business.Config.ModelSettingInit" />
+  <ExtensionToType Extension="querymachinequery" TypeName="Hoteam.InforCenter.QueryMachine.Config.QueryMachineQuerys" />
+  <ExtensionToType Extension="action" TypeName="Hoteam.InforCenter.Rule.Model.ActionConfig.Actions" />
+  <ExtensionToType Extension="oa" TypeName="Hoteam.InforCenter.Rule.Model.ActionConfig.ObjectActions" />
+  <ExtensionToType Extension="permissiontype" TypeName="Hoteam.InforCenter.Rule.Model.ActionPlugins.ActionRulePermissionTypePlugins" />
+  <ExtensionToType Extension="systensetting" TypeName="Hoteam.InforCenter.SystemSettings.Config.SystemSettings" />
+  <ExtensionToType Extension="pagepluginsetting" TypeName="Hoteam.InforCenter.Workflow.Config.PagePluginSettings" />
+  <ExtensionToType Extension="flowplugin" TypeName="Hoteam.InforCenter.Workflow.Config.WorkflowTemplateInit" />
+  <ExtensionToType Extension="flowtemplatetype" TypeName="Hoteam.InforCenter.Workflow.Config.WorkflowTemplateInit" />
+  <ExtensionToType Extension="flowcondition" TypeName="Hoteam.InforCenter.Workflow.Config.WorkflowTemplateInit" />
+  <ExtensionToType Extension="flowactor" TypeName="Hoteam.InforCenter.Workflow.Config.WorkflowTemplateInit" />
+  <ExtensionToType Extension="companyvault" TypeName="Hoteam.InforCenter.Registered.OrganizationDataService.Config.CompanyVaults" />
+  <ExtensionToType Extension="databasetemplate" TypeName="Hoteam.InforCenter.Registered.OrganizationDataService.Config.DatabaseTemplates" />
+  <ExtensionToType Extension="threeroleauthtype" TypeName="Hoteam.InforCenter.ThreeRoleAuthPlatform.Business.Config.ThreeRoleAuthTypeConfigs" />
+  <ExtensionToType Extension="threeroleloginlimit" TypeName="Hoteam.InforCenter.ThreeRoleAuthPlatform.Business.Config.ThreeRoleLoginLimits" />
+
+</root>

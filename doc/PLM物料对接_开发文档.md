@@ -264,7 +264,7 @@ state.subs: Map<subKey(6位), {
 | `blockOnDuplicate` | `true` | 命中强重复是否二次确认 |
 | `notifyDuplicateOnBlur` | `true` | 失焦是否浮层提示重复 |
 
-**服务端**：`PLM_API_PORT`（3100）、`PLM_API_HOST`（0.0.0.0）；业务规则在 `src/config/{dedup-rules,spec-fields,material-rules,name-synonyms}.json`。
+**服务端**：`PLM_API_PORT`（3100）、`PLM_API_HOST`（0.0.0.0）；治理看板另用 `PORT`（3000）。三者统一在项目根 `.env` 配置（模板 `.env.example`，加载点 `src/env.js`），优先级为 进程环境变量 > `.env` > 代码默认值；业务规则在 `src/config/{dedup-rules,spec-fields,material-rules,name-synonyms}.json`。
 
 ---
 

@@ -6,6 +6,7 @@
  */
 import http from 'http'
 import fs from 'fs'
+import { envPort, envBool, logEnvSource } from './env.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { runExtract } from './extract.js'
@@ -100,7 +101,11 @@ function readConfigJson(name) {
   return data
 }
 
-const PORT = Number(process.env.PORT) || 3000
+const PORT = envPort('PORT', 3000)
+// 监听地址留空 = Node 默认（所有网卡，含 IPv6）；需要只绑 IPv4 时在 .env 设 WEB_HOST=0.0.0.0
+const WEB_HOST = process.env.WEB_HOST || ''
+// 端口被占用时是否自动 +1。默认关闭：端口由 .env 唯一决定，避免 PM2 下端口静默漂移。
+const PORT_AUTO_INCREMENT = envBool('PORT_AUTO_INCREMENT', false)
 
 // ---- 带 mtime 缓存的 JSON 读取 ----
 const cache = new Map()
@@ -1557,16 +1562,34 @@ function watchSnapshot() {
   if (typeof timer.unref === 'function') timer.unref()
 }
 
+let currentPort = PORT
+
 function listen(port) {
-  server.listen(port)
-  server.on('error', (e) => {
-    if (e.code === 'EADDRINUSE') { console.log(`端口 ${port} 被占用，尝试 ${port + 1}`); listen(port + 1) }
-    else throw e
-  })
-  server.on('listening', () => {
-    const addr = server.address()
-    console.log(`物料治理前端已启动: http://localhost:${addr.port}`)
-    watchSnapshot()
-  })
+  currentPort = port
+  if (WEB_HOST) server.listen(port, WEB_HOST)
+  else server.listen(port)
 }
+
+server.on('listening', () => {
+  const addr = server.address()
+  logEnvSource('web')
+  console.log(`物料治理前端已启动: http://localhost:${addr.port}`)
+  if (WEB_HOST) console.log(`  监听地址 ${WEB_HOST}:${addr.port}`)
+  watchSnapshot()
+})
+
+server.on('error', (e) => {
+  if (e && e.code === 'EADDRINUSE') {
+    if (PORT_AUTO_INCREMENT) {
+      console.log(`端口 ${currentPort} 被占用，尝试 ${currentPort + 1}`)
+      return listen(currentPort + 1)
+    }
+    console.error(`[FATAL] 端口 ${currentPort} 已被占用。请在项目根 .env 中修改 PORT 换端口（端口由 .env 唯一决定）。`)
+    console.error(`        如确需沿用旧的「自动 +1」行为，可在 .env 设 PORT_AUTO_INCREMENT=true。`)
+    process.exit(1)
+  }
+  console.error('[FATAL] 服务启动失败：', e && e.message)
+  process.exit(1)
+})
+
 listen(PORT)

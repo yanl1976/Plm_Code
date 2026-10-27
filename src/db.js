@@ -1,18 +1,14 @@
 /**
  * 数据库连接（金蝶 ERP / SQL Server）。
  * 复用既有 kingdee 后端模式：单例连接池、跨网连接池收敛、永不按请求关闭池。
- * .env 位于项目根目录，使用 node --env-file=.env 注入；dotenv 仅兜底。
+ * .env 由 src/env.js 统一加载（项目根目录），本文件不再自己调 dotenv。
  */
 import sql from 'mssql'
-import dotenv from 'dotenv'
-import { fileURLToPath } from 'url'
-import { dirname, resolve } from 'path'
-
-dotenv.config({ path: resolve(dirname(fileURLToPath(import.meta.url)), '../.env') })
+import { env, envInt, envBool } from './env.js'
 
 function requireEnv(name) {
-  const v = process.env[name]
-  if (v === undefined || v === null || v === '') {
+  const v = env(name, '')
+  if (v === '') {
     throw new Error(`[db] 缺少必需环境变量 ${name}，请在 .env 中配置`)
   }
   return v
@@ -20,12 +16,12 @@ function requireEnv(name) {
 
 const dbConfig = {
   server: requireEnv('DB_SERVER'),
-  port: parseInt(requireEnv('DB_PORT'), 10),
+  port: envInt('DB_PORT', 1433),
   database: requireEnv('DB_DATABASE'),
   user: requireEnv('DB_USER'),
   password: requireEnv('DB_PASSWORD'),
   options: {
-    encrypt: process.env.DB_ENCRYPT !== 'false',
+    encrypt: envBool('DB_ENCRYPT', true),
     trustServerCertificate: true,
   },
   pool: {

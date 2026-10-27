@@ -1,12 +1,7 @@
 // LLM 客户端：OpenAI 兼容 chat/completions，支持 cloud(MiniMax) / local(内部Qwen) 双档案。
 // 仅服务端使用；超时不依赖 fetch 默认；返回 { content, usage, finish }。
-import fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
-import dotenv from 'dotenv'
-
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
-dotenv.config({ path: path.join(ROOT, '.env') })
+// .env 由 src/env.js 统一加载（项目根），此处不再单独调 dotenv
+import '../env.js'
 
 export function aiConfig(profile) {
   profile = profile || process.env.AI_DEFAULT_PROFILE || 'cloud'

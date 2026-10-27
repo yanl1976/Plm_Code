@@ -88,12 +88,20 @@ npm run plm
 2026-10-27T08:00:03.100Z [index] 就绪 {"count":23036,"subs":200,"skipped":9}
 ```
 
-可配置环境变量：
+可配置环境变量（**统一放在项目根 `.env`**，模板见 `.env.example`；启动日志会打印实际加载的文件与注入项数）：
 
 | 变量 | 默认 | 说明 |
 |---|---|---|
 | `PLM_API_PORT` | `3100` | 监听端口。改这里要同步改 PLM 侧 `CFG.apiBase` |
 | `PLM_API_HOST` | `0.0.0.0` | 监听地址。必须允许局域网访问，不能是 `127.0.0.1` |
+| `PORT` | `3000` | 治理看板（`npm run server`）监听端口，与 PLM 接口互不影响 |
+| `WEB_HOST` | 空 | 看板绑定地址。留空 = Node 默认（所有网卡）；需只绑 IPv4 时设 `0.0.0.0` |
+| `PORT_AUTO_INCREMENT` | `false` | 看板端口被占用时是否自动 +1。默认关闭，避免端口静默漂移 |
+
+> **配置加载已收敛到 `src/env.js`（全项目唯一 `.env` 加载点）**，优先级：
+> 进程真实环境变量（PM2 / docker / systemd 注入） > `.env` 文件 > 代码默认值。
+> 因此 PM2 下直接 `pm2 start src/plm-server.js` 即可读到 `.env`，**不再需要** `--node-args="--env-file=.env"`。
+> 启动日志首行形如 `[plm-api] 已加载 /opt/Plm_Code/.env（注入 65 项）`，未加载成功会明确提示。
 
 ### 3.3 放通防火墙（关键，最常被漏）
 
@@ -282,7 +290,8 @@ npm run verify:plm
 | 联想出来但点选不回填 | 控件 DOM/接口版本差异 | 看控制台是否提示「未取到 xxx 输入框 DOM」；`SetText` 走的是控件 API，DOM 只用于定位浮层与事件 |
 | 保存时未拦截重复 | `blockOnDuplicate=false`、名称或规格为空、或服务超时 | 检查配置；确认两个字段都有值；看控制台 `[check]` 日志 |
 | 查重结果一直是 0 条 | 索引未加载 / `materials.ndjson` 过期 / 编码前缀不在分类表 | 访问 `/api/plm/health` 看 `count`、`ready`；重新 `npm run extract` 后 `POST /api/plm/reload` |
-| 服务启动报 `EADDRINUSE` | 3100 被占用 | `netstat -ano | findstr :3100` 找到进程；或改 `PLM_API_PORT` 并同步改 `apiBase` |
+| 服务启动报 `EADDRINUSE` | 端口被占用（PLM 接口默认 3100，看板默认 3000） | `ss -lntp \| grep 3100`（Linux）或 `netstat -ano \| findstr :3100`（Windows）找到占用进程；或在 `.env` 改 `PLM_API_PORT` 并同步改 `apiBase` / 改 `PORT` |
+| 改了 `.env` 端口却不生效 | 外部环境变量优先于 `.env` | 看启动首行 `[xxx] 已加载 ...`；若显示「未找到 .env」，检查路径；若进程被 PM2/docker 注入过同名变量，外部值优先，需改注入源 |
 | 浏览器提示「同步 XMLHttpRequest 已废弃」 | `OnOK` 用同步请求以便阻断 | 仅警告，不影响功能；若需消除可改为预先异步缓存结果 |
 
 ---

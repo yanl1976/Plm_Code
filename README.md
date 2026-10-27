@@ -6,7 +6,7 @@
 ## 目录结构
 ```
 Plm_Code/
-  .env                      # ERP 数据库连接（已配置，server=198.168.6.26）
+  .env                      # 统一配置（数据库 + 端口 + AI），模板见 .env.example，不入库
   doc/编码分类规则以及编码属性说明.xlsx   # 编码分类规则（生产物资-2023）
   data/                     # 产物（gitignore）：materials.* / dedup-* / mapping.json / freeze.json / unified-materials.json
   src/
@@ -32,6 +32,36 @@ npm run dedup                   # 强制查重，输出候选簇
 # 或带近重：node src/cli.js dedup --fuzzy
 npm run report                  # 查看查重报告摘要
 ```
+
+## 配置（统一由 .env 管理）
+
+所有可变配置集中在项目根 `.env`，模板见 `.env.example`（`cp .env.example .env` 后填写）。
+**端口不再写死在代码或启动命令里**，两个服务都从 `.env` 读取：
+
+| 变量 | 默认 | 作用 |
+|---|---|---|
+| `PORT` | `3000` | 治理看板（`src/server.js`）监听端口 |
+| `WEB_HOST` | 空（Node 默认，监听所有网卡） | 看板绑定地址；需只绑 IPv4 时设 `0.0.0.0` |
+| `PORT_AUTO_INCREMENT` | `false` | 端口被占用时是否自动 +1；默认关闭，避免 PM2 下端口静默漂移 |
+| `PLM_API_PORT` | `3100` | PLM 接口（`src/plm-server.js`）监听端口，改动需同步 PLM 侧 `CFG.apiBase` |
+| `PLM_API_HOST` | `0.0.0.0` | PLM 接口绑定地址（`127.0.0.1` 则仅本机可访问） |
+| `DB_SERVER` `DB_PORT` `DB_DATABASE` `DB_USER` `DB_PASSWORD` `DB_ENCRYPT` | — | 金蝶 ERP 数据库连接（缺任一必填项会明确报错） |
+
+加载逻辑集中在 `src/env.js` —— **全项目唯一的 `.env` 加载点**，任何入口 `import` 它即可拿到完整配置。
+优先级：
+
+```
+进程真实环境变量（PM2 / docker / systemd 注入） > .env 文件 > 代码默认值
+```
+
+因此生产既可整体用 `.env`，也可在 PM2 的 `env` 段或容器 `-e` 覆盖单项。启动日志会打印配置来源：
+
+```
+[plm-api] 已加载 /opt/Plm_Code/.env（注入 65 项）
+[web] 已加载 /opt/Plm_Code/.env（注入 65 项）
+```
+
+端口被占用时默认**直接退出并提示改 `.env`**，不再静默 +1；确需旧行为可设 `PORT_AUTO_INCREMENT=true`。
 
 ## 物料提取范围（编码前缀过滤）
 提取范围由 `src/config/settings.json` 的 `materialPrefix` 控制，**默认仅提取 `10`/`11`/`12` 开头的生产物资物料**（排除 20/80 成品/半成品及未收录前缀）：
@@ -77,7 +107,7 @@ npm run report                  # 查看查重报告摘要
 ## Web 可视化前端
 零额外依赖（纯 Node 内置 http），可视化全流程与结果，支持人工复核与在线归并：
 ```bash
-npm run server                  # 默认 http://localhost:3000（端口被占用自动+1）
+npm run server                  # 端口取 .env 的 PORT（默认 3000），被占用则报错退出
 ```
 打开后包含四个视图：
 1. **概览**：全流程阶段状态（提取→规格结构化/分类→强制查重→存量清洗）+ 关键指标卡 + 关键发现。

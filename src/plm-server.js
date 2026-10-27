@@ -13,6 +13,7 @@
  *   3) 同时支持 application/json 与 x-www-form-urlencoded（后者不触发预检，兼容老浏览器）
  *
  * 启动：node src/plm-server.js
+ * 配置：统一由项目根 .env 提供（经 src/env.js 加载），真实环境变量可覆盖
  *   PLM_API_PORT  监听端口，默认 3100
  *   PLM_API_HOST  监听地址，默认 0.0.0.0
  */
@@ -21,9 +22,10 @@ import os from 'os'
 import { loadIndex, indexStatus, queryDuplicates, suggestNames, suggestSpecs, categoryOf, tokensOf } from './plm-index.js'
 import { checkMaterial, suggestSpec } from './material-rules.js'
 import { extractParams } from './struct-spec.js'
+import { env, envPort, logEnvSource } from './env.js'
 
-const PORT = Number(process.env.PLM_API_PORT) || 3100
-const HOST = process.env.PLM_API_HOST || '0.0.0.0'
+const PORT = envPort('PLM_API_PORT', 3100)
+const HOST = env('PLM_API_HOST', '0.0.0.0')
 const VERSION = '1.1.0'
 
 /**
@@ -292,7 +294,8 @@ const server = http.createServer(async (req, res) => {
 
 server.on('error', (e) => {
   if (e && e.code === 'EADDRINUSE') {
-    log(`[FATAL] 端口 ${PORT} 已被占用。请设置环境变量 PLM_API_PORT 换端口，并同步修改 PLM 侧 ItemSmartInput.js 的 CFG.apiBase`)
+    log(`[FATAL] 端口 ${PORT} 已被占用。请在项目根 .env 中修改 PLM_API_PORT 换端口，`)
+    log(`        并同步修改 PLM 侧 ItemSmartInput.js 的 CFG.apiBase`)
   } else {
     log('[FATAL] 服务启动失败：', e && e.message)
   }
@@ -300,6 +303,7 @@ server.on('error', (e) => {
 })
 
 server.listen(PORT, HOST, () => {
+  logEnvSource('plm-api')
   log(`PLM 物料录入助手 已启动（监听 ${HOST}:${PORT}）`)
   log(`  健康检查  GET  /api/plm/health`)
   log(`  联想      POST /api/plm/suggest`)

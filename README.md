@@ -63,6 +63,29 @@ npm run report                  # 查看查重报告摘要
 
 端口被占用时默认**直接退出并提示改 `.env`**，不再静默 +1；确需旧行为可设 `PORT_AUTO_INCREMENT=true`。
 
+## 生产部署（PM2）
+
+两个服务由 `ecosystem.config.cjs` 统一托管，端口全部来自 `.env`：
+
+```bash
+npm install
+npm run extract                  # 首次必须：生成 data/materials.ndjson
+pm2 start ecosystem.config.cjs   # 拉起 plm-api + plm-web
+pm2 save                         # 固化进程列表
+pm2 startup                      # 按输出的 sudo 命令执行一次，开机自启
+
+pm2 logs plm-api --lines 50      # PLM 接口（PLM_API_PORT，当前 3100）
+pm2 logs plm-web --lines 50      # 治理看板（PORT，当前 3130）
+pm2 restart plm-api plm-web      # 改完 .env 后重启生效
+pm2 delete plm-api plm-web       # 停掉本项目两个，不影响同机其它应用
+```
+
+三条纪律：
+
+- **不在 pm2 命令里写端口**，否则与 `.env` 形成两套配置；改端口只改 `.env` 再 restart。
+- **不用 cluster 多实例**：两个服务各自持有内存索引与定时器，多实例会重复加载 `materials.ndjson`。
+- 曾手工 `npm run server` 的要先停掉，否则端口冲突会让 `plm-web` FATAL 退出并反复重启。
+
 ## 物料提取范围（编码前缀过滤）
 提取范围由 `src/config/settings.json` 的 `materialPrefix` 控制，**默认仅提取 `10`/`11`/`12` 开头的生产物资物料**（排除 20/80 成品/半成品及未收录前缀）：
 - `include`（白名单）：仅提取这些前缀开头的物料；空数组 = 提取全部。

@@ -130,15 +130,46 @@ Invoke-RestMethod http://127.0.0.1:3100/api/plm/check -Method Post -Body @{name=
 
 ### 3.5 常驻运行（生产建议）
 
-```powershell
-# 方式一：pm2（若已安装）
-cd E:\tedri_project\dev\Plm_Code
-pm2 start src/plm-server.js --name plm-material-helper
-pm2 save
+项目自带 `ecosystem.config.cjs`，用 PM2 一条命令托管**两个服务**。端口全部由 `.env` 决定，**不在 pm2 命令里写端口**。
 
-# 方式二：计划任务，登录时自动启动
-schtasks /create /tn "PLM-Material-Helper" /tr "node E:\tedri_project\dev\Plm_Code\src\plm-server.js" /sc onlogon /rl highest
+```bash
+cd <项目目录>          # 例：/opt/Plm_Code
+
+npm install            # 首次
+npm run extract        # 首次必须：生成 data/materials.ndjson，否则两个服务启动即报「加载失败」
+
+pm2 start ecosystem.config.cjs
+pm2 list               # 应为 plm-api / plm-web 两个 online
+pm2 save               # 固化进程列表
+pm2 startup            # 按它输出的 sudo 命令执行一次，实现开机自启
+
+# 常用运维
+pm2 logs plm-api --lines 50
+pm2 logs plm-web --lines 50
+pm2 restart plm-api plm-web
+pm2 delete plm-api plm-web   # 只删本项目两个，不影响同机其它 PM2 应用
 ```
+
+端口对照（值取自 `.env`，改端口只改 `.env` 再 restart）：
+
+| 进程 | 入口 | 读取变量 | 当前值 |
+|---|---|---|---|
+| `plm-api` | `src/plm-server.js` | `PLM_API_PORT` | `3100` |
+| `plm-web` | `src/server.js` | `PORT` | `3130` |
+
+验证：
+
+```bash
+curl -s http://127.0.0.1:3100/api/plm/health    # ready:true, count>0
+curl -sI http://127.0.0.1:3130/                 # HTTP 200
+```
+
+注意事项：
+
+- **不要在 pm2 命令里再加端口环境变量**（如 `PORT=3000 pm2 start ...`），否则与 `.env` 形成两套配置，排查困难；临时改端口请改 `.env` 后 restart。
+- 若之前手工 `npm run server` 起过实例，先停掉再 `pm2 start`，否则 `plm-web` 会因端口占用 FATAL 退出并反复重启（`pm2 logs plm-web` 可见）。
+- 这两个服务不能配 `cluster` 多实例：各自持有内存索引与定时器，多实例会重复加载 `materials.ndjson`、重复跑快照检查。
+- Windows 下等价操作：在项目目录执行 `pm2 start ecosystem.config.cjs`；开机自启可用 `pm2-installer` 或计划任务 `schtasks /create /tn "PLM-Material" /tr "pm2 resurrect" /sc onlogon`。
 
 ---
 

@@ -29,9 +29,22 @@ const HOST = env('PLM_API_HOST', '0.0.0.0')
 const VERSION = '1.1.0'
 
 /**
+ * 内网地址判定与优先级。
+ * 本环境除标准私有网段外，还有一个自定义内网段 198.168.0.0/16（ERP 所在网段），
+ * 必须一并视为「内网」；否则会被当成外网排在后面，导致推荐地址选错。
+ * 优先级：192.168 > 198.168 > 10 > 172.16/12 > 其它（如 11.x 宽带连接）
+ */
+const INTRANET_SCORE = (ip) => {
+  if (/^192\.168\./.test(ip)) return 4
+  if (/^198\.168\./.test(ip)) return 3
+  if (/^10\./.test(ip)) return 2
+  if (/^172\.(1[6-9]|2\d|3[01])\./.test(ip)) return 1
+  return 0
+}
+
+/**
  * 列出本机可用于局域网访问的 IPv4 地址。
- * 目的：启动时把「能给别人用的地址」直接打出来，避免只会在本机用 127.0.0.1。
- * 过滤：回环、IPv6、APIPA(169.254)；私有网段排前面。
+ * 目的：启动时给出「别人能填进 CFG.apiBase 的地址」。
  */
 function listLocalIPv4() {
   const out = []
@@ -43,18 +56,26 @@ function listLocalIPv4() {
       const isV4 = a.family === 'IPv4' || a.family === 4
       if (!isV4) continue
       if (/^169\.254\./.test(a.address)) continue
-      out.push({
-        name,
-        address: a.address,
-        isPrivate: /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(a.address)
-      })
+      out.push({ name, address: a.address, score: INTRANET_SCORE(a.address) })
     }
   }
-  out.sort((x, y) => Number(y.isPrivate) - Number(x.isPrivate))
   return out
 }
 
+/**
+ * 对外公布地址：
+ *   1) .env 里显式指定 PLM_LAN_IP 时只用它（生产机推荐做法，避免多网卡歧义）
+ *   2) 否则从本机网卡里挑一个内网优先级最高的
+ * 只对外公布【一个】地址：多网卡全列出来（如 11.x 宽带连接、198.168.x）只会让人不知道填哪个。
+ */
+const LAN_IP = env('PLM_LAN_IP', '')
 const LOCAL_ADDRS = listLocalIPv4()
+const CANDIDATES = LAN_IP
+  ? [{ name: 'PLM_LAN_IP', address: LAN_IP, score: 9 }]
+  : LOCAL_ADDRS.slice().sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
+const PRIMARY_ADDR = CANDIDATES[0] || null
+const OTHER_COUNT = CANDIDATES.length > 1 ? CANDIDATES.length - 1 : 0
+
 /** 仅当监听 0.0.0.0 / :: 时对局域网开放 */
 const OPEN_TO_LAN = HOST === '0.0.0.0' || HOST === '::' || HOST === ''
 
@@ -259,10 +280,11 @@ const server = http.createServer(async (req, res) => {
           host: HOST,
           port: PORT,
           lanOpen: OPEN_TO_LAN,
-          // 供 PLM 侧排查：这些地址才是其他电脑能填进 CFG.apiBase 的
+          // 推荐的 CFG.apiBase：只给一个地址，避免多网卡时不知道该填哪个
+          apiBase: OPEN_TO_LAN && PRIMARY_ADDR ? 'http://' + PRIMARY_ADDR.address + ':' + PORT : '',
           urls: [
             'http://127.0.0.1:' + PORT,
-            ...(OPEN_TO_LAN ? LOCAL_ADDRS.map((a) => 'http://' + a.address + ':' + PORT) : [])
+            ...(OPEN_TO_LAN && PRIMARY_ADDR ? ['http://' + PRIMARY_ADDR.address + ':' + PORT] : [])
           ]
         }
       })
@@ -309,26 +331,24 @@ server.listen(PORT, HOST, () => {
   log(`  联想      POST /api/plm/suggest`)
   log(`  查重校验  POST /api/plm/check`)
   log('')
-  log(`  本机可用   http://127.0.0.1:${PORT}`)
-  log(`             http://localhost:${PORT}`)
+  log(`  本机      http://127.0.0.1:${PORT}`)
 
   if (!OPEN_TO_LAN) {
     log(`  [!] 当前 PLM_API_HOST=${HOST}，只有本机可访问。`)
     log(`      要让其他电脑访问：设 PLM_API_HOST=0.0.0.0 后重启服务`)
-  } else if (!LOCAL_ADDRS.length) {
+  } else if (!PRIMARY_ADDR) {
     log('  [!] 未检测到局域网 IPv4 地址（可能未联网或仅有虚拟网卡），其他电脑暂时无法访问。')
   } else {
-    for (const a of LOCAL_ADDRS) {
-      log(`  局域网可用 http://${a.address}:${PORT}   网卡: ${a.name}${a.isPrivate ? '' : '（非私有网段）'}`)
+    log(`  局域网    http://${PRIMARY_ADDR.address}:${PORT}   ← CFG.apiBase 填这个`)
+    if (OTHER_COUNT > 0) {
+      log(`            （另有 ${OTHER_COUNT} 个网卡地址未展示，如需指定：在 .env 设 PLM_LAN_IP=<地址>）`)
     }
     log('')
-    log(`  → PLM 侧 ItemSmartInput.js 的 CFG.apiBase 请填上面某个「局域网可用」地址，`)
-    log(`    不要填 127.0.0.1（那会指向用户自己的电脑）。`)
+    log(`  不要填 127.0.0.1 —— 那会指向 PLM 用户自己的电脑。`)
   }
 
   log('')
-  log(`  跨机访问不通时，先放通防火墙（管理员 PowerShell）：`)
-  log(`    netsh advfirewall firewall add rule name="PLM Material Helper ${PORT}" dir=in action=allow protocol=TCP localport=${PORT}`)
+  log(`  跨机访问不通时，先确认防火墙已放通 TCP ${PORT}（Linux: sudo ufw allow ${PORT}/tcp）`)
   log('')
 
   loadIndex()

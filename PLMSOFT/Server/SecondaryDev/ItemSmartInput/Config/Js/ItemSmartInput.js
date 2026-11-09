@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.27
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.28
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -1184,8 +1184,11 @@
     body.appendChild(nameIn);
 
     // 名称的问题只出现在名称框下面
-    var nameTip = dlgEl('div', 'margin:4px 0 10px;min-height:16px;');
+    var nameTip = dlgEl('div', 'margin:4px 0 6px;min-height:16px;');
     body.appendChild(nameTip);
+    // 名称联想（同 /api/plm/suggest field=name，与页面输入框同源）
+    var nameSugBox = dlgEl('div', 'margin:0 0 8px;');
+    body.appendChild(nameSugBox);
 
     body.appendChild(dlgEl('div', 'color:#666;margin-bottom:4px;', '规格型号'));
     var specIn = dlgEl('input', 'width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #cfd6de;'
@@ -1197,6 +1200,9 @@
     // 规格的问题只出现在规格框下面
     var specTip = dlgEl('div', 'margin-top:4px;min-height:16px;');
     body.appendChild(specTip);
+    // 规范写法 / 参数提取 / 建议写清
+    var specMeta = dlgEl('div', 'margin-top:2px;');
+    body.appendChild(specMeta);
 
     var invBox = dlgEl('div', 'margin-top:10px;');
     body.appendChild(invBox);
@@ -1252,29 +1258,128 @@
             + escHtml(dup[i].name || '') + ' ' + escHtml(dup[i].spec || '') + '</div>';
         }
       }
+      // 名称结构化建议：标准叫法 / 建议改为
+      if (r && r.nameSynonym && r.nameSynonym.exact && r.nameSynonym.std) {
+        nHtml += '<div style="color:#2e7d32">标准叫法：' + escHtml(r.nameSynonym.std) + '</div>';
+      }
+      if (r && r.nameFormat && r.nameFormat.final && r.nameFormat.final !== nameIn.value) {
+        nHtml += '<div style="color:#b8860b">建议改为：<a href="javascript:void(0)" class="plm-smart-apply-name"'
+          + ' style="color:#16558c;text-decoration:underline">' + escHtml(r.nameFormat.final) + '</a></div>';
+      }
+      // 规格结构化建议：规范写法
+      if (r && r.specFormat && r.specFormat.fixed && r.specFormat.fixed !== specIn.value) {
+        sHtml += '<div style="color:#b8860b">建议改为：<a href="javascript:void(0)" class="plm-smart-apply-spec"'
+          + ' style="color:#16558c;text-decoration:underline">' + escHtml(r.specFormat.fixed) + '</a></div>';
+      }
+
       nameTip.innerHTML = nHtml;
       specTip.innerHTML = sHtml;
+      bindApply(nameTip, '.plm-smart-apply-name', nameIn, r && r.nameFormat && r.nameFormat.final);
+      bindApply(specTip, '.plm-smart-apply-spec', specIn, r && r.specFormat && r.specFormat.fixed);
       // 有 error → 禁止回填，只能改或取消
       setSaveEnabled(errors.length === 0);
     }
 
-    function loadSimilar(sp) {
-      simBox.innerHTML = '';
-      if (!sp) return;
-      apiAsync('/api/plm/suggest', { field: 'spec', value: sp, sub: currentSub() }, function (r) {
+    /** 把「建议改为」做成可点击 */
+    function bindApply(box, sel, input, val) {
+      if (!val || !box || !box.querySelector) return;
+      var a = box.querySelector(sel);
+      if (a) a.onclick = function () { input.value = val; checkNow(); };
+    }
+
+    /** 名称联想：与页面输入框同源（/api/plm/suggest field=name） */
+    function loadNameSuggest(nm) {
+      nameSugBox.innerHTML = '';
+      if (!nm) return;
+      apiAsync('/api/plm/suggest', { field: 'name', value: nm, sub: currentSub() }, function (r) {
         if (!dlg || !r || !r.suggestions || !r.suggestions.length) return;
-        simBox.appendChild(dlgEl('div', 'color:#666;margin-bottom:4px;', '类似型号（点击填入）'));
+        nameSugBox.appendChild(dlgEl('div', 'color:#888;font-size:12px;margin-bottom:2px;', '名称建议（点击填入）'));
         var wrap = dlgEl('div', '');
-        var list = r.suggestions.slice(0, 8);
+        var list = r.suggestions.slice(0, 6);
         for (var i = 0; i < list.length; i++) {
           (function (s) {
             var chip = dlgEl('span', 'display:inline-block;margin:2px 6px 2px 0;padding:2px 8px;'
-              + 'background:#f2f6fb;border:1px solid #d8e4f0;border-radius:3px;cursor:pointer;', s.value);
-            chip.onclick = function () { specIn.value = s.value; checkNow(); };
+              + 'background:#f2f6fb;border:1px solid #d8e4f0;border-radius:3px;cursor:pointer;font-size:12px;', s.value);
+            chip.onclick = function () { nameIn.value = s.value; checkNow(); };
             wrap.appendChild(chip);
           })(list[i]);
         }
-        simBox.appendChild(wrap);
+        nameSugBox.appendChild(wrap);
+      });
+    }
+
+    /** 规格元信息：规范写法 / 建议写清的参数（/api/plm/suggest field=spec） */
+    function loadSpecMeta(sp) {
+      specMeta.innerHTML = '';
+      if (!sp) return;
+      apiAsync('/api/plm/suggest', { field: 'spec', value: sp, sub: currentSub() }, function (r) {
+        if (!dlg || !r) return;
+        var html = '';
+        if (r.normalized && r.normalized !== sp) {
+          html += '<div style="color:#b8860b;font-size:12px">规范写法：<a href="javascript:void(0)"'
+            + ' class="plm-smart-apply-norm" style="color:#16558c;text-decoration:underline">'
+            + escHtml(r.normalized) + '</a></div>';
+        }
+        if (r.tokens && r.tokens.length) {
+          html += '<div style="color:#888;font-size:12px">该小类建议写清：'
+            + escHtml(r.tokens.slice(0, 8).join(' / ')) + '</div>';
+        }
+        if (!html) return;
+        specMeta.innerHTML = html;
+        bindApply(specMeta, '.plm-smart-apply-norm', specIn, r.normalized);
+      });
+    }
+
+    /**
+     * 类似型号：优先用看板的 similar-models（服务端已按接近度排序），
+     * 未配置 inventoryBase 时退回 3100 的 suggest 频率序。
+     */
+    function loadSimilar(sp) {
+      simBox.innerHTML = '';
+      if (!sp) return;
+      var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
+
+      if (!base) {
+        apiAsync('/api/plm/suggest', { field: 'spec', value: sp, sub: currentSub() }, function (r) {
+          if (!dlg || !r || !r.suggestions || !r.suggestions.length) return;
+          simBox.appendChild(dlgEl('div', 'color:#666;margin-bottom:4px;', '类似型号（点击填入）'));
+          var wrap = dlgEl('div', '');
+          var list = r.suggestions.slice(0, 8);
+          for (var i = 0; i < list.length; i++) {
+            (function (s) {
+              var chip = dlgEl('span', 'display:inline-block;margin:2px 6px 2px 0;padding:2px 8px;'
+                + 'background:#f2f6fb;border:1px solid #d8e4f0;border-radius:3px;cursor:pointer;font-size:12px;', s.value);
+              chip.onclick = function () { specIn.value = s.value; checkNow(); };
+              wrap.appendChild(chip);
+            })(list[i]);
+          }
+          simBox.appendChild(wrap);
+        });
+        return;
+      }
+
+      var url = base + '/api/new-material/similar-models?sub=' + encodeURIComponent(currentSub())
+        + '&spec=' + encodeURIComponent(sp) + '&code=' + encodeURIComponent(readEcode());
+      apiAbsolute(url, function (r) {
+        if (!dlg || !r || !r.items || !r.items.length) return;
+        simBox.appendChild(dlgEl('div', 'color:#666;margin-bottom:4px;',
+          '类似型号（按接近程度排序，点击填入）'));
+        var box = dlgEl('div', 'border:1px solid #e3e8ee;border-radius:4px;overflow:hidden;');
+        var list = r.items.slice(0, 8);
+        for (var i = 0; i < list.length; i++) {
+          (function (it) {
+            var row = dlgEl('div', 'padding:4px 8px;border-bottom:1px solid #f0f2f5;'
+              + 'cursor:pointer;font-size:12px;white-space:nowrap;overflow:hidden;');
+            var pct = (it.similarity != null) ? Math.round(it.similarity * 100) + '%' : '';
+            row.innerHTML = '<span style="color:#888;display:inline-block;width:104px">'
+              + escHtml(it.fnumber || '') + '</span>'
+              + '<span style="display:inline-block;width:250px">' + escHtml(it.spec || '') + '</span>'
+              + '<span style="color:#aaa">' + pct + '</span>';
+            row.onclick = function () { specIn.value = it.spec; checkNow(); };
+            box.appendChild(row);
+          })(list[i]);
+        }
+        simBox.appendChild(box);
       });
     }
 
@@ -1310,6 +1415,7 @@
       var sp = specIn.value;
       if (!nm && !sp) {
         nameTip.innerHTML = ''; specTip.innerHTML = ''; simBox.innerHTML = ''; invBox.innerHTML = '';
+        nameSugBox.innerHTML = ''; specMeta.innerHTML = '';
         errors = []; setSaveEnabled(true); return;
       }
       specTip.innerHTML = '<div style="color:#999">校验中…</div>';
@@ -1322,6 +1428,8 @@
         }
         renderInfo(r);
         renderTips(r);
+        loadNameSuggest(nm);
+        loadSpecMeta(sp);
         loadSimilar(sp);
         loadInventory(sp);
       });
@@ -1373,8 +1481,7 @@
       log('弹窗回填完成：' + (applied.join('、') || '无'));
     };
 
-    mask.onclick = function (ev) { if (ev && ev.target === mask) closeEditor(); };
-
+    // 按要求：只有右上角 ×（和「取消」）能关闭，点遮罩不关闭
     mask.appendChild(panel);
     panel.appendChild(head);
     panel.appendChild(body);
@@ -1915,7 +2022,7 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.27（api=' + apiUrl('')
+  log('脚本已加载 v1.28（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；外部配置=' + (EXT_KEYS.length ? EXT_KEYS.join('/') : '未使用')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')

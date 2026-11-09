@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.7
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.12
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -1152,6 +1152,109 @@
   var domWatchTimer = null;
   var domLastTry = 0;
   var domWarned = false;
+  var lastInputSig = '';
+
+  /** 当前可见的输入框（弹窗打开时才有意义） */
+  function visibleInputs() {
+    var out = [];
+    try {
+      var all = document.querySelectorAll('input,textarea');
+      for (var i = 0; i < all.length; i++) {
+        var el = all[i];
+        var r = null;
+        try { r = el.getBoundingClientRect(); } catch (e) { r = null; }
+        if (!r || r.width <= 0 || r.height <= 0) continue;
+        out.push(el);
+      }
+    } catch (e) { }
+    return out;
+  }
+
+  function textOf(el) {
+    try { return String(el.textContent || '').replace(/\s+/g, ''); } catch (e) { return ''; }
+  }
+
+  /** 向上最多 4 层找最近的标签文字（名称/规格型号/编号/类型…） */
+  function nearLabel(el) {
+    var p = el;
+    for (var i = 0; i < 4 && p; i++) {
+      p = p.parentNode;
+      if (!p) break;
+      var t = textOf(p);
+      if (t && t.length <= 24) return t;
+    }
+    return '';
+  }
+
+  /** 标签匹配：必须「相等」或以目标「开头」，避免首页「所有类型」命中「类型」 */
+  function labelHit(lb, name) {
+    var t = String(lb || '').replace(/[*＊\s:：]/g, '');
+    if (!t) return false;
+    if (t === name) return true;
+    return t.indexOf(name) === 0;
+  }
+
+  /**
+   * 按标签文字找输入框。
+   * 不能「从输入框向上找文字」——爬到整行/整块表单后文字会变成
+   * 「名称*规格型号/图号*…」，只有第一个字段能命中。
+   * 正确做法：先锁定标签元素（自身文本即标签），再取文档顺序中紧跟其后的可见输入框。
+   */
+  function findInputByLabel(names) {
+    var all = visibleInputs();
+    // 只认带 id 的输入框：弹窗字段是 id2255_TextBox 这类自动 id，
+    // 首页/搜索框那些无 id 的输入框正是误命中的来源。
+    var inputs = [];
+    for (var q = 0; q < all.length; q++) if (all[q].id) inputs.push(all[q]);
+    if (!inputs.length) return null;
+    var nodes = null;
+    try { nodes = document.querySelectorAll('label,span,div,td,th'); } catch (e) { nodes = null; }
+    if (!nodes) return null;
+
+    for (var i = 0; i < nodes.length; i++) {
+      var el = nodes[i];
+      if (el.children && el.children.length > 2) continue;     // 容器节点跳过
+      var own = '';
+      try { own = String(el.textContent || '').replace(/[*＊\s:：]/g, ''); } catch (e) { }
+      if (!own || own.length > 12) continue;
+
+      var hit = false;
+      for (var j = 0; j < names.length && !hit; j++) hit = labelHit(own, names[j]);
+      if (!hit) continue;
+
+      // 文档顺序中紧跟在标签后面的第一个可见输入框
+      for (var m = 0; m < inputs.length; m++) {
+        var pos = 0;
+        try { pos = el.compareDocumentPosition(inputs[m]); } catch (e) { pos = 0; }
+        if (pos & 4) return inputs[m];                          // 4 = DOCUMENT_POSITION_FOLLOWING
+      }
+      // 兜底：向上 3 层，在同容器里找
+      var p = el;
+      for (var k = 0; k < 3 && p; k++) {
+        p = p.parentNode;
+        if (!p || !p.querySelector) continue;
+        var inp = p.querySelector('input,textarea');
+        if (inp && inp.id && inputVisible(inp)) return inp;
+      }
+    }
+    return null;
+  }
+
+  /** 打一份可见输入框清单，用于现场定位真实 id（只需看一眼控制台） */
+  function dumpInputs(list) {
+    var lines = [];
+    for (var i = 0; i < list.length && i < 30; i++) {
+      var el = list[i];
+      lines.push('  [' + i + '] id=' + (el.id || '(空)')
+        + ' label=' + (nearLabel(el) || '(空)')
+        + ' ph=' + (el.placeholder || '')
+        + ' type=' + (el.type || ''));
+    }
+    var frames = 0;
+    try { frames = document.querySelectorAll('iframe').length; } catch (e) { }
+    log('可见输入框 ' + list.length + ' 个（未命中 *_Value，供定位；iframe=' + frames + '）：\n'
+      + lines.join('\n'));
+  }
 
   function findInput(baseId) {
     var el = null;
@@ -1195,17 +1298,30 @@
   }
 
   function takeOverByDom() {
-    var specEl = findInput('GGXH_Value');
-    var ecodeEl = findInput('ECODE_Value');
-    // 两个都在才认为是新增弹窗（编辑页通常没有 ECODE 输入框）
-    if (!specEl || !ecodeEl || !inputVisible(specEl)) return false;
+    // 优先按稳定 id（*_Value）；本平台实际渲染的是 id2044_TextBox 这类自动 id，
+    // 找不到就按标签文字（规格型号 / 名称 / 编号 / 类型）定位。
+    var hasId = function (el) { return !!(el && el.id); };
+    var specEl = findInput('GGXH_Value') || findInputByLabel(['规格型号', '图号']);
+    if (!hasId(specEl) || !inputVisible(specEl)) return false;
+
+    var enameEl = findInput('ENAME_Value') || findInputByLabel(['名称']);
+    var ecodeEl = findInput('ECODE_Value') || findInputByLabel(['编号']);
+    var typeEl = findInput('ITEMTYPE_Value') || findInputByLabel(['类型']);
+    // 只认带 id 的控件，且至少要有编号或类型，避免在首页/查询页误挂
+    if (!hasId(enameEl)) enameEl = null;
+    if (!hasId(ecodeEl)) ecodeEl = null;
+    if (!hasId(typeEl)) typeEl = null;
+    if (!ecodeEl && !typeEl) return false;
 
     if (!isValidCtl(state.ggxh)) state.ggxh = domCtl('GGXH_Value', specEl);
-    if (!isValidCtl(state.ename)) state.ename = domCtl('ENAME_Value', findInput('ENAME_Value'));
-    if (!isValidCtl(state.ecode)) state.ecode = domCtl('ECODE_Value', ecodeEl);
-    if (!isValidCtl(state.itemtype)) state.itemtype = domCtl('ITEMTYPE_Value', findInput('ITEMTYPE_Value'));
+    if (!isValidCtl(state.ename)) state.ename = enameEl ? domCtl('ENAME_Value', enameEl) : null;
+    if (!isValidCtl(state.ecode)) state.ecode = ecodeEl ? domCtl('ECODE_Value', ecodeEl) : null;
+    if (!isValidCtl(state.itemtype)) state.itemtype = typeEl ? domCtl('ITEMTYPE_Value', typeEl) : null;
 
-    log('检测到新增弹窗（DOM 兜底接管）：名称/规格/编号/类型');
+    log('检测到新增弹窗（DOM 兜底接管）：规格=' + (specEl.id || '(无id)')
+      + ' 名称=' + (enameEl ? (enameEl.id || '(无id)') : '未找到')
+      + ' 编号=' + (ecodeEl ? (ecodeEl.id || '(无id)') : '未找到')
+      + ' 类型=' + (typeEl ? (typeEl.id || '(无id)') : '未找到'));
     try { bindSuggest(state.ename, 'name'); } catch (e) { }
     try { bindSuggest(state.ggxh, 'spec'); } catch (e) { }
     var okBtn = false;
@@ -1218,24 +1334,53 @@
     if (!CFG.enabled) return;
     if (domWatchTimer) clearTimeout(domWatchTimer);
 
+    function detachButton() {
+      try {
+        if (state.checkBtn && state.checkBtn.parentNode) state.checkBtn.parentNode.removeChild(state.checkBtn);
+      } catch (e) { }
+      try {
+        if (state.checkTip && state.checkTip.parentNode) state.checkTip.parentNode.removeChild(state.checkTip);
+      } catch (e) { }
+      if (state.typeTimer) { clearInterval(state.typeTimer); state.typeTimer = null; }
+      state.checkBtn = null;
+      state.checkTip = null;
+    }
+
+    function resetTakeover() {
+      detachButton();
+      state.ename = null; state.ggxh = null; state.ecode = null; state.itemtype = null;
+      state.lastTypeKey = '';
+    }
+
     function tick() {
       try {
+        // 当前该接管的目标输入框（弹窗关闭时为空）
+        var specNow = findInput('GGXH_Value') || findInputByLabel(['规格型号', '图号']);
+        var curSpec = (state.ggxh && state.ggxh.__dom) || null;
+
+        // 目标变了：新弹窗打开，或之前挂到了错误位置（如首页）→ 拆掉重建
+        if (specNow && curSpec && specNow !== curSpec) resetTakeover();
+
         var attached = !!(state.checkBtn && document.body && document.body.contains
           && document.body.contains(state.checkBtn));
         if (!attached) {
-          // 弹窗关闭：清掉对已销毁 DOM 的引用，下次重新接管
-          if (state.checkBtn) {
-            state.checkBtn = null;
-            state.checkTip = null;
-            state.ename = null; state.ggxh = null; state.ecode = null; state.itemtype = null;
-            state.lastTypeKey = '';
-          }
+          if (state.checkBtn) resetTakeover();      // 弹窗关闭：按钮已脱离 DOM
           var now = Date.now();
-          if (now - domLastTry > 1200) {          // 最多每 1.2s 尝试一次，避免频繁重绑
+          if (now - domLastTry > 1200) {            // 最多每 1.2s 尝试一次，避免频繁重绑
             domLastTry = now;
-            if (!takeOverByDom() && !domWarned) {
-              domWarned = true;
-              log('尚未探测到新增弹窗的输入框（GGXH_Value / ECODE_Value），继续等待');
+            if (!takeOverByDom()) {
+              if (!domWarned) {
+                domWarned = true;
+                log('尚未探测到新增弹窗（需同时出现 规格型号 / 编号 / 类型 三个字段），继续等待');
+              }
+              // 弹窗一打开（可见输入框变多）就打一份清单，便于定位真实 id；
+              // 同一批输入框只打一次，避免刷屏
+              var list = visibleInputs();
+              var sig = list.length + '#' + ((list[0] && list[0].id) || '');
+              if (list.length >= 4 && sig !== lastInputSig) {
+                lastInputSig = sig;
+                dumpInputs(list);
+              }
             }
           }
         }
@@ -1249,7 +1394,7 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.7（api=' + apiUrl('')
+  log('脚本已加载 v1.12（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')
     + '；空格整理=' + (CFG.tidySpecSpace ? '开' : '关')

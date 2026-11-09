@@ -149,6 +149,7 @@ function newPage({ ctrls, ajaxHandler, confirmReturn = true, globalCfg = null })
   const ctl = {}
   for (const [id, init] of Object.entries(ctrls)) {
     const dom = mkEl('input')
+    dom.id = id
     doc.__byId[id] = dom
     form.appendChild(dom)
     const c = {

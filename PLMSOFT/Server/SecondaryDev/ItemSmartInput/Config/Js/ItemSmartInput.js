@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.20
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.22
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -70,8 +70,10 @@
     domWatchDelay: 2500,         // DOM 兜底接管延时(ms)：给正常 OnCreate 留出时间，避免重复接管
     showCheckButton: true,       // 在新建零组件窗口注入「校验并回填」按钮
     checkButtonText: '校验并回填',
-    checkButtonHost: 'spec',     // 按钮挂在哪个输入框旁：'spec' | 'name'
-    checkButtonPlace: 'float',   // 'float'=跟随输入框定位（默认）；'fixed'=窗口右下角；'after'=插进布局
+    checkButtonHost: 'name',     // 按钮挂在哪个输入框旁：'name'（默认）| 'spec'
+    checkButtonOffsetX: 6,       // 跟随定位时相对输入框右边缘的横向偏移(px)，负数可向左贴
+    checkButtonOffsetY: 0,       // 纵向偏移(px)
+    checkButtonPlace: 'left',    // 'left'=名称标签左侧（默认）；'float'=输入框右侧；'fixed'=窗口右下角；'after'=插进布局
     // 按钮只对下列「类型(ITEMTYPE)」生效，其余类型置灰不可用
     restrictItemType: true,
     itemTypeAllowText: ['电气元件', '原材料', '外购标准件'],
@@ -785,7 +787,7 @@
       setCheckTip('');
     }
     // 跟随模式：弹窗滚动/移动后重新贴合输入框
-    if (state.btnPlace === 'float') placeFloat();
+    if (state.btnPlace === 'float' || state.btnPlace === 'left') placeFloat();
   }
 
   /** 类型下拉变化即时刷新；自定义下拉不一定触发 change，另有轮询兜底 */
@@ -811,24 +813,61 @@
   function placeFloat() {
     var btn = state.checkBtn;
     if (!btn) return;
-    var el = (state.ggxh && state.ggxh.__dom) || null;
+    // 跟随的输入框要和按钮锚点一致（默认名称框）
+    var hostCtl = CFG.checkButtonHost === 'name' ? state.ename : state.ggxh;
+    var el = (hostCtl && hostCtl.__dom) || null;
     if (!el || !el.getBoundingClientRect) return;
     var r = null;
     try { r = el.getBoundingClientRect(); } catch (e) { r = null; }
     var tip = state.checkTip;
+
+    var dx = CFG.checkButtonOffsetX == null ? 6 : Number(CFG.checkButtonOffsetX);
+    var dy = CFG.checkButtonOffsetY == null ? 0 : Number(CFG.checkButtonOffsetY);
+    try {
+      var ec2 = extCfg();
+      if (ec2 && ec2.checkButtonOffsetX != null && !isNaN(Number(ec2.checkButtonOffsetX))) dx = Number(ec2.checkButtonOffsetX);
+      if (ec2 && ec2.checkButtonOffsetY != null && !isNaN(Number(ec2.checkButtonOffsetY))) dy = Number(ec2.checkButtonOffsetY);
+    } catch (e) { }
     if (!r || r.width <= 0 || r.height <= 0) {
       btn.style.display = 'none';
       if (tip) tip.style.display = 'none';
       return;
     }
-    var maxLeft = (window.innerWidth || 1200) - 120;
+    var maxLeft = (window.innerWidth || 1200) - 60;
     btn.style.display = 'inline-block';
     btn.style.position = 'fixed';
     btn.style.right = 'auto';
     btn.style.bottom = 'auto';
     btn.style.zIndex = '2147483000';
-    btn.style.left = Math.max(4, Math.min(r.right + 6, maxLeft)) + 'px';
-    btn.style.top = Math.max(4, r.top) + 'px';
+
+    if (state.btnPlace === 'left') {
+      // 放在「名称」标签左侧：标签列很窄，按钮必须收窄、允许换行，否则会压住标签
+      var row = rowRectOf(el);
+      var left = row ? (row.left + 2) : (r.left - 50);
+      btn.style.width = '44px';
+      btn.style.whiteSpace = 'normal';
+      btn.style.lineHeight = '14px';
+      btn.style.padding = '1px 2px';
+      btn.style.fontSize = '11px';
+      btn.style.textAlign = 'center';
+      btn.style.left = Math.max(2, left + dx) + 'px';
+      btn.style.top = Math.max(4, r.top + dy) + 'px';
+      if (tip) {
+        tip.style.display = 'inline-block';
+        tip.style.position = 'fixed';
+        tip.style.right = 'auto';
+        tip.style.bottom = 'auto';
+        tip.style.maxWidth = '150px';
+        tip.style.whiteSpace = 'normal';
+        tip.style.zIndex = '2147483000';
+        tip.style.left = btn.style.left;
+        tip.style.top = (r.bottom + 2) + 'px';
+      }
+      return;
+    }
+
+    btn.style.left = Math.max(4, Math.min(r.right + dx, maxLeft)) + 'px';
+    btn.style.top = Math.max(4, r.top + dy) + 'px';
     if (tip) {
       tip.style.display = 'inline-block';
       tip.style.position = 'fixed';
@@ -838,6 +877,22 @@
       tip.style.left = btn.style.left;
       tip.style.top = (r.bottom + 2) + 'px';
     }
+  }
+
+  /** 找包含「标签 + 输入框」的整行容器（宽度明显大于输入框） */
+  function rowRectOf(el) {
+    var ir = null;
+    try { ir = el.getBoundingClientRect(); } catch (e) { return null; }
+    if (!ir) return null;
+    var p = el;
+    for (var i = 0; i < 5 && p; i++) {
+      p = p.parentNode || p.parent;
+      if (!p || !p.getBoundingClientRect) continue;
+      var r = null;
+      try { r = p.getBoundingClientRect(); } catch (e) { r = null; }
+      if (r && r.width > ir.width + 24) return r;
+    }
+    return null;
   }
 
   /** 在名称/规格输入框旁注入按钮（同一页面实例只注入一次） */
@@ -918,8 +973,8 @@
       tip.style.zIndex = '2147483000';
       document.body.appendChild(btn);
       document.body.appendChild(tip);
-    } else if (place === 'float') {
-      // 挂到 body，但用 rect 定位到输入框右侧（不参与原布局，也不会被容器裁掉）
+    } else if (place === 'float' || place === 'left') {
+      // 挂到 body，用 rect 定位（不参与原布局，也不会被容器裁掉）
       document.body.appendChild(btn);
       document.body.appendChild(tip);
     } else if (host.insertBefore) {
@@ -933,7 +988,7 @@
     state.checkBtn = btn;
     state.checkTip = tip;
     state.btnPlace = place;
-    if (place === 'float') placeFloat();
+    if (place === 'float' || place === 'left') placeFloat();
     log('已注入「' + (CFG.checkButtonText || '校验并回填') + '」按钮（位置=' + place
       + '；挂载方式：' + (trace.join(' > ') || '未知') + '；锚点=' + (anchor.tagName || '?')
       + '；父节点=' + (host.tagName || '?') + '）');
@@ -1526,7 +1581,7 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.20（api=' + apiUrl('')
+  log('脚本已加载 v1.22（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')
     + '；空格整理=' + (CFG.tidySpecSpace ? '开' : '关')

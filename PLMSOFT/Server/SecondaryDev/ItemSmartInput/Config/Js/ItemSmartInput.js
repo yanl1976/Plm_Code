@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.28
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.31
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -1131,8 +1131,67 @@
     return el;
   }
 
+  /** 判断颜色是否偏暗（决定用亮色还是深色文字） */
+  function isDarkColor(s) {
+    var m = String(s || '').match(/rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+    if (!m) return false;
+    return (0.299 * (+m[1]) + 0.587 * (+m[2]) + 0.114 * (+m[3])) < 140;
+  }
+
+  /**
+   * 继承 PLM 原有配色：以规格输入框为锚点向上找弹窗容器，读它的
+   * background-color / color；主色取页面上第一个有饱和背景的按钮。
+   */
+  function readTheme() {
+    var ref = null;
+    var el = (state.ggxh && state.ggxh.__dom) || null;
+    try {
+      var ir = el ? el.getBoundingClientRect() : null;
+      var p = el;
+      for (var i = 0; i < 6 && p; i++) {
+        p = p.parentNode || p.parent;
+        if (!p || !p.getBoundingClientRect) continue;
+        var r = p.getBoundingClientRect();
+        if (ir && r.width > ir.width + 40 && r.height > ir.height + 40) { ref = p; break; }
+      }
+    } catch (e) { ref = null; }
+
+    var bg = '';
+    var fg = '';
+    try {
+      if (ref && window.getComputedStyle) {
+        var cs = window.getComputedStyle(ref);
+        bg = cs.backgroundColor || '';
+        fg = cs.color || '';
+      }
+    } catch (e) { }
+
+    var accent = '';
+    try {
+      var btns = document.querySelectorAll('button');
+      for (var j = 0; j < btns.length && !accent; j++) {
+        var b = btns[j];
+        var br = b.getBoundingClientRect ? b.getBoundingClientRect() : null;
+        if (!br || br.width <= 0 || br.height <= 0) continue;
+        var bc = window.getComputedStyle(b).backgroundColor || '';
+        var m = bc.match(/rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+        if (!m) continue;
+        var sum = (+m[1]) + (+m[2]) + (+m[3]);
+        if (sum > 140 && sum < 690) accent = bc;   // 排除纯白/纯黑/极浅
+      }
+    } catch (e) { }
+
+    if (!bg || /transparent|rgba\(0,\s*0,\s*0,\s*0\)/.test(bg)) bg = '#ffffff';
+    if (!fg) fg = '#333333';
+    if (!accent) accent = '#3f8fd2';
+    return { bg: bg, fg: fg, accent: accent };
+  }
+
   function closeEditor() {
     if (!dlg) return;
+    try {
+      if (dlg.similarMask && dlg.similarMask.parentNode) dlg.similarMask.parentNode.removeChild(dlg.similarMask);
+    } catch (e) { }
     try { if (dlg.mask && dlg.mask.parentNode) dlg.mask.parentNode.removeChild(dlg.mask); } catch (e) { }
     dlg = null;
   }
@@ -1140,13 +1199,24 @@
   function openEditor() {
     if (!CFG.enabled || !isTypeAllowed() || dlg) return;
 
+    // 继承 PLM 配色：背景/文字取实际弹窗容器，主色取页面按钮
+    var th = readTheme();
+    var dark = isDarkColor(th.bg);
+    var C_ERR = dark ? '#ff8a80' : '#c0392b';
+    var C_WARN = dark ? '#ffd54f' : '#b8860b';
+    var C_OK = dark ? '#81c784' : '#2e7d32';
+    var C_MUTE = 'rgba(127,127,127,.9)';
+    var C_LINE = '1px solid rgba(127,127,127,.30)';
+    var C_INPUT_BG = 'rgba(127,127,127,.07)';
+    var C_HEAD_BG = 'rgba(127,127,127,.10)';
+
     var mask = dlgEl('div', 'position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,.35);z-index:2147483000;');
     var panel = dlgEl('div', 'position:fixed;left:50%;top:6%;transform:translateX(-50%);width:620px;max-width:94vw;'
-      + 'max-height:86vh;overflow:auto;background:#fff;border-radius:6px;'
+      + 'max-height:86vh;overflow:auto;background:' + th.bg + ';border-radius:6px;'
       + 'box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:2147483001;'
-      + 'font:13px/1.6 "Microsoft YaHei",Arial,sans-serif;color:#333;');
+      + 'font:13px/1.6 "Microsoft YaHei",Arial,sans-serif;color:' + th.fg + ';');
 
-    var head = dlgEl('div', 'padding:10px 16px;background:#f5f7fa;border-bottom:1px solid #e3e8ee;font-weight:bold;font-size:14px;');
+    var head = dlgEl('div', 'padding:10px 16px;background:' + C_HEAD_BG + ';border-bottom:' + C_LINE + ';font-weight:bold;font-size:14px;');
     head.textContent = '物料名称与规格校验';
     var xBtn = dlgEl('span', 'float:right;cursor:pointer;color:#999;font-weight:normal;font-size:18px;line-height:18px;', '×');
     xBtn.onclick = closeEditor;
@@ -1155,8 +1225,8 @@
     var body = dlgEl('div', 'padding:14px 16px;');
 
     // 分类/编码信息条：把看板里的「当前小类」信息搬进弹窗
-    var infoBox = dlgEl('div', 'background:#f7f9fc;border:1px solid #e3e8ee;border-radius:4px;'
-      + 'padding:6px 10px;margin-bottom:12px;color:#555;font-size:12px;line-height:1.7;');
+    var infoBox = dlgEl('div', 'background:' + C_INPUT_BG + ';border:' + C_LINE + ';border-radius:4px;'
+      + 'padding:6px 10px;margin-bottom:12px;color:' + C_MUTE + ';font-size:12px;line-height:1.7;');
     body.appendChild(infoBox);
 
     function renderInfo(r) {
@@ -1167,18 +1237,18 @@
       var html = '<div>物料编码：<b>' + escHtml(code || '(未申请)') + '</b>'
         + (cat ? '　分类：' + escHtml(cat) : '') + '</div>';
       if (r && r.tokens && r.tokens.length) {
-        html += '<div style="color:#888">该小类建议写清：'
+        html += '<div style="opacity:.75">该小类建议写清：'
           + escHtml(r.tokens.slice(0, 8).join(' / ')) + '</div>';
       }
       if (r && r.skipReason) {
-        html += '<div style="color:#b8860b">' + escHtml(r.skipReason) + '</div>';
+        html += '<div style="color:' + C_WARN + '">' + escHtml(r.skipReason) + '</div>';
       }
       infoBox.innerHTML = html;
     }
 
     body.appendChild(dlgEl('div', 'color:#666;margin-bottom:4px;', '物料名称'));
-    var nameIn = dlgEl('input', 'width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #cfd6de;'
-      + 'border-radius:3px;font-size:13px;margin-bottom:12px;');
+    var nameIn = dlgEl('input', 'width:100%;box-sizing:border-box;padding:6px 8px;border:' + C_LINE + ';'
+      + 'border-radius:3px;font-size:13px;margin-bottom:12px;background:' + C_INPUT_BG + ';color:inherit;');
     nameIn.className = 'plm-smart-dlg-name';
     nameIn.value = readText(state.ename);
     body.appendChild(nameIn);
@@ -1191,8 +1261,8 @@
     body.appendChild(nameSugBox);
 
     body.appendChild(dlgEl('div', 'color:#666;margin-bottom:4px;', '规格型号'));
-    var specIn = dlgEl('input', 'width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #cfd6de;'
-      + 'border-radius:3px;font-size:13px;');
+    var specIn = dlgEl('input', 'width:100%;box-sizing:border-box;padding:6px 8px;border:' + C_LINE + ';'
+      + 'border-radius:3px;font-size:13px;background:' + C_INPUT_BG + ';color:inherit;');
     specIn.className = 'plm-smart-dlg-spec';
     specIn.value = readRaw(state.ggxh);
     body.appendChild(specIn);
@@ -1209,15 +1279,16 @@
     var simBox = dlgEl('div', 'margin-top:6px;');
     body.appendChild(simBox);
 
-    var foot = dlgEl('div', 'padding:10px 16px;border-top:1px solid #e3e8ee;text-align:right;background:#fafbfc;');
-    var cancelBtn = dlgEl('button', 'padding:4px 14px;margin-left:8px;border:1px solid #cfd6de;background:#fff;'
-      + 'border-radius:3px;cursor:pointer;', '取消');
+    var foot = dlgEl('div', 'padding:10px 16px;border-top:' + C_LINE + ';text-align:right;background:' + C_HEAD_BG + ';');
+    var cancelBtn = dlgEl('button', 'padding:4px 14px;margin-left:8px;border:' + C_LINE + ';background:transparent;'
+      + 'color:inherit;border-radius:3px;cursor:pointer;', '取消');
     cancelBtn.onclick = closeEditor;
-    var saveBtn = dlgEl('button', 'padding:4px 14px;margin-left:8px;border:1px solid #3f8fd2;background:#3f8fd2;'
-      + 'color:#fff;border-radius:3px;cursor:pointer;', '保存并回填');
+    var saveBtn = dlgEl('button', 'padding:4px 14px;margin-left:8px;border:1px solid ' + th.accent
+      + ';background:' + th.accent + ';color:#fff;border-radius:3px;cursor:pointer;', '保存并回填');
     saveBtn.className = 'plm-smart-dlg-save';
 
     var errors = [];
+    var lastSimilar = null;   // 最近一次 similar-models 结果，供「类似型号明细」弹窗使用
 
     function setSaveEnabled(ok) {
       saveBtn.disabled = !ok;
@@ -1239,37 +1310,37 @@
       var sHtml = '';
       var i;
       for (i = 0; i < errors.length; i++) {
-        var el = '<div style="color:#c0392b">✕ ' + escHtml(errors[i]) + '</div>';
+        var el = '<div style="color:' + C_ERR + '">✕ ' + escHtml(errors[i]) + '</div>';
         if (isNameMsg(errors[i])) nHtml += el; else sHtml += el;
       }
       for (i = 0; i < ws.length; i++) {
-        var wl = '<div style="color:#b8860b">! ' + escHtml(ws[i]) + '</div>';
+        var wl = '<div style="color:' + C_WARN + '">! ' + escHtml(ws[i]) + '</div>';
         if (isNameMsg(ws[i])) nHtml += wl; else sHtml += wl;
       }
       if (!nHtml && !sHtml) {
-        sHtml = '<div style="color:#2e7d32">✓ 名称与规格符合录入规则</div>';
+        sHtml = '<div style="color:' + C_OK + '">✓ 名称与规格符合录入规则</div>';
       }
       var dup = ((r && r.duplicates) || []).filter(function (d) { return d.level === 'exact' || d.level === 'sep'; });
       if (dup.length) {
-        sHtml += '<div style="color:#b8860b;margin-top:6px">同小类已有完全相同规格：</div>';
+        sHtml += '<div style="color:' + C_WARN + ';margin-top:6px">同小类已有完全相同规格：</div>';
         for (i = 0; i < dup.length && i < 5; i++) {
-          sHtml += '<div style="color:#666;margin-left:12px">'
+          sHtml += '<div style="color:' + C_MUTE + ';margin-left:12px">'
             + escHtml(dup[i].code || dup[i].fnumber || '') + ' '
             + escHtml(dup[i].name || '') + ' ' + escHtml(dup[i].spec || '') + '</div>';
         }
       }
       // 名称结构化建议：标准叫法 / 建议改为
       if (r && r.nameSynonym && r.nameSynonym.exact && r.nameSynonym.std) {
-        nHtml += '<div style="color:#2e7d32">标准叫法：' + escHtml(r.nameSynonym.std) + '</div>';
+        nHtml += '<div style="color:' + C_OK + '">标准叫法：' + escHtml(r.nameSynonym.std) + '</div>';
       }
       if (r && r.nameFormat && r.nameFormat.final && r.nameFormat.final !== nameIn.value) {
-        nHtml += '<div style="color:#b8860b">建议改为：<a href="javascript:void(0)" class="plm-smart-apply-name"'
-          + ' style="color:#16558c;text-decoration:underline">' + escHtml(r.nameFormat.final) + '</a></div>';
+        nHtml += '<div style="color:' + C_WARN + '">建议改为：<a href="javascript:void(0)" class="plm-smart-apply-name"'
+          + ' style="color:' + th.accent + ';text-decoration:underline">' + escHtml(r.nameFormat.final) + '</a></div>';
       }
       // 规格结构化建议：规范写法
       if (r && r.specFormat && r.specFormat.fixed && r.specFormat.fixed !== specIn.value) {
-        sHtml += '<div style="color:#b8860b">建议改为：<a href="javascript:void(0)" class="plm-smart-apply-spec"'
-          + ' style="color:#16558c;text-decoration:underline">' + escHtml(r.specFormat.fixed) + '</a></div>';
+        sHtml += '<div style="color:' + C_WARN + '">建议改为：<a href="javascript:void(0)" class="plm-smart-apply-spec"'
+          + ' style="color:' + th.accent + ';text-decoration:underline">' + escHtml(r.specFormat.fixed) + '</a></div>';
       }
 
       nameTip.innerHTML = nHtml;
@@ -1293,13 +1364,13 @@
       if (!nm) return;
       apiAsync('/api/plm/suggest', { field: 'name', value: nm, sub: currentSub() }, function (r) {
         if (!dlg || !r || !r.suggestions || !r.suggestions.length) return;
-        nameSugBox.appendChild(dlgEl('div', 'color:#888;font-size:12px;margin-bottom:2px;', '名称建议（点击填入）'));
+        nameSugBox.appendChild(dlgEl('div', 'opacity:.7;font-size:12px;margin-bottom:2px;', '名称建议（点击填入）'));
         var wrap = dlgEl('div', '');
         var list = r.suggestions.slice(0, 6);
         for (var i = 0; i < list.length; i++) {
           (function (s) {
             var chip = dlgEl('span', 'display:inline-block;margin:2px 6px 2px 0;padding:2px 8px;'
-              + 'background:#f2f6fb;border:1px solid #d8e4f0;border-radius:3px;cursor:pointer;font-size:12px;', s.value);
+              + 'background:' + C_INPUT_BG + ';border:' + C_LINE + ';border-radius:3px;cursor:pointer;font-size:12px;', s.value);
             chip.onclick = function () { nameIn.value = s.value; checkNow(); };
             wrap.appendChild(chip);
           })(list[i]);
@@ -1316,12 +1387,12 @@
         if (!dlg || !r) return;
         var html = '';
         if (r.normalized && r.normalized !== sp) {
-          html += '<div style="color:#b8860b;font-size:12px">规范写法：<a href="javascript:void(0)"'
-            + ' class="plm-smart-apply-norm" style="color:#16558c;text-decoration:underline">'
+          html += '<div style="color:' + C_WARN + ';font-size:12px">规范写法：<a href="javascript:void(0)"'
+            + ' class="plm-smart-apply-norm" style="color:' + th.accent + ';text-decoration:underline">'
             + escHtml(r.normalized) + '</a></div>';
         }
         if (r.tokens && r.tokens.length) {
-          html += '<div style="color:#888;font-size:12px">该小类建议写清：'
+          html += '<div style="opacity:.7;font-size:12px">该小类建议写清：'
             + escHtml(r.tokens.slice(0, 8).join(' / ')) + '</div>';
         }
         if (!html) return;
@@ -1336,50 +1407,24 @@
      */
     function loadSimilar(sp) {
       simBox.innerHTML = '';
+      lastSimilar = null;
       if (!sp) return;
       var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
-
-      if (!base) {
-        apiAsync('/api/plm/suggest', { field: 'spec', value: sp, sub: currentSub() }, function (r) {
-          if (!dlg || !r || !r.suggestions || !r.suggestions.length) return;
-          simBox.appendChild(dlgEl('div', 'color:#666;margin-bottom:4px;', '类似型号（点击填入）'));
-          var wrap = dlgEl('div', '');
-          var list = r.suggestions.slice(0, 8);
-          for (var i = 0; i < list.length; i++) {
-            (function (s) {
-              var chip = dlgEl('span', 'display:inline-block;margin:2px 6px 2px 0;padding:2px 8px;'
-                + 'background:#f2f6fb;border:1px solid #d8e4f0;border-radius:3px;cursor:pointer;font-size:12px;', s.value);
-              chip.onclick = function () { specIn.value = s.value; checkNow(); };
-              wrap.appendChild(chip);
-            })(list[i]);
-          }
-          simBox.appendChild(wrap);
-        });
-        return;
-      }
+      // 只保留「类似型号明细」弹窗；未配置 inventoryBase 时不展示任何内联候选
+      if (!base) return;
 
       var url = base + '/api/new-material/similar-models?sub=' + encodeURIComponent(currentSub())
         + '&spec=' + encodeURIComponent(sp) + '&code=' + encodeURIComponent(readEcode());
       apiAbsolute(url, function (r) {
         if (!dlg || !r || !r.items || !r.items.length) return;
-        simBox.appendChild(dlgEl('div', 'color:#666;margin-bottom:4px;',
-          '类似型号（按接近程度排序，点击填入）'));
-        var box = dlgEl('div', 'border:1px solid #e3e8ee;border-radius:4px;overflow:hidden;');
-        var list = r.items.slice(0, 8);
-        for (var i = 0; i < list.length; i++) {
-          (function (it) {
-            var row = dlgEl('div', 'padding:4px 8px;border-bottom:1px solid #f0f2f5;'
-              + 'cursor:pointer;font-size:12px;white-space:nowrap;overflow:hidden;');
-            var pct = (it.similarity != null) ? Math.round(it.similarity * 100) + '%' : '';
-            row.innerHTML = '<span style="color:#888;display:inline-block;width:104px">'
-              + escHtml(it.fnumber || '') + '</span>'
-              + '<span style="display:inline-block;width:250px">' + escHtml(it.spec || '') + '</span>'
-              + '<span style="color:#aaa">' + pct + '</span>';
-            row.onclick = function () { specIn.value = it.spec; checkNow(); };
-            box.appendChild(row);
-          })(list[i]);
-        }
-        simBox.appendChild(box);
+        lastSimilar = r;
+        simBox.appendChild(dlgEl('div', 'opacity:.75;font-size:12px;',
+          '类似型号：同小类共 ' + r.items.length + ' 条（按接近程度排序）'));
+        var link = dlgEl('span', 'color:' + th.accent + ';cursor:pointer;text-decoration:underline;font-size:12px;',
+          '查看类似型号明细');
+        link.className = 'plm-smart-sim-open';
+        link.onclick = openSimilarModal;
+        simBox.appendChild(link);
       });
     }
 
@@ -1396,18 +1441,115 @@
         var t = r.total;
         var whs = r.warehouses || [];
         var only = whs.length === 1 ? (whs[0].stockName || ('仓库#' + whs[0].stockId)) : '';
-        var html = '<div style="color:#666;margin-bottom:4px">现有库存</div>'
-          + '<div style="color:#333">数量 <b>' + t.qty + '</b>　可用 <b style="color:#2e7d32">' + t.avbqty + '</b>'
-          + (only ? '<span style="color:#999">（' + escHtml(only) + '）</span>' : '') + '</div>';
+        var html = '<div style="opacity:.75;margin-bottom:4px">现有库存</div>'
+          + '<div>数量 <b>' + t.qty + '</b>　可用 <b style="color:' + C_OK + '">' + t.avbqty + '</b>'
+          + (only ? '<span style="opacity:.7">（' + escHtml(only) + '）</span>' : '') + '</div>';
         if (!only && whs.length) {
           var parts = [];
           for (var i = 0; i < whs.length && i < 6; i++) {
             parts.push(escHtml(whs[i].stockName || ('仓库#' + whs[i].stockId)) + '：' + whs[i].qty);
           }
-          html += '<div style="color:#666;font-size:12px">' + parts.join('　') + '</div>';
+          html += '<div style="opacity:.75;font-size:12px">' + parts.join('　') + '</div>';
         }
         invBox.innerHTML = html;
       });
+    }
+
+    /**
+     * 规格差异高亮：把该行规格里「与录入规格不同」的片段标黄，
+     * 与看板「类似型号明细」保持同一口径（按分隔符切词比较）。
+     */
+    function diffSpec(qspec, spec) {
+      var qt = {};
+      String(qspec || '').toUpperCase().split(/[\s\/()（）,，+\-*]+/).forEach(function (t) {
+        if (t) qt[t] = 1;
+      });
+      var parts = String(spec || '').split(/([\s\/()（）,，+\-*]+)/);
+      var out = '';
+      for (var i = 0; i < parts.length; i++) {
+        var p = parts[i];
+        if (!p) continue;
+        if (/^[\s\/()（）,，+\-*]+$/.test(p)) { out += escHtml(p); continue; }
+        out += qt[p.toUpperCase()]
+          ? escHtml(p)
+          : '<span style="background:#ffd54f;color:#333;padding:0 2px;border-radius:2px">' + escHtml(p) + '</span>';
+      }
+      return out;
+    }
+
+    /** 类似型号明细弹窗：汇总 + 差异高亮表格，点行填入规格 */
+    function closeSimilarModal() {
+      if (dlg && dlg.similarMask && dlg.similarMask.parentNode) {
+        dlg.similarMask.parentNode.removeChild(dlg.similarMask);
+      }
+      if (dlg) dlg.similarMask = null;
+    }
+
+    function openSimilarModal() {
+      if (!lastSimilar || !lastSimilar.items || !lastSimilar.items.length) return;
+      if (dlg && dlg.similarMask) return;
+
+      var items = lastSimilar.items;
+      var total = lastSimilar.total || {};
+      var sp = specIn.value;
+
+      var m2 = dlgEl('div', 'position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,.35);z-index:2147483010;');
+      var p2 = dlgEl('div', 'position:fixed;left:50%;top:8%;transform:translateX(-50%);width:880px;max-width:96vw;'
+        + 'max-height:82vh;overflow:auto;background:' + th.bg + ';color:' + th.fg + ';border-radius:6px;'
+        + 'box-shadow:0 12px 36px rgba(0,0,0,.35);z-index:2147483011;'
+        + 'font:13px/1.6 "Microsoft YaHei",Arial,sans-serif;');
+
+      var h2 = dlgEl('div', 'padding:12px 18px;border-bottom:' + C_LINE + ';background:' + C_HEAD_BG
+        + ';font-size:15px;font-weight:bold;');
+      h2.innerHTML = '类似型号明细 <span style="font-weight:normal;opacity:.7;font-size:13px">'
+        + '（同小类相同/相似规格，共 ' + items.length + ' 条）</span>';
+      var x2 = dlgEl('span', 'float:right;cursor:pointer;opacity:.7;font-size:18px;line-height:18px;', '×');
+      x2.onclick = closeSimilarModal;
+      h2.appendChild(x2);
+
+      var b2 = dlgEl('div', 'padding:12px 18px 16px;');
+      b2.innerHTML = '<div style="opacity:.75;margin-bottom:8px">合计数量 <b style="opacity:1">'
+        + (total.qty == null ? 0 : total.qty) + '</b>　·　可用 <b style="opacity:1">'
+        + (total.avbqty == null ? 0 : total.avbqty) + '</b></div>'
+        + '<div style="opacity:.75;margin-bottom:10px">录入规格：<span style="opacity:1">'
+        + escHtml(sp) + '</span>　<span style="background:#ffd54f;color:#333;padding:0 4px;border-radius:2px">黄色</span>'
+        + ' = 与该规格的差异部分　·　已按接近程度排序（越靠前差异越少）</div>';
+
+      var table = dlgEl('table', 'width:100%;border-collapse:collapse;font-size:13px;');
+      table.innerHTML = '<thead><tr style="background:' + C_HEAD_BG + ';opacity:.75;text-align:left">'
+        + '<th style="padding:6px 10px;font-weight:normal">物料号</th>'
+        + '<th style="padding:6px 10px;font-weight:normal">名称</th>'
+        + '<th style="padding:6px 10px;font-weight:normal">规格型号</th>'
+        + '<th style="padding:6px 10px;font-weight:normal;width:70px">数量</th>'
+        + '<th style="padding:6px 10px;font-weight:normal">项目号（最近业务）</th>'
+        + '</tr></thead>';
+
+      var tb = dlgEl('tbody', '');
+      for (var i = 0; i < items.length; i++) {
+        (function (it) {
+          var tr = dlgEl('tr', 'border-bottom:' + C_LINE + ';cursor:pointer;');
+          tr.innerHTML = '<td style="padding:6px 10px"><a href="javascript:void(0)"'
+            + ' style="color:' + th.accent + ';text-decoration:none">' + escHtml(it.fnumber || '') + '</a></td>'
+            + '<td style="padding:6px 10px">' + escHtml(it.name || '') + '</td>'
+            + '<td style="padding:6px 10px">' + diffSpec(sp, it.spec || '') + '</td>'
+            + '<td style="padding:6px 10px">' + (it.qty == null ? 0 : it.qty) + '</td>'
+            + '<td style="padding:6px 10px;opacity:.75">' + escHtml(it.projectNo || '') + '</td>';
+          tr.onclick = function () {
+            specIn.value = it.spec;
+            closeSimilarModal();
+            checkNow();
+          };
+          tb.appendChild(tr);
+        })(items[i]);
+      }
+      table.appendChild(tb);
+
+      b2.appendChild(table);
+      p2.appendChild(h2);
+      p2.appendChild(b2);
+      m2.appendChild(p2);
+      document.body.appendChild(m2);
+      if (dlg) dlg.similarMask = m2;
     }
 
     function checkNow() {
@@ -1418,11 +1560,11 @@
         nameSugBox.innerHTML = ''; specMeta.innerHTML = '';
         errors = []; setSaveEnabled(true); return;
       }
-      specTip.innerHTML = '<div style="color:#999">校验中…</div>';
+      specTip.innerHTML = '<div style="opacity:.6">校验中…</div>';
       apiAsync('/api/plm/check', { name: nm, spec: sp, sub: currentSub(), ecode: readEcode() }, function (r) {
         if (!dlg) return;
         if (!r || r.ok === false) {
-          specTip.innerHTML = '<div style="color:#c0392b">治理服务不可用（' + escHtml(CFG.apiLabel) + '）</div>';
+          specTip.innerHTML = '<div style="color:' + C_ERR + '">治理服务不可用（' + escHtml(CFG.apiLabel) + '）</div>';
           setSaveEnabled(false);
           return;
         }
@@ -2022,7 +2164,7 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.28（api=' + apiUrl('')
+  log('脚本已加载 v1.31（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；外部配置=' + (EXT_KEYS.length ? EXT_KEYS.join('/') : '未使用')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')

@@ -1,13 +1,14 @@
 # PLM 物料新增「名称/规格型号」智能录入助手 — 部署说明
 
 > 版本 **v1.6** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
-> 插件文件：`ItemSmartInput.js` v1.6 — 50,560 字节 / 1,146 行 / UTF-8 无 BOM
-> SHA256：`15DDC98FB941F82A5CDADF0C3FAC5752406E57081188FD1D4F3EAD43FAB4E333`
+> 插件文件：`ItemSmartInput.js` v1.7 — 55,910 字节 / 1,264 行 / UTF-8 无 BOM
+> SHA256：`86E111A30B6B21BF765321E95267C6EF3D500686F92E32D2A08489F128F353A9`
 > 地址配置：`ItemSmartInput.config.js` — 1,043 字节 / 22 行 / UTF-8 无 BOM
 > SHA256：`8C8B332107DDD0D2EED87556CDFC1FF2552C3C681100C0E55447EADA21A27EA7`
 >
 > **版本演进**
-> - **v1.6（当前）**：新增「校验并回填」按钮，**仅对 电气元件 / 原材料 / 外购标准件 三种类型生效**，其余类型置灰；同时兼容 `PSEITEM` 与 `PSEITEM$` 两个「新建零组件」入口
+> - **v1.7（当前）**：新增 **DOM 兜底接管** —— `PSE_ItemGuide` 等向导入口不触发 `CreatePage_OnCreate`，改为轮询输入框出现后接管控件并注入按钮
+> - v1.6：新增「校验并回填」按钮，**仅对 电气元件 / 原材料 / 外购标准件 三种类型生效**，其余类型置灰；兼容 `PSEITEM` 与 `PSEITEM$`
 > - v1.5：按钮雏形；编码仍由 PLM 编码器管理，插件不参与发号
 > - v1.4：规格空格自动整理（首尾 / 连续 / 全角），乘号暂不处理
 > - v1.1.0：修复异步请求返回值缺陷；新增页重复打开时状态重置；保存校验增加控件兜底取值；规则错误由硬阻断改为二次确认；未查重时回传 `skipReason`
@@ -70,7 +71,7 @@
 
 | # | 文件 | 说明 | 是否必须 |
 |---|---|---|---|
-| 1 | `ItemSmartInput.js` | 插件本体：按钮 + 类型门控 + 读取外置地址 | **必须** |
+| 1 | `ItemSmartInput.js` | 插件本体：按钮 + 类型门控 + 外置地址 + DOM 兜底接管 | **必须** |
 | 2 | `ItemSmartInput.config.js` | **新增**：地址配置（IP / 端口） | **必须** |
 | 3 | `ItemSmartInput.fileref` | **覆盖**：把 config 注册到 js 之前 | **必须** |
 | 4 | `src/material-rules.js` | 空格整理 `fixSpecFormat()` + 小类不符 `detectSubMismatch()` | 需要「规格自动整理 / 分类不符提示」时 |
@@ -301,11 +302,13 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 2. 浏览器按 `F12` 打开控制台，应看到：
 
 ```
-[ItemSmartInput] 脚本已加载 v1.6（api=http://10.1.2.3:3100；地址来源=ItemSmartInput.config.js；规格同步ZYCS/FLSXHB=开；空格整理=开；类型门控=电气元件/原材料/外购标准件；超限拦截=开）
-[ItemSmartInput] 进入 PSEITEM$ 新增页（与 PSEITEM 共用同一套逻辑）      ← 仅从 PSEITEM$ 入口进入时出现
+[ItemSmartInput] 脚本已加载 v1.7（api=http://10.1.2.3:3100；地址来源=ItemSmartInput.config.js；规格同步ZYCS/FLSXHB=开；空格整理=开；类型门控=电气元件/原材料/外购标准件；超限拦截=开）
+[ItemSmartInput] 进入 PSEITEM$ 新增页（与 PSEITEM 共用同一套逻辑）      ← 仅 PSEITEM$ 入口
 [ItemSmartInput] 已绑定：名称 规格 联想；保存前查重已启用
 [ItemSmartInput] 已注入「校验并回填」按钮（挂载方式：getElementById#GGXH_Value > querySelector(input)；父节点 TD）
 [ItemSmartInput] 治理服务就绪：索引 23036 条 / 200 个小类
+[ItemSmartInput] 检测到新增弹窗（DOM 兜底接管）：名称/规格/编号/类型    ← 仅向导入口（不触发 OnCreate）
+[ItemSmartInput] 当前类型：value="…" text="电气元件" → 允许
 ```
 
 逐行含义：
@@ -406,9 +409,9 @@ cd E:\tedri_project\dev\Plm_Code
 npm run verify:plm
 ```
 
-预期输出结尾：`结果: 40 通过 / 0 失败`。
+预期输出结尾：`结果: 42 通过 / 0 失败`。
 
-该脚本用 `vm` 构造 mock 环境（window/document/jQuery/HoteamUI/控件），**真实执行 `ItemSmartInput.js`**，覆盖 17 个场景：绑定、防抖联想、点选回填、ZYCS 连带回填、命中重复时取消（阻断）/确认（放行）、未取编码跳过、服务异常放行、字段为空不干预、二次打开页重新绑定、规则错误不硬阻断、确认记录随页面重置、规格空格回填、按钮点击回填、类型门控（非授权类型禁用且不回填）、外置地址配置、`PSEITEM$` 入口钩子。
+该脚本用 `vm` 构造 mock 环境（window/document/jQuery/HoteamUI/控件），**真实执行 `ItemSmartInput.js`**，覆盖 18 个场景：绑定、防抖联想、点选回填、ZYCS 连带回填、命中重复时取消（阻断）/确认（放行）、未取编码跳过、服务异常放行、字段为空不干预、二次打开页重新绑定、规则错误不硬阻断、确认记录随页面重置、规格空格回填、按钮点击回填、类型门控（非授权类型禁用且不回填）、外置地址配置、`PSEITEM$` 入口钩子。
 
 > 它验证的是【控制流】，不能替代真实浏览器验证（真实 DOM 结构、真实跨域仍要现场确认）；网络层由 `/api/plm/*` 的端到端测试单独覆盖。
 
@@ -464,6 +467,8 @@ npm run verify:plm
 10. **类型枚举存放在 PLM 库里**：插件优先按「类型」下拉的显示文本判断，取不到再回退 `GetSelectedValue()` 与 DOM 选中项。若现场返回的是内部编码，需在 `CFG.itemTypeAllowValues` 补编码。
 11. **类型门控只作用于新按钮**：原有的名称联想、失焦查重、保存前查重仍对所有类型生效。
 12. **两个同名「新建零组件」入口**：PLM 同时存在 `PSEITEM` 与 `PSEITEM$`（`PSEITEM-CREATE.page` / `PSEITEM$-CREATE.page`），标题都叫「新建零组件」、控件 ID 完全一致，但钩子名不同。插件已同时挂上两组钩子；若现场还有第三种入口，需要按其页面里的 `InforCenter_<对象>_CreatePage_OnCreate` 再补一次别名。
+13. **向导入口（PSE_ItemGuide）走 DOM 兜底**：实测该向导不调用 `InforCenter_PSEITEM_CreatePage_OnCreate`，只暴露 `InforCenter_PSE_ItemGuide_CreateItem/Save`。v1.7 起脚本会在页面加载 2.5 秒后开始轮询 `GGXH_Value` / `ECODE_Value`，出现即接管（日志「检测到新增弹窗（DOM 兜底接管）」）。若该入口的控件 DOM id 与 `*_Value` 不同，兜底会失败，此时需按实际 id 调整 `findInput()`。
+14. **DOM 兜底的代价**：写值走 `input.value + input/change 事件`，依赖 PLM 在取数时从 DOM 读值（`OnGetDataFromPage` 正是 `c.GetText()`），因此正常生效；若某版本改为缓存控件内部状态，兜底写入可能不落库，需改回钩子方式。
 
 ---
 

@@ -597,6 +597,22 @@ async function run() {
     ok('从 $ 入口也能注入按钮', !!btn)
   }
 
+  // S18 DOM 兜底接管：入口不触发 CreatePage_OnCreate 时，靠轮询仍能注入按钮
+  {
+    console.log('[S18] DOM 兜底接管（PSE_ItemGuide 等不触发 OnCreate 的入口）')
+    const p = newPage({
+      ctrls: baseCtrl(),
+      ajaxHandler: router({ '/health': HEALTH_OK, '/check': CHECK_CLEAN }),
+      globalCfg: { domWatchDelay: 50 },
+    })
+    await sleep(220)                       // 不调用 OnCreate，等兜底接管
+    const btn = p.form.children.find(
+      (c) => String(c.className || '').indexOf('plm-smart-check-btn') >= 0
+    )
+    ok('未触发 OnCreate 也能注入按钮', !!btn)
+    ok('输入框已绑定事件', (p.doc.__byId['ENAME_Value'].__handlers || []).length > 0)
+  }
+
   console.log('\n----------------------------------------')
   console.log(`结果: ${pass} 通过 / ${fail} 失败`)
   if (fail) console.log('失败项: ' + failures.join(' | '))

@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.6
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.7
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -24,6 +24,9 @@
  *        → 把合规写法回填到「名称」「规格型号/图号」输入框。
  *        编码始终由 PLM 编码器生成，本脚本不参与发号、不改编号。
  *        仅对「电气元件 / 原材料 / 外购标准件」三种类型启用，其余类型按钮置灰不可用。
+ *   7) DOM 兜底接管 —— PSE_ItemGuide 等向导入口不触发 CreatePage_OnCreate，
+ *        脚本会轮询等待 GGXH_Value / ECODE_Value 出现，再用 DOM 托管控件并注入按钮，
+ *        保证「向导入口」和「普通新增页」行为一致（v1.7）。
  *
  * 降级策略（关键）：
  *   - API 不可达 / 超时 / 返回异常 → 一律放行，绝不阻断 PLM 正常建物料
@@ -64,6 +67,7 @@
     blockOnDuplicate: true,      // 保存时命中强重复是否二次确认
     notifyDuplicateOnBlur: true, // 失焦时是否在浮层提示重复（不弹框）
     tidySpecSpace: true,         // 规格失焦/保存前自动整理空格（首尾 + 连续），不处理乘号
+    domWatchDelay: 2500,         // DOM 兜底接管延时(ms)：给正常 OnCreate 留出时间，避免重复接管
     showCheckButton: true,       // 在新建零组件窗口注入「校验并回填」按钮
     checkButtonText: '校验并回填',
     checkButtonHost: 'spec',     // 按钮挂在哪个输入框旁：'spec' | 'name'
@@ -93,7 +97,8 @@
     checkBtn: null,         // 「校验并回填」按钮
     checkTip: null,         // 按钮右侧的状态文字
     itemtype: null,         // 类型(ITEMTYPE) 下拉控件
-    typeTimer: null         // 类型变化的轮询兜底
+    typeTimer: null,        // 类型变化的轮询兜底
+    lastTypeKey: ''         // 上一次识别到的类型，用于变化时打日志
   };
 
   function log() {
@@ -736,6 +741,13 @@
     var allowVal = CFG.itemTypeAllowValues || [];
     if (!allowText.length && !allowVal.length) return true;
     var it = readItemType();
+    // 现场排障用：类型值变化时打一行，便于确认枚举是名称还是编码
+    var tkey = String(it.value) + '|' + String(it.text);
+    if (tkey !== state.lastTypeKey) {
+      state.lastTypeKey = tkey;
+      log('当前类型：value=' + JSON.stringify(it.value) + ' text=' + JSON.stringify(it.text)
+        + ' → ' + (isTypeAllowed() ? '允许' : '不允许'));
+    }
     var cands = [it.text, it.value];
     for (var i = 0; i < cands.length; i++) {
       var x = cands[i];
@@ -1134,7 +1146,110 @@
     try { return confirm(title + '\n\n' + msg) === true; } catch (e) { return true; }
   }
 
-  log('脚本已加载 v1.6（api=' + apiUrl('')
+  // ======================= 向导/变体页面兜底（DOM 轮询） =======================
+  // 实测：PSE_ItemGuide 向导不会调用 InforCenter_PSEITEM_CreatePage_OnCreate，
+  // 但输入框 DOM 是存在的。这里轮询等待弹窗出现，出现后用 DOM 托管控件。
+  var domWatchTimer = null;
+  var domLastTry = 0;
+  var domWarned = false;
+
+  function findInput(baseId) {
+    var el = null;
+    try { el = document.getElementById(baseId); } catch (e) { el = null; }
+    if (!el) {
+      try {
+        var list = document.querySelectorAll('[id$="' + baseId + '"]');
+        if (list && list.length) el = list[0];
+      } catch (e) { el = null; }
+    }
+    if (!el) return null;
+    var tag = String(el.tagName || '').toUpperCase();
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return el;
+    try { return el.querySelector('input,textarea') || null; } catch (e) { return null; }
+  }
+
+  function inputVisible(el) {
+    if (!el) return false;
+    try {
+      var r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0;
+    } catch (e) { return true; }
+  }
+
+  /** 用 DOM 元素伪造控件对象，复用 readText/writeText/domOf 那一套 */
+  function domCtl(id, input) {
+    if (!input) return null;
+    return {
+      id: id,
+      __dom: input,
+      GetText: function () { return input.value == null ? '' : String(input.value); },
+      SetText: function (v) {
+        input.value = v;
+        try { input.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) { }
+        try { input.dispatchEvent(new Event('change', { bubbles: true })); } catch (e) { }
+      },
+      GetDom: function () { return input; },
+      GetSelectedValue: function () { return input.value; },
+      Check: function () { return true; }
+    };
+  }
+
+  function takeOverByDom() {
+    var specEl = findInput('GGXH_Value');
+    var ecodeEl = findInput('ECODE_Value');
+    // 两个都在才认为是新增弹窗（编辑页通常没有 ECODE 输入框）
+    if (!specEl || !ecodeEl || !inputVisible(specEl)) return false;
+
+    if (!isValidCtl(state.ggxh)) state.ggxh = domCtl('GGXH_Value', specEl);
+    if (!isValidCtl(state.ename)) state.ename = domCtl('ENAME_Value', findInput('ENAME_Value'));
+    if (!isValidCtl(state.ecode)) state.ecode = domCtl('ECODE_Value', ecodeEl);
+    if (!isValidCtl(state.itemtype)) state.itemtype = domCtl('ITEMTYPE_Value', findInput('ITEMTYPE_Value'));
+
+    log('检测到新增弹窗（DOM 兜底接管）：名称/规格/编号/类型');
+    try { bindSuggest(state.ename, 'name'); } catch (e) { }
+    try { bindSuggest(state.ggxh, 'spec'); } catch (e) { }
+    var okBtn = false;
+    try { okBtn = ensureCheckButton(); } catch (e) { log('按钮注入异常（已忽略）', e && e.message); }
+    try { bindTypeWatch(); refreshTypeGate(); startTypeWatch(); } catch (e) { }
+    return !!okBtn;
+  }
+
+  function watchDialog() {
+    if (!CFG.enabled) return;
+    if (domWatchTimer) clearTimeout(domWatchTimer);
+
+    function tick() {
+      try {
+        var attached = !!(state.checkBtn && document.body && document.body.contains
+          && document.body.contains(state.checkBtn));
+        if (!attached) {
+          // 弹窗关闭：清掉对已销毁 DOM 的引用，下次重新接管
+          if (state.checkBtn) {
+            state.checkBtn = null;
+            state.checkTip = null;
+            state.ename = null; state.ggxh = null; state.ecode = null; state.itemtype = null;
+            state.lastTypeKey = '';
+          }
+          var now = Date.now();
+          if (now - domLastTry > 1200) {          // 最多每 1.2s 尝试一次，避免频繁重绑
+            domLastTry = now;
+            if (!takeOverByDom() && !domWarned) {
+              domWarned = true;
+              log('尚未探测到新增弹窗的输入框（GGXH_Value / ECODE_Value），继续等待');
+            }
+          }
+        }
+      } catch (e) { log('弹窗探测异常（已忽略）', e && e.message); }
+      domWatchTimer = setTimeout(tick, 800);
+    }
+    // 延时启动：先给正常的 CreatePage_OnCreate 机会，避免两条路重复接管
+    var delay = CFG.domWatchDelay == null ? 2500 : CFG.domWatchDelay;
+    var c = extCfg();
+    if (c && c.domWatchDelay != null && !isNaN(Number(c.domWatchDelay))) delay = Number(c.domWatchDelay);
+    domWatchTimer = setTimeout(tick, delay);
+  }
+
+  log('脚本已加载 v1.7（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')
     + '；空格整理=' + (CFG.tidySpecSpace ? '开' : '关')
@@ -1143,4 +1258,7 @@
 
   // 平台向导脚本可能晚于本文件加载，这里延迟挂接（幂等，最多重试 20 秒）
   installGuideGuards();
+
+  // 兜底：PSE_ItemGuide 等不触发 CreatePage_OnCreate 的入口，靠 DOM 轮询接管
+  watchDialog();
 })(window, window.jQuery);

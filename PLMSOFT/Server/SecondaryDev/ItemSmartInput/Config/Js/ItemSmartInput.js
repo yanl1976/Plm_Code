@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.12
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.13
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -1214,6 +1214,9 @@
     for (var i = 0; i < nodes.length; i++) {
       var el = nodes[i];
       if (el.children && el.children.length > 2) continue;     // 容器节点跳过
+      // 关键：标签自身必须可见。弹窗未打开时模板里的标签是隐藏的，
+      // 若只看文字就会命中文档里隐藏的「规格型号/图号」，再抓到首页的输入框。
+      if (!inputVisible(el)) continue;
       var own = '';
       try { own = String(el.textContent || '').replace(/[*＊\s:：]/g, ''); } catch (e) { }
       if (!own || own.length > 12) continue;
@@ -1301,7 +1304,7 @@
     // 优先按稳定 id（*_Value）；本平台实际渲染的是 id2044_TextBox 这类自动 id，
     // 找不到就按标签文字（规格型号 / 名称 / 编号 / 类型）定位。
     var hasId = function (el) { return !!(el && el.id); };
-    var specEl = findInput('GGXH_Value') || findInputByLabel(['规格型号', '图号']);
+    var specEl = findInput('GGXH_Value') || findInputByLabel(['规格型号']);
     if (!hasId(specEl) || !inputVisible(specEl)) return false;
 
     var enameEl = findInput('ENAME_Value') || findInputByLabel(['名称']);
@@ -1355,7 +1358,7 @@
     function tick() {
       try {
         // 当前该接管的目标输入框（弹窗关闭时为空）
-        var specNow = findInput('GGXH_Value') || findInputByLabel(['规格型号', '图号']);
+        var specNow = findInput('GGXH_Value') || findInputByLabel(['规格型号']);
         var curSpec = (state.ggxh && state.ggxh.__dom) || null;
 
         // 目标变了：新弹窗打开，或之前挂到了错误位置（如首页）→ 拆掉重建
@@ -1394,7 +1397,7 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.12（api=' + apiUrl('')
+  log('脚本已加载 v1.13（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')
     + '；空格整理=' + (CFG.tidySpecSpace ? '开' : '关')

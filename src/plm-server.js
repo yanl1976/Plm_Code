@@ -216,6 +216,8 @@ function handleCheck(body) {
     result.nameModel = r.nameModel || null
     // 规格空格体检：前端据此可一键修正/保存前自动应用
     result.specFormat = r.specFormat || null
+    // 名称与所选小类不符（疑似选错小类）：带候选类别，前端可展示
+    result.subMismatch = r.subMismatch || null
   } catch (e) {
     result.warnings.push('规则校验异常（已跳过）：' + e.message)
   }

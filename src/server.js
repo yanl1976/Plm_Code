@@ -467,6 +467,47 @@ async function queryInventory(code) {
   return summarizeInventory(ids, code)
 }
 
+// 字符二元组 Dice 系数：token 重合度对「只共 1 个 token」的候选拉不开差距，
+// 这里再用书写结构（二元组）衡量接近程度，返回 0~1。
+function bigramDice(a, b) {
+  if (!a || !b) return 0
+  const grams = (s) => {
+    const m = new Map()
+    for (let i = 0; i < s.length - 1; i++) {
+      const g = s.slice(i, i + 2)
+      m.set(g, (m.get(g) || 0) + 1)
+    }
+    return m
+  }
+  const totalA = a.length - 1, totalB = b.length - 1
+  if (totalA <= 0 || totalB <= 0) return 0
+  const ma = grams(a), mb = grams(b)
+  let inter = 0
+  for (const [g, n] of ma) {
+    const m = mb.get(g)
+    if (m) inter += Math.min(n, m)
+  }
+  return (2 * inter) / (totalA + totalB)
+}
+
+/**
+ * 规格接近度（0~1）：供「类似型号」按录入规格排序，而不是按库存量排序。
+ * 三个信号：型号段相同（同系列）> token 重合 > 字符二元组结构相似。
+ * 权重 0.35 / 0.45 / 0.20，相加后封顶 1。
+ */
+function specCloseness(qspec, dspec) {
+  const qn = normalize(qspec), dn = normalize(dspec)
+  if (!qn || !dn) return 0
+  if (qn === dn) return 1
+  if (looseSignature(qspec) === looseSignature(dspec)) return 0.98
+  let s = 0
+  const qm = modelOf(qspec), dm = modelOf(dspec)
+  if (qm && qm === dm) s += 0.35
+  s += 0.45 * jaccard(tokenize(qspec), tokenize(dspec))
+  s += 0.20 * bigramDice(qn, dn)
+  return Math.min(1, s)
+}
+
 // 匹配同小类「完全相同 → 高度相似 → 关键片段（牌号等）包含」的存量物料
 function matchSimilarDocs(sub, spec, excludeCode) {
   const qn = normalize(spec), qt = tokenize(spec)
@@ -488,6 +529,9 @@ function matchSimilarDocs(sub, spec, excludeCode) {
     if (fragRes.length && fragRes.some((re) => re.test(dn))) { related.push(d); seen.add(d.fnumber) }
   }
   similar.sort((a, b) => b.s - a.s)
+  // 候选超过 50 条时，截断前先按接近度排一遍：否则留下的是 allDocs 顺序里的前 50 条，
+  // 真正接近的物料可能被挡在弹窗外面。
+  related.sort((a, b) => specCloseness(spec, b.spec) - specCloseness(spec, a.spec))
   return [...exact, ...similar.map((x) => x.d), ...related].slice(0, 50)
 }
 
@@ -663,8 +707,10 @@ async function similarModels(sub, spec, excludeCode, opts = {}) {
       projectNo: (pj && pj.projectNo) || '',
       projectLastDate: (pj && pj.lastDate) || '',
       cached: !!(c && pj),
+      // 接近度：按录入规格排序的主键；库存量只在同分时做次要排序
+      similarity: +specCloseness(spec, d.spec).toFixed(3),
     }
-  }).sort((a, b) => b.qty - a.qty)
+  }).sort((a, b) => (b.similarity - a.similarity) || (b.qty - a.qty))
   const total = items.reduce((s, x) => ({ qty: s.qty + x.qty, avbqty: s.avbqty + x.avbqty }), { qty: 0, avbqty: 0 })
   return { items, total, pending, cachedCount: items.length - pending }
 }

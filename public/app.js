@@ -1873,7 +1873,7 @@ async function nmShowSimilar(refresh) {
     html += '<p class="muted">未找到类似型号的存量物料</p>'
   } else {
     html += `<p class="muted small">合计数量 ${fmt(total.qty)} · 可用 ${fmt(total.avbqty)}</p>`
-    html += `<p class="muted small">录入规格：<span class="mono">${escapeHtml(spec)}</span>　<span class="nm-diff-legend">黄色</span>= 与该规格的差异部分</p>`
+    html += `<p class="muted small">录入规格：<span class="mono">${escapeHtml(spec)}</span>　<span class="nm-diff-legend">黄色</span>= 与该规格的差异部分　·　已按接近程度排序（越靠前差异越少）</p>`
     html += '<table class="mat nm-sim-table"><thead><tr><th>物料号</th><th>名称</th><th>规格型号</th><th>数量</th><th>项目号（最近业务）</th></tr></thead><tbody>'
     html += items.map((d) => {
       // 与「已录入的规格」逐词元对比，差异部分黄色标出（分隔符原样保留）

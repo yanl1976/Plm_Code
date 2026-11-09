@@ -307,6 +307,7 @@ state.subs: Map<subKey(6位), {
 | `blocking` | `{type:'error'|'duplicate', reason}` 或 `null` |
 | `suggestion` | `{name, spec, zycs}` 可回填值 |
 | `specFormat` | `{raw, fixed, reasons[]}` 规格空格体检；`fixed` 为整理后写法，无问题为 `null`（乘号不在此处理） |
+| `subMismatch` | 名称与所选小类不符时返回 `{name, level, current, best, candidates[], msg}`；`level=warn` 同时进 `warnings[]`，`level=error` 进 `errors[]`；名称与别的小类标准名相似度 ≥ `blockBest`(0.9) 时为 `error`，否则为 `warn`；正常为 `null` |
 | `skipReason` | **未查重的原因**（无编码/前缀未命中），有此字段表示本次没查 |
 | `elapsedMs` | 耗时（实测 2~4ms） |
 

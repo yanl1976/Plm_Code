@@ -15,7 +15,7 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { fullwidthToHalf } from './spec.js'
-import { getCategory, chooseTokens } from './classify.js'
+import { getCategory, chooseTokens, MAP } from './classify.js'
 import { extractParams } from './struct-spec.js'
 import { suggestName } from './name-synonyms.js'
 
@@ -41,6 +41,91 @@ const esc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const hasFullWidth = (s) => /[\uFF01-\uFF5E\u3000]/.test(s)
 // 中文没有 \b，用分隔符/首尾做词边界，避免「无」误命中「无锡」
 const wordBound = (w) => new RegExp('(?:^|[\\s+*/·\\-,()、，。])' + esc(w) + '(?:$|[\\s+*/·\\-,()、，。])')
+const num = (o, k, d) => (o && o[k] != null && !Number.isNaN(Number(o[k])) ? Number(o[k]) : d)
+
+// ---------------- 名称 ↔ 小类 一致性 ----------------
+// 用字符二元组衡量名称与小类标准名的相似度：中文名称短，二元组比 token 稳；
+// 「断路器」与「三相电抗器」共享 0 个二元组，「电抗器」与「三相电抗器」共享 2 个。
+function bigramsOf(s) {
+  const t = String(s == null ? '' : s).replace(/\s+/g, '')
+  const m = new Map()
+  if (!t) return m
+  if (t.length === 1) { m.set(t, 1); return m }
+  for (let i = 0; i < t.length - 1; i++) {
+    const g = t.slice(i, i + 2)
+    m.set(g, (m.get(g) || 0) + 1)
+  }
+  return m
+}
+
+function diceOf(ga, gb) {
+  let ta = 0
+  let tb = 0
+  for (const n of ga.values()) ta += n
+  for (const n of gb.values()) tb += n
+  if (!ta || !tb) return 0
+  let inter = 0
+  for (const [g, n] of ga) {
+    const m = gb.get(g)
+    if (m) inter += Math.min(n, m)
+  }
+  return (2 * inter) / (ta + tb)
+}
+
+// 模块加载时把小类名称的二元组算好，避免每次按键校验都重算 200 多次
+const SUB_GRAMS = Object.entries(MAP).map(([sub, it]) => ({
+  sub,
+  subName: it.subName || '',
+  midName: it.midName || '',
+  grams: bigramsOf(it.subName || ''),
+}))
+
+/**
+ * 名称与所选小类是否明显不符（如小类「三相电抗器」却把名称写成「断路器」）。
+ *
+ * 三个条件同时满足才判定，尽量避免误伤同族简称：
+ *   1) 与当前小类标准名相似度 < minCurrent（默认 0.4）
+ *   2) 另有小类相似度 >= minBest（默认 0.6）
+ *   3) 两者差距 >= minGap（默认 0.25）
+ *
+ * 例：三相电抗器 + 断路器   → 当前 0，最佳「微型断路器」0.67 → 判定不符
+ *    三相电抗器 + 电抗器   → 当前 0.67                     → 不判定（同族简称）
+ *
+ * @returns {null | {name, current, best, candidates, msg}}
+ */
+export function detectSubMismatch(rawName, sub) {
+  const R = (rules().name || {}).subMismatch || {}
+  if (R.enabled === false) return null
+  const name = String(rawName == null ? '' : rawName).trim()
+  if (!name || !sub) return null
+  const info = getCategory(sub)
+  if (!info || !info.subName) return null
+
+  const gq = bigramsOf(name)
+  if (!gq.size) return null
+  const curScore = diceOf(gq, bigramsOf(info.subName))
+  if (curScore >= num(R, 'minCurrent', 0.4)) return null
+
+  const ranked = SUB_GRAMS
+    .filter((x) => x.sub !== sub && x.subName)
+    .map((x) => ({ sub: x.sub, subName: x.subName, midName: x.midName, score: diceOf(gq, x.grams) }))
+    .sort((a, b) => b.score - a.score)
+  const best = ranked[0]
+  if (!best) return null
+  if (best.score < num(R, 'minBest', 0.6)) return null
+  if (best.score - curScore < num(R, 'minGap', 0.25)) return null
+
+  // 同分候选一起列出：断路器会同时命中「微型断路器/漏电断路器/塑壳断路器」
+  const cands = ranked.filter((x) => x.score >= best.score - 0.05).slice(0, 3)
+  const list = cands.map((x) => `${x.sub} ${x.subName}`).join(' / ')
+  return {
+    name,
+    current: { sub, subName: info.subName, score: +curScore.toFixed(3) },
+    best: { ...best, score: +best.score.toFixed(3) },
+    candidates: cands.map((x) => ({ ...x, score: +x.score.toFixed(3) })),
+    msg: `名称「${name}」与所选小类「${info.subName}」不匹配，更像 ${list}，请确认小类是否选错`,
+  }
+}
 
 /**
  * 规范写法建议：只做可机械统一的处理，保留原有的语义与大小写结构
@@ -290,7 +375,7 @@ export function checkName(raw, spec, sub, opts = {}) {
 
   if (!s) {
     errors.push('物料名称不能为空')
-    return { ok: false, errors, warnings, nameSynonym: null, nameFormat: null }
+    return { ok: false, errors, warnings, nameSynonym: null, nameFormat: null, subMismatch: null }
   }
   if (s.length < (R.minLen || 2)) errors.push(`名称过短（至少 ${R.minLen || 2} 个字）`)
   if (s.length > (R.maxLen || 24)) errors.push(`名称过长（最多 ${R.maxLen || 24} 个字），细节请写进规格`)
@@ -330,7 +415,26 @@ export function checkName(raw, spec, sub, opts = {}) {
     warnings.push(`名称里有空格/分隔符（${why}），建议改为「${nameFormat.final}」`)
   }
 
-  return { ok: errors.length === 0, errors, warnings, nameSynonym: syn || null, nameFormat, nameModel: nameModel || null }
+  // 名称 ↔ 小类一致性：先在本小类内做同义词归一，再比标准名，
+  // 避免「空气开关 → 微型断路器」这种正确写法被误判成类别不符。
+  const canonical = (syn && syn.exact && syn.std) ? syn.std : s
+  const subMismatch = detectSubMismatch(canonical, sub)
+  if (subMismatch) {
+    // 两档处理：名称与别的小类标准名几乎完全一致（>= blockBest）才硬阻断；
+    // 其余仅提示 —— 交界情况（熔芯座/熔座、插头座/接插件）不该挡人录入。
+    const conf = R.subMismatch || {}
+    const lv = subMismatch.best.score >= num(conf, 'blockBest', 0.9)
+      ? 'error'
+      : (conf.level || 'warn')
+    subMismatch.level = lv
+    if (lv === 'error') errors.push(subMismatch.msg)
+    else warnings.push(subMismatch.msg)
+  }
+
+  return {
+    ok: errors.length === 0, errors, warnings, nameSynonym: syn || null, nameFormat,
+    nameModel: nameModel || null, subMismatch,
+  }
 }
 
 /**
@@ -357,6 +461,8 @@ export function checkMaterial(m = {}) {
     specFormat: sp.specFormat || null,
     // 名称含型号/参数：仅提示标准写法（含建议实物名 core 与型号片段 moved），不改写任何字段
     nameModel: n.nameModel || null,
+    // 名称与所选小类不符（疑似选错小类），结构化返回供前端提示候选类别
+    subMismatch: n.subMismatch || null,
     suggestion: {
       name: syn && syn.exact ? syn.std : '',
       spec: sp.suggestion && sp.suggestion !== String(m.spec || '').trim() ? sp.suggestion : '',
@@ -365,4 +471,4 @@ export function checkMaterial(m = {}) {
   }
 }
 
-export default { rules, checkName, checkSpec, checkMaterial, suggestSpec, fixNameFormat, fixSpecFormat, resolveNameFix, detectNameModel }
+export default { rules, checkName, checkSpec, checkMaterial, suggestSpec, fixNameFormat, fixSpecFormat, resolveNameFix, detectNameModel, detectSubMismatch }

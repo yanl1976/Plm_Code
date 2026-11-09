@@ -273,7 +273,7 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 服务端业务规则**不在 js 里**，仍由既有配置文件驱动，改规则不需要动 PLM：
 
 - `src/config/name-synonyms.json` —— 名称同义词（空气开关 → 微型断路器）
-- `src/config/material-rules.json` —— 名称/规格书写规则（长度、禁用词、单位大小写…）
+- `src/config/material-rules.json` —— 名称/规格书写规则（长度、禁用词、单位大小写…）；`name.subMismatch` 控制「名称与所选小类不符」的检测阈值与级别（warn/error）
 - `src/config/dedup-rules.json` —— 查重属性与特征参数（按小类）
 - `src/config/spec-fields.json` —— 特征参数取值正则
 

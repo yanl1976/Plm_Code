@@ -12,6 +12,15 @@
     "minLen": 2,
     "maxLen": 24,
     "desc": "名称 = 实物名（小类标准词），只写“是什么”；型号、参数、材质、品牌、项目都不写进名称。",
+    "subMismatch": {
+      "enabled": true,
+      "level": "warn",
+      "blockBest": 0.9,
+      "minCurrent": 0.4,
+      "minBest": 0.6,
+      "minGap": 0.25,
+      "desc": "名称与所选小类明显不符（如小类=三相电抗器、名称=断路器）。两档：与别的小类标准名相似度 >= blockBest(0.9) 视为明显错配，按 error 处理（看板阻断保存、PLM 二次确认）；其余按 level(默认 warn) 仅提示。三个门槛 minCurrent/minBest/minGap 需同时满足才判定，避免误伤同族简称。"
+    },
     "forbidPatterns": [
       {
         "re": "[Ss]20\\d{5}",

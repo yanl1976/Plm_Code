@@ -6,22 +6,96 @@
 ## 目录结构
 ```
 Plm_Code/
-  .env                      # 统一配置（数据库 + 端口 + AI），模板见 .env.example，不入库
-  doc/编码分类规则以及编码属性说明.xlsx   # 编码分类规则（生产物资-2023）
-  data/                     # 产物（gitignore）：materials.* / dedup-* / mapping.json / freeze.json / unified-materials.json
+  .env                          # 统一配置（数据库 + 端口 + AI）；模板见 .env.example，不入库
+  .env.example                  # 配置模板
+  .gitignore                    # 忽略 data/（产物）、node_modules 等
+  ecosystem.config.cjs          # PM2 进程定义（plm-api + plm-web），端口全部取自 .env
+  package.json                  # 依赖与 npm scripts
+  export_all.cjs                # 一次性导出脚本（含硬编码绝对路径，仅本地用）
+  README.md                     # 本文档
+  DistributedFileServer.rar     # PLM 服务端安装包（大文件，非本项目代码）
+  Server.rar                    # PLM 服务端安装包（大文件，非本项目代码）
+
+  doc/                          # 参考资料与导出产物
+    编码分类规则以及编码属性说明.xlsx  # 编码分类规则（生产物资-2023），gen_classification.py 的输入
+    物料分类.xlsx                # 分类辅助表
+    特征参数录入模板.xlsx         # 特征参数录入模板
+    各类物料明细导出 xlsx         # 按小类/品类的物料明细，人工核查用
+    编码分类规则与特征参数说明.md   # 分类与特征参数说明（人工整理）
+    特征参数权威补全方案_电气类.md   # 电气类特征参数权威补全方案
+    物料导出模板_规则与踩坑.md      # 导出模板规则与踩坑记录
+    AI开发标准模板.md              # AI 相关开发规范
+    PLM物料对接_开发文档.md        # PLM 对接开发文档
+    PLM物料录入助手_部署说明.md     # PLM 录入助手部署说明
+    plm-sdk/                      # 由 export_plm_sdk.ps1 从 PLMSOFT/Server 反射导出的 SDK 文档
+      01-interface-sdk.md         # 接口 SDK
+      02-service-api.md           # 服务 API
+      03-plugin-points.md         # 插件点
+      04-cmdsql-index.md          # 命令 SQL 索引
+      05-development-extensiontotype.xml  # 扩展点 -> 接口类型映射（SDK 原始 XML）
+    物料导出模板/                 # export_all.cjs 产出的 xlsx 模板（按小类分文件）
+
+  PLMSOFT/                      # 金蝶 PLM 程序目录（Server/Client，第三方，3 万+ 文件，勿改）
+
+  data/                         # 产物（gitignore）：materials.ndjson/csv + stats.json / dedup-* /
+                                #   mapping.json / freeze.json / unified-materials.json /
+                                #   feature-overrides.json / extract-validation.json /
+                                #   learn-todo.json / ai-overlay.json / rules-prev/
+
+  public/                       # 治理看板前端（原生 JS，零额外依赖）
+    index.html                  # 单页骨架：概览 / 一物多号查重 / 分类树 / 存量清洗 / 系统设置
+    app.js                      # 全部视图逻辑：fetch 调 /api/*，含簇参数对比表与同义词维护
+    style.css                   # 样式
+
+  scripts/
+    gen_classification.py       # xlsx -> src/config/classification.json（规则变更时重跑）
+    export_all.cjs              # 全量导出物料 xlsx 到 doc/物料导出模板/（列宽自适应、自动换行）
+    export_plm_sdk.ps1          # 反射读取 PLMSOFT/Server 程序集 -> doc/plm-sdk/*.md
+    poc-ai-extract.mjs          # PoC：LLM 抽取与规则基线对比（本地验证，不并入正式流程）
+    verify-plm-plugin.mjs       # PLM 录入助手控制流验证器（vm sandbox + mock $.ajax）
+
   src/
-    db.js                   # SQL Server 连接池（单例，跨网优化）
-    config/
-      classification.json     # 由 xlsx 生成的分类树（3 大类 / 209 小类）
-      classification-map.json # 6位小类编码 -> 分类定位
-      dedup-rules.json        # 灵活查重规则：归一化 + 各小类关键属性（可改，无需动代码）
-    extract.js              # 全量提取物料 -> ndjson/csv/stats
-    classify.js             # FNUMBER 前缀 -> 小类 + 选择查重属性
-    spec.js                 # 名称/规格归一化、签名构造、Jaccard 相似度
-    dedup.js                # 强制查重引擎（一物多号 / 一号多物 / 近重）
-    mapping.js              # 存量清洗：映射法(旧->主) + 冷冻法(冻结)
-    cli.js                  # 命令行入口
-  scripts/gen_classification.py  # xlsx -> classification.json（规则变更时重跑）
+    env.js                      # 全项目唯一 .env 加载点（进程环境 > .env > 代码默认值）
+    db.js                       # 金蝶 ERP / SQL Server 连接池（单例、跨网收敛、不按请求关闭）
+    cli.js                      # CLI 入口：extract / ai-extract / dedup / validate / learn / report / mapping / feature-templates
+
+    extract.js                  # 全量提取 -> data/materials.ndjson + csv + stats.json（keyset 分页）
+    classify.js                 # FNUMBER 前 6 位 -> 大类/中类/小类，并按规则选择查重属性
+    spec.js                     # 名称/规格归一化、签名构造、token 化、Jaccard、型号提取
+    struct-spec.js              # 规格文本 -> 特征参数结构化（正则来自 spec-fields.json）
+    dedup.js                    # 强制查重批处理：一物多号 / 一号多物 / 近重，落盘 dedup-*
+    validate.js                 # 提取校验：黄金样例 + 格式契约 + 覆盖率 + 新旧规则对比
+    learn.js                    # 自学习闭环：差异聚合 -> 检索词清单 -> 确认后写回 model-semantics.json
+    mapping.js                  # 存量清洗：映射法(旧->主) + 冷冻法(冻结)，落盘 data/
+    snapshot.js                 # 快照保鲜（ERP 指纹比对）+ 本地未命中时在线兜底查询
+    settings.js                 # 系统设置读写（编码前缀过滤 / 筛查组织）-> config/settings.json
+    feature-store.js            # 人工填报层持久化 -> data/feature-overrides.json
+    feature-templates.js        # 中类标准有序特征参数模板 -> config/feature-templates.json
+    material-rules.js           # 名称/规格书写规则引擎（error 阻断 / warn 提示）
+    name-synonyms.js            # 名称同义词字典：加载(mtime 热更新) / 三级匹配 / 增删改(原子写回)
+    plm-index.js                # PLM 实时联想 + 查重内存索引（毫秒级，不落盘）
+    plm-server.js               # PLM 录入助手 API（:3100）：/suggest /check /health /reload
+    server.js                   # 治理看板 Web 服务（:3000）：REST + 后台重跑（纯内置 http）
+
+    ai/                         # LLM 辅助抽取（规则先行，AI 仅补缺项，默认关闭）
+      client.js                 # OpenAI 兼容 chat/completions 客户端（cloud/local 双档案）
+      extractSpec.js            # 抽取提示词 + 调用 + JSON 归一 + 证据校验
+      index.js                  # ai-extract 命令：规则优先，LLM 补缺项，烘焙 ai-overlay.json
+      overlay.js                # AI 结果回灌（需 AI_EXTRACT=1 才生效）
+
+    config/                     # 规则配置：改这里即可调整行为，无需改代码
+      classification.json       # 由 xlsx 生成的分类树（3 大类 / 209 小类）
+      classification-map.json   # 6 位小类编码 -> 大类/中类/小类 定位与名称
+      dedup-rules.json          # 查重口径：归一化规则 + 各小类关键属性 + 近重阈值
+      spec-fields.json          # 特征参数取值正则库（按头部企业命名方式归纳）
+      material-rules.json       # 名称/规格书写规则（硬错误 + 提示）及文案
+      name-synonyms.json        # 名称同义词字典（global + bySub 两级，bySub 优先）
+      feature-templates.json    # 中类特征参数模板（feature-templates.js 产出，勿手改）
+      model-semantics.json      # 品牌型号编码语义解码表（逐段解码，fill-when-empty）
+      brand-decode.json         # 型号编码解码表（文本提取为空时的盲区填充）
+      extract-cases.json        # 特征参数提取黄金样例（validate 断言，改动必须全绿）
+      settings.json             # 系统设置（编码前缀过滤 / 筛查组织）
+      中类提取规则设计.md        # 中类提取规则设计说明
 ```
 
 ## 快速开始

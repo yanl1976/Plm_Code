@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.13
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.15
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -741,23 +741,25 @@
     var allowVal = CFG.itemTypeAllowValues || [];
     if (!allowText.length && !allowVal.length) return true;
     var it = readItemType();
-    // 现场排障用：类型值变化时打一行，便于确认枚举是名称还是编码
+    var ok = false;
+    var cands = [it.text, it.value];
+    for (var i = 0; i < cands.length && !ok; i++) {
+      var x = cands[i];
+      if (!x) continue;
+      if (allowText.indexOf(x) >= 0 || allowVal.indexOf(x) >= 0) { ok = true; break; }
+      for (var j = 0; j < allowText.length; j++) {
+        if (x.indexOf(allowText[j]) >= 0) { ok = true; break; }   // 兼容「电气元件(10)」这类带后缀
+      }
+    }
+
+    // 现场排障：类型值变化时打一行（注意不要再递归调用本函数）
     var tkey = String(it.value) + '|' + String(it.text);
     if (tkey !== state.lastTypeKey) {
       state.lastTypeKey = tkey;
       log('当前类型：value=' + JSON.stringify(it.value) + ' text=' + JSON.stringify(it.text)
-        + ' → ' + (isTypeAllowed() ? '允许' : '不允许'));
+        + ' 允许表=' + JSON.stringify(allowText) + ' → ' + (ok ? '允许' : '不允许'));
     }
-    var cands = [it.text, it.value];
-    for (var i = 0; i < cands.length; i++) {
-      var x = cands[i];
-      if (!x) continue;
-      if (allowText.indexOf(x) >= 0 || allowVal.indexOf(x) >= 0) return true;
-      for (var j = 0; j < allowText.length; j++) {
-        if (x.indexOf(allowText[j]) >= 0) return true;   // 兼容「电气元件(10)」这类带后缀
-      }
-    }
-    return false;
+    return ok;
   }
 
   /** 按当前类型刷新按钮的可用状态 */
@@ -1200,6 +1202,34 @@
    * 「名称*规格型号/图号*…」，只有第一个字段能命中。
    * 正确做法：先锁定标签元素（自身文本即标签），再取文档顺序中紧跟其后的可见输入框。
    */
+  /** 是否像下拉/复选组件（名称、规格必须是普通文本框） */
+  function looksLikeDropdown(el) {
+    if (!el) return false;
+    var id = String(el.id || '');
+    var cls = String(el.className || '');
+    return /DropDown|ComboBox|AutoComboBox|Select/i.test(id)
+      || /dropdown|combo|select/i.test(cls);
+  }
+
+  /** 从标签向上找「只含一个可见输入框」的行容器，返回该输入框 */
+  function inputInLabelRow(el) {
+    var p = el;
+    for (var k = 0; k < 6 && p; k++) {
+      p = p.parentNode;
+      if (!p || !p.querySelectorAll) continue;
+      var ins = p.querySelectorAll('input,textarea');
+      var first = null, count = 0;
+      for (var i = 0; i < ins.length; i++) {
+        if (!ins[i].id || !inputVisible(ins[i])) continue;
+        if (!first) first = ins[i];
+        count++;
+      }
+      if (count >= 1 && count <= 3) return first;   // 行内 1~3 个（规格型号/图号可能两个），取第一个
+      if (count > 3) return null;                   // 容器太大，说明粒度不对，不猜
+    }
+    return null;
+  }
+
   function findInputByLabel(names) {
     var all = visibleInputs();
     // 只认带 id 的输入框：弹窗字段是 id2255_TextBox 这类自动 id，
@@ -1225,7 +1255,11 @@
       for (var j = 0; j < names.length && !hit; j++) hit = labelHit(own, names[j]);
       if (!hit) continue;
 
-      // 文档顺序中紧跟在标签后面的第一个可见输入框
+      // 首选：标签所在「行容器」里唯一的可见输入框（标签与输入框同行时最准）
+      var rowInp = inputInLabelRow(el);
+      if (rowInp) return rowInp;
+
+      // 次选：文档顺序中紧跟在标签后面的第一个可见输入框
       for (var m = 0; m < inputs.length; m++) {
         var pos = 0;
         try { pos = el.compareDocumentPosition(inputs[m]); } catch (e) { pos = 0; }
@@ -1306,6 +1340,10 @@
     var hasId = function (el) { return !!(el && el.id); };
     var specEl = findInput('GGXH_Value') || findInputByLabel(['规格型号']);
     if (!hasId(specEl) || !inputVisible(specEl)) return false;
+    if (looksLikeDropdown(specEl)) {           // 下拉框绝不是规格型号
+      log('规格型号定位到了下拉控件（' + specEl.id + '），跳过本次接管');
+      return false;
+    }
 
     var enameEl = findInput('ENAME_Value') || findInputByLabel(['名称']);
     var ecodeEl = findInput('ECODE_Value') || findInputByLabel(['编号']);
@@ -1316,15 +1354,29 @@
     if (!hasId(typeEl)) typeEl = null;
     if (!ecodeEl && !typeEl) return false;
 
+    // 四个字段必须互不相同：出现「四个都指向同一个下拉框」说明结构没认对，宁可不接管
+    var picked = [specEl, enameEl, ecodeEl, typeEl], seenEls = [];
+    for (var pi = 0; pi < picked.length; pi++) {
+      var pe = picked[pi];
+      if (!pe) continue;
+      if (seenEls.indexOf(pe) >= 0) {
+        log('字段定位重复（同一输入框被当成多个字段），跳过本次接管');
+        return false;
+      }
+      seenEls.push(pe);
+    }
+
     if (!isValidCtl(state.ggxh)) state.ggxh = domCtl('GGXH_Value', specEl);
     if (!isValidCtl(state.ename)) state.ename = enameEl ? domCtl('ENAME_Value', enameEl) : null;
     if (!isValidCtl(state.ecode)) state.ecode = ecodeEl ? domCtl('ECODE_Value', ecodeEl) : null;
     if (!isValidCtl(state.itemtype)) state.itemtype = typeEl ? domCtl('ITEMTYPE_Value', typeEl) : null;
 
-    log('检测到新增弹窗（DOM 兜底接管）：规格=' + (specEl.id || '(无id)')
-      + ' 名称=' + (enameEl ? (enameEl.id || '(无id)') : '未找到')
-      + ' 编号=' + (ecodeEl ? (ecodeEl.id || '(无id)') : '未找到')
-      + ' 类型=' + (typeEl ? (typeEl.id || '(无id)') : '未找到'));
+    var desc = function (el) {
+      if (!el) return '未找到';
+      return (el.id || '(无id)') + '[' + (nearLabel(el) || '?') + ']';
+    };
+    log('检测到新增弹窗（DOM 兜底接管）：规格=' + desc(specEl)
+      + ' 名称=' + desc(enameEl) + ' 编号=' + desc(ecodeEl) + ' 类型=' + desc(typeEl));
     try { bindSuggest(state.ename, 'name'); } catch (e) { }
     try { bindSuggest(state.ggxh, 'spec'); } catch (e) { }
     var okBtn = false;
@@ -1371,19 +1423,17 @@
           var now = Date.now();
           if (now - domLastTry > 1200) {            // 最多每 1.2s 尝试一次，避免频繁重绑
             domLastTry = now;
-            if (!takeOverByDom()) {
-              if (!domWarned) {
-                domWarned = true;
-                log('尚未探测到新增弹窗（需同时出现 规格型号 / 编号 / 类型 三个字段），继续等待');
-              }
-              // 弹窗一打开（可见输入框变多）就打一份清单，便于定位真实 id；
-              // 同一批输入框只打一次，避免刷屏
-              var list = visibleInputs();
-              var sig = list.length + '#' + ((list[0] && list[0].id) || '');
-              if (list.length >= 4 && sig !== lastInputSig) {
-                lastInputSig = sig;
-                dumpInputs(list);
-              }
+            // 只要可见输入框集合变化就打一份清单（不论接管成功与否），
+            // 弹窗打开时必然会出现一次，用来确认标签与 id 的对应关系
+            var list = visibleInputs();
+            var sig = list.length + '#' + ((list[0] && list[0].id) || '');
+            if (list.length >= 4 && sig !== lastInputSig) {
+              lastInputSig = sig;
+              dumpInputs(list);
+            }
+            if (!takeOverByDom() && !domWarned) {
+              domWarned = true;
+              log('尚未探测到新增弹窗（需同时出现 规格型号 / 编号 / 类型 三个字段），继续等待');
             }
           }
         }
@@ -1397,7 +1447,7 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.13（api=' + apiUrl('')
+  log('脚本已加载 v1.15（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')
     + '；空格整理=' + (CFG.tidySpecSpace ? '开' : '关')

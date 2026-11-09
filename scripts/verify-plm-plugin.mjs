@@ -273,8 +273,8 @@ function router(map) {
   }
 }
 
-/** 在整棵 mock DOM 里找「校验并回填」按钮（注入点可能是 form，也可能是 body） */
-function findBtn(p) {
+/** 在整棵 mock DOM 里按 class 找元素（注入点可能是 form，也可能是 body） */
+function findByClass(p, cls) {
   const all = []
   const walk = (n) => {
     if (!n) return
@@ -282,7 +282,11 @@ function findBtn(p) {
     for (const c of (n.children || [])) walk(c)
   }
   walk(p.doc.body)
-  return all.find((c) => String(c.className || '').indexOf('plm-smart-check-btn') >= 0)
+  return all.find((c) => String(c.className || '').indexOf(cls) >= 0)
+}
+
+function findBtn(p) {
+  return findByClass(p, 'plm-smart-check-btn')
 }
 
 // ======================= 场景 =======================
@@ -543,11 +547,23 @@ async function run() {
     ok('允许类型下按钮可用', !!btn && btn.disabled !== true)
     if (btn) {
       btn.onclick({ preventDefault() { }, stopPropagation() { } })
-      await sleep(40)
-      ok('名称回填为同义词标准名', p.ctl['ENAME_Value'].__text === '微型断路器',
-        'got=' + JSON.stringify(p.ctl['ENAME_Value'].__text))
-      ok('规格回填并整理空格', p.ctl['GGXH_Value'].__text === 'NXB-63 C16',
-        'got=' + JSON.stringify(p.ctl['GGXH_Value'].__text))
+      await sleep(20)
+
+      const nameIn = findByClass(p, 'plm-smart-dlg-name')
+      const specIn = findByClass(p, 'plm-smart-dlg-spec')
+      const saveBtn = findByClass(p, 'plm-smart-dlg-save')
+      ok('点击后弹出校验弹窗', !!(nameIn && specIn && saveBtn))
+
+      if (saveBtn) {
+        nameIn.value = '空气 开关'
+        specIn.value = '  NXB-63   C16  '
+        saveBtn.onclick({ preventDefault() { }, stopPropagation() { } })
+        await sleep(20)
+        ok('名称回填为同义词标准名', p.ctl['ENAME_Value'].__text === '微型断路器',
+          'got=' + JSON.stringify(p.ctl['ENAME_Value'].__text))
+        ok('规格回填并整理空格', p.ctl['GGXH_Value'].__text === 'NXB-63 C16',
+          'got=' + JSON.stringify(p.ctl['GGXH_Value'].__text))
+      }
     }
   }
 

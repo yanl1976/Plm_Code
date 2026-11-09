@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.22
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.23
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -74,6 +74,7 @@
     checkButtonOffsetX: 6,       // 跟随定位时相对输入框右边缘的横向偏移(px)，负数可向左贴
     checkButtonOffsetY: 0,       // 纵向偏移(px)
     checkButtonPlace: 'left',    // 'left'=名称标签左侧（默认）；'float'=输入框右侧；'fixed'=窗口右下角；'after'=插进布局
+    apiLabel: '数据治理服务器',   // 提示文案里代替具体地址显示的名字
     // 按钮只对下列「类型(ITEMTYPE)」生效，其余类型置灰不可用
     restrictItemType: true,
     itemTypeAllowText: ['电气元件', '原材料', '外购标准件'],
@@ -778,14 +779,13 @@
       }
     } catch (e) { }
     var ok = isTypeAllowed();
+    // 未选类型 / 不在白名单 → 直接隐藏按钮，不再显示黄色提示
     btn.disabled = !ok;
-    btn.style.opacity = ok ? '1' : '0.55';
+    btn.style.display = ok ? 'inline-block' : 'none';
+    btn.style.opacity = '1';
     btn.style.cursor = ok ? 'pointer' : 'not-allowed';
-    btn.title = ok ? '' : typeHint();
-    if (!ok) setCheckTip(typeHint(), 'warn');
-    else if (state.checkTip && String(state.checkTip.textContent || '').indexOf('当前类型不适用') >= 0) {
-      setCheckTip('');
-    }
+    btn.title = '';
+    if (!ok) setCheckTip('');
     // 跟随模式：弹窗滚动/移动后重新贴合输入框
     if (state.btnPlace === 'float' || state.btnPlace === 'left') placeFloat();
   }
@@ -813,6 +813,12 @@
   function placeFloat() {
     var btn = state.checkBtn;
     if (!btn) return;
+    // 类型门控优先：不允许时保持隐藏
+    if (!isTypeAllowed()) {
+      btn.style.display = 'none';
+      if (state.checkTip) state.checkTip.style.display = 'none';
+      return;
+    }
     // 跟随的输入框要和按钮锚点一致（默认名称框）
     var hostCtl = CFG.checkButtonHost === 'name' ? state.ename : state.ggxh;
     var el = (hostCtl && hostCtl.__dom) || null;
@@ -942,7 +948,7 @@
       fired = true;
       setTimeout(function () { fired = false; }, 300);
       log('按钮已点击');
-      runCheckAndFill();
+      openEditor();
       return false;
     };
     btn.onclick = fire;
@@ -1015,7 +1021,7 @@
       name: name, spec: spec, sub: sub, ecode: readEcode()
     }, function (r) {
       if (!r || r.ok === false) {
-        var tip = '治理服务不可用，未做处理（' + apiUrl('') + '）';
+        var tip = '治理服务不可用，未做处理（' + CFG.apiLabel + '）';
         setCheckTip(tip, 'bad');
         msgBox('校验未完成', tip + '\n\n请确认服务已启动，且浏览器能直接访问该地址。');
         return;
@@ -1061,6 +1067,179 @@
     } else if (r.subMismatch) {
       msgBox('分类疑似不符', r.subMismatch.msg);
     }
+  }
+
+  // ======================= 编辑弹窗（名称/规格校验 + 回填） =======================
+  var dlg = null;
+
+  function escHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function dlgEl(tag, css, text) {
+    var el = document.createElement(tag);
+    if (css) el.style.cssText = css;
+    if (text != null) el.textContent = text;
+    return el;
+  }
+
+  function closeEditor() {
+    if (!dlg) return;
+    try { if (dlg.mask && dlg.mask.parentNode) dlg.mask.parentNode.removeChild(dlg.mask); } catch (e) { }
+    dlg = null;
+  }
+
+  function openEditor() {
+    if (!CFG.enabled || !isTypeAllowed() || dlg) return;
+
+    var mask = dlgEl('div', 'position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,.35);z-index:2147483000;');
+    var panel = dlgEl('div', 'position:fixed;left:50%;top:6%;transform:translateX(-50%);width:620px;max-width:94vw;'
+      + 'max-height:86vh;overflow:auto;background:#fff;border-radius:6px;'
+      + 'box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:2147483001;'
+      + 'font:13px/1.6 "Microsoft YaHei",Arial,sans-serif;color:#333;');
+
+    var head = dlgEl('div', 'padding:10px 16px;background:#f5f7fa;border-bottom:1px solid #e3e8ee;font-weight:bold;font-size:14px;');
+    head.textContent = '物料名称与规格校验';
+    var xBtn = dlgEl('span', 'float:right;cursor:pointer;color:#999;font-weight:normal;font-size:18px;line-height:18px;', '×');
+    xBtn.onclick = closeEditor;
+    head.appendChild(xBtn);
+
+    var body = dlgEl('div', 'padding:14px 16px;');
+    body.appendChild(dlgEl('div', 'color:#666;margin-bottom:4px;', '物料名称'));
+    var nameIn = dlgEl('input', 'width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #cfd6de;'
+      + 'border-radius:3px;font-size:13px;margin-bottom:12px;');
+    nameIn.className = 'plm-smart-dlg-name';
+    nameIn.value = readText(state.ename);
+    body.appendChild(nameIn);
+
+    body.appendChild(dlgEl('div', 'color:#666;margin-bottom:4px;', '规格型号'));
+    var specIn = dlgEl('input', 'width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #cfd6de;'
+      + 'border-radius:3px;font-size:13px;');
+    specIn.className = 'plm-smart-dlg-spec';
+    specIn.value = readRaw(state.ggxh);
+    body.appendChild(specIn);
+
+    var tipBox = dlgEl('div', 'margin-top:10px;min-height:20px;');
+    body.appendChild(tipBox);
+    var simBox = dlgEl('div', 'margin-top:6px;');
+    body.appendChild(simBox);
+
+    var foot = dlgEl('div', 'padding:10px 16px;border-top:1px solid #e3e8ee;text-align:right;background:#fafbfc;');
+    var cancelBtn = dlgEl('button', 'padding:4px 14px;margin-left:8px;border:1px solid #cfd6de;background:#fff;'
+      + 'border-radius:3px;cursor:pointer;', '取消');
+    cancelBtn.onclick = closeEditor;
+    var saveBtn = dlgEl('button', 'padding:4px 14px;margin-left:8px;border:1px solid #3f8fd2;background:#3f8fd2;'
+      + 'color:#fff;border-radius:3px;cursor:pointer;', '保存并回填');
+    saveBtn.className = 'plm-smart-dlg-save';
+
+    var errors = [];
+
+    function renderTips(r) {
+      errors = (r && r.errors) || [];
+      var html = '';
+      var i;
+      for (i = 0; i < errors.length; i++) html += '<div style="color:#c0392b">✕ ' + escHtml(errors[i]) + '</div>';
+      var ws = (r && r.warnings) || [];
+      for (i = 0; i < ws.length; i++) html += '<div style="color:#b8860b">! ' + escHtml(ws[i]) + '</div>';
+      if (!html) html = '<div style="color:#2e7d32">✓ 名称与规格符合录入规则</div>';
+      var dup = ((r && r.duplicates) || []).filter(function (d) { return d.level === 'exact' || d.level === 'sep'; });
+      if (dup.length) {
+        html += '<div style="color:#b8860b;margin-top:6px">同小类已有完全相同规格：</div>';
+        for (i = 0; i < dup.length && i < 5; i++) {
+          html += '<div style="color:#666;margin-left:12px">'
+            + escHtml(dup[i].code || dup[i].fnumber || '') + ' '
+            + escHtml(dup[i].name || '') + ' ' + escHtml(dup[i].spec || '') + '</div>';
+        }
+      }
+      tipBox.innerHTML = html;
+    }
+
+    function loadSimilar(sp) {
+      simBox.innerHTML = '';
+      if (!sp) return;
+      apiAsync('/api/plm/suggest', { field: 'spec', value: sp, sub: currentSub() }, function (r) {
+        if (!dlg || !r || !r.suggestions || !r.suggestions.length) return;
+        simBox.appendChild(dlgEl('div', 'color:#666;margin-bottom:4px;', '类似型号（点击填入）'));
+        var wrap = dlgEl('div', '');
+        var list = r.suggestions.slice(0, 8);
+        for (var i = 0; i < list.length; i++) {
+          (function (s) {
+            var chip = dlgEl('span', 'display:inline-block;margin:2px 6px 2px 0;padding:2px 8px;'
+              + 'background:#f2f6fb;border:1px solid #d8e4f0;border-radius:3px;cursor:pointer;', s.value);
+            chip.onclick = function () { specIn.value = s.value; checkNow(); };
+            wrap.appendChild(chip);
+          })(list[i]);
+        }
+        simBox.appendChild(wrap);
+      });
+    }
+
+    function checkNow() {
+      var nm = nameIn.value;
+      var sp = specIn.value;
+      if (!nm && !sp) { tipBox.innerHTML = ''; simBox.innerHTML = ''; return; }
+      tipBox.innerHTML = '<div style="color:#999">校验中…</div>';
+      apiAsync('/api/plm/check', { name: nm, spec: sp, sub: currentSub(), ecode: readEcode() }, function (r) {
+        if (!dlg) return;
+        if (!r || r.ok === false) {
+          tipBox.innerHTML = '<div style="color:#c0392b">治理服务不可用（' + escHtml(CFG.apiLabel) + '）</div>';
+          return;
+        }
+        renderTips(r);
+        loadSimilar(sp);
+      });
+    }
+
+    var timer = null;
+    function onChange() {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(checkNow, 400);
+    }
+    nameIn.oninput = onChange;
+    specIn.oninput = onChange;
+
+    saveBtn.onclick = function () {
+      var nm = nameIn.value;
+      var sp = specIn.value;
+      if (!nm && !sp) { msgBox('提示', '请先填写名称或规格型号'); return; }
+
+      // 保存前同步校验一次，按规范写法回填
+      var r = apiSync('/api/plm/check', { name: nm, spec: sp, sub: currentSub(), ecode: readEcode() });
+      if (r && r.ok !== false) {
+        if (r.nameFormat && r.nameFormat.final) nm = r.nameFormat.final;
+        else if (r.nameSynonym && r.nameSynonym.exact && r.nameSynonym.std) nm = r.nameSynonym.std;
+        if (r.specFormat && r.specFormat.fixed != null) sp = r.specFormat.fixed;
+        if (r.errors && r.errors.length) {
+          if (!confirmBox('存在校验错误', r.errors.join('\n') + '\n\n是否仍要回填？')) return;
+        }
+      }
+
+      var applied = [];
+      if (nm && writeText(state.ename, nm)) { fireBlur(state.ename); applied.push('名称'); }
+      if (sp && writeText(state.ggxh, sp)) {
+        fireBlur(state.ggxh);
+        if (CFG.fillSpecToParams) syncSpecToParams(sp);
+        applied.push('规格型号');
+      }
+      closeEditor();
+      setCheckTip(applied.length ? ('已回填' + applied.join('、')) : '未回填（内容为空）', applied.length ? 'ok' : 'bad');
+      log('弹窗回填完成：' + (applied.join('、') || '无'));
+    };
+
+    mask.onclick = function (ev) { if (ev && ev.target === mask) closeEditor(); };
+
+    mask.appendChild(panel);
+    panel.appendChild(head);
+    panel.appendChild(body);
+    panel.appendChild(foot);
+    foot.appendChild(cancelBtn);
+    foot.appendChild(saveBtn);
+    document.body.appendChild(mask);
+    dlg = { mask: mask, panel: panel, nameIn: nameIn, specIn: specIn, tipBox: tipBox, simBox: simBox };
+
+    checkNow();
   }
 
   // ======================= PLM 钩子 =======================
@@ -1581,7 +1760,7 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.22（api=' + apiUrl('')
+  log('脚本已加载 v1.23（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')
     + '；空格整理=' + (CFG.tidySpecSpace ? '开' : '关')

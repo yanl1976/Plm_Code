@@ -209,7 +209,14 @@ function startJob(label, fn) {
 // ---- 工具 ----
 function sendJson(res, code, obj) {
   const body = JSON.stringify(obj)
-  res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store, max-age=0' })
+  res.writeHead(code, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'no-store, max-age=0',
+    // PLM 页面跨端口读取「现有库存」需要 CORS
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  })
   res.end(body)
 }
 function readBody(req) {

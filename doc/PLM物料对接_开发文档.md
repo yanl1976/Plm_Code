@@ -266,8 +266,12 @@ state.subs: Map<subKey(6位), {
 | `tidySpecSpace` | `true` | 失焦/保存前自动整理规格空格（首尾 + 连续 + 全角）；乘号不处理 |
 | `showCheckButton` | `true` | 是否在新建零组件窗口注入「校验并回填」按钮（编码仍由 PLM 编码器负责） |
 | `checkButtonText` | `校验并回填` | 按钮文字 |
-| `checkButtonHost` | `spec` | 按钮挂载位置：`spec`（规格型号/图号）或 `name`（名称） |
-| `restrictItemType` | `true` | 按钮只对指定「类型」生效，其余置灰 |
+| `checkButtonHost` | `name` | 按钮锚点：`name`（名称框）或 `spec`（规格框） |
+| `checkButtonPlace` | `left` | 位置：`left` 名称标签左侧 / `float` 锚点右侧 / `fixed` 窗口右下角 / `after` 原布局 |
+| `checkButtonOffsetX` / `Y` | `6` / `0` | 跟随定位的像素偏移 |
+| `apiLabel` | `数据治理服务器` | 提示文案里代替 IP 显示的名称 |
+| `domWatchDelay` | `2500` | DOM 兜底接管延时(ms) |
+| `restrictItemType` | `true` | 按钮只对指定「类型」显示，其余隐藏 |
 | `itemTypeAllowText` | `['电气元件','原材料','外购标准件']` | 允许的类型显示名 |
 | `itemTypeAllowValues` | `[]` | 类型返回编码时在此补充 |
 

@@ -1,19 +1,27 @@
 # PLM 物料新增「名称/规格型号」智能录入助手 — 部署说明
 
-> 版本 **v1.6** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
-> 插件文件：`ItemSmartInput.js` v1.7 — 55,910 字节 / 1,264 行 / UTF-8 无 BOM
-> SHA256：`86E111A30B6B21BF765321E95267C6EF3D500686F92E32D2A08489F128F353A9`
-> 地址配置：`ItemSmartInput.config.js` — 1,043 字节 / 22 行 / UTF-8 无 BOM
-> SHA256：`8C8B332107DDD0D2EED87556CDFC1FF2552C3C681100C0E55447EADA21A27EA7`
+> 版本 **v1.26** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
+> 插件文件：`ItemSmartInput.js` v1.26 — 84,565 字节 / 1,930 行 / UTF-8 无 BOM
+> SHA256：`88D0D767679CA7CC8EDCFAF9CAB21FD89AD51AC79D9E2B01A90C2C5A11D5A5D9`
+> 配置文件：`ItemSmartInput.config.js` — 2,812 字节 / 48 行 / UTF-8 无 BOM
+> SHA256：`B244444FF9426844EFB414A47B3BFE839A1C0AF25F44A20B7A21BE052D1277A2`
 >
-> **版本演进**
-> - **v1.7（当前）**：新增 **DOM 兜底接管** —— `PSE_ItemGuide` 等向导入口不触发 `CreatePage_OnCreate`，改为轮询输入框出现后接管控件并注入按钮
-> - v1.6：新增「校验并回填」按钮，**仅对 电气元件 / 原材料 / 外购标准件 三种类型生效**，其余类型置灰；兼容 `PSEITEM` 与 `PSEITEM$`
-> - v1.5：按钮雏形；编码仍由 PLM 编码器管理，插件不参与发号
-> - v1.4：规格空格自动整理（首尾 / 连续 / 全角），乘号暂不处理
-> - v1.1.0：修复异步请求返回值缺陷；新增页重复打开时状态重置；保存校验增加控件兜底取值；规则错误由硬阻断改为二次确认；未查重时回传 `skipReason`
+> **版本演进（近期）**
+> - **v1.26（当前）**：弹窗内提示分字段（名称问题在名称框下、规格问题在规格框下）、新增**现有库存**区块（读看板 3130）、**存在 error 时禁止回填**（只能修改或取消）
+> - v1.25：回填后在 PLM 输入框**不再弹联想/重复提示、保存时不再二次确认**（内容改动后自动恢复）
+> - v1.24：配置文件支持**全部功能开关**（白名单合并，控制台打印「外部配置=…」）
+> - v1.23：点击按钮改为弹出**校验对话框**（名称/规格可编辑、实时校验提示、类似型号、查重明细、保存并回填）；**类型未选或不满足时直接隐藏按钮**；提示文案改用「数据治理服务器」
+> - v1.22：按钮改到「名称」标签左侧，窄按钮 + 可配置偏移
+> - v1.21：按钮锚点默认改为名称框，`float` 定位跟随锚点
+> - v1.20：改为 `float` 跟随输入框定位，解决 iframe 内 `position:fixed` 跑到视口外
+> - v1.19：默认悬浮，`z-index` 提到 `2147483000`，避免被 PLM 弹窗遮罩盖住
+> - v1.18：注入时跳过输入框控件外壳，新增 `checkButtonPlace` 开关
+> - v1.16 / v1.17：改为按标签文字定位字段（平台真实 DOM id 是 `idgul271_TextBox` 这类自动 id）
+> - v1.15：增加「可见输入框清单」诊断日志
+> - v1.7：DOM 兜底接管（`PSE_ItemGuide` 向导入口不触发 `CreatePage_OnCreate`）
+> - v1.6：新增按钮 + 类型门控，兼容 `PSEITEM` / `PSEITEM$`
 >
-> 目标：在 PLM **原生新增物料页面**上，为「名称」「规格型号」两个输入框增加联想、查重与一键校验回填。
+> 目标：在 PLM **原生新增物料页面**上，为「名称」「规格型号」增加联想、查重、校验与回填。
 > **前置项（分类、物料编码申请、单位、位置、描述、主要参数等）全部保持 PLM 原有行为，不做任何改动。**
 > **编码一律由 PLM 编码器生成并管理，插件不参与发号、不改编号。**
 
@@ -28,10 +36,10 @@
 │         InforCenter_PSEITEM_CreatePage_OnCreate(pageEvent, data)        │
 │         InforCenter_PSEITEM_CreatePage_OnOK(pageEvent)                  │
 │                                                                         │
-│  SecondaryDev/ItemSmartInput/Config/Js/ItemSmartInput.js  ← 新增        │
-│      实现上面两个全局函数（钩子被模板固化，模型页重新生成也不会丢）       │
-│  SecondaryDev/ItemSmartInput/Config/ItemSmartInput.fileref ← 新增       │
-│      声明 js 加载到 InforCenter / TSDC 框架                              │
+│  InforCenter/Config/ItemSmartInput/ItemSmartInput.js  ← 新增（插件本体）│
+│  InforCenter/Config/ItemSmartInput.config.js          ← 新增（地址配置）│
+│  InforCenter/Config/PLMFileRef.fileref                ← 追加 2 行注册    │
+│      config 必须排在 js 之前，否则读不到 window.ItemSmartInputConfig     │
 └─────────────────────────────────┬───────────────────────────────────────┘
                                   │ 浏览器 jQuery $.ajax
                                   │ POST（form-urlencoded，无预检）
@@ -44,42 +52,60 @@
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-**改动了什么**：只在 PLM 站点新增/覆盖 2 个文件（1 个 js + 1 个 fileref），不修改任何既有文件。
+**改动了什么**：新增插件 js + 地址配置，并在 `PLMFileRef.fileref` 追加两行注册；不改任何既有页面/模型。
 **没改动什么**：`PSEITEM-CREATE.page`、`PSEITEM.model`、菜单、编码规则、工作流、既有 `CreateItem.js` 全部保持原样。
 
-**v1.6 新增**：插件在「规格型号/图号」输入框右侧注入「校验并回填」按钮。点击后按编号前 6 位确定小类 → 校验名称/规格（书写规则、同义词、空格、分类是否相符、同小类查重）→ 把合规写法回填到「名称」和「规格型号/图号」。
-**类型门控**：按钮只对「电气元件 / 原材料 / 外购标准件」三种类型启用；其余类型（非标自制件、通用自制件、请购单、成品、服务…）按钮置灰、点击无效。
+**交互（v1.23）**：「名称」标签左侧出现「校验并回填」按钮（类型不满足时**隐藏**）。点击弹出校验对话框：
+
+- 名称 / 规格型号可编辑，输入 400ms 后自动校验
+- 显示错误（红）、提示（黄）、同小类重复明细
+- 「类似型号」列出同小类已有写法，点击即填入
+- 「保存并回填」先做一次同步校验，按规范写法（同义词标准名 + 空格整理）写回 PLM 的名称与规格型号框
+
+**类型门控**：仅「电气元件 / 原材料 / 外购标准件」显示按钮；未选择类型或其它类型（非标自制件、通用自制件、请购单、成品、服务…）**按钮不出现，也没有任何提示文案**。
+
+> **部署位置说明**：本安装的 `Config/Apps.app` 里 `SecondaryDev` 模块整块被注释，平台不会扫描该目录下的 `.fileref`。因此插件必须挂在**已启用**的 `InforCenter` 模块下（见 4.1），不能放在 `SecondaryDev`。
 
 ---
 
 ## 二、部署清单
 
-| # | 文件 | 放置位置 | 类型 |
-|---|---|---|---|
-| 1 | `src/plm-index.js` | `E:\tedri_project\dev\Plm_Code\src\` | 新增（Node） |
-| 2 | `src/plm-server.js` | `E:\tedri_project\dev\Plm_Code\src\` | 新增（Node） |
-| 3 | `ItemSmartInput.js` | `<PLM站点>\SecondaryDev\ItemSmartInput\Config\Js\` | 新增（PLM） |
-| 4 | `ItemSmartInput.fileref` | `<PLM站点>\SecondaryDev\ItemSmartInput\Config\` | 新增（PLM） |
-| 5 | `package.json` 的 `scripts.plm` | `E:\tedri_project\dev\Plm_Code\package.json` | 已加入（可选） |
-
 > `<PLM站点>` 指 IIS 中指向 `PLMSOFT\Server` 的物理目录，例如 `E:\tedri_project\dev\Plm_Code\PLMSOFT\Server`。
 > 生产环境请按实际路径替换，**不要**误放到 `PLMSOFT\DistributedFileServer`。
 
-### 2.1 本次增量更新（v1.4 / v1.5 → v1.6）
+### 2.1 PLM 侧（3 个文件）
 
-如果 PLM 站点上已经有旧版插件，本次需要关注下面 6 个文件：
-
-| # | 文件 | 说明 | 是否必须 |
+| # | 文件 | 放置位置 | 类型 |
 |---|---|---|---|
-| 1 | `ItemSmartInput.js` | 插件本体：按钮 + 类型门控 + 外置地址 + DOM 兜底接管 | **必须** |
-| 2 | `ItemSmartInput.config.js` | **新增**：地址配置（IP / 端口） | **必须** |
-| 3 | `ItemSmartInput.fileref` | **覆盖**：把 config 注册到 js 之前 | **必须** |
-| 4 | `src/material-rules.js` | 空格整理 `fixSpecFormat()` + 小类不符 `detectSubMismatch()` | 需要「规格自动整理 / 分类不符提示」时 |
-| 5 | `src/plm-server.js` | `/api/plm/check` 返回 `specFormat`、`subMismatch` | 同上 |
-| 6 | `src/config/material-rules.json` | `name.subMismatch` 配置段 | 同上 |
+| 1 | `ItemSmartInput.js` | `<PLM站点>\InforCenter\Config\ItemSmartInput\` | 新增 |
+| 2 | `ItemSmartInput.config.js` | 同上 | 新增 |
+| 3 | `InforCenter\Config\PLMFileRef.fileref` | 在 `</root>` 前追加 2 行 | 修改 |
 
-> **只换 PLM 三个文件（1/2/3）**：按钮、名称回填、空格整理里的「回填空格」都可用；但**分类不符提示**与**后端侧规格规范化**需要 4/5/6。
-> `ItemSmartInput.config.js` 与 `ItemSmartInput.fileref` 只需首次补齐，之后地址变化只改 config 文件。
+追加内容：
+
+```xml
+	<!--物料录入助手（本项目二开）-->
+	<JSFile FileName ="~/InforCenter/Config/ItemSmartInput/ItemSmartInput.config.js" group="InforCenter"/>
+	<JSFile FileName ="~/InforCenter/Config/ItemSmartInput/ItemSmartInput.js" group="InforCenter"/>
+```
+
+> **为什么不用 `SecondaryDev`**：本安装的 `Config/Apps.app` 中 `SecondaryDev` 整个 `<Apps>` 块被注释，平台不会扫描它的 `*.fileref`。文件能通过 URL 访问（200），但不会被加载进页面。
+> `config` 必须排在 `js` 之前，否则插件读不到 `window.ItemSmartInputConfig`。
+
+### 2.2 后端（校验与回填必需）
+
+| # | 文件 | 说明 |
+|---|---|---|
+| 1 | `src/material-rules.js` | 书写规则、`fixSpecFormat()` 空格整理、`detectSubMismatch()` 分类不符 |
+| 2 | `src/plm-server.js` | `/api/plm/check` 返回 `specFormat`、`subMismatch` |
+| 3 | `src/config/material-rules.json` | `name.subMismatch` 配置段 |
+| 4 | `src/name-synonyms.js` + `src/config/name-synonyms.json` | 名称同义词（回填标准名依赖） |
+
+> 只换插件不换后端：按钮与弹窗仍可用，但**规格不会自动整理、分类不符不会提示、同义词标准名可能不生效**。
+
+### 2.3 不需要部署
+
+`scripts/verify-plm-plugin.mjs`、`doc/*`、`README.md`；`src/server.js` 与 `public/*` 属于治理看板（端口 3130），与 PLM 插件无关。
 
 ---
 
@@ -208,36 +234,54 @@ curl -sI http://127.0.0.1:3130/                 # HTTP 200
 
 ### 4.1 建目录并放文件
 
-在 PLM 站点根下新建（路径必须完全一致，`fileref` 里写的是相对站点根的路径）：
+在 PLM 站点根下新建目录并放入两个文件：
 
 ```
-<PLM站点>\SecondaryDev\ItemSmartInput\Config\ItemSmartInput.fileref
-<PLM站点>\SecondaryDev\ItemSmartInput\Config\ItemSmartInput.config.js
-<PLM站点>\SecondaryDev\ItemSmartInput\Config\Js\ItemSmartInput.js
+<PLM站点>\InforCenter\Config\ItemSmartInput\ItemSmartInput.js
+<PLM站点>\InforCenter\Config\ItemSmartInput\ItemSmartInput.config.js
 ```
 
 示例（按实际 PLM 站点目录替换）：
 
 ```powershell
 $plm = 'E:\tedri_project\dev\Plm_Code\PLMSOFT\Server'
-New-Item -ItemType Directory -Force -Path "$plm\SecondaryDev\ItemSmartInput\Config\Js" | Out-Null
-Copy-Item 'E:\tedri_project\dev\Plm_Code\PLMSOFT\Server\SecondaryDev\ItemSmartInput\Config\ItemSmartInput.fileref' "$plm\SecondaryDev\ItemSmartInput\Config\" -Force
-Copy-Item 'E:\tedri_project\dev\Plm_Code\PLMSOFT\Server\SecondaryDev\ItemSmartInput\Config\ItemSmartInput.config.js' "$plm\SecondaryDev\ItemSmartInput\Config\" -Force
-Copy-Item 'E:\tedri_project\dev\Plm_Code\PLMSOFT\Server\SecondaryDev\ItemSmartInput\Config\Js\ItemSmartInput.js' "$plm\SecondaryDev\ItemSmartInput\Config\Js\" -Force
+$src = 'E:\tedri_project\dev\Plm_Code\PLMSOFT\Server\SecondaryDev\ItemSmartInput\Config'
+$dst = "$plm\InforCenter\Config\ItemSmartInput"
+
+New-Item -ItemType Directory -Force -Path $dst | Out-Null
+Copy-Item "$src\Js\ItemSmartInput.js"   $dst -Force
+Copy-Item "$src\ItemSmartInput.config.js" $dst -Force
 ```
 
-**覆盖前先备份**（本次是更新，不是首次安装）：
+**注册到 fileref**（关键，否则不会加载）：
 
-```powershell
-Copy-Item "$plm\SecondaryDev\ItemSmartInput\Config\Js\ItemSmartInput.js" `
-          "$plm\SecondaryDev\ItemSmartInput\Config\Js\ItemSmartInput.js.bak_20261109" -Force
+打开 `<PLM站点>\InforCenter\Config\PLMFileRef.fileref`，在 `</root>` **之前**追加：
+
+```xml
+	<!--物料录入助手（本项目二开）-->
+	<JSFile FileName ="~/InforCenter/Config/ItemSmartInput/ItemSmartInput.config.js" group="InforCenter"/>
+	<JSFile FileName ="~/InforCenter/Config/ItemSmartInput/ItemSmartInput.js" group="InforCenter"/>
 ```
 
-**拷完核对指纹**（应与第 1 节一致，避免拷贝被截断或编码变化）：
+**覆盖前先备份**：
 
 ```powershell
-Get-FileHash "$plm\SecondaryDev\ItemSmartInput\Config\Js\ItemSmartInput.js" -Algorithm SHA256
-(Get-Item "$plm\SecondaryDev\ItemSmartInput\Config\Js\ItemSmartInput.js").Length
+Copy-Item "$dst\ItemSmartInput.js" "$dst\ItemSmartInput.js.bak_20261109" -Force
+```
+
+**拷贝后核对指纹**：
+
+```powershell
+Get-FileHash "$dst\ItemSmartInput.js" -Algorithm SHA256
+(Get-Item "$dst\ItemSmartInput.js").Length
+```
+
+应为 `022EEEC9FEBA678EE7B95283CE3CE7839CB68FB30C673AF57B5BDE0C742F0EEE` / `77853`。
+
+**改完 `PLMFileRef.fileref` 要校验 XML**（写坏会导致整个 InforCenter 脚本包失效）：
+
+```powershell
+[xml](Get-Content "$plm\InforCenter\Config\PLMFileRef.fileref") | Out-Null; "XML OK"
 ```
 
 ### 4.2 编码与权限
@@ -246,7 +290,7 @@ Get-FileHash "$plm\SecondaryDev\ItemSmartInput\Config\Js\ItemSmartInput.js" -Alg
 - 赋予 IIS 应用程序池账号读取权限：
 
 ```powershell
-icacls "$plm\SecondaryDev\ItemSmartInput" /grant "IIS_IUSRS:(OI)(CI)R" /T
+icacls "$plm\InforCenter\Config\ItemSmartInput" /grant "IIS_IUSRS:(OI)(CI)R" /T
 ```
 
 ### 4.3 修改 API 地址（**只改配置文件，不动 JS**）
@@ -254,17 +298,45 @@ icacls "$plm\SecondaryDev\ItemSmartInput" /grant "IIS_IUSRS:(OI)(CI)R" /T
 地址已外置到独立配置文件：
 
 ```
-<PLM站点>\SecondaryDev\ItemSmartInput\Config\ItemSmartInput.config.js
+<PLM站点>\InforCenter\Config\ItemSmartInput\ItemSmartInput.config.js
 ```
 
-打开它，只改这两个值：
+配置文件同时是**功能开关表**，改动后 Ctrl+F5 生效。可用的键（白名单，写错键名不生效）：
 
 ```javascript
 window.ItemSmartInputConfig = {
-  apiBase: 'http://192.168.20.31:3100',  // ← 服务机局域网 IP:端口；同机部署可写 'auto'
-  apiPort: 3100                          // ← 仅 apiBase='auto' 时生效
+  // 服务地址
+  apiBase: 'http://192.168.20.31:3100',  // 'auto' = 同机部署
+  apiPort: 3100, apiLabel: '数据治理服务器', timeout: 1500,
+
+  // 总开关
+  enabled: true,              // false = 插件完全静默
+  showCheckButton: true,      // false = 不注入按钮
+
+  // 按钮
+  checkButtonText: '校验并回填',
+  checkButtonHost: 'name',    // 'name' | 'spec'
+  checkButtonPlace: 'left',   // 'left' | 'float' | 'fixed' | 'after'
+  checkButtonOffsetX: 6, checkButtonOffsetY: 0,
+
+  // 类型门控
+  restrictItemType: true,     // false = 所有类型都显示
+  itemTypeAllowText: ['电气元件', '原材料', '外购标准件'],
+  itemTypeAllowValues: [],    // 类型返回编码时补这里
+
+  // 校验与回填
+  tidySpecSpace: true,        // 规格空格整理
+  fillSpecToParams: true,     // 同步 ZYCS / FLSXHB
+  blockOnDuplicate: true,     // 重复二次确认
+  notifyDuplicateOnBlur: true,
+  strictWidth: true,          // 超宽拦截
+
+  // 联想与探测
+  suggestDebounce: 300, minLen: 2, domWatchDelay: 2500
 };
 ```
+
+> 控制台首行会打印 `外部配置=apiBase/checkButtonPlace/…`，列出真正被读取的键；未出现在该列表里的键说明没写或键名有误。
 
 - **不要改 `ItemSmartInput.js`**，以后 IP / 端口变化只改这个文件
 - 改完保存 → 浏览器 Ctrl+F5 即可，**不需要重启 IIS，也不需要重启 Node 服务**
@@ -302,28 +374,30 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 2. 浏览器按 `F12` 打开控制台，应看到：
 
 ```
-[ItemSmartInput] 脚本已加载 v1.7（api=http://10.1.2.3:3100；地址来源=ItemSmartInput.config.js；规格同步ZYCS/FLSXHB=开；空格整理=开；类型门控=电气元件/原材料/外购标准件；超限拦截=开）
+[ItemSmartInput] 脚本已加载 v1.23（api=http://10.1.2.3:3100；地址来源=ItemSmartInput.config.js；…；类型门控=电气元件/原材料/外购标准件；…）
 [ItemSmartInput] 进入 PSEITEM$ 新增页（与 PSEITEM 共用同一套逻辑）      ← 仅 PSEITEM$ 入口
 [ItemSmartInput] 已绑定：名称 规格 联想；保存前查重已启用
-[ItemSmartInput] 已注入「校验并回填」按钮（挂载方式：getElementById#GGXH_Value > querySelector(input)；父节点 TD）
+[ItemSmartInput] 检测到新增弹窗（DOM 兜底接管）：规格=…[规格型号/图号] 名称=…[名称*] 编号=…[编号*] 类型=…[类型*]
+[ItemSmartInput] 已注入「校验并回填」按钮（位置=left；…）
+[ItemSmartInput] 当前类型：value="电气元件" text="电气元件" 允许表=[…] → 允许
 [ItemSmartInput] 治理服务就绪：索引 23036 条 / 200 个小类
-[ItemSmartInput] 检测到新增弹窗（DOM 兜底接管）：名称/规格/编号/类型    ← 仅向导入口（不触发 OnCreate）
-[ItemSmartInput] 当前类型：value="…" text="电气元件" → 允许
 ```
 
 逐行含义：
 
 | 行 | 说明 |
 |---|---|
-| 第 1 行 | 脚本已加载；`v1.6` 确认部署的是新版；`地址来源=ItemSmartInput.config.js` 确认读到了外置配置；`类型门控=` 显示允许的类型 |
-| 第 2 行（可选） | 只有在 `PSEITEM$` 入口出现；`PSEITEM` 入口没有这一行，属正常 |
+| 第 1 行 | 脚本已加载；`v1.23` 确认部署的是新版；`地址来源=ItemSmartInput.config.js` 确认读到了外置配置 |
+| 第 2 行（可选） | 只有 `PSEITEM$` 入口出现；`PSEITEM` 入口没有这一行，属正常 |
 | 第 3 行 | 输入框事件绑定成功（联想与保存前查重可用） |
-| 第 4 行 | 按钮已注入，且**命中哪条 DOM 策略**一目了然；没有这一行说明按钮未注入（见第七节） |
-| 第 5 行 | 治理服务可达、索引已就绪；缺失只代表服务不可达，联想/查重自动跳过，**页面与原生保存仍正常** |
+| 第 4 行 | **兜底接管**：方括号里是识别到的标签。四个标签应分别是 `规格型号/图号`、`名称*`、`编号*`、`类型*`；若出现「字段定位重复…跳过本次接管」，说明结构没认对 |
+| 第 5 行 | 按钮已注入，`位置=` 是实际生效的模式（`left` / `float` / `fixed` / `after`） |
+| 第 6 行 | 类型判定结果；只有显示「允许」时按钮才可见 |
+| 第 7 行 | 治理服务可达；缺失只代表服务不可达，按钮仍会显示，点击会提示「治理服务不可用（数据治理服务器）」 |
 
-3. 若出现 `按钮挂载点未找到：控件 id=…；GetDom / GetElement / ctrl.element / getElementById / 后缀匹配 全部失败`，说明 PLM 的 DOM 结构与预期不同，把该行贴给开发调整，不影响正常录入。
+3. 若出现 `按钮挂载点未找到：控件 id=…`，把该行贴给开发；不影响 PLM 正常录入。
 
-4. 若出现 `未找到类型控件 ITEMTYPE_Value，按钮将按「类型不符」处理（保持禁用）`，说明类型控件 ID 与该版本不一致，需核对 `PSEITEM-CREATE.page` 里的 `ControlID`。
+4. 若出现 `未找到类型控件 ITEMTYPE_Value`，说明类型控件 ID 不一致，按钮会一直隐藏，需核对 `PSEITEM-CREATE.page` 里的 `ControlID`。
 
 ---
 
@@ -340,12 +414,18 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 | `blockOnDuplicate` | `true` | 保存时命中 exact/sep 级重复是否二次确认 |
 | `notifyDuplicateOnBlur` | `true` | 失焦时在浮层提示重复（不弹框） |
 | `tidySpecSpace` | `true` | 失焦/保存前自动整理规格空格（首尾 + 连续 + 全角 U+3000/Tab）；乘号不处理 |
-| `showCheckButton` | `true` | 是否在「新建零组件」窗口注入「校验并回填」按钮 |
-| `checkButtonText` | `校验并回填` | 按钮文字 |
-| `checkButtonHost` | `spec` | 按钮挂在哪个输入框旁：`spec`（规格型号/图号）或 `name`（名称） |
-| `restrictItemType` | `true` | 是否按「类型」限制按钮可用性 |
-| `itemTypeAllowText` | `['电气元件','原材料','外购标准件']` | 允许使用按钮的类型显示名 |
-| `itemTypeAllowValues` | `[]` | 若 `GetSelectedValue()` 返回的是编码而非名称，在此补编码 |
+| `showCheckButton` | `true` | 是否注入「校验并回填」按钮 |
+| `checkButtonText` | `校验并回填` | 按钮文字（`left` 模式下自动换行） |
+| `checkButtonHost` | `name` | 按钮锚点：`name`（名称框）或 `spec`（规格框） |
+| `checkButtonPlace` | `left` | 位置模式：`left`=名称标签左侧；`float`=锚点右侧；`fixed`=窗口右下角；`after`=插进原布局 |
+| `checkButtonOffsetX` | `6` | 跟随定位的横向偏移(px)，负值向左 |
+| `checkButtonOffsetY` | `0` | 纵向偏移(px) |
+| `apiLabel` | `数据治理服务器` | 提示文案里代替 IP 显示的名字 |
+| `inventoryBase` | `''` | 看板地址（如 `http://192.168.20.31:3130`），用于弹窗内「现有库存」；留空则不显示 |
+| `domWatchDelay` | `2500` | DOM 兜底接管延时(ms)；给正常 `OnCreate` 留出时间 |
+| `restrictItemType` | `true` | 是否按「类型」控制按钮可见性 |
+| `itemTypeAllowText` | `['电气元件','原材料','外购标准件']` | 允许显示按钮的类型显示名 |
+| `itemTypeAllowValues` | `[]` | 若类型返回值是编码而非名称，在此补编码 |
 | `ctlEname / ctlGgxh / ctlZycs / ctlEcode / ctlItemType` | 见文件 | 控件 ID，与 `PSEITEM-CREATE.page` 一致，一般不改 |
 
 服务端业务规则**不在 js 里**，仍由既有配置文件驱动，改规则不需要动 PLM：
@@ -357,25 +437,34 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 
 改完配置后调用 `POST http://127.0.0.1:3100/api/plm/reload` 重载索引（规则文件本身带 mtime 缓存，多数情况无需重启）。
 
-### 5.1 「校验并回填」按钮（v1.6）
+### 5.1 「校验并回填」按钮与校验弹窗（v1.23）
 
-新建零组件窗口打开后，插件会在「规格型号/图号」输入框右侧插入一个按钮。**编码仍由 PLM 编码器负责，插件不参与发号、也不改编号**，按钮只处理名称与规格。
+新建零组件窗口打开后，插件在「名称」标签左侧插入一个窄按钮（`checkButtonPlace: 'left'`）。**编码仍由 PLM 编码器负责，插件不参与发号、也不改编号**。
 
-> **按钮只在「电气元件 / 原材料 / 外购标准件」三种类型下可用**，其余类型（非标自制件、通用自制件、请购单、成品、服务…）按钮置灰不可点。
-> 判定优先用「类型」下拉的显示文本，取不到时回退 `GetSelectedValue()` 与 DOM 选中项；类型切换后 1.5 秒内自动刷新，点按钮时还会再校验一次。
+**类型门控**：只有「电气元件 / 原材料 / 外购标准件」显示按钮；未选择类型，或选了非标自制件 / 通用自制件 / 请购单 / 成品 / 服务等，**按钮直接不出现，也没有任何提示文字**。类型切换后 1.5 秒内自动跟随。
 
-按钮流程：
+**点击按钮弹出校验对话框**：
 
-1. 点「编号」右侧「…」，在编码器里选大类 / 小类并「申请编码」，编码回填到编号框；
-2. 填好名称与规格型号，点「校验并回填」；
-3. 插件按**编号前 6 位**确定小类，调用 `/api/plm/check`，然后：
-   - 名称：套用同义词标准名 + 格式修正（空格/分隔符），回填到「名称」；
-   - 规格：只整理空格（首尾 / 连续 / 全角），回填到「规格型号/图号」；乘号策略未定，不自动改写；
-   - 按钮右侧状态文字显示结果：已回填哪些字段、错误/提示/重复条数；
-   - 有硬错误时弹框；命中同小类相同规格时弹出明细，便于改用原编码。
-4. 尚未申请编码就点按钮，会提示「请先在编号右侧点「…」申请编码」——小类完全由编码前 6 位决定，没有编码就无法做分类校验与查重。
+| 区域 | 说明 |
+|---|---|
+| 信息条 | 物料编码 + 大类/中类/小类；该小类建议写清的参数；未查重原因 |
+| 物料名称 | 预填当前 PLM 名称，可编辑；**名称类问题显示在名称框正下方** |
+| 规格型号 | 预填当前 PLM 规格，可编辑；**规格类问题显示在规格框正下方** |
+| 现有库存 | 读看板（`inventoryBase`）的只读接口，显示数量 / 可用 / 单仓名称；多仓列分仓明细 |
+| 类似型号 | 调 `/api/plm/suggest` 取同小类已有写法，点击即填入规格框 |
+| 保存并回填 | **有 error 时按钮禁用**，点击会提示；无 error 时按规范写法回填（名称=同义词标准名+格式修正，规格=空格整理，并同步 ZYCS / FLSXHB） |
+| 取消 / × / 点遮罩 | 关闭，不改动 PLM 字段 |
 
-> 按钮注入失败只写控制台日志，不影响 PLM 正常录入；`CFG.showCheckButton=false` 可关闭该按钮。
+使用流程：
+
+1. 点「编号」右侧「…」，在编码器里选大类 / 小类并「申请编码」；
+2. 点「校验并回填」→ 弹窗打开，名称与规格自动带入；
+3. 修改内容，观察校验提示；可用「类似型号」一键填入已有写法；
+4. 点「保存并回填」→ 写回 PLM 的「名称」「规格型号/图号」并关闭弹窗；**成功时不显示任何提示条**（界面保持干净），只有什么都没填时才提示「未回填（内容为空）」。
+
+> 尚未申请编码时弹窗仍可打开、可校验书写规则，但**分类相关校验与查重会跳过**（小类来自编码前 6 位）。
+> 有硬错误时点保存会弹二次确认，不硬阻断。
+> 按钮注入或接管失败只写控制台日志，不影响 PLM 正常录入；`CFG.showCheckButton=false` 可完全关闭。
 
 ---
 
@@ -393,14 +482,16 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 | 8 | 停掉 Node 服务后再新建物料 | 页面正常打开、可正常保存；控制台提示「治理服务不可达（联想/查重将自动跳过，不影响原生录入）」 |
 | 9 | 未选物料编码就填名称/规格 | 不查重、不报错（控制台记录跳过原因），由 PLM 原生编码校验兜底 |
 | 10 | 连续开关新增页 3 次以上 | 每次都能联想与查重（不会因上一次页面关闭而失效） |
-| 11 | 「类型」选 电气元件 / 原材料 / 外购标准件 | 「规格型号/图号」右侧出现「校验并回填」按钮，可点击 |
-| 12 | 「类型」选 非标自制件 / 成品 / 服务等 | 按钮**置灰不可点**，右侧提示「当前类型不适用（仅 电气元件 / 原材料 / 外购标准件）」 |
-| 13 | 已申请编码，名称填「空气 开关」、规格填 `  NXB-63   C16  `，点按钮 | 名称回填「微型断路器」，规格回填 `NXB-63 C16`，状态显示「已回填名称、规格」 |
-| 14 | 未申请编码就点按钮 | 提示「请先在「编号」右侧点「…」申请编码」，**不发生任何回填** |
-| 15 | 小类 100601 三相电抗器 + 名称「断路器」，点按钮 | 提示分类疑似不符并列出更接近的小类，**不自动改名** |
-| 16 | 名称「热缩管」但小类选「电工材料」，点按钮 | 提示校验未通过（名称与小类明显错配） |
-| 17 | 规格带首尾/连续空格后点按钮 | 仅整理空格并回填；乘号 `×` / `x` **不会被改写** |
-| 18 | 从 `PSEITEM$` 入口（同样标题为「新建零组件」）进入 | 控制台多一行「进入 PSEITEM$ 新增页」，按钮、联想、回填与 `PSEITEM` 入口表现一致 |
+| 11 | 「类型」选 电气元件 / 原材料 / 外购标准件 | 「名称」标签左侧出现「校验并回填」按钮 |
+| 12 | 「类型」未选择，或选 非标自制件 / 成品 / 服务等 | 按钮**不出现**，页面无任何黄色提示 |
+| 13 | 点「校验并回填」 | 弹出「物料名称与规格校验」对话框，名称/规格自动带入 |
+| 14 | 弹窗内把名称改成「空气 开关」、规格改成 `  NXB-63   C16  ` | 停 400ms 后出现校验提示；错误红、提示黄 |
+| 15 | 弹窗内点「类似型号」 | 列出同小类已有写法，点击即填入规格框 |
+| 16 | 点「保存并回填」 | PLM 名称=`微型断路器`、规格=`NXB-63 C16`，按钮旁显示「已回填名称、规格型号」 |
+| 17 | 未申请编码时打开弹窗并保存 | 弹窗可开；分类相关校验与查重跳过，仅做书写规则校验 |
+| 18 | 小类 100601 三相电抗器 + 名称「断路器」，弹窗内保存 | 提示「名称与所选小类不匹配…」；点保存时二次确认，不硬阻断 |
+| 19 | 规格带首尾/连续空格 | 保存后回填为整理后的写法；乘号 `×` / `x` **不被改写** |
+| 20 | 从 `PSEITEM$` 入口（同样标题为「新建零组件」）进入 | 按钮、弹窗、回填与 `PSEITEM` 入口表现一致 |
 
 ### 6.1 离线逻辑验证（无需 PLM 站点，改完 js 先跑）
 
@@ -409,9 +500,9 @@ cd E:\tedri_project\dev\Plm_Code
 npm run verify:plm
 ```
 
-预期输出结尾：`结果: 42 通过 / 0 失败`。
+预期输出结尾：`结果: 43 通过 / 0 失败`。
 
-该脚本用 `vm` 构造 mock 环境（window/document/jQuery/HoteamUI/控件），**真实执行 `ItemSmartInput.js`**，覆盖 18 个场景：绑定、防抖联想、点选回填、ZYCS 连带回填、命中重复时取消（阻断）/确认（放行）、未取编码跳过、服务异常放行、字段为空不干预、二次打开页重新绑定、规则错误不硬阻断、确认记录随页面重置、规格空格回填、按钮点击回填、类型门控（非授权类型禁用且不回填）、外置地址配置、`PSEITEM$` 入口钩子。
+该脚本用 `vm` 构造 mock 环境（window/document/jQuery/HoteamUI/控件），**真实执行 `ItemSmartInput.js`**，覆盖 18 个场景：绑定、防抖联想、点选回填、ZYCS 连带回填、命中重复时取消（阻断）/确认（放行）、未取编码跳过、服务异常放行、字段为空不干预、二次打开页重新绑定、规则错误不硬阻断、确认记录随页面重置、规格空格回填、按钮点击 → 弹窗 → 保存回填、类型门控（非授权类型按钮隐藏且不回填）、外置地址配置、`PSEITEM$` 入口钩子、DOM 兜底接管。其中 S14 会真实走一遍「点按钮 → 弹窗 → 保存」，断言名称与规格被正确回填。
 
 > 它验证的是【控制流】，不能替代真实浏览器验证（真实 DOM 结构、真实跨域仍要现场确认）；网络层由 `/api/plm/*` 的端到端测试单独覆盖。
 
@@ -423,7 +514,7 @@ npm run verify:plm
 |---|---|---|
 | 控制台无 `[ItemSmartInput]` 日志 | fileref 未加载 / 缓存未清 / 权限不足 | 检查 fileref 路径与站点根是否一致；重启应用池；`icacls` 赋读权限 |
 | 有「脚本已加载」但无「治理服务就绪」 | 探活失败（不影响原生录入） | 浏览器直接访问 `http://<开发机IP>:3100/api/plm/health`；不通则查防火墙/服务是否在跑 |
-| 新增页第二次打开后联想失效 | 旧版本状态未重置（v1.1 已修复） | 确认部署的是 v1.6；控制台看每次打开是否都有「已绑定」日志 |
+| 新增页第二次打开后联想失效 | 旧版本状态未重置（v1.1 已修复） | 确认部署的是 v1.23；控制台看每次打开是否都有「已绑定」日志 |
 | 浏览器报 CORS 错误 | 用了非简单请求 / 端口被代理改写 | 本实现用 form-urlencoded + 全量 CORS 头，正常不该出现；若经反向代理，确认未被剥离 `Access-Control-Allow-Origin` |
 | 联想出来但点选不回填 | 控件 DOM/接口版本差异 | 看控制台是否提示「未取到 xxx 输入框 DOM」；`SetText` 走的是控件 API，DOM 只用于定位浮层与事件 |
 | 保存时未拦截重复 | `blockOnDuplicate=false`、名称或规格为空、或服务超时 | 检查配置；确认两个字段都有值；看控制台 `[check]` 日志 |
@@ -436,6 +527,11 @@ npm run verify:plm
 | 点按钮提示「请先申请编码」 | 编号为空（未走编码器） | 点「编号」右侧「…」申请编码后再点按钮；小类完全由编码前 6 位决定 |
 | 点按钮但规格没回填 | 后端仍是旧版，未返回 `specFormat` | 按 2.1 更新 `material-rules.js` / `plm-server.js` 并重启服务 |
 | 改了 `ItemSmartInput.config.js` 但地址没变 | fileref 顺序不对 / 浏览器缓存 / 文件没放对目录 | 确认 fileref 里 config 排在 js 之前；Ctrl+F5；看首行 `地址来源=` 是「ItemSmartInput.config.js」还是「内置默认」 |
+| **插件放了但完全不加载** | 放在 `SecondaryDev` 下，而该模块在 `Config/Apps.app` 里被注释，平台不扫描 | 按 2.1 放到 `InforCenter\Config\ItemSmartInput`，并在 `InforCenter\Config\PLMFileRef.fileref` 注册 |
+| 字段定位日志全是 `(无id)` | 命中了隐藏模板或首页元素 | v1.16 起按「可见 + 带 id + 标签」过滤；仍出现就贴「可见输入框清单」那段 |
+| 按钮不显示 | 类型为空或不在白名单；或输入框不可见 | 先选「电气元件 / 原材料 / 外购标准件」；看「当前类型…→ 允许」日志 |
+| 按钮跑到窗口右下角 | 配置文件里还写着 `checkButtonPlace: 'fixed'` | 删掉该行，或改成 `'left'` / `'float'` |
+| 按钮位置偏几像素 | 标签列宽度因主题而异 | 改 `checkButtonOffsetX` / `checkButtonOffsetY`，无需改代码 |
 | **控制台完全没有 `[ItemSmartInput]`** | 脚本根本没加载 | ① F12 → Network 搜 `ItemSmartInput.js`：404/403 说明路径或权限问题；② 直接在地址栏打开该 js 的 URL 看是否 200；③ 回收 IIS 应用池后 Ctrl+F5 |
 | **有「脚本已加载」但没有「已绑定」** | 钩子未触发：进入的不是 `PSEITEM` / `PSEITEM$` 页面 | 看控制台是否有「进入 PSEITEM$ 新增页」；若两个都没有，说明该窗口是第三种对象类型，需把它的 `InforCenter_<对象>_CreatePage_OnCreate` 钩子也挂上（告诉我页面名即可） |
 
@@ -447,7 +543,7 @@ npm run verify:plm
 |---|---|---|
 | 只关功能、保留文件 | `ItemSmartInput.js` 里 `CFG.enabled = false` | 清缓存后立即 |
 | 关闭某一框架 | 删除 `ItemSmartInput.fileref` 对应 `<JSFile ... group="TSDC"/>` 或 `group="InforCenter"/>` 行 | 清缓存后立即 |
-| 完全移除 | 删除 `SecondaryDev\ItemSmartInput` 整个目录 | 清缓存后立即 |
+| 完全移除 | 删除 `InforCenter\Config\ItemSmartInput` 整个目录，并移除 `PLMFileRef.fileref` 里追加的两行 | 清缓存后立即 |
 
 > 任何一档都不需要改动 PLM 原文件，也不会影响已建物料数据。
 
@@ -467,8 +563,10 @@ npm run verify:plm
 10. **类型枚举存放在 PLM 库里**：插件优先按「类型」下拉的显示文本判断，取不到再回退 `GetSelectedValue()` 与 DOM 选中项。若现场返回的是内部编码，需在 `CFG.itemTypeAllowValues` 补编码。
 11. **类型门控只作用于新按钮**：原有的名称联想、失焦查重、保存前查重仍对所有类型生效。
 12. **两个同名「新建零组件」入口**：PLM 同时存在 `PSEITEM` 与 `PSEITEM$`（`PSEITEM-CREATE.page` / `PSEITEM$-CREATE.page`），标题都叫「新建零组件」、控件 ID 完全一致，但钩子名不同。插件已同时挂上两组钩子；若现场还有第三种入口，需要按其页面里的 `InforCenter_<对象>_CreatePage_OnCreate` 再补一次别名。
-13. **向导入口（PSE_ItemGuide）走 DOM 兜底**：实测该向导不调用 `InforCenter_PSEITEM_CreatePage_OnCreate`，只暴露 `InforCenter_PSE_ItemGuide_CreateItem/Save`。v1.7 起脚本会在页面加载 2.5 秒后开始轮询 `GGXH_Value` / `ECODE_Value`，出现即接管（日志「检测到新增弹窗（DOM 兜底接管）」）。若该入口的控件 DOM id 与 `*_Value` 不同，兜底会失败，此时需按实际 id 调整 `findInput()`。
-14. **DOM 兜底的代价**：写值走 `input.value + input/change 事件`，依赖 PLM 在取数时从 DOM 读值（`OnGetDataFromPage` 正是 `c.GetText()`），因此正常生效；若某版本改为缓存控件内部状态，兜底写入可能不落库，需改回钩子方式。
+13. **平台真实 DOM id 是自动生成的**：`idgul271_TextBox` 这类 id 每次会话都会变，**不能硬编码**。插件按标签文字（`规格型号` / `名称` / `编号` / `类型`）定位，并只认「可见 + 带 id」的输入框；`编号` 是 `EditButton`，渲染成非 input 元素，按 `_EditButton` / `MultiNo` 容器读文本。
+14. **弹窗可能在 iframe 里**：所以按钮定位用 `getBoundingClientRect()` + `position:fixed`（同一坐标系），而不是相对窗口的 `bottom/right`；否则会落到 iframe 视口外看不见。
+15. **DOM 兜底的代价**：写值走 `input.value + input/change 事件`，依赖 PLM 取数时从 DOM 读值（`OnGetDataFromPage` 正是 `c.GetText()`），因此正常生效；若某版本改为缓存控件内部状态，兜底写入可能不落库，需改回钩子方式。
+16. **弹窗内不含大类/中类/小类/编码/单位/库存**：这些依赖治理看板（3130）的接口，PLM 插件只访问 3100。小类由编号前 6 位决定，弹窗里再选会与编码器冲突，因此刻意不做。
 
 ---
 
@@ -479,13 +577,15 @@ npm run verify:plm
 - [ ] 3. 防火墙放通 3100
 - [ ] 4. 用 `http://<开发机IP>:3100/api/plm/health` 在**另一台**电脑验证可达
 - [ ] 5. 备份旧 `ItemSmartInput.js`（`.bak_日期`）
-- [ ] 6. 部署 PLM 三个文件：`ItemSmartInput.js`（SHA256 与第 1 节一致）、`ItemSmartInput.config.js`、`ItemSmartInput.fileref`
-- [ ] 7. 若需要「规格自动整理 / 分类不符提示」：同步更新 `material-rules.js`、`plm-server.js`、`material-rules.json` 并重启服务
-- [ ] 8. 按需修改 `Config\ItemSmartInput.config.js` 的 `apiBase`（未变可跳过）
-- [ ] 9. `icacls` 赋读权限（首次部署才需要）
-- [ ] 10. 重启 IIS 应用程序池（及 8890 服务）
-- [ ] 11. 浏览器 Ctrl+F5，确认首行 `地址来源=ItemSmartInput.config.js` 与「已注入…按钮」日志
-- [ ] 12. 按第六节 18 条验收逐项过一遍
+- [ ] 6. 复制 `ItemSmartInput.js` + `ItemSmartInput.config.js` 到 `<站点>\InforCenter\Config\ItemSmartInput\`，SHA256 与第 1 节一致
+- [ ] 7. 在 `InforCenter\Config\PLMFileRef.fileref` 的 `</root>` 前追加两行（config 在前、js 在后）
+- [ ] 8. `[xml](Get-Content ...)` 校验 fileref 通过
+- [ ] 9. 按需改 `ItemSmartInput.config.js`（`apiBase` / `checkButtonPlace` / `apiLabel` / 偏移量）
+- [ ] 10. 后端同步：`material-rules.js`、`plm-server.js`、`material-rules.json`，重启服务
+- [ ] 11. `icacls` 赋读权限（首次部署才需要）
+- [ ] 12. 重启业务服务（8890）+ 回收 IIS 应用池
+- [ ] 13. 浏览器 Ctrl+F5，确认 `v1.23`、`地址来源=ItemSmartInput.config.js`、「已注入…位置=left」
+- [ ] 14. 按第六节 20 条验收逐项过一遍
 
 ---
 

@@ -36,12 +36,13 @@ Plm_Code/
     物料导出模板/                 # export_all.cjs 产出的 xlsx 模板（按小类分文件）
 
   PLMSOFT/                      # 金蝶 PLM 程序目录（第三方，3 万+ 文件；仅 SecondaryDev 下为本项目二开）
-    Server/SecondaryDev/ItemSmartInput/Config/
-      ItemSmartInput.fileref    # 脚本注册表（config 先于 js 加载）
-      ItemSmartInput.config.js  # 地址配置：改 IP/端口只改这里
-      Js/ItemSmartInput.js      # PLM 新增物料页「名称/规格」智能录入插件（本项目维护，v1.6）
+    Server/SecondaryDev/ItemSmartInput/Config/   # 源码（开发位置）
+      ItemSmartInput.fileref    # 脚本注册表（本安装 SecondaryDev 未启用，仅留档）
+      ItemSmartInput.config.js  # 地址/按钮位置配置（部署时一并复制）
+      Js/ItemSmartInput.js      # PLM 新增物料页「名称/规格」智能录入插件（本项目维护，v1.23）
                                 # 编码由 PLM 编码器生成，插件只做名称/规格校验与回填
-                                # 按钮仅对 电气元件 / 原材料 / 外购标准件 生效
+                                # 按钮仅对 电气元件 / 原材料 / 外购标准件 显示，点击弹出校验对话框
+    Server/InforCenter/Config/ItemSmartInput/    # 实际部署位置（见 doc/PLM物料录入助手_部署说明.md）
 
   data/                         # 产物（gitignore）：materials.ndjson/csv + stats.json / dedup-* /
                                 #   mapping.json / freeze.json / unified-materials.json /

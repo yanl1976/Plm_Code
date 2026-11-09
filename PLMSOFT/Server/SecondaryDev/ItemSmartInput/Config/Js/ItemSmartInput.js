@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.23
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.27
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -75,6 +75,7 @@
     checkButtonOffsetY: 0,       // 纵向偏移(px)
     checkButtonPlace: 'left',    // 'left'=名称标签左侧（默认）；'float'=输入框右侧；'fixed'=窗口右下角；'after'=插进布局
     apiLabel: '数据治理服务器',   // 提示文案里代替具体地址显示的名字
+    inventoryBase: '',           // 库存查询地址（治理看板），如 http://192.168.20.31:3130；留空则不显示库存
     // 按钮只对下列「类型(ITEMTYPE)」生效，其余类型置灰不可用
     restrictItemType: true,
     itemTypeAllowText: ['电气元件', '原材料', '外购标准件'],
@@ -90,6 +91,29 @@
     ctlItemType: 'ITEMTYPE_Value'
   };
 
+  // 允许被外部配置文件（ItemSmartInput.config.js）覆盖的键。
+  // 用白名单而不是全量合并：写错键名不会悄悄改掉别的行为。
+  var CFG_OVERRIDABLE = [
+    'apiBase', 'apiPort', 'apiLabel', 'inventoryBase', 'enabled', 'showCheckButton',
+    'checkButtonText', 'checkButtonHost', 'checkButtonPlace',
+    'checkButtonOffsetX', 'checkButtonOffsetY',
+    'restrictItemType', 'itemTypeAllowText', 'itemTypeAllowValues',
+    'tidySpecSpace', 'fillSpecToParams', 'blockOnDuplicate',
+    'notifyDuplicateOnBlur', 'strictWidth',
+    'suggestDebounce', 'minLen', 'timeout', 'domWatchDelay'
+  ];
+
+  var EXT_KEYS = [];
+  (function applyExtCfg() {
+    var c = null;
+    try { c = window.ItemSmartInputConfig; } catch (e) { c = null; }
+    if (!c || typeof c !== 'object') return;
+    for (var i = 0; i < CFG_OVERRIDABLE.length; i++) {
+      var k = CFG_OVERRIDABLE[i];
+      if (c[k] !== undefined && c[k] !== null) { CFG[k] = c[k]; EXT_KEYS.push(k); }
+    }
+  })();
+
   var LOG_TAG = '[ItemSmartInput]';
   var state = {
     pageKey: '',            // 当前页面实例标识，用于识别"新开了一个新增页"
@@ -103,8 +127,14 @@
     btnPlace: '',           // 当前按钮位置模式，用于轮询时重新定位
     itemtype: null,         // 类型(ITEMTYPE) 下拉控件
     typeTimer: null,        // 类型变化的轮询兜底
-    lastTypeKey: ''         // 上一次识别到的类型，用于变化时打日志
+    lastTypeKey: '',        // 上一次识别到的类型，用于变化时打日志
+    quietKey: ''            // 弹窗回填后的「名称|规格」快照：一致时不再弹提示/二次选择
   };
+
+  /** 当前名称|规格的指纹，用于判断用户是否又改了内容 */
+  function fieldKey() {
+    return readText(state.ename) + '|' + readText(state.ggxh);
+  }
 
   function log() {
     if (window.console && console.log) {
@@ -480,6 +510,18 @@
     return out;
   }
 
+  /** 访问非 3100 的地址（如看板 3130 的库存接口） */
+  function apiAbsolute(url, cb) {
+    if (!CFG.enabled || !window.$ || !$.ajax) { if (cb) cb(null); return; }
+    try {
+      $.ajax({
+        url: url, type: 'GET', dataType: 'json', timeout: CFG.timeout,
+        success: function (r) { if (cb) cb(r || null); },
+        error: function () { if (cb) cb(null); }
+      });
+    } catch (e) { if (cb) cb(null); }
+  }
+
   function apiAsync(path, data, cb) {
     if (!CFG.enabled || !window.$ || !$.ajax) { if (cb) cb(null); return; }
     try {
@@ -611,6 +653,8 @@
     $(el).on('input.smartinput keyup.smartinput', function () {
       if (timer) clearTimeout(timer);
       timer = setTimeout(function () {
+        // 弹窗已确认回填且用户没再改 → 不再弹联想/提示
+        if (state.quietKey && fieldKey() === state.quietKey) { hidePanel(); return; }
         var v = $(el).val();
         v = String(v == null ? '' : v).replace(/^\s+|\s+$/g, '');
         // 规格型号一有内容就同步到 ZYCS/FLSXHB（不受联想最小长度限制）
@@ -672,6 +716,8 @@
       setTimeout(hidePanel, 120);
       // 只在规格框失焦时整理，避免名称框触发时误改规格
       if (field === 'spec') tidySpecCtl(state.ggxh);
+      // 弹窗已确认回填且内容未变 → 不再提示重复，避免二次打扰
+      if (state.quietKey && fieldKey() === state.quietKey) return;
       if (!CFG.notifyDuplicateOnBlur) return;
       var name = readText(state.ename);
       var spec = readText(state.ggxh);
@@ -1107,12 +1153,39 @@
     head.appendChild(xBtn);
 
     var body = dlgEl('div', 'padding:14px 16px;');
+
+    // 分类/编码信息条：把看板里的「当前小类」信息搬进弹窗
+    var infoBox = dlgEl('div', 'background:#f7f9fc;border:1px solid #e3e8ee;border-radius:4px;'
+      + 'padding:6px 10px;margin-bottom:12px;color:#555;font-size:12px;line-height:1.7;');
+    body.appendChild(infoBox);
+
+    function renderInfo(r) {
+      var code = readEcode();
+      var cat = (r && r.category)
+        ? (r.category.bigName + ' / ' + r.category.midName + ' / ' + r.category.subName)
+        : '';
+      var html = '<div>物料编码：<b>' + escHtml(code || '(未申请)') + '</b>'
+        + (cat ? '　分类：' + escHtml(cat) : '') + '</div>';
+      if (r && r.tokens && r.tokens.length) {
+        html += '<div style="color:#888">该小类建议写清：'
+          + escHtml(r.tokens.slice(0, 8).join(' / ')) + '</div>';
+      }
+      if (r && r.skipReason) {
+        html += '<div style="color:#b8860b">' + escHtml(r.skipReason) + '</div>';
+      }
+      infoBox.innerHTML = html;
+    }
+
     body.appendChild(dlgEl('div', 'color:#666;margin-bottom:4px;', '物料名称'));
     var nameIn = dlgEl('input', 'width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #cfd6de;'
       + 'border-radius:3px;font-size:13px;margin-bottom:12px;');
     nameIn.className = 'plm-smart-dlg-name';
     nameIn.value = readText(state.ename);
     body.appendChild(nameIn);
+
+    // 名称的问题只出现在名称框下面
+    var nameTip = dlgEl('div', 'margin:4px 0 10px;min-height:16px;');
+    body.appendChild(nameTip);
 
     body.appendChild(dlgEl('div', 'color:#666;margin-bottom:4px;', '规格型号'));
     var specIn = dlgEl('input', 'width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #cfd6de;'
@@ -1121,8 +1194,12 @@
     specIn.value = readRaw(state.ggxh);
     body.appendChild(specIn);
 
-    var tipBox = dlgEl('div', 'margin-top:10px;min-height:20px;');
-    body.appendChild(tipBox);
+    // 规格的问题只出现在规格框下面
+    var specTip = dlgEl('div', 'margin-top:4px;min-height:16px;');
+    body.appendChild(specTip);
+
+    var invBox = dlgEl('div', 'margin-top:10px;');
+    body.appendChild(invBox);
     var simBox = dlgEl('div', 'margin-top:6px;');
     body.appendChild(simBox);
 
@@ -1136,24 +1213,49 @@
 
     var errors = [];
 
+    function setSaveEnabled(ok) {
+      saveBtn.disabled = !ok;
+      saveBtn.style.opacity = ok ? '1' : '.5';
+      saveBtn.style.cursor = ok ? 'pointer' : 'not-allowed';
+      saveBtn.title = ok ? '' : '存在校验错误，请修改后再回填（或直接取消）';
+    }
+
+    // 名称类提示：名称/品名、小类/分类相关
+    function isNameMsg(s) {
+      var t = String(s || '');
+      return /名称|品名/.test(t) || /小类|分类/.test(t);
+    }
+
     function renderTips(r) {
       errors = (r && r.errors) || [];
-      var html = '';
-      var i;
-      for (i = 0; i < errors.length; i++) html += '<div style="color:#c0392b">✕ ' + escHtml(errors[i]) + '</div>';
       var ws = (r && r.warnings) || [];
-      for (i = 0; i < ws.length; i++) html += '<div style="color:#b8860b">! ' + escHtml(ws[i]) + '</div>';
-      if (!html) html = '<div style="color:#2e7d32">✓ 名称与规格符合录入规则</div>';
+      var nHtml = '';
+      var sHtml = '';
+      var i;
+      for (i = 0; i < errors.length; i++) {
+        var el = '<div style="color:#c0392b">✕ ' + escHtml(errors[i]) + '</div>';
+        if (isNameMsg(errors[i])) nHtml += el; else sHtml += el;
+      }
+      for (i = 0; i < ws.length; i++) {
+        var wl = '<div style="color:#b8860b">! ' + escHtml(ws[i]) + '</div>';
+        if (isNameMsg(ws[i])) nHtml += wl; else sHtml += wl;
+      }
+      if (!nHtml && !sHtml) {
+        sHtml = '<div style="color:#2e7d32">✓ 名称与规格符合录入规则</div>';
+      }
       var dup = ((r && r.duplicates) || []).filter(function (d) { return d.level === 'exact' || d.level === 'sep'; });
       if (dup.length) {
-        html += '<div style="color:#b8860b;margin-top:6px">同小类已有完全相同规格：</div>';
+        sHtml += '<div style="color:#b8860b;margin-top:6px">同小类已有完全相同规格：</div>';
         for (i = 0; i < dup.length && i < 5; i++) {
-          html += '<div style="color:#666;margin-left:12px">'
+          sHtml += '<div style="color:#666;margin-left:12px">'
             + escHtml(dup[i].code || dup[i].fnumber || '') + ' '
             + escHtml(dup[i].name || '') + ' ' + escHtml(dup[i].spec || '') + '</div>';
         }
       }
-      tipBox.innerHTML = html;
+      nameTip.innerHTML = nHtml;
+      specTip.innerHTML = sHtml;
+      // 有 error → 禁止回填，只能改或取消
+      setSaveEnabled(errors.length === 0);
     }
 
     function loadSimilar(sp) {
@@ -1176,19 +1278,52 @@
       });
     }
 
+    /** 现有库存：走治理看板（3130）的只读接口；未配置 inventoryBase 则不显示 */
+    function loadInventory(sp) {
+      invBox.innerHTML = '';
+      var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
+      if (!base) return;
+      var url = base + '/api/new-material/inventory?code=' + encodeURIComponent(readEcode())
+        + '&sub=' + encodeURIComponent(currentSub())
+        + '&spec=' + encodeURIComponent(sp || '');
+      apiAbsolute(url, function (r) {
+        if (!dlg || !r || !r.total) return;
+        var t = r.total;
+        var whs = r.warehouses || [];
+        var only = whs.length === 1 ? (whs[0].stockName || ('仓库#' + whs[0].stockId)) : '';
+        var html = '<div style="color:#666;margin-bottom:4px">现有库存</div>'
+          + '<div style="color:#333">数量 <b>' + t.qty + '</b>　可用 <b style="color:#2e7d32">' + t.avbqty + '</b>'
+          + (only ? '<span style="color:#999">（' + escHtml(only) + '）</span>' : '') + '</div>';
+        if (!only && whs.length) {
+          var parts = [];
+          for (var i = 0; i < whs.length && i < 6; i++) {
+            parts.push(escHtml(whs[i].stockName || ('仓库#' + whs[i].stockId)) + '：' + whs[i].qty);
+          }
+          html += '<div style="color:#666;font-size:12px">' + parts.join('　') + '</div>';
+        }
+        invBox.innerHTML = html;
+      });
+    }
+
     function checkNow() {
       var nm = nameIn.value;
       var sp = specIn.value;
-      if (!nm && !sp) { tipBox.innerHTML = ''; simBox.innerHTML = ''; return; }
-      tipBox.innerHTML = '<div style="color:#999">校验中…</div>';
+      if (!nm && !sp) {
+        nameTip.innerHTML = ''; specTip.innerHTML = ''; simBox.innerHTML = ''; invBox.innerHTML = '';
+        errors = []; setSaveEnabled(true); return;
+      }
+      specTip.innerHTML = '<div style="color:#999">校验中…</div>';
       apiAsync('/api/plm/check', { name: nm, spec: sp, sub: currentSub(), ecode: readEcode() }, function (r) {
         if (!dlg) return;
         if (!r || r.ok === false) {
-          tipBox.innerHTML = '<div style="color:#c0392b">治理服务不可用（' + escHtml(CFG.apiLabel) + '）</div>';
+          specTip.innerHTML = '<div style="color:#c0392b">治理服务不可用（' + escHtml(CFG.apiLabel) + '）</div>';
+          setSaveEnabled(false);
           return;
         }
+        renderInfo(r);
         renderTips(r);
         loadSimilar(sp);
+        loadInventory(sp);
       });
     }
 
@@ -1204,16 +1339,23 @@
       var nm = nameIn.value;
       var sp = specIn.value;
       if (!nm && !sp) { msgBox('提示', '请先填写名称或规格型号'); return; }
+      // 有 error 时不允许回填，只能修改或取消
+      if (errors.length) {
+        msgBox('存在校验错误', '请先按提示修改名称 / 规格，或点击取消。\n\n' + errors.join('\n'));
+        return;
+      }
 
       // 保存前同步校验一次，按规范写法回填
       var r = apiSync('/api/plm/check', { name: nm, spec: sp, sub: currentSub(), ecode: readEcode() });
       if (r && r.ok !== false) {
+        if (r.errors && r.errors.length) {
+          renderTips(r);
+          msgBox('存在校验错误', '请先按提示修改名称 / 规格，或点击取消。\n\n' + r.errors.join('\n'));
+          return;
+        }
         if (r.nameFormat && r.nameFormat.final) nm = r.nameFormat.final;
         else if (r.nameSynonym && r.nameSynonym.exact && r.nameSynonym.std) nm = r.nameSynonym.std;
         if (r.specFormat && r.specFormat.fixed != null) sp = r.specFormat.fixed;
-        if (r.errors && r.errors.length) {
-          if (!confirmBox('存在校验错误', r.errors.join('\n') + '\n\n是否仍要回填？')) return;
-        }
       }
 
       var applied = [];
@@ -1224,7 +1366,10 @@
         applied.push('规格型号');
       }
       closeEditor();
-      setCheckTip(applied.length ? ('已回填' + applied.join('、')) : '未回填（内容为空）', applied.length ? 'ok' : 'bad');
+      // 记住回填后的内容：之后 PLM 输入框不再弹联想/重复提示，除非用户再改
+      state.quietKey = fieldKey();
+      // 回填成功不再显示绿色提示，保持界面干净；只有什么都没填时才给一句说明
+      setCheckTip(applied.length ? '' : '未回填（内容为空）', applied.length ? 'ok' : 'bad');
       log('弹窗回填完成：' + (applied.join('、') || '无'));
     };
 
@@ -1237,8 +1382,12 @@
     foot.appendChild(cancelBtn);
     foot.appendChild(saveBtn);
     document.body.appendChild(mask);
-    dlg = { mask: mask, panel: panel, nameIn: nameIn, specIn: specIn, tipBox: tipBox, simBox: simBox };
+    dlg = {
+      mask: mask, panel: panel, nameIn: nameIn, specIn: specIn,
+      nameTip: nameTip, specTip: specTip, simBox: simBox, invBox: invBox
+    };
 
+    renderInfo(null);
     checkNow();
   }
 
@@ -1273,6 +1422,7 @@
       state.lastCheckKey = ''; state.okConfirmed = '';
       state.specOverWarned = false;
       state.checkBtn = null; state.checkTip = null;
+      state.quietKey = '';
       if (state.typeTimer) { clearInterval(state.typeTimer); state.typeTimer = null; }
       state.itemtype = null;
       fillMark.zycs = ''; fillMark.flsxhb = '';   // 新实例：清空"本脚本已写入值"标记
@@ -1394,6 +1544,11 @@
 
       var key = name + '|' + spec;
       if (state.okConfirmed === key) return true;
+      // 弹窗里已确认并回填、内容未变 → 不再二次确认
+      if (state.quietKey && state.quietKey === key) {
+        log('名称/规格已在弹窗确认，跳过保存前二次确认');
+        return true;
+      }
 
       var r = apiSync('/api/plm/check', {
         name: name, spec: spec, zycs: readText(cZycs), sub: sub, ecode: ecode
@@ -1760,8 +1915,9 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.23（api=' + apiUrl('')
+  log('脚本已加载 v1.27（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
+    + '；外部配置=' + (EXT_KEYS.length ? EXT_KEYS.join('/') : '未使用')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')
     + '；空格整理=' + (CFG.tidySpecSpace ? '开' : '关')
     + '；类型门控=' + (CFG.restrictItemType ? (CFG.itemTypeAllowText || []).join('/') : '关')

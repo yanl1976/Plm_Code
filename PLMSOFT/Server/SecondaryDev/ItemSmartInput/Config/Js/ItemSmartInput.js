@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.15
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.18
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -71,6 +71,7 @@
     showCheckButton: true,       // 在新建零组件窗口注入「校验并回填」按钮
     checkButtonText: '校验并回填',
     checkButtonHost: 'spec',     // 按钮挂在哪个输入框旁：'spec' | 'name'
+    checkButtonPlace: 'after',   // 'after'=插到输入框右侧（默认）；'fixed'=悬浮在窗口右下角（布局挤时用）
     // 按钮只对下列「类型(ITEMTYPE)」生效，其余类型置灰不可用
     restrictItemType: true,
     itemTypeAllowText: ['电气元件', '原材料', '外购标准件'],
@@ -814,8 +815,20 @@
     var wrap = el.parentNode || el.parent;
     if (!wrap) { log('输入框没有父节点，跳过按钮注入'); return false; }
 
+    // 若父节点是 DIV/SPAN（控件外壳，宽度通常固定），按钮放进去会压住输入框或超出被裁，
+    // 因此把插入点上移一层：锚点=外壳，父节点=外壳的父节点（同一行的容器）
+    var anchor = el, host = wrap;
+    var wrapTag = String(wrap.tagName || '').toUpperCase();
+    if (wrapTag === 'DIV' || wrapTag === 'SPAN') {
+      var gp = wrap.parentNode || wrap.parent;
+      if (gp) { anchor = wrap; host = gp; }
+    }
+
     var exists = null;
-    try { exists = wrap.querySelector ? wrap.querySelector('.plm-smart-check-btn') : null; } catch (e) { exists = null; }
+    try {
+      exists = (host.querySelector && host.querySelector('.plm-smart-check-btn'))
+        || (document.querySelector && document.querySelector('.plm-smart-check-btn'));
+    } catch (e) { exists = null; }
     if (exists) { state.checkBtn = exists; return true; }
 
     var btn = document.createElement('button');
@@ -824,32 +837,58 @@
     btn.textContent = CFG.checkButtonText || '校验并回填';
     btn.style.cssText = 'margin-left:6px;padding:2px 8px;font:12px/18px inherit;cursor:pointer;'
       + 'border:1px solid #3f8fd2;background:#eaf3fb;color:#16558c;border-radius:3px;'
-      + 'white-space:nowrap;vertical-align:middle;';
-    btn.onclick = function (ev) {
+      + 'white-space:nowrap;vertical-align:middle;position:relative;z-index:9999;pointer-events:auto;';
+    var fired = false;
+    var fire = function (ev) {
       try {
         if (ev && ev.preventDefault) ev.preventDefault();
         if (ev && ev.stopPropagation) ev.stopPropagation();
       } catch (e) { }
+      if (fired) return false;
+      fired = true;
+      setTimeout(function () { fired = false; }, 300);
+      log('按钮已点击');
       runCheckAndFill();
       return false;
     };
+    btn.onclick = fire;
+    btn.onmousedown = fire;      // 某些容器会吞掉 click 事件，用 mousedown 兜底
 
     var tip = document.createElement('span');
     tip.className = 'plm-smart-check-tip';
     tip.style.cssText = 'margin-left:8px;font-size:12px;color:#666;vertical-align:middle;';
 
-    // 插到输入框后面：INPUT → 按钮 → 状态文字
-    if (wrap.insertBefore) {
-      wrap.insertBefore(tip, el.nextSibling);
-      wrap.insertBefore(btn, tip);
+    // 位置模式：默认插到输入框右侧；布局太挤时可切成悬浮（只改配置文件即可）
+    var place = CFG.checkButtonPlace || 'after';
+    try { var ec = extCfg(); if (ec && ec.checkButtonPlace) place = String(ec.checkButtonPlace); } catch (e) { }
+
+    if (place === 'fixed') {
+      btn.style.position = 'fixed';
+      btn.style.right = '24px';
+      btn.style.bottom = '86px';
+      btn.style.zIndex = '99999';
+      tip.style.position = 'fixed';
+      tip.style.right = '24px';
+      tip.style.bottom = '62px';
+      tip.style.background = '#fff';
+      tip.style.padding = '2px 6px';
+      tip.style.borderRadius = '3px';
+      tip.style.zIndex = '99999';
+      document.body.appendChild(btn);
+      document.body.appendChild(tip);
+    } else if (host.insertBefore) {
+      // [输入框/外壳] → 按钮 → 状态文字
+      host.insertBefore(tip, anchor.nextSibling);
+      host.insertBefore(btn, tip);
     } else {
-      wrap.appendChild(btn);
-      wrap.appendChild(tip);
+      host.appendChild(btn);
+      host.appendChild(tip);
     }
     state.checkBtn = btn;
     state.checkTip = tip;
     log('已注入「' + (CFG.checkButtonText || '校验并回填') + '」按钮（挂载方式：'
-      + (trace.join(' > ') || '未知') + '；父节点 ' + (wrap.tagName || '?') + '）');
+      + (trace.join(' > ') || '未知') + '；锚点=' + (anchor.tagName || '?')
+      + '；父节点=' + (host.tagName || '?') + '）');
     return true;
   }
 
@@ -872,7 +911,12 @@
     apiAsync('/api/plm/check', {
       name: name, spec: spec, sub: sub, ecode: readEcode()
     }, function (r) {
-      if (!r || r.ok === false) { setCheckTip('治理服务不可用，未做处理', 'bad'); return; }
+      if (!r || r.ok === false) {
+        var tip = '治理服务不可用，未做处理（' + apiUrl('') + '）';
+        setCheckTip(tip, 'bad');
+        msgBox('校验未完成', tip + '\n\n请确认服务已启动，且浏览器能直接访问该地址。');
+        return;
+      }
       applyCheckResult(r, name, spec);
     });
   }
@@ -1211,67 +1255,23 @@
       || /dropdown|combo|select/i.test(cls);
   }
 
-  /** 从标签向上找「只含一个可见输入框」的行容器，返回该输入框 */
-  function inputInLabelRow(el) {
-    var p = el;
-    for (var k = 0; k < 6 && p; k++) {
-      p = p.parentNode;
-      if (!p || !p.querySelectorAll) continue;
-      var ins = p.querySelectorAll('input,textarea');
-      var first = null, count = 0;
-      for (var i = 0; i < ins.length; i++) {
-        if (!ins[i].id || !inputVisible(ins[i])) continue;
-        if (!first) first = ins[i];
-        count++;
-      }
-      if (count >= 1 && count <= 3) return first;   // 行内 1~3 个（规格型号/图号可能两个），取第一个
-      if (count > 3) return null;                   // 容器太大，说明粒度不对，不猜
-    }
-    return null;
-  }
-
-  function findInputByLabel(names) {
-    var all = visibleInputs();
-    // 只认带 id 的输入框：弹窗字段是 id2255_TextBox 这类自动 id，
-    // 首页/搜索框那些无 id 的输入框正是误命中的来源。
-    var inputs = [];
-    for (var q = 0; q < all.length; q++) if (all[q].id) inputs.push(all[q]);
-    if (!inputs.length) return null;
-    var nodes = null;
-    try { nodes = document.querySelectorAll('label,span,div,td,th'); } catch (e) { nodes = null; }
-    if (!nodes) return null;
-
-    for (var i = 0; i < nodes.length; i++) {
-      var el = nodes[i];
-      if (el.children && el.children.length > 2) continue;     // 容器节点跳过
-      // 关键：标签自身必须可见。弹窗未打开时模板里的标签是隐藏的，
-      // 若只看文字就会命中文档里隐藏的「规格型号/图号」，再抓到首页的输入框。
-      if (!inputVisible(el)) continue;
-      var own = '';
-      try { own = String(el.textContent || '').replace(/[*＊\s:：]/g, ''); } catch (e) { }
-      if (!own || own.length > 12) continue;
-
-      var hit = false;
-      for (var j = 0; j < names.length && !hit; j++) hit = labelHit(own, names[j]);
-      if (!hit) continue;
-
-      // 首选：标签所在「行容器」里唯一的可见输入框（标签与输入框同行时最准）
-      var rowInp = inputInLabelRow(el);
-      if (rowInp) return rowInp;
-
-      // 次选：文档顺序中紧跟在标签后面的第一个可见输入框
-      for (var m = 0; m < inputs.length; m++) {
-        var pos = 0;
-        try { pos = el.compareDocumentPosition(inputs[m]); } catch (e) { pos = 0; }
-        if (pos & 4) return inputs[m];                          // 4 = DOCUMENT_POSITION_FOLLOWING
-      }
-      // 兜底：向上 3 层，在同容器里找
-      var p = el;
-      for (var k = 0; k < 3 && p; k++) {
-        p = p.parentNode;
-        if (!p || !p.querySelector) continue;
-        var inp = p.querySelector('input,textarea');
-        if (inp && inp.id && inputVisible(inp)) return inp;
+  /**
+   * 按标签找输入框：**从输入框反查标签**。
+   * 实测弹窗里每个输入框的 nearLabel 就是 "名称*" / "规格型号/图号" / "类型*"，
+   * 比「从标签找输入框」稳得多（后者会被左侧导航里 "名称,编号,项目代号,…" 带偏）。
+   * 只认带 id 的输入框，避免命中首页/搜索框。
+   */
+  function findInputByLabel(names, opts) {
+    var list = visibleInputs();
+    var noDd = !!(opts && opts.noDropdown);
+    for (var i = 0; i < list.length; i++) {
+      var el = list[i];
+      if (!el.id) continue;
+      if (noDd && looksLikeDropdown(el)) continue;
+      var lb = nearLabel(el);
+      if (!lb) continue;
+      for (var j = 0; j < names.length; j++) {
+        if (labelHit(lb, names[j])) return el;
       }
     }
     return null;
@@ -1317,36 +1317,67 @@
   }
 
   /** 用 DOM 元素伪造控件对象，复用 readText/writeText/domOf 那一套 */
-  function domCtl(id, input) {
-    if (!input) return null;
+  function domCtl(id, el) {
+    if (!el) return null;
+    var host = el;
+    var input = el;
+    var tag = String(el.tagName || '').toUpperCase();
+    if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+      try { input = el.querySelector('input,textarea'); } catch (e) { input = null; }
+    }
+    var read = function () {
+      if (input && input.value) return String(input.value);
+      // EditButton 这类没有 input 的控件，退化为读容器文本（编号显示在这里）
+      var txt = '';
+      try { txt = String(host.textContent || ''); } catch (e) { txt = ''; }
+      var m = txt.match(/[0-9A-Za-z]{6,}/);
+      return m ? m[0] : '';
+    };
     return {
       id: id,
-      __dom: input,
-      GetText: function () { return input.value == null ? '' : String(input.value); },
+      __dom: input || host,
+      GetText: read,
       SetText: function (v) {
+        if (!input) return;
         input.value = v;
         try { input.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) { }
         try { input.dispatchEvent(new Event('change', { bubbles: true })); } catch (e) { }
       },
-      GetDom: function () { return input; },
-      GetSelectedValue: function () { return input.value; },
+      GetDom: function () { return input || host; },
+      GetSelectedValue: read,
       Check: function () { return true; }
     };
+  }
+
+  /** 编号是 EditButton（渲染成非 input 元素），按 id 特征或标签找它的容器 */
+  function findEcodeHost() {
+    var byId = findInput('ECODE_Value');     // 标准新增页能直接按 id 取到
+    if (byId) return byId;
+    var pats = ['_EditButton', 'MultiNo'];
+    for (var p = 0; p < pats.length; p++) {
+      try {
+        var nodes = document.querySelectorAll('[id*="' + pats[p] + '"]');
+        for (var i = 0; i < nodes.length; i++) {
+          if (inputVisible(nodes[i])) return nodes[i];
+        }
+      } catch (e) { }
+    }
+    return findInputByLabel(['编号']);
   }
 
   function takeOverByDom() {
     // 优先按稳定 id（*_Value）；本平台实际渲染的是 id2044_TextBox 这类自动 id，
     // 找不到就按标签文字（规格型号 / 名称 / 编号 / 类型）定位。
     var hasId = function (el) { return !!(el && el.id); };
-    var specEl = findInput('GGXH_Value') || findInputByLabel(['规格型号']);
+    var specEl = findInput('GGXH_Value') || findInputByLabel(['规格型号'], { noDropdown: true });
     if (!hasId(specEl) || !inputVisible(specEl)) return false;
     if (looksLikeDropdown(specEl)) {           // 下拉框绝不是规格型号
       log('规格型号定位到了下拉控件（' + specEl.id + '），跳过本次接管');
       return false;
     }
 
-    var enameEl = findInput('ENAME_Value') || findInputByLabel(['名称']);
-    var ecodeEl = findInput('ECODE_Value') || findInputByLabel(['编号']);
+    var enameEl = findInput('ENAME_Value') || findInputByLabel(['名称'], { noDropdown: true });
+    var ecodeEl = findEcodeHost();             // 编号是 EditButton，可能是 div 而非 input
     var typeEl = findInput('ITEMTYPE_Value') || findInputByLabel(['类型']);
     // 只认带 id 的控件，且至少要有编号或类型，避免在首页/查询页误挂
     if (!hasId(enameEl)) enameEl = null;
@@ -1410,7 +1441,7 @@
     function tick() {
       try {
         // 当前该接管的目标输入框（弹窗关闭时为空）
-        var specNow = findInput('GGXH_Value') || findInputByLabel(['规格型号']);
+        var specNow = findInput('GGXH_Value') || findInputByLabel(['规格型号'], { noDropdown: true });
         var curSpec = (state.ggxh && state.ggxh.__dom) || null;
 
         // 目标变了：新弹窗打开，或之前挂到了错误位置（如首页）→ 拆掉重建
@@ -1447,7 +1478,7 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.15（api=' + apiUrl('')
+  log('脚本已加载 v1.18（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')
     + '；空格整理=' + (CFG.tidySpecSpace ? '开' : '关')

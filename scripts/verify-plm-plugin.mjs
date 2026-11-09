@@ -273,6 +273,18 @@ function router(map) {
   }
 }
 
+/** 在整棵 mock DOM 里找「校验并回填」按钮（注入点可能是 form，也可能是 body） */
+function findBtn(p) {
+  const all = []
+  const walk = (n) => {
+    if (!n) return
+    all.push(n)
+    for (const c of (n.children || [])) walk(c)
+  }
+  walk(p.doc.body)
+  return all.find((c) => String(c.className || '').indexOf('plm-smart-check-btn') >= 0)
+}
+
 // ======================= 场景 =======================
 async function run() {
   console.log('\n=== PLM ItemSmartInput.js 程序逻辑验证 ===\n')
@@ -526,9 +538,7 @@ async function run() {
     p.ctl['GGXH_Value'].__text = '  NXB-63   C16  '
     p.OnCreate()
 
-    const btn = p.form.children.find(
-      (c) => String(c.className || '').indexOf('plm-smart-check-btn') >= 0
-    )
+    const btn = findBtn(p)
     ok('按钮已注入到规格输入框旁', !!btn)
     ok('允许类型下按钮可用', !!btn && btn.disabled !== true)
     if (btn) {
@@ -552,9 +562,7 @@ async function run() {
     p.ctl['GGXH_Value'].__text = '  NXB-63   C16  '
     p.OnCreate()
 
-    const btn = p.form.children.find(
-      (c) => String(c.className || '').indexOf('plm-smart-check-btn') >= 0
-    )
+    const btn = findBtn(p)
     ok('非授权类型按钮为禁用态', !!btn && btn.disabled === true)
     if (btn) {
       btn.onclick({ preventDefault() { }, stopPropagation() { } })
@@ -592,9 +600,7 @@ async function run() {
     p.sandbox.InforCenter_PSEITEM$_CreatePage_OnCreate(p.pageEvent, {})
     await sleep(30)
     ok('从 $ 入口也能绑定输入框', (p.doc.__byId['ENAME_Value'].__handlers || []).length > 0)
-    const btn = p.form.children.find(
-      (c) => String(c.className || '').indexOf('plm-smart-check-btn') >= 0
-    )
+    const btn = findBtn(p)
     ok('从 $ 入口也能注入按钮', !!btn)
   }
 
@@ -607,9 +613,7 @@ async function run() {
       globalCfg: { domWatchDelay: 50 },
     })
     await sleep(220)                       // 不调用 OnCreate，等兜底接管
-    const btn = p.form.children.find(
-      (c) => String(c.className || '').indexOf('plm-smart-check-btn') >= 0
-    )
+    const btn = findBtn(p)
     ok('未触发 OnCreate 也能注入按钮', !!btn)
     ok('输入框已绑定事件', (p.doc.__byId['ENAME_Value'].__handlers || []).length > 0)
   }

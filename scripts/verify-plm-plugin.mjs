@@ -450,6 +450,34 @@ async function run() {
     ok('新页面再次询问', (p2.doc.__confirmCalls || 0) === 1, 'calls=' + p2.doc.__confirmCalls)
   }
 
+  // S13 规格空格自动整理：首尾 + 连续空格在保存前就地修正
+  {
+    console.log('[S13] 规格空格自动整理 → 保存前就地修正，乘号不动')
+    const p = newPage({
+      ctrls: baseCtrl(),
+      ajaxHandler: router({ '/health': HEALTH_OK, '/check': CHECK_CLEAN }),
+    })
+    p.ctl['ENAME_Value'].__text = '微型断路器'
+    p.ctl['GGXH_Value'].__text = '  NXB-63   C16 3P  '
+    p.OnCreate()
+    const ret = p.OnOK()
+    ok('OnOK 放行', ret === true, 'ret=' + ret)
+    ok('首尾/连续空格已整理', p.ctl['GGXH_Value'].__text === 'NXB-63 C16 3P',
+      'got=' + JSON.stringify(p.ctl['GGXH_Value'].__text))
+
+    // 反向断言：乘号（x）不属于空格问题，不应被顺手改成 *
+    const q = newPage({
+      ctrls: baseCtrl(),
+      ajaxHandler: router({ '/health': HEALTH_OK, '/check': CHECK_CLEAN }),
+    })
+    q.ctl['ENAME_Value'].__text = '按钮'
+    q.ctl['GGXH_Value'].__text = 'LAY3x2 2 红'
+    q.OnCreate()
+    q.OnOK()
+    ok('乘号不被改写', q.ctl['GGXH_Value'].__text === 'LAY3x2 2 红',
+      'got=' + JSON.stringify(q.ctl['GGXH_Value'].__text))
+  }
+
   console.log('\n----------------------------------------')
   console.log(`结果: ${pass} 通过 / ${fail} 失败`)
   if (fail) console.log('失败项: ' + failures.join(' | '))

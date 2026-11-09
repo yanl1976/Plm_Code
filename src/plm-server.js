@@ -194,6 +194,7 @@ function handleCheck(body) {
     warnings: [],
     duplicates: [],
     suggestion: { name: '', spec: '', zycs: '' },
+    specFormat: null,
     tokens: [],
     rulesVersion: '',
   }
@@ -213,6 +214,8 @@ function handleCheck(body) {
     result.nameFormat = r.nameFormat || null
     result.nameSynonym = r.nameSynonym || null
     result.nameModel = r.nameModel || null
+    // 规格空格体检：前端据此可一键修正/保存前自动应用
+    result.specFormat = r.specFormat || null
   } catch (e) {
     result.warnings.push('规则校验异常（已跳过）：' + e.message)
   }

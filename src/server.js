@@ -21,7 +21,7 @@ import { loadTemplates, buildTree, rebuildMid, addCustomParam, removeCustomParam
 import { getOverride, saveOverride, deleteOverride, bulkPrefill, overrideMtime, countParamUsage } from './feature-store.js'
 import XLSX from 'xlsx'
 import { normalize, tokenize, jaccard, looseSignature, modelOf } from './spec.js'
-import { checkMaterial, rules as materialRules, resolveNameFix, detectNameModel } from './material-rules.js'
+import { checkMaterial, fixSpecFormat, rules as materialRules, resolveNameFix, detectNameModel } from './material-rules.js'
 import * as nameSyn from './name-synonyms.js'
 import { snapshotStatus, invalidateSnapshotStatus, erpSubDocs, invalidateErpSub } from './snapshot.js'
 
@@ -1210,7 +1210,8 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/new-material/validate') {
       const m = {
         name: (url.searchParams.get('name') || '').trim(),
-        spec: (url.searchParams.get('spec') || '').trim(),
+        // 规格保留原文：首尾空格必须能被 checkSpec 看到，否则前端「会自动整理」的提醒永远不出现
+        spec: url.searchParams.get('spec') || '',
         sub: (url.searchParams.get('sub') || '').trim(),
       }
       // knownCount：该名称在本小类的存量出现次数，用于区分「已是在用的完整名称」与「还在打字」
@@ -1401,13 +1402,24 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/new-material' && req.method === 'POST') {
       const b = await readBody(req)
       const name = String(b.name || '').trim()
-      const spec = String(b.spec || '').trim()
+      const rawSpec = String(b.spec || '')
+      let spec = rawSpec.trim()
       const sub = String(b.sub || '').trim()
       if (!name) return sendJson(res, 400, { error: '物料名称不能为空' })
       if (!spec) return sendJson(res, 400, { error: '规格型号不能为空' })
       const info = subInfo(sub)
       if (!info) return sendJson(res, 400, { error: '小类不存在' })
       // 录入规则兜底：硬错误直接拒绝；提示项允许保存但随结果返回，便于前端展示
+      // 空格整理：与 PLM 插件、录入页同一口径（首尾 / 连续 / 全角空格）。
+      // 必须以【原文】判断：上面已 trim，用 trim 后的值永远看不出首尾空格。
+      // 放在 checkMaterial 之前，避免「提示有空格」与「已经改掉」自相矛盾。
+      const specFmt = fixSpecFormat(rawSpec)
+      let specTidy = null
+      if (specFmt && specFmt.fixed !== rawSpec) {
+        specTidy = { from: specFmt.raw, to: specFmt.fixed, reasons: specFmt.reasons }
+        spec = specFmt.fixed
+      }
+
       const verdict = checkMaterial({ name, spec, sub })
       if (!verdict.ok) {
         return sendJson(res, 400, { error: '不符合录入规则：' + verdict.errors.join('；'), rule: verdict })
@@ -1479,7 +1491,7 @@ const server = http.createServer(async (req, res) => {
         }
         d.items.push(item)
         writeNewMats(d)
-        return sendJson(res, 200, { ok: true, item, rule: verdict })
+        return sendJson(res, 200, { ok: true, item, rule: verdict, specTidy })
       })
     }
 

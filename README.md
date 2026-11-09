@@ -35,7 +35,9 @@ Plm_Code/
       05-development-extensiontotype.xml  # 扩展点 -> 接口类型映射（SDK 原始 XML）
     物料导出模板/                 # export_all.cjs 产出的 xlsx 模板（按小类分文件）
 
-  PLMSOFT/                      # 金蝶 PLM 程序目录（Server/Client，第三方，3 万+ 文件，勿改）
+  PLMSOFT/                      # 金蝶 PLM 程序目录（第三方，3 万+ 文件；仅 SecondaryDev 下为本项目二开）
+    Server/SecondaryDev/ItemSmartInput/Config/Js/ItemSmartInput.js
+                                # PLM 新增物料页「名称/规格」智能录入插件（本项目维护，v1.4）
 
   data/                         # 产物（gitignore）：materials.ndjson/csv + stats.json / dedup-* /
                                 #   mapping.json / freeze.json / unified-materials.json /
@@ -247,3 +249,25 @@ npm run server                  # 端口取 .env 的 PORT（默认 3000），被
 - 编码规则更新：改 `doc/*.xlsx` 后 `python scripts/gen_classification.py` 重建分类树。
 - 某小类的关键属性（如电阻要按 阻值/精度/封装 查重）：编辑 `src/config/dedup-rules.json` 的
   `heuristics`（按小类名称关键字匹配）或 `subOverrides`（指定小类编码覆盖），无需改代码。
+
+## 规格空格规则（v1.4 起自动整理）
+
+录入页与治理看板共用一套规则，实现在 `src/material-rules.js`：`fixSpecFormat(raw)` → `{raw, fixed, reasons[]}`。
+
+| 问题 | 检测依据 | 处理 |
+|---|---|---|
+| 首尾空格 | 原文与 `trim()` 结果不等 | 失焦 / 保存前**就地去除** |
+| 连续空格 | ` {2,}` | 合并为单个空格 |
+| 全角空格 U+3000 / Tab / 换行 / 不间断空格 | `[^\S ]` | 统一成半角空格 |
+
+- **后端单一真源**：`checkSpec()` 用**原文**（不是 trim 后的值）检测并返回 `specFormat`；`/api/plm/check` 与 `/api/new-material/validate` 都已透出该字段。
+- **提醒位置**：治理看板「新增物料」表单的规则区（输入框正下方）实时提示「保存时会自动整理规格空格（原因）→ 整理后写法」，保存成功后在同一位置显示整理结果；`/api/new-material` 响应带 `specTidy` 供前端使用。
+- **插件自动应用**：`ItemSmartInput.js` 在规格框失焦、以及 `OnOK` 保存前调用 `tidySpecCtl()` 就地改写，受 `CFG.tidySpecSpace` 控制（默认 `true`）。
+- **同步字段同样整理**：写入 ZYCS / FLSXHB 前走同一口径，避免主字段干净、参数字段带空格。
+- 注意：插件原有的 `readText()` 会 trim，看不到首尾空格，故新增 `readRaw()` 读原始文本再判断。
+
+## 待决事项
+
+- **乘号强制统一 `*`（待定）**：当前 `checkSpec()` 只发 `warn`（`multiplyMsg`），`suggestSpec()` 已能算出 `3*25` 的规范写法，但**不自动改写、也不阻断保存**。
+  待确认：`LAY3x2` 里的 `x` 是乘号还是型号分隔符（正确写法可能是 `LAY3-2` 而非 `LAY3*2`）。
+  结论明确前不改规则；涉及 `src/material-rules.js` 的乘号判定与 `src/config/material-rules.json` 的 `multiplyChars` / `multiplyMsg`。

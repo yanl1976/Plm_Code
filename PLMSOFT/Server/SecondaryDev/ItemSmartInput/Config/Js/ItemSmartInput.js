@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.3
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.4
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -12,7 +12,9 @@
  *   1) 名称输入 —— 同义词规范化 + 库内高频名称联想，点选后回填 ENAME
  *   2) 规格输入 —— 同类既有写法联想 + 结构化参数，点选后回填 GGXH
  *   3) 失焦/保存 —— 调 /api/plm/check 做同小类查重，命中 exact/sep 级重复时提示并二次确认
- *   4) 规格型号自动同步 —— 把 GGXH 写入 主要参数(ZYCS) 与 分类属性合并(FLSXHB)：
+ *   4) 规格空格整理 —— 失焦/保存前把首尾空格、连续空格、全角空格就地修正
+ *        口径同后端 material-rules.fixSpecFormat；乘号(×/x/X -> *)不在此处理（待定）
+ *   5) 规格型号自动同步 —— 把 GGXH 写入 主要参数(ZYCS) 与 分类属性合并(FLSXHB)：
  *        仅当二者为空或等于二开占位文字时填入，已有值一律不覆盖（不改变 PLM 生成逻辑）
  *        时机：规格输入/点选候选、进入步骤2、点"确定"前兜底
  *        宽度：严格按 PLM 元数据（GGXH 500 / ZYCS 1000 / FLSXHB 100）
@@ -56,6 +58,7 @@
     strictWidth: true,           // true=超限不截断，保存时提示并阻断，让用户回去修改
     blockOnDuplicate: true,      // 保存时命中强重复是否二次确认
     notifyDuplicateOnBlur: true, // 失焦时是否在浮层提示重复（不弹框）
+    tidySpecSpace: true,         // 规格失焦/保存前自动整理空格（首尾 + 连续），不处理乘号
 
     // 字段控件 ID（与 AutoGenerator/Config/Pages/PSEITEM-CREATE.page 一致）
     ctlEname: 'ENAME_Value',
@@ -135,6 +138,34 @@
       var el = domOf(ctrl);
       if (el && $) { $(el).trigger('blur'); }
     } catch (e) { }
+  }
+
+  /**
+   * 规格空格整理：全角空格/Tab/换行 -> 半角空格，连续空格合并，去首尾空格。
+   * 与后端 material-rules.fixSpecFormat 同口径；乘号(×/x/X -> *)不在此处理（待定）。
+   */
+  function tidySpecSpace(s) {
+    return String(s == null ? '' : s)
+      .replace(/[^\S ]/g, ' ')
+      .replace(/ {2,}/g, ' ')
+      .replace(/^ +| +$/g, '');
+  }
+
+  /** 读控件原始文本（不 trim）——readText 会去掉首尾空格，恰恰是这里要修的问题 */
+  function readRaw(ctrl) {
+    if (!ctrl) return '';
+    try { return String(ctrl.GetText() == null ? '' : ctrl.GetText()); } catch (e) { return ''; }
+  }
+
+  /** 就地整理规格控件的空格；返回 true = 发生了修正 */
+  function tidySpecCtl(ctrl) {
+    if (!CFG.enabled || !CFG.tidySpecSpace || !isValidCtl(ctrl)) return false;
+    var cur = readRaw(ctrl);
+    var fixed = tidySpecSpace(cur);
+    if (!cur || fixed === cur) return false;
+    if (!writeText(ctrl, fixed)) return false;
+    log('规格型号空格已整理', JSON.stringify(cur), '=>', JSON.stringify(fixed));
+    return true;
   }
 
   /**
@@ -289,7 +320,8 @@
   /** 统一入口：缓存规格 + 同步两个字段（幂等，可重复调用） */
   function syncSpecToParams(spec) {
     if (!CFG.enabled || !CFG.fillSpecToParams) return;
-    var v = String(spec == null ? '' : spec).replace(/^\s+|\s+$/g, '');
+    // 同步到 ZYCS/FLSXHB 前先整理空格，避免主字段干净、参数字段带空格
+    var v = tidySpecSpace(spec);
     if (!v) return;
     window.__PLM_SMART_SPEC = v;      // 供步骤2 页面加载时取用
 
@@ -584,9 +616,11 @@
       }, CFG.suggestDebounce);
     });
 
-    // 失焦：提示重复（不阻断、不弹框），并关闭浮层
+    // 失焦：先整理规格空格（就地修正、用户无感），再提示重复（不阻断、不弹框）
     $(el).on('blur.smartinput', function () {
       setTimeout(hidePanel, 120);
+      // 只在规格框失焦时整理，避免名称框触发时误改规格
+      if (field === 'spec') tidySpecCtl(state.ggxh);
       if (!CFG.notifyDuplicateOnBlur) return;
       var name = readText(state.ename);
       var spec = readText(state.ggxh);
@@ -725,6 +759,9 @@
       var spec = readText(cSpec);
       if (!name || !spec) return true;   // 交由 PLM 原生必填校验
 
+      // 空格兜底：控件里可能残留首尾/连续空格（readText 读不到），保存前就地整理
+      if (tidySpecCtl(cSpec)) spec = readText(cSpec);
+
       // 宽度校验：超限提示并阻断保存，让用户回去修改（不做静默截断）
       if (!blockIfOverflow(spec, '保存')) return false;
 
@@ -816,8 +853,9 @@
     try { return confirm(title + '\n\n' + msg) === true; } catch (e) { return true; }
   }
 
-  log('脚本已加载 v1.3（api=' + apiUrl('')
+  log('脚本已加载 v1.4（api=' + apiUrl('')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')
+    + '；空格整理=' + (CFG.tidySpecSpace ? '开' : '关')
     + '；超限拦截=' + (CFG.strictWidth ? '开' : '关') + '）');
 
   // 平台向导脚本可能晚于本文件加载，这里延迟挂接（幂等，最多重试 20 秒）

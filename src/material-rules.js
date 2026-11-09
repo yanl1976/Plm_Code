@@ -80,10 +80,12 @@ export function checkSpec(raw, sub) {
   const warnings = []
   const s = String(raw == null ? '' : raw).trim()
   const sug = suggestSpec(s)
+  // 空格体检用原文：s 已 trim，首尾空格到这一步就看不到了
+  const fmt = fixSpecFormat(raw)
 
   if (!s) {
     errors.push('型号规格不能为空')
-    return { ok: false, errors, warnings, suggestion: '' }
+    return { ok: false, errors, warnings, suggestion: '', specFormat: null }
   }
   if (s.length < (R.minLen || 2)) errors.push(`型号规格过短（至少 ${R.minLen || 2} 个字符）`)
   if (s.length > (R.maxLen || 64)) errors.push(`型号规格过长（最多 ${R.maxLen || 64} 个字符）`)
@@ -103,7 +105,14 @@ export function checkSpec(raw, sub) {
   const mult = (R.multiplyChars || []).filter((c) => new RegExp('\\d\\s*' + esc(c) + '\\s*(?=\\d)').test(s))
   if (mult.length) warnings.push(R.multiplyMsg || '乘号统一用 *')
   if (/[（）]/.test(s)) warnings.push('括号请使用半角 ()')
-  if (/[\s]{2,}/.test(s)) warnings.push('规格里有连续空格，请用单个空格分隔参数')
+  // 空格：首尾只能从原文看出来（s 已 trim），中间连续空格/非常规空白沿用原提示
+  if (fmt && fmt.reasons.includes('首尾有空格')) {
+    warnings.push('规格首尾有多余空格，建议去除')
+  }
+  if (fmt && (fmt.reasons.includes('中间有连续空格') ||
+              fmt.reasons.includes('含制表符或全角空格'))) {
+    warnings.push('规格里有连续空格，请用单个空格分隔参数')
+  }
   if (sug && sug !== s) warnings.push('规范写法：' + sug)
 
   // 该小类关键参数至少命中 N 个，否则无法与相似物料区分
@@ -121,7 +130,7 @@ export function checkSpec(raw, sub) {
     } catch (e) { /* 分类信息缺失时跳过参数校验 */ }
   }
 
-  return { ok: errors.length === 0, errors, warnings, suggestion: sug }
+  return { ok: errors.length === 0, errors, warnings, suggestion: sug, specFormat: fmt }
 }
 
 /**
@@ -153,6 +162,41 @@ export function fixNameFormat(raw) {
   if (strip.length) {
     reasons.push('含分隔符 ' + strip.join(' '))
     for (const c of strip) fixed = fixed.split(c).join('')
+  }
+  if (!reasons.length || fixed === s) return null
+  return { raw: s, fixed, reasons: [...new Set(reasons)] }
+}
+
+/**
+ * 规格格式体检：首尾空格、连续空格、非常规空白
+ *
+ * 与 fixNameFormat 对称，但**只处理空白** —— 乘号（×/x/X → *）属于语义改写，
+ * 待确认「数字之间的 x 是否都是乘号」（如 LAY3x2 的 x 是乘号还是型号分隔符）后再决定，
+ * 暂不纳入自动修正，见 README「待决事项」。
+ *
+ * 这些空白去掉/合并不会改变语义，所以直接给出可一键采用（且可自动采用）的修正值。
+ * 覆盖 U+3000 全角空格与 Tab：二者既会被 halfWidthOnly 判为全角，也会让签名算错。
+ *
+ * @returns {null | {raw:string, fixed:string, reasons:string[]}}
+ */
+export function fixSpecFormat(raw) {
+  const s = String(raw == null ? '' : raw)
+  if (!s) return null
+  const reasons = []
+  let fixed = s
+
+  if (fixed !== fixed.trim()) {
+    reasons.push('首尾有空格')
+    fixed = fixed.trim()
+  }
+  // 非普通空格的空白（Tab / 换行 / 全角空格 U+3000 / 不间断空格）统一成半角空格
+  if (/[^\S ]/.test(fixed)) {
+    reasons.push('含制表符或全角空格')
+    fixed = fixed.replace(/[^\S ]/g, ' ')
+  }
+  if (/ {2,}/.test(fixed)) {
+    reasons.push('中间有连续空格')
+    fixed = fixed.replace(/ {2,}/g, ' ')
   }
   if (!reasons.length || fixed === s) return null
   return { raw: s, fixed, reasons: [...new Set(reasons)] }
@@ -309,6 +353,8 @@ export function checkMaterial(m = {}) {
     nameSynonym: syn,
     // 名称格式体检（空格/分隔符），供浮层给一键修正
     nameFormat: n.nameFormat || null,
+    // 规格格式体检（空格），供浮层给一键修正 / 保存前自动应用
+    specFormat: sp.specFormat || null,
     // 名称含型号/参数：仅提示标准写法（含建议实物名 core 与型号片段 moved），不改写任何字段
     nameModel: n.nameModel || null,
     suggestion: {
@@ -319,4 +365,4 @@ export function checkMaterial(m = {}) {
   }
 }
 
-export default { rules, checkName, checkSpec, checkMaterial, suggestSpec, fixNameFormat, resolveNameFix, detectNameModel }
+export default { rules, checkName, checkSpec, checkMaterial, suggestSpec, fixNameFormat, fixSpecFormat, resolveNameFix, detectNameModel }

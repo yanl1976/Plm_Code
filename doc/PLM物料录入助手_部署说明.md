@@ -267,6 +267,7 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 | `autoFillZycs` | `true` | 选定规格后是否连带回填「主要参数 ZYCS」（仅当 ZYCS 为空时） |
 | `blockOnDuplicate` | `true` | 保存时命中 exact/sep 级重复是否二次确认 |
 | `notifyDuplicateOnBlur` | `true` | 失焦时在浮层提示重复（不弹框） |
+| `tidySpecSpace` | `true` | 失焦/保存前自动整理规格空格（首尾 + 连续 + 全角 U+3000/Tab）；乘号不处理 |
 | `ctlEname / ctlGgxh / ctlZycs / ctlEcode` | 见文件 | 控件 ID，与 `PSEITEM-CREATE.page` 一致，一般不改 |
 
 服务端业务规则**不在 js 里**，仍由既有配置文件驱动，改规则不需要动 PLM：

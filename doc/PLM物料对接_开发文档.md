@@ -263,6 +263,7 @@ state.subs: Map<subKey(6位), {
 | `autoFillZycs` | `true` | 选规格时连带回填主要参数 |
 | `blockOnDuplicate` | `true` | 命中强重复是否二次确认 |
 | `notifyDuplicateOnBlur` | `true` | 失焦是否浮层提示重复 |
+| `tidySpecSpace` | `true` | 失焦/保存前自动整理规格空格（首尾 + 连续 + 全角）；乘号不处理 |
 
 **服务端**：`PLM_API_PORT`（3100）、`PLM_API_HOST`（0.0.0.0）；治理看板另用 `PORT`（3000）。三者统一在项目根 `.env` 配置（模板 `.env.example`，加载点 `src/env.js`），优先级为 进程环境变量 > `.env` > 代码默认值；业务规则在 `src/config/{dedup-rules,spec-fields,material-rules,name-synonyms}.json`。
 
@@ -305,6 +306,7 @@ state.subs: Map<subKey(6位), {
 | `dupLevel` | `none` \| `exact` \| `sep` \| `fuzzy` |
 | `blocking` | `{type:'error'|'duplicate', reason}` 或 `null` |
 | `suggestion` | `{name, spec, zycs}` 可回填值 |
+| `specFormat` | `{raw, fixed, reasons[]}` 规格空格体检；`fixed` 为整理后写法，无问题为 `null`（乘号不在此处理） |
 | `skipReason` | **未查重的原因**（无编码/前缀未命中），有此字段表示本次没查 |
 | `elapsedMs` | 耗时（实测 2~4ms） |
 

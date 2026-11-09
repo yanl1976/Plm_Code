@@ -1625,8 +1625,9 @@ function nmRuleCheck() {
   const el = $('#nmRuleCheck')
   if (!el) return
   const name = ($('#nmName').value || '').trim()
-  const spec = ($('#nmSpec').value || '').trim()
-  if (!name && !spec) { el.innerHTML = ''; return }
+  // 规格不 trim：交给后端识别首尾空格，前端才能提示「保存时会自动整理」
+  const spec = ($('#nmSpec').value || '')
+  if (!name && !spec.trim()) { el.innerHTML = ''; return }
   api('/api/new-material/validate?name=' + encodeURIComponent(name)
     + '&spec=' + encodeURIComponent(spec) + '&sub=' + encodeURIComponent(nm.cur.sub || ''))
     .then((r) => renderNmRule(r || {}))
@@ -1636,12 +1637,21 @@ function renderNmRule(r) {
   const el = $('#nmRuleCheck')
   if (!el) return
   const errs = r.errors || [], warns = r.warnings || []
-  let html
-  if (!errs.length && !warns.length) html = '<div class="nm-ok">✓ 名称与规格符合录入规则</div>'
-  else {
-    html = errs.map((e) => `<div class="nm-rule-err">✕ ${escapeHtml(e)}</div>`).join('')
-      + warns.map((w) => `<div class="nm-rule-warn">! ${escapeHtml(w)}</div>`).join('')
+  const fmt = r.specFormat
+  // 空格类问题合并成一条「会自动整理成什么」，比逐条列「有空格」更有用；
+  // 其余警告（乘号、括号、规范写法…）照常展示。
+  const otherWarns = warns.filter((w) => {
+    if (/空格/.test(w)) return false                       // 已并入「自动整理」那一条
+    if (fmt && fmt.fixed && w === '规范写法：' + fmt.fixed) return false  // 与整理结果重复
+    return true
+  })
+  let html = errs.map((e) => `<div class="nm-rule-err">✕ ${escapeHtml(e)}</div>`).join('')
+  if (fmt && fmt.fixed) {
+    html += '<div class="nm-rule-warn">! 保存时会自动整理规格空格（'
+      + escapeHtml(fmt.reasons.join('、')) + '）→ ' + escapeHtml(fmt.fixed) + '</div>'
   }
+  html += otherWarns.map((w) => `<div class="nm-rule-warn">! ${escapeHtml(w)}</div>`).join('')
+  if (!html) html = '<div class="nm-ok">✓ 名称与规格符合录入规则</div>'
   // 同义词建议与常用名称联想都在名称输入框的浮层里，这里只管规则错误
   el.innerHTML = html
 }
@@ -1792,11 +1802,18 @@ async function renderNmInv() {
       el.innerHTML = `<div class="nm-inv-box"><b>现有库存</b><span class="muted"> ${escapeHtml(r.note || '无完全相同规格的存量物料')}</span></div>`
       return
     }
+    // 单仓库时把仓库名并进汇总行，避免「数量 3」和「元器件库1：3 个」把同一个数说两遍；
+    // 多仓库才单独列分仓明细（那时每个库的数量才有对比价值）。
+    const whs = r.warehouses || []
+    const onlyWh = whs.length === 1 ? (whs[0].stockName || ('仓库#' + whs[0].stockId)) : ''
     let html = `<div class="nm-inv-box"><b>现有库存</b><span class="muted"> 完全相同规格 ${n} 个物料</span>
       <span class="nm-inv-sum">数量 <b>${fmt(t.qty)}</b> ${unit}</span>
-      <span class="nm-inv-sum">可用 <b class="nm-ok">${fmt(t.avbqty)}</b> ${unit}</span></div>`
-    const wh = (r.warehouses || []).slice(0, 8).map((w) => `<span class="nm-wh-chip">${escapeHtml(w.stockName || ('仓库#' + w.stockId))}：${fmt(w.qty)} ${unit}</span>`)
-    if (wh.length) html += '<div class="nm-inv-wh">' + wh.join('') + '</div>'
+      <span class="nm-inv-sum">可用 <b class="nm-ok">${fmt(t.avbqty)}</b> ${unit}</span>`
+      + (onlyWh ? `<span class="muted">（${escapeHtml(onlyWh)}）</span>` : '') + '</div>'
+    if (!onlyWh) {
+      const wh = whs.slice(0, 8).map((w) => `<span class="nm-wh-chip">${escapeHtml(w.stockName || ('仓库#' + w.stockId))}：${fmt(w.qty)} ${unit}</span>`)
+      if (wh.length) html += '<div class="nm-inv-wh">' + wh.join('') + '</div>'
+    }
     el.innerHTML = html
     return
   }
@@ -1805,18 +1822,24 @@ async function renderNmInv() {
     el.innerHTML = `<div class="nm-inv-box"><b>即时库存</b><span class="muted"> ${escapeHtml(note)}</span></div>`
     return
   }
+  // 与参考库存同口径：单仓库并入汇总行，多仓库才单独列明细
+  const whs = r.warehouses || []
+  const onlyWh = whs.length === 1 ? (whs[0].stockName || ('仓库#' + whs[0].stockId)) : ''
   let html = `<div class="nm-inv-box"><b>即时库存</b>
     <span class="nm-inv-sum">数量 <b>${fmt(t.qty)}</b> ${unit}</span>
     <span class="nm-inv-sum">可用 <b class="nm-ok">${fmt(t.avbqty)}</b> ${unit}</span>
-    <span class="nm-inv-sum">锁库 <b class="nm-warn">${fmt(t.lockqty)}</b> ${unit}</span></div>`
-  if ((r.warehouses || []).length) {
-    html += '<div class="nm-inv-wh">' + r.warehouses.map((w) => {
-      const name = w.stockName || ('仓库#' + w.stockId)
-      const extra = w.avbqty !== w.qty ? '（可用 ' + fmt(w.avbqty) + '）' : ''
-      return `<span class="nm-wh-chip">${escapeHtml(name)}：${fmt(w.qty)} ${unit}${extra}</span>`
-    }).join('') + '</div>'
-  } else {
-    html += '<div class="nm-inv-wh"><span class="nm-wh-chip">暂无分仓库存</span></div>'
+    <span class="nm-inv-sum">锁库 <b class="nm-warn">${fmt(t.lockqty)}</b> ${unit}</span>`
+    + (onlyWh ? `<span class="muted">（${escapeHtml(onlyWh)}）</span>` : '') + '</div>'
+  if (!onlyWh) {
+    if (whs.length) {
+      html += '<div class="nm-inv-wh">' + whs.map((w) => {
+        const name = w.stockName || ('仓库#' + w.stockId)
+        const extra = w.avbqty !== w.qty ? '（可用 ' + fmt(w.avbqty) + '）' : ''
+        return `<span class="nm-wh-chip">${escapeHtml(name)}：${fmt(w.qty)} ${unit}${extra}</span>`
+      }).join('') + '</div>'
+    } else {
+      html += '<div class="nm-inv-wh"><span class="nm-wh-chip">暂无分仓库存</span></div>'
+    }
   }
   el.innerHTML = html
 }
@@ -1874,9 +1897,11 @@ async function nmSave() {
   const msg = (s) => { $('#nmMsg').textContent = s }
   if (!nm.cur.sub) { msg('请先选择小类'); return }
   const name = ($('#nmName').value || '').trim()
-  const spec = ($('#nmSpec').value || '').trim()
+  // 规格保留原始输入：首尾空格交给后端统一整理并回传「改了什么」，
+  // 若在这里先 trim，后续就无法提醒用户「空格已被自动整理」。
+  const spec = ($('#nmSpec').value || '')
   if (!name) { msg('请填写物料名称'); return }
-  if (!spec) { msg('请填写规格型号'); return }
+  if (!spec.trim()) { msg('请填写规格型号'); return }
   $('#nmSave').disabled = true
   try {
     const r = await apiPost('/api/new-material', {
@@ -1884,6 +1909,7 @@ async function nmSave() {
       remark: ($('#nmRemark').value || '').trim(), by: 'web',
     })
     if (r && r.error) { msg('保存失败：' + r.error); return }
+    const tidy = r.specTidy
     msg('已加入待新增清单，编码 ' + r.item.code)
     $('#nmName').value = ''; $('#nmSpec').value = ''; $('#nmUnit').value = ''; $('#nmRemark').value = ''
     $('#nmSuggest').innerHTML = ''; $('#nmSpecCheck').innerHTML = ''
@@ -1891,7 +1917,15 @@ async function nmSave() {
     const invEl = $('#nmInv'); if (invEl) invEl.innerHTML = ''
     const stEl = $('#nmSpecStock'); if (stEl) stEl.textContent = '现有库存 -'
     hideNmNameTip()
-    const rc = $('#nmRuleCheck'); if (rc) rc.innerHTML = ''
+    // 空格整理结果放到输入框正下方的规则区，比挤在按钮旁更容易看到
+    clearTimeout(nm.ruleTimer)
+    const rc = $('#nmRuleCheck')
+    if (rc) {
+      rc.innerHTML = tidy
+        ? '<div class="nm-ok">✓ 规格空格已自动整理（'
+          + escapeHtml(tidy.reasons.join('、')) + '）：' + escapeHtml(tidy.to) + '</div>'
+        : ''
+    }
     nm.items = (await api('/api/new-material')).items || []
     renderNmList()
     await refreshNmCode()

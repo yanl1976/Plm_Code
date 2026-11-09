@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.4
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.5
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -19,10 +19,14 @@
  *        时机：规格输入/点选候选、进入步骤2、点"确定"前兜底
  *        宽度：严格按 PLM 元数据（GGXH 500 / ZYCS 1000 / FLSXHB 100）
  *              超限时【不做静默截断】：写入阶段跳过，保存/下一步时弹提示并阻断，让用户修改
+ *   6) 「校验并回填」按钮 —— 新建零组件窗口里点一下：
+ *        按编号前 6 位确定小类 → 校验名称/规格（书写规则、同义词、空格、分类是否相符、同小类查重）
+ *        → 把合规写法回填到「名称」「规格型号/图号」输入框。
+ *        编码始终由 PLM 编码器生成，本脚本不参与发号、不改编号。
  *
  * 降级策略（关键）：
  *   - API 不可达 / 超时 / 返回异常 → 一律放行，绝不阻断 PLM 正常建物料
- *   - 取不到输入框 DOM → 自动关闭联想，仅保留保存前查重
+ *   - 取不到输入框 DOM → 自动关闭联想，仅保留保存前查重；按钮注入失败只记日志
  *   - 总开关 CFG.enabled=false 可一键关闭
  *
  * 依赖：jQuery（PLM 站点自带 3.4.1）、HoteamUI
@@ -59,6 +63,9 @@
     blockOnDuplicate: true,      // 保存时命中强重复是否二次确认
     notifyDuplicateOnBlur: true, // 失焦时是否在浮层提示重复（不弹框）
     tidySpecSpace: true,         // 规格失焦/保存前自动整理空格（首尾 + 连续），不处理乘号
+    showCheckButton: true,       // 在新建零组件窗口注入「校验并回填」按钮
+    checkButtonText: '校验并回填',
+    checkButtonHost: 'spec',     // 按钮挂在哪个输入框旁：'spec' | 'name'
 
     // 字段控件 ID（与 AutoGenerator/Config/Pages/PSEITEM-CREATE.page 一致）
     ctlEname: 'ENAME_Value',
@@ -77,7 +84,9 @@
     panel: null,
     panelOwner: null,
     lastCheckKey: '',
-    okConfirmed: ''         // 已人工确认过的 名称|规格，避免重复拦截
+    okConfirmed: '',        // 已人工确认过的 名称|规格，避免重复拦截
+    checkBtn: null,         // 「校验并回填」按钮
+    checkTip: null          // 按钮右侧的状态文字
   };
 
   function log() {
@@ -88,23 +97,24 @@
 
   // ======================= 控件与 DOM 适配 =======================
   // PLM 不同版本取 DOM 的方式不同，多级回退，任一可用即可
-  function domOf(ctrl) {
+  function domOf(ctrl, trace) {
     if (!ctrl) return null;
     var el = null;
-    try { if (typeof ctrl.GetDom === 'function') el = ctrl.GetDom(); } catch (e) { }
-    if (!el) { try { if (typeof ctrl.GetElement === 'function') el = ctrl.GetElement(); } catch (e) { } }
-    if (!el) { try { if (ctrl.element) el = ctrl.element; } catch (e) { } }
-    if (!el && ctrl.id) { try { el = document.getElementById(ctrl.id); } catch (e) { } }
-    if (!el && ctrl.id && $) { try { el = $('#' + ctrl.id)[0]; } catch (e) { } }
+    var t = trace || null;
+    try { if (typeof ctrl.GetDom === 'function') { el = ctrl.GetDom(); if (el && t) t.push('GetDom'); } } catch (e) { }
+    if (!el) { try { if (typeof ctrl.GetElement === 'function') { el = ctrl.GetElement(); if (el && t) t.push('GetElement'); } } catch (e) { } }
+    if (!el) { try { if (ctrl.element) { el = ctrl.element; if (t) t.push('ctrl.element'); } } catch (e) { } }
+    if (!el && ctrl.id) { try { el = document.getElementById(ctrl.id); if (el && t) t.push('getElementById#' + ctrl.id); } catch (e) { } }
+    if (!el && ctrl.id && $) { try { el = $('#' + ctrl.id)[0]; if (el && t) t.push('$#' + ctrl.id); } catch (e) { } }
     if (!el && ctrl.id && $) {
-      try { el = $('[id$="' + ctrl.id + '"]').get(0); } catch (e) { }
+      try { el = $('[id$="' + ctrl.id + '"]').get(0); if (el && t) t.push('$[id$=' + ctrl.id + ']'); } catch (e) { }
     }
     if (el && el.tagName) {
       var tag = el.tagName.toUpperCase();
       if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
         try {
           var inner = el.querySelector ? el.querySelector('input,textarea') : null;
-          if (inner) el = inner;
+          if (inner) { el = inner; if (t) t.push('querySelector(input)'); }
         } catch (e) { }
       }
     }
@@ -647,6 +657,131 @@
     return true;
   }
 
+  // ======================= 「校验并回填」按钮 =======================
+  // 只做名称/规格的校验与回填；编码一律由 PLM 编码器生成，本脚本不参与发号。
+
+  function setCheckTip(text, kind) {
+    var tip = state.checkTip;
+    if (!tip) { log(text); return; }
+    tip.textContent = text || '';
+    tip.style.color = kind === 'bad' ? '#c0392b' : (kind === 'warn' ? '#b8860b' : '#2e7d32');
+  }
+
+  /** 在名称/规格输入框旁注入按钮（同一页面实例只注入一次） */
+  function ensureCheckButton() {
+    if (!CFG.enabled || !CFG.showCheckButton) return false;
+    var hostCtl = CFG.checkButtonHost === 'name' ? state.ename : state.ggxh;
+    var trace = [];
+    var el = domOf(hostCtl, trace);
+    if (!el) {
+      log('按钮挂载点未找到：控件 id=' + ((hostCtl && hostCtl.id) || '(空)')
+        + '；GetDom / GetElement / ctrl.element / getElementById / 后缀匹配 全部失败');
+      return false;
+    }
+    var wrap = el.parentNode || el.parent;
+    if (!wrap) { log('输入框没有父节点，跳过按钮注入'); return false; }
+
+    var exists = null;
+    try { exists = wrap.querySelector ? wrap.querySelector('.plm-smart-check-btn') : null; } catch (e) { exists = null; }
+    if (exists) { state.checkBtn = exists; return true; }
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'plm-smart-check-btn';
+    btn.textContent = CFG.checkButtonText || '校验并回填';
+    btn.style.cssText = 'margin-left:6px;padding:2px 8px;font:12px/18px inherit;cursor:pointer;'
+      + 'border:1px solid #3f8fd2;background:#eaf3fb;color:#16558c;border-radius:3px;'
+      + 'white-space:nowrap;vertical-align:middle;';
+    btn.onclick = function (ev) {
+      try {
+        if (ev && ev.preventDefault) ev.preventDefault();
+        if (ev && ev.stopPropagation) ev.stopPropagation();
+      } catch (e) { }
+      runCheckAndFill();
+      return false;
+    };
+
+    var tip = document.createElement('span');
+    tip.className = 'plm-smart-check-tip';
+    tip.style.cssText = 'margin-left:8px;font-size:12px;color:#666;vertical-align:middle;';
+
+    // 插到输入框后面：INPUT → 按钮 → 状态文字
+    if (wrap.insertBefore) {
+      wrap.insertBefore(tip, el.nextSibling);
+      wrap.insertBefore(btn, tip);
+    } else {
+      wrap.appendChild(btn);
+      wrap.appendChild(tip);
+    }
+    state.checkBtn = btn;
+    state.checkTip = tip;
+    log('已注入「' + (CFG.checkButtonText || '校验并回填') + '」按钮（挂载方式：'
+      + (trace.join(' > ') || '未知') + '；父节点 ' + (wrap.tagName || '?') + '）');
+    return true;
+  }
+
+  /** 点按钮：校验 → 把合规写法回填到名称/规格型号 */
+  function runCheckAndFill() {
+    if (!CFG.enabled) return;
+    var sub = currentSub();
+    if (!sub) {
+      setCheckTip('请先在「编号」右侧点「…」申请编码', 'bad');
+      msgBox('提示', '请先在「编号」右侧点「…」申请编码。\n'
+        + '插件需要根据编码前 6 位确定小类，才能做分类校验与查重。');
+      return;
+    }
+    var name = readText(state.ename);
+    var spec = readRaw(state.ggxh);
+    if (!name && !spec) { setCheckTip('请先填写名称或规格型号', 'bad'); return; }
+
+    setCheckTip('校验中…');
+    apiAsync('/api/plm/check', {
+      name: name, spec: spec, sub: sub, ecode: readEcode()
+    }, function (r) {
+      if (!r || r.ok === false) { setCheckTip('治理服务不可用，未做处理', 'bad'); return; }
+      applyCheckResult(r, name, spec);
+    });
+  }
+
+  /** 回填可机械修正的部分，并展示剩余问题 */
+  function applyCheckResult(r, oldName, oldSpec) {
+    var applied = [];
+
+    // 名称：格式修正（空格/分隔符）+ 同义词归一，后端已算好 final
+    var newName = oldName;
+    if (r.nameFormat && r.nameFormat.final) newName = r.nameFormat.final;
+    else if (r.nameSynonym && r.nameSynonym.exact && r.nameSynonym.std) newName = r.nameSynonym.std;
+    if (newName && newName !== oldName && writeText(state.ename, newName)) {
+      fireBlur(state.ename);
+      applied.push('名称');
+    }
+
+    // 规格：只做空格整理（乘号策略未定，不自动改写）
+    var newSpec = oldSpec;
+    if (r.specFormat && r.specFormat.fixed != null) newSpec = r.specFormat.fixed;
+    if (newSpec !== oldSpec && writeText(state.ggxh, newSpec)) {
+      fireBlur(state.ggxh);
+      if (CFG.fillSpecToParams) syncSpecToParams(newSpec);
+      applied.push('规格');
+    }
+
+    var dup = (r.duplicates || []).filter(function (x) { return x.level === 'exact' || x.level === 'sep'; });
+    var parts = [applied.length ? ('已回填' + applied.join('、')) : '无需回填'];
+    if (r.subMismatch) parts.push('分类疑似不符');
+    if (r.errors && r.errors.length) parts.push('错误 ' + r.errors.length);
+    if (r.warnings && r.warnings.length) parts.push('提示 ' + r.warnings.length);
+    if (dup.length) parts.push('重复 ' + dup.length);
+    setCheckTip(parts.join('；'), (r.errors && r.errors.length) || dup.length ? 'warn' : 'ok');
+
+    if (r.errors && r.errors.length) {
+      msgBox('校验未通过', r.errors.join('\n'));
+    } else if (dup.length) {
+      renderPanel(state.ggxh || state.ename, '查重提示', [], r.duplicates, function () { });
+    } else if (r.subMismatch) {
+      msgBox('分类疑似不符', r.subMismatch.msg);
+    }
+  }
+
   // ======================= PLM 钩子 =======================
   function ctlFrom(pageEvent, id, fallback) {
     if (isValidCtl(fallback)) return fallback;
@@ -677,6 +812,7 @@
       state.ename = null; state.ggxh = null; state.zycs = null; state.ecode = null;
       state.lastCheckKey = ''; state.okConfirmed = '';
       state.specOverWarned = false;
+      state.checkBtn = null; state.checkTip = null;
       fillMark.zycs = ''; fillMark.flsxhb = '';   // 新实例：清空"本脚本已写入值"标记
       window.__PLM_SMART_SPEC = '';   // 新实例：清空上一页缓存的规格型号
       hidePanel();
@@ -697,6 +833,9 @@
       var b1 = bindSuggest(state.ename, 'name');
       var b2 = bindSuggest(state.ggxh, 'spec');
       log('已绑定：' + (b1 ? '名称 ' : '') + (b2 ? '规格 ' : '') + '联想；保存前查重已启用');
+
+      // 注入「校验并回填」按钮（编码仍由 PLM 编码器负责，这里完全不碰编号）
+      try { ensureCheckButton(); } catch (e) { log('按钮注入异常（已忽略）', e && e.message); }
 
       // 编辑/复制场景：规格型号已有值，立即同步一次 ZYCS/FLSXHB
       if (CFG.fillSpecToParams) {
@@ -853,7 +992,7 @@
     try { return confirm(title + '\n\n' + msg) === true; } catch (e) { return true; }
   }
 
-  log('脚本已加载 v1.4（api=' + apiUrl('')
+  log('脚本已加载 v1.5（api=' + apiUrl('')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')
     + '；空格整理=' + (CFG.tidySpecSpace ? '开' : '关')
     + '；超限拦截=' + (CFG.strictWidth ? '开' : '关') + '）');

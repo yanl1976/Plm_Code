@@ -268,6 +268,9 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 | `blockOnDuplicate` | `true` | 保存时命中 exact/sep 级重复是否二次确认 |
 | `notifyDuplicateOnBlur` | `true` | 失焦时在浮层提示重复（不弹框） |
 | `tidySpecSpace` | `true` | 失焦/保存前自动整理规格空格（首尾 + 连续 + 全角 U+3000/Tab）；乘号不处理 |
+| `showCheckButton` | `true` | 是否在「新建零组件」窗口注入「校验并回填」按钮 |
+| `checkButtonText` | `校验并回填` | 按钮文字 |
+| `checkButtonHost` | `spec` | 按钮挂在哪个输入框旁：`spec`（规格型号/图号）或 `name`（名称） |
 | `ctlEname / ctlGgxh / ctlZycs / ctlEcode` | 见文件 | 控件 ID，与 `PSEITEM-CREATE.page` 一致，一般不改 |
 
 服务端业务规则**不在 js 里**，仍由既有配置文件驱动，改规则不需要动 PLM：
@@ -278,6 +281,21 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 - `src/config/spec-fields.json` —— 特征参数取值正则
 
 改完配置后调用 `POST http://127.0.0.1:3100/api/plm/reload` 重载索引（规则文件本身带 mtime 缓存，多数情况无需重启）。
+
+### 5.1 「校验并回填」按钮（v1.5）
+
+新建零组件窗口打开后，插件会在「规格型号/图号」输入框右侧插入一个按钮。**编码仍由 PLM 编码器负责，插件不参与发号、也不改编号**，按钮只处理名称与规格：
+
+1. 点「编号」右侧「…」，在编码器里选大类 / 小类并「申请编码」，编码回填到编号框；
+2. 填好名称与规格型号，点「校验并回填」；
+3. 插件按**编号前 6 位**确定小类，调用 `/api/plm/check`，然后：
+   - 名称：套用同义词标准名 + 格式修正（空格/分隔符），回填到「名称」；
+   - 规格：只整理空格（首尾 / 连续 / 全角），回填到「规格型号/图号」；乘号策略未定，不自动改写；
+   - 按钮右侧状态文字显示结果：已回填哪些字段、错误/提示/重复条数；
+   - 有硬错误时弹框；命中同小类相同规格时弹出明细，便于改用原编码。
+4. 尚未申请编码就点按钮，会提示「请先在编号右侧点「…」申请编码」——小类完全由编码前 6 位决定，没有编码就无法做分类校验与查重。
+
+> 按钮注入失败只写控制台日志，不影响 PLM 正常录入；`CFG.showCheckButton=false` 可关闭该按钮。
 
 ---
 

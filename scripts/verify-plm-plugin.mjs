@@ -39,12 +39,32 @@ function mkEl(tag) {
     __handlers: [],
     children: [],
     innerHTML: '',
-    appendChild(c) { this.children.push(c); c.parent = this; return c },
+    parentNode: null,
+    appendChild(c) { this.children.push(c); c.parentNode = this; c.parent = this; return c },
+    insertBefore(node, ref) {
+      const i = ref ? this.children.indexOf(ref) : -1
+      if (i >= 0) this.children.splice(i, 0, node)
+      else this.children.push(node)
+      node.parentNode = this; node.parent = this
+      return node
+    },
     contains(n) {
       if (n === this) return true
       return this.children.some((c) => c.contains && c.contains(n))
     },
-    querySelector() { return null },
+    querySelector(sel) {
+      // 仅支持类选择器（插件用它判断按钮是否已注入）；标签选择器保持原来的 null
+      if (typeof sel !== 'string' || sel.charAt(0) !== '.') return null
+      const cls = sel.slice(1)
+      const has = (c) => String(c.className || '').split(/\s+/).includes(cls)
+      const direct = this.children.find(has)
+      if (direct) return direct
+      for (const c of this.children) {
+        const r = c.querySelector ? c.querySelector(sel) : null
+        if (r) return r
+      }
+      return null
+    },
     getBoundingClientRect() { return { left: 10, top: 10, right: 210, bottom: 30, width: 200, height: 20 } },
   }
   return el
@@ -123,10 +143,14 @@ function newPage({ ctrls, ajaxHandler, confirmReturn = true }) {
   const jq = makeJQ(doc, () => handler)
 
   // 控件对象（模拟 PLM 的 OTextBox / OEditButton）
+  // form 作为输入框的父容器：按钮注入依赖 parentNode
+  const form = mkEl('div')
+  doc.body.appendChild(form)
   const ctl = {}
   for (const [id, init] of Object.entries(ctrls)) {
     const dom = mkEl('input')
     doc.__byId[id] = dom
+    form.appendChild(dom)
     const c = {
       id,
       __text: init.text || '',
@@ -178,7 +202,7 @@ function newPage({ ctrls, ajaxHandler, confirmReturn = true }) {
   vm.runInContext(quiet, sandbox, { filename: 'ItemSmartInput.js' })
 
   return {
-    ctl, doc, pageEvent, sandbox,
+    ctl, doc, form, pageEvent, sandbox,
     setAjax: (h) => { handler = h },
     OnCreate: () => sandbox.InforCenter_PSEITEM_CreatePage_OnCreate(pageEvent, {}),
     OnOK: () => sandbox.InforCenter_PSEITEM_CreatePage_OnOK(pageEvent),
@@ -476,6 +500,36 @@ async function run() {
     q.OnOK()
     ok('乘号不被改写', q.ctl['GGXH_Value'].__text === 'LAY3x2 2 红',
       'got=' + JSON.stringify(q.ctl['GGXH_Value'].__text))
+  }
+
+  // S14 「校验并回填」按钮：注入 → 点击 → 名称/规格回填
+  {
+    console.log('[S14] 校验并回填按钮（编码由 PLM 编码器提供，插件不碰编号）')
+    const CHECK_FILL = {
+      ok: true, pass: true, errors: [], warnings: [], duplicates: [],
+      suggestion: { name: '', spec: '', zycs: '' },
+      nameFormat: { raw: '空气 开关', fixed: '空气开关', final: '微型断路器', reasons: ['中间有空格', '并统一叫法'] },
+      specFormat: { raw: '  NXB-63   C16  ', fixed: 'NXB-63 C16', reasons: ['首尾有空格', '中间有连续空格'] },
+    }
+    const p = newPage({ ctrls: baseCtrl(), ajaxHandler: router({ '/health': HEALTH_OK, '/check': CHECK_FILL }) })
+    p.ctl['ECODE_Value'].__text = '10010100435'
+    p.ctl['ECODE_Value'].__tag = { value: '10010100435' }
+    p.ctl['ENAME_Value'].__text = '空气 开关'
+    p.ctl['GGXH_Value'].__text = '  NXB-63   C16  '
+    p.OnCreate()
+
+    const btn = p.form.children.find(
+      (c) => String(c.className || '').indexOf('plm-smart-check-btn') >= 0
+    )
+    ok('按钮已注入到规格输入框旁', !!btn)
+    if (btn) {
+      btn.onclick({ preventDefault() { }, stopPropagation() { } })
+      await sleep(40)
+      ok('名称回填为同义词标准名', p.ctl['ENAME_Value'].__text === '微型断路器',
+        'got=' + JSON.stringify(p.ctl['ENAME_Value'].__text))
+      ok('规格回填并整理空格', p.ctl['GGXH_Value'].__text === 'NXB-63 C16',
+        'got=' + JSON.stringify(p.ctl['GGXH_Value'].__text))
+    }
   }
 
   console.log('\n----------------------------------------')

@@ -264,6 +264,9 @@ state.subs: Map<subKey(6位), {
 | `blockOnDuplicate` | `true` | 命中强重复是否二次确认 |
 | `notifyDuplicateOnBlur` | `true` | 失焦是否浮层提示重复 |
 | `tidySpecSpace` | `true` | 失焦/保存前自动整理规格空格（首尾 + 连续 + 全角）；乘号不处理 |
+| `showCheckButton` | `true` | 是否在新建零组件窗口注入「校验并回填」按钮（编码仍由 PLM 编码器负责） |
+| `checkButtonText` | `校验并回填` | 按钮文字 |
+| `checkButtonHost` | `spec` | 按钮挂载位置：`spec`（规格型号/图号）或 `name`（名称） |
 
 **服务端**：`PLM_API_PORT`（3100）、`PLM_API_HOST`（0.0.0.0）；治理看板另用 `PORT`（3000）。三者统一在项目根 `.env` 配置（模板 `.env.example`，加载点 `src/env.js`），优先级为 进程环境变量 > `.env` > 代码默认值；业务规则在 `src/config/{dedup-rules,spec-fields,material-rules,name-synonyms}.json`。
 

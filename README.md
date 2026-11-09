@@ -37,7 +37,8 @@ Plm_Code/
 
   PLMSOFT/                      # 金蝶 PLM 程序目录（第三方，3 万+ 文件；仅 SecondaryDev 下为本项目二开）
     Server/SecondaryDev/ItemSmartInput/Config/Js/ItemSmartInput.js
-                                # PLM 新增物料页「名称/规格」智能录入插件（本项目维护，v1.4）
+                                # PLM 新增物料页「名称/规格」智能录入插件（本项目维护，v1.5）
+                                # 编码由 PLM 编码器生成，插件只做名称/规格校验与回填
 
   data/                         # 产物（gitignore）：materials.ndjson/csv + stats.json / dedup-* /
                                 #   mapping.json / freeze.json / unified-materials.json /

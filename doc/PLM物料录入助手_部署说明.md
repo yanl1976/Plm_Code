@@ -1,13 +1,13 @@
 # PLM 物料新增「名称/规格型号」智能录入助手 — 部署说明
 
 > 版本 **v1.6** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
-> 插件文件：`ItemSmartInput.js` v1.6 — 49,740 字节 / 1,133 行 / UTF-8 无 BOM
-> SHA256：`1709BCF3355114532D13B8C13F6E1FA3A56484FF762D871E03C224A95F27D722`
+> 插件文件：`ItemSmartInput.js` v1.6 — 50,560 字节 / 1,146 行 / UTF-8 无 BOM
+> SHA256：`15DDC98FB941F82A5CDADF0C3FAC5752406E57081188FD1D4F3EAD43FAB4E333`
 > 地址配置：`ItemSmartInput.config.js` — 1,043 字节 / 22 行 / UTF-8 无 BOM
 > SHA256：`8C8B332107DDD0D2EED87556CDFC1FF2552C3C681100C0E55447EADA21A27EA7`
 >
 > **版本演进**
-> - **v1.6（当前）**：新增「校验并回填」按钮，**仅对 电气元件 / 原材料 / 外购标准件 三种类型生效**，其余类型置灰
+> - **v1.6（当前）**：新增「校验并回填」按钮，**仅对 电气元件 / 原材料 / 外购标准件 三种类型生效**，其余类型置灰；同时兼容 `PSEITEM` 与 `PSEITEM$` 两个「新建零组件」入口
 > - v1.5：按钮雏形；编码仍由 PLM 编码器管理，插件不参与发号
 > - v1.4：规格空格自动整理（首尾 / 连续 / 全角），乘号暂不处理
 > - v1.1.0：修复异步请求返回值缺陷；新增页重复打开时状态重置；保存校验增加控件兜底取值；规则错误由硬阻断改为二次确认；未查重时回传 `skipReason`
@@ -302,6 +302,7 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 
 ```
 [ItemSmartInput] 脚本已加载 v1.6（api=http://10.1.2.3:3100；地址来源=ItemSmartInput.config.js；规格同步ZYCS/FLSXHB=开；空格整理=开；类型门控=电气元件/原材料/外购标准件；超限拦截=开）
+[ItemSmartInput] 进入 PSEITEM$ 新增页（与 PSEITEM 共用同一套逻辑）      ← 仅从 PSEITEM$ 入口进入时出现
 [ItemSmartInput] 已绑定：名称 规格 联想；保存前查重已启用
 [ItemSmartInput] 已注入「校验并回填」按钮（挂载方式：getElementById#GGXH_Value > querySelector(input)；父节点 TD）
 [ItemSmartInput] 治理服务就绪：索引 23036 条 / 200 个小类
@@ -312,9 +313,10 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 | 行 | 说明 |
 |---|---|
 | 第 1 行 | 脚本已加载；`v1.6` 确认部署的是新版；`地址来源=ItemSmartInput.config.js` 确认读到了外置配置；`类型门控=` 显示允许的类型 |
-| 第 2 行 | 输入框事件绑定成功（联想与保存前查重可用） |
-| 第 3 行 | 按钮已注入，且**命中哪条 DOM 策略**一目了然；没有这一行说明按钮未注入（见第七节） |
-| 第 4 行 | 治理服务可达、索引已就绪；缺失只代表服务不可达，联想/查重自动跳过，**页面与原生保存仍正常** |
+| 第 2 行（可选） | 只有在 `PSEITEM$` 入口出现；`PSEITEM` 入口没有这一行，属正常 |
+| 第 3 行 | 输入框事件绑定成功（联想与保存前查重可用） |
+| 第 4 行 | 按钮已注入，且**命中哪条 DOM 策略**一目了然；没有这一行说明按钮未注入（见第七节） |
+| 第 5 行 | 治理服务可达、索引已就绪；缺失只代表服务不可达，联想/查重自动跳过，**页面与原生保存仍正常** |
 
 3. 若出现 `按钮挂载点未找到：控件 id=…；GetDom / GetElement / ctrl.element / getElementById / 后缀匹配 全部失败`，说明 PLM 的 DOM 结构与预期不同，把该行贴给开发调整，不影响正常录入。
 
@@ -395,6 +397,7 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 | 15 | 小类 100601 三相电抗器 + 名称「断路器」，点按钮 | 提示分类疑似不符并列出更接近的小类，**不自动改名** |
 | 16 | 名称「热缩管」但小类选「电工材料」，点按钮 | 提示校验未通过（名称与小类明显错配） |
 | 17 | 规格带首尾/连续空格后点按钮 | 仅整理空格并回填；乘号 `×` / `x` **不会被改写** |
+| 18 | 从 `PSEITEM$` 入口（同样标题为「新建零组件」）进入 | 控制台多一行「进入 PSEITEM$ 新增页」，按钮、联想、回填与 `PSEITEM` 入口表现一致 |
 
 ### 6.1 离线逻辑验证（无需 PLM 站点，改完 js 先跑）
 
@@ -403,9 +406,9 @@ cd E:\tedri_project\dev\Plm_Code
 npm run verify:plm
 ```
 
-预期输出结尾：`结果: 35 通过 / 0 失败`。
+预期输出结尾：`结果: 40 通过 / 0 失败`。
 
-该脚本用 `vm` 构造 mock 环境（window/document/jQuery/HoteamUI/控件），**真实执行 `ItemSmartInput.js`**，覆盖 15 个场景：绑定、防抖联想、点选回填、ZYCS 连带回填、命中重复时取消（阻断）/确认（放行）、未取编码跳过、服务异常放行、字段为空不干预、二次打开页重新绑定、规则错误不硬阻断、确认记录随页面重置、规格空格回填、按钮点击回填、类型门控（非授权类型禁用且不回填）。
+该脚本用 `vm` 构造 mock 环境（window/document/jQuery/HoteamUI/控件），**真实执行 `ItemSmartInput.js`**，覆盖 17 个场景：绑定、防抖联想、点选回填、ZYCS 连带回填、命中重复时取消（阻断）/确认（放行）、未取编码跳过、服务异常放行、字段为空不干预、二次打开页重新绑定、规则错误不硬阻断、确认记录随页面重置、规格空格回填、按钮点击回填、类型门控（非授权类型禁用且不回填）、外置地址配置、`PSEITEM$` 入口钩子。
 
 > 它验证的是【控制流】，不能替代真实浏览器验证（真实 DOM 结构、真实跨域仍要现场确认）；网络层由 `/api/plm/*` 的端到端测试单独覆盖。
 
@@ -430,6 +433,8 @@ npm run verify:plm
 | 点按钮提示「请先申请编码」 | 编号为空（未走编码器） | 点「编号」右侧「…」申请编码后再点按钮；小类完全由编码前 6 位决定 |
 | 点按钮但规格没回填 | 后端仍是旧版，未返回 `specFormat` | 按 2.1 更新 `material-rules.js` / `plm-server.js` 并重启服务 |
 | 改了 `ItemSmartInput.config.js` 但地址没变 | fileref 顺序不对 / 浏览器缓存 / 文件没放对目录 | 确认 fileref 里 config 排在 js 之前；Ctrl+F5；看首行 `地址来源=` 是「ItemSmartInput.config.js」还是「内置默认」 |
+| **控制台完全没有 `[ItemSmartInput]`** | 脚本根本没加载 | ① F12 → Network 搜 `ItemSmartInput.js`：404/403 说明路径或权限问题；② 直接在地址栏打开该 js 的 URL 看是否 200；③ 回收 IIS 应用池后 Ctrl+F5 |
+| **有「脚本已加载」但没有「已绑定」** | 钩子未触发：进入的不是 `PSEITEM` / `PSEITEM$` 页面 | 看控制台是否有「进入 PSEITEM$ 新增页」；若两个都没有，说明该窗口是第三种对象类型，需把它的 `InforCenter_<对象>_CreatePage_OnCreate` 钩子也挂上（告诉我页面名即可） |
 
 ---
 
@@ -458,6 +463,7 @@ npm run verify:plm
 9. **按钮是 DOM 注入，不是平台官方扩展点**：平台只支持在 `.page` 模型里声明 `TypeName="Button"`（会被模型重新生成覆盖），没有运行时 `AddControl` API，控件对象也不暴露 `GetDom`。插件依赖「控件 ID = DOM ID」这条平台约定挂载（框架自身也是 `$("#"+id)` 操作控件），PLM 升级若改渲染结构可能失效——控制台「已注入…（挂载方式：…）」日志就是为此准备的。
 10. **类型枚举存放在 PLM 库里**：插件优先按「类型」下拉的显示文本判断，取不到再回退 `GetSelectedValue()` 与 DOM 选中项。若现场返回的是内部编码，需在 `CFG.itemTypeAllowValues` 补编码。
 11. **类型门控只作用于新按钮**：原有的名称联想、失焦查重、保存前查重仍对所有类型生效。
+12. **两个同名「新建零组件」入口**：PLM 同时存在 `PSEITEM` 与 `PSEITEM$`（`PSEITEM-CREATE.page` / `PSEITEM$-CREATE.page`），标题都叫「新建零组件」、控件 ID 完全一致，但钩子名不同。插件已同时挂上两组钩子；若现场还有第三种入口，需要按其页面里的 `InforCenter_<对象>_CreatePage_OnCreate` 再补一次别名。
 
 ---
 
@@ -474,7 +480,7 @@ npm run verify:plm
 - [ ] 9. `icacls` 赋读权限（首次部署才需要）
 - [ ] 10. 重启 IIS 应用程序池（及 8890 服务）
 - [ ] 11. 浏览器 Ctrl+F5，确认首行 `地址来源=ItemSmartInput.config.js` 与「已注入…按钮」日志
-- [ ] 12. 按第六节 17 条验收逐项过一遍
+- [ ] 12. 按第六节 18 条验收逐项过一遍
 
 ---
 

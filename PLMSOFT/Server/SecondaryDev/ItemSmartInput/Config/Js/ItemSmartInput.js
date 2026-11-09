@@ -1094,6 +1094,19 @@
     }
   };
 
+  // ---- 兼容 PSEITEM$ ----
+  // PLM 里存在两个同名的「新建零组件」对象类型，页面与控件 ID 完全一致，只是钩子名不同：
+  //   PSEITEM  → InforCenter_PSEITEM_CreatePage_OnCreate  / _OnOK
+  //   PSEITEM$ → InforCenter_PSEITEM$_CreatePage_OnCreate / _OnOK
+  // 不挂 $ 这组钩子时，从该入口进入插件完全不生效（控制台只有「脚本已加载」，没有「已绑定」）。
+  window.InforCenter_PSEITEM$_CreatePage_OnCreate = function (pageEvent, data) {
+    log('进入 PSEITEM$ 新增页（与 PSEITEM 共用同一套逻辑）');
+    return window.InforCenter_PSEITEM_CreatePage_OnCreate(pageEvent, data);
+  };
+  window.InforCenter_PSEITEM$_CreatePage_OnOK = function (pageEvent) {
+    return window.InforCenter_PSEITEM_CreatePage_OnOK(pageEvent);
+  };
+
   // ======================= 弹窗兼容封装 =======================
   function msgBox(title, msg) {
     try {

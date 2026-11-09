@@ -582,6 +582,21 @@ async function run() {
     ok('请求走到配置文件里的地址', seenUrl.indexOf('http://10.9.8.7:3101') === 0, 'url=' + seenUrl)
   }
 
+  // S17 PSEITEM$ 入口：同名「新建零组件」的另一对象类型也能生效
+  {
+    console.log('[S17] PSEITEM$ 入口钩子（另一个「新建零组件」对象类型）')
+    const p = newPage({ ctrls: baseCtrl(), ajaxHandler: router({ '/health': HEALTH_OK, '/check': CHECK_CLEAN }) })
+    ok('OnCreate 已挂载', typeof p.sandbox.InforCenter_PSEITEM$_CreatePage_OnCreate === 'function')
+    ok('OnOK 已挂载', typeof p.sandbox.InforCenter_PSEITEM$_CreatePage_OnOK === 'function')
+    p.sandbox.InforCenter_PSEITEM$_CreatePage_OnCreate(p.pageEvent, {})
+    await sleep(30)
+    ok('从 $ 入口也能绑定输入框', (p.doc.__byId['ENAME_Value'].__handlers || []).length > 0)
+    const btn = p.form.children.find(
+      (c) => String(c.className || '').indexOf('plm-smart-check-btn') >= 0
+    )
+    ok('从 $ 入口也能注入按钮', !!btn)
+  }
+
   console.log('\n----------------------------------------')
   console.log(`结果: ${pass} 通过 / ${fail} 失败`)
   if (fail) console.log('失败项: ' + failures.join(' | '))

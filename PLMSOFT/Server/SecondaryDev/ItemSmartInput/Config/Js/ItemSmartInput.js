@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.5
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.6
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -23,6 +23,7 @@
  *        按编号前 6 位确定小类 → 校验名称/规格（书写规则、同义词、空格、分类是否相符、同小类查重）
  *        → 把合规写法回填到「名称」「规格型号/图号」输入框。
  *        编码始终由 PLM 编码器生成，本脚本不参与发号、不改编号。
+ *        仅对「电气元件 / 原材料 / 外购标准件」三种类型启用，其余类型按钮置灰不可用。
  *
  * 降级策略（关键）：
  *   - API 不可达 / 超时 / 返回异常 → 一律放行，绝不阻断 PLM 正常建物料
@@ -66,6 +67,10 @@
     showCheckButton: true,       // 在新建零组件窗口注入「校验并回填」按钮
     checkButtonText: '校验并回填',
     checkButtonHost: 'spec',     // 按钮挂在哪个输入框旁：'spec' | 'name'
+    // 按钮只对下列「类型(ITEMTYPE)」生效，其余类型置灰不可用
+    restrictItemType: true,
+    itemTypeAllowText: ['电气元件', '原材料', '外购标准件'],
+    itemTypeAllowValues: [],     // 若 PLM 的 GetSelectedValue() 返回编码而非名称，在此补充编码
 
     // 字段控件 ID（与 AutoGenerator/Config/Pages/PSEITEM-CREATE.page 一致）
     ctlEname: 'ENAME_Value',
@@ -86,7 +91,9 @@
     lastCheckKey: '',
     okConfirmed: '',        // 已人工确认过的 名称|规格，避免重复拦截
     checkBtn: null,         // 「校验并回填」按钮
-    checkTip: null          // 按钮右侧的状态文字
+    checkTip: null,         // 按钮右侧的状态文字
+    itemtype: null,         // 类型(ITEMTYPE) 下拉控件
+    typeTimer: null         // 类型变化的轮询兜底
   };
 
   function log() {
@@ -413,13 +420,37 @@
   }
 
   // ======================= API（同步/异步分开，不可混用） =======================
+
+  /**
+   * 外部地址配置：Config/ItemSmartInput.config.js 里定义 window.ItemSmartInputConfig。
+   * 由 fileref 先于本文件加载；每次调用都重新读，即使配置晚到也能生效。
+   */
+  function extCfg() {
+    var c = null;
+    try { c = window.ItemSmartInputConfig; } catch (e) { c = null; }
+    return (c && typeof c === 'object') ? c : null;
+  }
+
+  /** 生效地址：外部配置优先，其次内置 CFG.apiBase */
+  function effectiveApiBase() {
+    var c = extCfg();
+    var v = (c && c.apiBase != null) ? String(c.apiBase).trim() : '';
+    return v || CFG.apiBase;
+  }
+
+  function effectiveApiPort() {
+    var c = extCfg();
+    var n = (c && c.apiPort != null) ? Number(c.apiPort) : NaN;
+    return (!isNaN(n) && n > 0) ? n : (CFG.apiPort || 3100);
+  }
+
   /** 解析 API 根地址：支持 apiBase='auto'（与 PLM 同机部署时自动用当前主机名） */
   function apiUrl(path) {
-    var base = String(CFG.apiBase == null ? '' : CFG.apiBase).replace(/\/+$/, '');
+    var base = String(effectiveApiBase() == null ? '' : effectiveApiBase()).replace(/\/+$/, '');
     if (base.toLowerCase() === 'auto') {
       var host = '127.0.0.1';
       try { host = window.location.hostname || host; } catch (e) { }
-      base = 'http://' + host + ':' + (CFG.apiPort || 3100);
+      base = 'http://' + host + ':' + effectiveApiPort();
     }
     return base + path;
   }
@@ -667,6 +698,94 @@
     tip.style.color = kind === 'bad' ? '#c0392b' : (kind === 'warn' ? '#b8860b' : '#2e7d32');
   }
 
+  // ---- 类型(ITEMTYPE) 门控：只对电气元件 / 原材料 / 外购标准件生效 ----
+
+  /** 读当前类型：依次取 GetSelectedValue / GetText / DOM，兼容「值是编码」或「值是名称」 */
+  function readItemType() {
+    var c = state.itemtype;
+    var out = { value: '', text: '' };
+    if (!isValidCtl(c)) return out;
+    try { var v = c.GetSelectedValue(); if (v != null) out.value = String(v).trim(); } catch (e) { }
+    try { var t = c.GetText(); if (t != null) out.text = String(t).trim(); } catch (e) { }
+    if (!out.value || !out.text) {
+      var el = domOf(c);
+      if (el) {
+        try {
+          if (!out.value && el.value != null) out.value = String(el.value).trim();
+          if (!out.text) {
+            if (el.options && el.selectedIndex >= 0 && el.options[el.selectedIndex]) {
+              out.text = String(el.options[el.selectedIndex].text || '').trim();
+            } else if (el.textContent) {
+              out.text = String(el.textContent).trim();
+            }
+          }
+        } catch (e) { }
+      }
+    }
+    return out;
+  }
+
+  function typeHint() {
+    return '当前类型不适用（仅 ' + (CFG.itemTypeAllowText || []).join(' / ') + '）';
+  }
+
+  /** 当前类型是否允许使用按钮 */
+  function isTypeAllowed() {
+    if (!CFG.restrictItemType) return true;
+    var allowText = CFG.itemTypeAllowText || [];
+    var allowVal = CFG.itemTypeAllowValues || [];
+    if (!allowText.length && !allowVal.length) return true;
+    var it = readItemType();
+    var cands = [it.text, it.value];
+    for (var i = 0; i < cands.length; i++) {
+      var x = cands[i];
+      if (!x) continue;
+      if (allowText.indexOf(x) >= 0 || allowVal.indexOf(x) >= 0) return true;
+      for (var j = 0; j < allowText.length; j++) {
+        if (x.indexOf(allowText[j]) >= 0) return true;   // 兼容「电气元件(10)」这类带后缀
+      }
+    }
+    return false;
+  }
+
+  /** 按当前类型刷新按钮的可用状态 */
+  function refreshTypeGate() {
+    var btn = state.checkBtn;
+    if (!btn) return;
+    // 页面已关闭（按钮脱离 DOM）→ 停止轮询
+    try {
+      if (document.body && document.body.contains && !document.body.contains(btn)) {
+        if (state.typeTimer) { clearInterval(state.typeTimer); state.typeTimer = null; }
+        return;
+      }
+    } catch (e) { }
+    var ok = isTypeAllowed();
+    btn.disabled = !ok;
+    btn.style.opacity = ok ? '1' : '0.55';
+    btn.style.cursor = ok ? 'pointer' : 'not-allowed';
+    btn.title = ok ? '' : typeHint();
+    if (!ok) setCheckTip(typeHint(), 'warn');
+    else if (state.checkTip && String(state.checkTip.textContent || '').indexOf('当前类型不适用') >= 0) {
+      setCheckTip('');
+    }
+  }
+
+  /** 类型下拉变化即时刷新；自定义下拉不一定触发 change，另有轮询兜底 */
+  function bindTypeWatch() {
+    var el = domOf(state.itemtype);
+    if (!el || !$) return;
+    try {
+      $(el).off('.smarttype').on('change.smarttype click.smarttype', function () {
+        setTimeout(refreshTypeGate, 0);
+      });
+    } catch (e) { }
+  }
+
+  function startTypeWatch() {
+    if (state.typeTimer) clearInterval(state.typeTimer);
+    state.typeTimer = setInterval(refreshTypeGate, 1500);
+  }
+
   /** 在名称/规格输入框旁注入按钮（同一页面实例只注入一次） */
   function ensureCheckButton() {
     if (!CFG.enabled || !CFG.showCheckButton) return false;
@@ -723,6 +842,7 @@
   /** 点按钮：校验 → 把合规写法回填到名称/规格型号 */
   function runCheckAndFill() {
     if (!CFG.enabled) return;
+    if (!isTypeAllowed()) { setCheckTip(typeHint(), 'warn'); return; }
     var sub = currentSub();
     if (!sub) {
       setCheckTip('请先在「编号」右侧点「…」申请编码', 'bad');
@@ -813,6 +933,8 @@
       state.lastCheckKey = ''; state.okConfirmed = '';
       state.specOverWarned = false;
       state.checkBtn = null; state.checkTip = null;
+      if (state.typeTimer) { clearInterval(state.typeTimer); state.typeTimer = null; }
+      state.itemtype = null;
       fillMark.zycs = ''; fillMark.flsxhb = '';   // 新实例：清空"本脚本已写入值"标记
       window.__PLM_SMART_SPEC = '';   // 新实例：清空上一页缓存的规格型号
       hidePanel();
@@ -824,6 +946,10 @@
       state.ggxh = o.GetControl(CFG.ctlGgxh);
       state.zycs = o.GetControl(CFG.ctlZycs);
       state.ecode = o.GetControl(CFG.ctlEcode);
+      state.itemtype = o.GetControl(CFG.ctlItemType);
+      if (!isValidCtl(state.itemtype)) {
+        log('未找到类型控件 ' + CFG.ctlItemType + '，按钮将按「类型不符」处理（保持禁用）');
+      }
 
       if (!isValidCtl(state.ename) && !isValidCtl(state.ggxh)) {
         log('未找到 名称/规格型号 控件，跳过增强');
@@ -836,6 +962,9 @@
 
       // 注入「校验并回填」按钮（编码仍由 PLM 编码器负责，这里完全不碰编号）
       try { ensureCheckButton(); } catch (e) { log('按钮注入异常（已忽略）', e && e.message); }
+
+      // 类型门控：只对「电气元件 / 原材料 / 外购标准件」启用按钮，其余类型置灰
+      try { bindTypeWatch(); refreshTypeGate(); startTypeWatch(); } catch (e) { log('类型门控异常（已忽略）', e && e.message); }
 
       // 编辑/复制场景：规格型号已有值，立即同步一次 ZYCS/FLSXHB
       if (CFG.fillSpecToParams) {
@@ -992,9 +1121,11 @@
     try { return confirm(title + '\n\n' + msg) === true; } catch (e) { return true; }
   }
 
-  log('脚本已加载 v1.5（api=' + apiUrl('')
+  log('脚本已加载 v1.6（api=' + apiUrl('')
+    + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')
     + '；空格整理=' + (CFG.tidySpecSpace ? '开' : '关')
+    + '；类型门控=' + (CFG.restrictItemType ? (CFG.itemTypeAllowText || []).join('/') : '关')
     + '；超限拦截=' + (CFG.strictWidth ? '开' : '关') + '）');
 
   // 平台向导脚本可能晚于本文件加载，这里延迟挂接（幂等，最多重试 20 秒）

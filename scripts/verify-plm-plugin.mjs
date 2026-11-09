@@ -129,7 +129,7 @@ function makeJQ(doc, getAjax) {
 }
 
 /** 创建一个"页面实例"：控件 + DOM + sandbox，并执行插件脚本 */
-function newPage({ ctrls, ajaxHandler, confirmReturn = true }) {
+function newPage({ ctrls, ajaxHandler, confirmReturn = true, globalCfg = null }) {
   const doc = mkEl('body')
   doc.body = mkEl('body')
   doc.documentElement = mkEl('html')
@@ -154,8 +154,10 @@ function newPage({ ctrls, ajaxHandler, confirmReturn = true }) {
     const c = {
       id,
       __text: init.text || '',
+      __value: init.value != null ? init.value : null,
       __tag: init.tag || null,
       GetText() { return this.__text },
+      GetSelectedValue() { return this.__value != null ? this.__value : this.__text },
       SetText(v) { this.__text = v; dom.value = v },
       GetTag() { return this.__tag },
       SetTag(t) { this.__tag = t },
@@ -189,12 +191,16 @@ function newPage({ ctrls, ajaxHandler, confirmReturn = true }) {
   sandbox.console = console
   sandbox.setTimeout = setTimeout
   sandbox.clearTimeout = clearTimeout
+  sandbox.setInterval = setInterval
+  sandbox.clearInterval = clearInterval
   sandbox.alert = () => { }
   sandbox.confirm = () => confirmReturn
   sandbox.HoteamUI = HoteamUI
   sandbox.jQuery = jq
   sandbox.$ = jq
   sandbox.pageYOffset = 0
+  // 模拟 Config/ItemSmartInput.config.js（先于插件加载）
+  if (globalCfg) sandbox.ItemSmartInputConfig = globalCfg
 
   vm.createContext(sandbox)
   // 屏蔽插件自身的加载日志，保持输出整洁
@@ -217,6 +223,7 @@ const baseCtrl = () => ({
   GGXH_Value: { text: '' },
   ZYCS_Value: { text: '' },
   ECODE_Value: { text: '1001050001', tag: { text: '1001050001', value: '1001050001' } },
+  ITEMTYPE_Value: { text: '电气元件' },
 })
 
 const HEALTH_OK = { ok: true, ready: true, count: 23036, subs: 200 }
@@ -235,6 +242,12 @@ const SUGGEST_SPEC = {
   normalized: 'NXB-63 C16 3P',
 }
 const CHECK_CLEAN = { ok: true, pass: true, errors: [], warnings: [], duplicates: [], suggestion: { name: '', spec: '', zycs: '' } }
+const CHECK_FILL = {
+  ok: true, pass: true, errors: [], warnings: [], duplicates: [],
+  suggestion: { name: '', spec: '', zycs: '' },
+  nameFormat: { raw: '空气 开关', fixed: '空气开关', final: '微型断路器', reasons: ['中间有空格', '并统一叫法'] },
+  specFormat: { raw: '  NXB-63   C16  ', fixed: 'NXB-63 C16', reasons: ['首尾有空格', '中间有连续空格'] },
+}
 const CHECK_DUP = {
   ok: true, pass: false, errors: [], warnings: [],
   duplicates: [{ fNumber: '10010500099', fName: '微型断路器', fSpec: 'NXB-63 C16 3P', level: 'exact', score: 1 }],
@@ -505,12 +518,6 @@ async function run() {
   // S14 「校验并回填」按钮：注入 → 点击 → 名称/规格回填
   {
     console.log('[S14] 校验并回填按钮（编码由 PLM 编码器提供，插件不碰编号）')
-    const CHECK_FILL = {
-      ok: true, pass: true, errors: [], warnings: [], duplicates: [],
-      suggestion: { name: '', spec: '', zycs: '' },
-      nameFormat: { raw: '空气 开关', fixed: '空气开关', final: '微型断路器', reasons: ['中间有空格', '并统一叫法'] },
-      specFormat: { raw: '  NXB-63   C16  ', fixed: 'NXB-63 C16', reasons: ['首尾有空格', '中间有连续空格'] },
-    }
     const p = newPage({ ctrls: baseCtrl(), ajaxHandler: router({ '/health': HEALTH_OK, '/check': CHECK_FILL }) })
     p.ctl['ECODE_Value'].__text = '10010100435'
     p.ctl['ECODE_Value'].__tag = { value: '10010100435' }
@@ -522,6 +529,7 @@ async function run() {
       (c) => String(c.className || '').indexOf('plm-smart-check-btn') >= 0
     )
     ok('按钮已注入到规格输入框旁', !!btn)
+    ok('允许类型下按钮可用', !!btn && btn.disabled !== true)
     if (btn) {
       btn.onclick({ preventDefault() { }, stopPropagation() { } })
       await sleep(40)
@@ -530,6 +538,48 @@ async function run() {
       ok('规格回填并整理空格', p.ctl['GGXH_Value'].__text === 'NXB-63 C16',
         'got=' + JSON.stringify(p.ctl['GGXH_Value'].__text))
     }
+  }
+
+  // S15 类型门控：非「电气元件 / 原材料 / 外购标准件」时按钮禁用且不回填
+  {
+    console.log('[S15] 类型门控：非授权类型按钮不可用')
+    const p = newPage({ ctrls: baseCtrl(), ajaxHandler: router({ '/health': HEALTH_OK, '/check': CHECK_FILL }) })
+    p.ctl['ITEMTYPE_Value'].__text = '非标自制件'
+    p.ctl['ECODE_Value'].__text = '10010100435'
+    p.ctl['ECODE_Value'].__tag = { value: '10010100435' }
+    p.ctl['ENAME_Value'].__text = '空气 开关'
+    p.ctl['GGXH_Value'].__text = '  NXB-63   C16  '
+    p.OnCreate()
+
+    const btn = p.form.children.find(
+      (c) => String(c.className || '').indexOf('plm-smart-check-btn') >= 0
+    )
+    ok('非授权类型按钮为禁用态', !!btn && btn.disabled === true)
+    if (btn) {
+      btn.onclick({ preventDefault() { }, stopPropagation() { } })
+      await sleep(40)
+      ok('点击后名称不回填', p.ctl['ENAME_Value'].__text === '空气 开关',
+        'got=' + JSON.stringify(p.ctl['ENAME_Value'].__text))
+      ok('点击后规格不回填', p.ctl['GGXH_Value'].__text === '  NXB-63   C16  ',
+        'got=' + JSON.stringify(p.ctl['GGXH_Value'].__text))
+    }
+  }
+
+  // S16 地址配置外置：window.ItemSmartInputConfig 覆盖内置 apiBase
+  {
+    console.log('[S16] 地址配置外置（Config/ItemSmartInput.config.js）')
+    let seenUrl = ''
+    const p = newPage({
+      ctrls: baseCtrl(),
+      ajaxHandler: (opts) => {
+        if (String(opts.url || '').indexOf('/health') >= 0) seenUrl = String(opts.url || '')
+        return HEALTH_OK
+      },
+      globalCfg: { apiBase: 'http://10.9.8.7:3101', apiPort: 3101 },
+    })
+    p.OnCreate()
+    await sleep(40)
+    ok('请求走到配置文件里的地址', seenUrl.indexOf('http://10.9.8.7:3101') === 0, 'url=' + seenUrl)
   }
 
   console.log('\n----------------------------------------')

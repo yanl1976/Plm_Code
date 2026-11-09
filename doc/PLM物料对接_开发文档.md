@@ -267,6 +267,9 @@ state.subs: Map<subKey(6位), {
 | `showCheckButton` | `true` | 是否在新建零组件窗口注入「校验并回填」按钮（编码仍由 PLM 编码器负责） |
 | `checkButtonText` | `校验并回填` | 按钮文字 |
 | `checkButtonHost` | `spec` | 按钮挂载位置：`spec`（规格型号/图号）或 `name`（名称） |
+| `restrictItemType` | `true` | 按钮只对指定「类型」生效，其余置灰 |
+| `itemTypeAllowText` | `['电气元件','原材料','外购标准件']` | 允许的类型显示名 |
+| `itemTypeAllowValues` | `[]` | 类型返回编码时在此补充 |
 
 **服务端**：`PLM_API_PORT`（3100）、`PLM_API_HOST`（0.0.0.0）；治理看板另用 `PORT`（3000）。三者统一在项目根 `.env` 配置（模板 `.env.example`，加载点 `src/env.js`），优先级为 进程环境变量 > `.env` > 代码默认值；业务规则在 `src/config/{dedup-rules,spec-fields,material-rules,name-synonyms}.json`。
 

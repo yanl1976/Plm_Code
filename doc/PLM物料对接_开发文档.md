@@ -264,8 +264,8 @@ state.subs: Map<subKey(6位), {
 | `blockOnDuplicate` | `true` | 命中强重复是否二次确认 |
 | `notifyDuplicateOnBlur` | `true` | 失焦是否浮层提示重复 |
 | `tidySpecSpace` | `true` | 失焦/保存前自动整理规格空格（首尾 + 连续 + 全角）；乘号不处理 |
-| `showCheckButton` | `true` | 是否在新建零组件窗口注入「校验并回填」按钮（编码仍由 PLM 编码器负责） |
-| `checkButtonText` | `校验并回填` | 按钮文字 |
+| `showCheckButton` | `true` | 是否在新建零组件窗口注入「智能录入」按钮（编码仍由 PLM 编码器负责） |
+| `checkButtonText` | `智能录入` | 按钮文字 |
 | `checkButtonHost` | `name` | 按钮锚点：`name`（名称框）或 `spec`（规格框） |
 | `checkButtonPlace` | `left` | 位置：`left` 名称标签左侧 / `float` 锚点右侧 / `fixed` 窗口右下角 / `after` 原布局 |
 | `checkButtonOffsetX` / `Y` | `6` / `0` | 跟随定位的像素偏移 |

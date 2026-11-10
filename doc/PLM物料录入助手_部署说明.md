@@ -1,13 +1,15 @@
 # PLM 物料新增「名称/规格型号」智能录入助手 — 部署说明
 
-> 版本 **v1.39** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
-> 插件文件：`ItemSmartInput.js` v1.39 — 102,474 字节 / 2,296 行 / UTF-8 无 BOM
-> SHA256：`C92D7B7F77EDAF0B5BBC21790BB7AD976050CEE08BCCF1C12322554FB0233E10`
-> 配置文件：`ItemSmartInput.config.js` — 2,812 字节 / 48 行 / UTF-8 无 BOM
-> SHA256：`B244444FF9426844EFB414A47B3BFE839A1C0AF25F44A20B7A21BE052D1277A2`
+> 版本 **v1.41** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
+> 插件文件：`ItemSmartInput.js` v1.41 — 105,885 字节 / 2,391 行 / UTF-8 无 BOM
+> SHA256：`719A1F37546C231128FEEB379E1A9007DF751F0C1C8548BB95E71F67A95C9F69`
+> 配置文件：`ItemSmartInput.config.js` — 2,994 字节 / 49 行 / UTF-8 无 BOM
+> SHA256：`04296D2284E884E73C513FC1D513BBF6BA208488A4FA53FD495853E8797CEBBE`
 >
 > **版本演进（近期）**
-> - **v1.39（当前）**：修正提示归类——「该小类的关键参数…」属规格侧，不再错分到名称下方
+> - **v1.41（当前）**：名称/规格**全锁**（只读 + 灰底），服务不可用时**自动解锁**、恢复后再锁；新增 `lockFields` 开关
+> - v1.40：按钮文案由「校验并回填」改为**「智能录入」**（含配置文件与日志）
+> - v1.39：修正提示归类——「该小类的关键参数…」属规格侧，不再错分到名称下方
 > - v1.38：同小类已有完全相同规格时**按 error 处理**（红字 + 禁止回填）；修复重复明细行取错字段（`fNumber/fName/fSpec`）导致的空白
 > - v1.37：规格框下方新增**同型号系列联想**（与看板同源）：`同型号系列 XXX（含变体）：已有 N 条规格 / M 个物料`，候选行显示「型号段 N 条 · 库存 X」，点击填入
 > - v1.36：弹窗校验改为**多事件触发**（input/keyup/change/paste + 失焦），防抖 250ms，内容未变不重复请求；「建议改为 / 规范写法」按归一化比较去重
@@ -419,7 +421,8 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 | 配置 | 默认 | 说明 |
 |---|---|---|
 | `apiBase` | `http://192.168.20.31:3100` | **仅作兜底**。实际地址以 `Config/ItemSmartInput.config.js` 为准；只有该文件缺失时才用此值 |
-| `enabled` | `true` | 总开关，`false` 时脚本完全静默（最快的止血手段） |
+| `enabled` | `true` | 总开关，`false` 时脚本完全静默并**自动解锁**字段 |
+| `lockFields` | `'auto'` | 名称/规格锁定：`'auto'`=服务可用才锁；`true`=始终锁；`false`=不锁 |
 | `timeout` | `1500` | 单次请求超时(ms)，超时即降级放行 |
 | `suggestDebounce` | `300` | 输入防抖，打字 300ms 后才请求 |
 | `minLen` | `2` | 触发联想的最少字符数 |
@@ -467,6 +470,7 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 | 类似型号明细 | 点「类似型号（N）」打开**独立弹窗**：合计数量/可用、录入规格 + 黄色差异高亮 + 排序说明、五列表格（物料号/名称/规格型号/数量/项目号），按接近程度排序，点行填入规格框 |
 | 保存并回填 | **有 error 时按钮禁用**（含「名称与规格完全相同」「同小类已有完全相同规格」），点击会提示；无 error 时按规范写法回填（名称=同义词标准名+格式修正，规格=空格整理，并同步 ZYCS / FLSXHB） |
 | 关闭方式 | **只有右上角 × 和「取消」**；点击遮罩不会关闭 |
+| 字段锁定 | 名称/规格 **readOnly + 灰底**，用户不能手输，只能经弹窗写入；服务不可达时自动解锁（`lockFields: 'auto'`） |
 | 配色 | **继承 PLM 原有配色**：以规格框向上找弹窗容器，读 `background-color` / `color`；主色取页面按钮。输入框/边框用半透明灰，浅色与深色主题都适配 |
 
 使用流程：

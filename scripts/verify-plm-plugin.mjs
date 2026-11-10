@@ -708,6 +708,43 @@ async function run() {
     ok('规格警告出现在规格下方', !!specTip && String(specTip.innerHTML).indexOf('关键参数') >= 0)
   }
 
+  // S23 全锁：服务可用时锁定名称/规格
+  {
+    console.log('[S23] 全锁：服务可用时锁定')
+    const p = newPage({ ctrls: baseCtrl(), ajaxHandler: router({ '/health': HEALTH_OK, '/check': CHECK_CLEAN }) })
+    p.ctl['ECODE_Value'].__text = '10010100435'
+    p.ctl['ECODE_Value'].__tag = { value: '10010100435' }
+    p.OnCreate()
+    await sleep(120)
+    ok('名称框已锁定', p.doc.__byId['ENAME_Value'].readOnly === true)
+    ok('规格框已锁定', p.doc.__byId['GGXH_Value'].readOnly === true)
+  }
+
+  // S24 服务不可用：自动解锁，不阻塞录入
+  {
+    console.log('[S24] 服务不可用：自动解锁')
+    const p = newPage({ ctrls: baseCtrl(), ajaxHandler: () => null })
+    p.ctl['ECODE_Value'].__text = '10010100435'
+    p.ctl['ECODE_Value'].__tag = { value: '10010100435' }
+    p.OnCreate()
+    await sleep(120)
+    ok('名称框保持可编辑', p.doc.__byId['ENAME_Value'].readOnly !== true)
+    ok('规格框保持可编辑', p.doc.__byId['GGXH_Value'].readOnly !== true)
+  }
+
+  // S25 总开关关闭：不锁定
+  {
+    console.log('[S25] 总开关关闭：不锁定')
+    const p = newPage({
+      ctrls: baseCtrl(),
+      ajaxHandler: router({ '/health': HEALTH_OK }),
+      globalCfg: { enabled: false },
+    })
+    p.OnCreate()
+    await sleep(120)
+    ok('关闭后名称框可编辑', p.doc.__byId['ENAME_Value'].readOnly !== true)
+  }
+
   console.log('\n----------------------------------------')
   console.log(`结果: ${pass} 通过 / ${fail} 失败`)
   if (fail) console.log('失败项: ' + failures.join(' | '))

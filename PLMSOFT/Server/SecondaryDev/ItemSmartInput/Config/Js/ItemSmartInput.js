@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.40
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.42
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -69,6 +69,7 @@
     tidySpecSpace: true,         // 规格失焦/保存前自动整理空格（首尾 + 连续），不处理乘号
     domWatchDelay: 2500,         // DOM 兜底接管延时(ms)：给正常 OnCreate 留出时间，避免重复接管
     showCheckButton: true,       // 在新建零组件窗口注入「智能录入」按钮
+    lockFields: 'auto',          // 名称/规格锁定：'auto'=服务可用才锁；true=始终锁；false=不锁
     checkButtonText: '智能录入',
     checkButtonHost: 'name',     // 按钮挂在哪个输入框旁：'name'（默认）| 'spec'
     checkButtonOffsetX: 6,       // 跟随定位时相对输入框右边缘的横向偏移(px)，负数可向左贴
@@ -94,7 +95,7 @@
   // 允许被外部配置文件（ItemSmartInput.config.js）覆盖的键。
   // 用白名单而不是全量合并：写错键名不会悄悄改掉别的行为。
   var CFG_OVERRIDABLE = [
-    'apiBase', 'apiPort', 'apiLabel', 'inventoryBase', 'enabled', 'showCheckButton',
+    'apiBase', 'apiPort', 'apiLabel', 'inventoryBase', 'enabled', 'showCheckButton', 'lockFields',
     'checkButtonText', 'checkButtonHost', 'checkButtonPlace',
     'checkButtonOffsetX', 'checkButtonOffsetY',
     'restrictItemType', 'itemTypeAllowText', 'itemTypeAllowValues',
@@ -834,6 +835,8 @@
     if (!ok) setCheckTip('');
     // 跟随模式：弹窗滚动/移动后重新贴合输入框
     if (state.btnPlace === 'float' || state.btnPlace === 'left') placeFloat();
+    // 每 1.5 秒同步一次锁定状态（抵抗平台重渲染）
+    try { syncLock(); } catch (e) { }
   }
 
   /** 类型下拉变化即时刷新；自定义下拉不一定触发 change，另有轮询兜底 */
@@ -896,8 +899,11 @@
       // 放在「名称」标签左侧：标签列很窄，按钮必须收窄、允许换行，否则会压住标签
       var row = rowRectOf(el);
       var left = row ? (row.left + 2) : (r.left - 50);
-      btn.style.width = '44px';
+      // 两两排列：11px 字号下 2 个汉字约 22px，内容宽 28px 可保证每行恰好 2 个字
+      btn.style.width = '28px';
       btn.style.whiteSpace = 'normal';
+      btn.style.wordBreak = 'break-all';
+      btn.style.overflowWrap = 'break-word';
       btn.style.lineHeight = '14px';
       btn.style.padding = '1px 2px';
       btn.style.fontSize = '11px';
@@ -1830,9 +1836,13 @@
       // 异步探活：仅用于日志提示，不阻塞页面、不影响绑定
       apiAsync('/api/plm/health', {}, function (h) {
         if (!h || h.ok !== true) {
-          log('治理服务不可达：' + apiUrl('') + '（联想/查重将自动跳过，不影响原生录入）');
+          svc.ok = false;
+          try { syncLock(); } catch (e) { }
+          log('治理服务不可达：' + apiUrl('') + '（联想/查重将自动跳过，名称/规格保持可编辑）');
           return;
         }
+        svc.ok = h.ready !== false;
+        try { syncLock(); } catch (e) { }
         if (h.ready === false) { log('治理服务索引未就绪，联想暂不可用'); return; }
         log('治理服务就绪：索引 ' + h.count + ' 条 / ' + h.subs + ' 个小类');
         // 服务端会把本机所有可用地址回传，便于确认 apiBase 是否填对
@@ -2001,6 +2011,84 @@
   var domLastTry = 0;
   var domWarned = false;
   var lastInputSig = '';
+
+  // ---- 名称/规格锁定（全锁 + 服务降级自动解锁）----
+  var svc = { ok: null, at: 0 };        // 治理服务可用性：null=未知，true=可用，false=不可用
+  var lockApplied = false;
+
+  function probeService() {
+    svc.at = Date.now();
+    apiAsync('/api/plm/health', {}, function (h) {
+      svc.ok = !!(h && h.ok === true && h.ready !== false);
+    });
+  }
+
+  function lockMode() {
+    var mode = CFG.lockFields;
+    var ec = extCfg();
+    if (ec && ec.lockFields !== undefined && ec.lockFields !== null) mode = ec.lockFields;
+    if (mode === false || mode === 'false') return false;
+    if (mode === true || mode === 'true') return true;
+    return svc.ok === true;            // 'auto'：服务可用才锁
+  }
+
+  /** 是否应该锁：总开关、按钮开关、锁定开关三者都允许才锁 */
+  function shouldLock() {
+    if (!CFG.enabled) return false;
+    if (!CFG.showCheckButton) return false;   // 没有录入入口时不锁，避免无法录入
+    return lockMode();
+  }
+
+  function lockTargets() {
+    var list = [];
+    var a = domOf(state.ename);
+    var b = domOf(state.ggxh);
+    if (a) list.push(a);
+    if (b && b !== a) list.push(b);
+    return list;
+  }
+
+  /** 锁定 / 解锁名称与规格（readOnly，程序写入不受影响） */
+  function applyLock(on) {
+    var els = lockTargets();
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i];
+      if (!el) continue;
+      if (on) {
+        if (!el.__plmSmartLock) {
+          el.__plmSmartLock = {
+            bg: el.style ? el.style.backgroundColor : '',
+            cursor: el.style ? el.style.cursor : ''
+          };
+        }
+        el.readOnly = true;
+        if (el.style) {
+          el.style.backgroundColor = 'rgba(127,127,127,.12)';
+          el.style.cursor = 'not-allowed';
+        }
+        if (el.setAttribute) el.setAttribute('title', '请使用「智能录入」填写');
+      } else {
+        el.readOnly = false;
+        var s = el.__plmSmartLock;
+        if (s) {
+          if (el.style) {
+            el.style.backgroundColor = s.bg || '';
+            el.style.cursor = s.cursor || '';
+          }
+          if (el.setAttribute) el.setAttribute('title', '');
+          el.__plmSmartLock = null;
+        }
+      }
+    }
+    lockApplied = !!on;
+  }
+
+  /** 每轮轮询调用：服务可用性变化时自动锁/解锁 */
+  function syncLock() {
+    var on = shouldLock();
+    if (on === lockApplied && lockTargets().length === 0) return;
+    applyLock(on);
+  }
 
   /** 当前可见的输入框（弹窗打开时才有意义） */
   function visibleInputs() {
@@ -2215,11 +2303,12 @@
     var okBtn = false;
     try { okBtn = ensureCheckButton(); } catch (e) { log('按钮注入异常（已忽略）', e && e.message); }
     try { bindTypeWatch(); refreshTypeGate(); startTypeWatch(); } catch (e) { }
+    // 首次接管时探活一次，并按结果决定是否锁定名称/规格
+    try { if (svc.ok === null) probeService(); syncLock(); } catch (e) { }
     return !!okBtn;
   }
 
   function watchDialog() {
-    if (!CFG.enabled) return;
     if (domWatchTimer) clearTimeout(domWatchTimer);
 
     function detachButton() {
@@ -2241,6 +2330,15 @@
     }
 
     function tick() {
+      // 先按当前配置同步锁定状态：配置关闭 → 自动解锁；服务恢复 → 自动重新锁定
+      try {
+        if (CFG.enabled && Date.now() - svc.at > 30000) probeService();
+        syncLock();
+      } catch (e) { }
+      if (!CFG.enabled) {          // 插件停用：只维持「已解锁」，不再接管
+        domWatchTimer = setTimeout(tick, 1500);
+        return;
+      }
       try {
         // 当前该接管的目标输入框（弹窗关闭时为空）
         var specNow = findInput('GGXH_Value') || findInputByLabel(['规格型号'], { noDropdown: true });
@@ -2280,7 +2378,7 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.40（api=' + apiUrl('')
+  log('脚本已加载 v1.42（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；外部配置=' + (EXT_KEYS.length ? EXT_KEYS.join('/') : '未使用')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')

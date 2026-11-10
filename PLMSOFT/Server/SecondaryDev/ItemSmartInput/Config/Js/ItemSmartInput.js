@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.36
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.39
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -1289,6 +1289,12 @@
     specRow.appendChild(quickRow);
     body.appendChild(specRow);
 
+    // 规格输入下方的「同型号系列」近似联想（看板同款，数据来自 3130）
+    var specSug = dlgEl('div', 'display:none;margin-top:4px;border:' + C_LINE + ';border-radius:4px;'
+      + 'overflow:hidden;font-size:12px;background:' + C_INPUT_BG + ';max-height:230px;overflow-y:auto;');
+    specSug.className = 'plm-smart-dlg-sug';
+    body.appendChild(specSug);
+
     // 规格的问题只出现在规格框下面
     var specTip = dlgEl('div', 'margin-top:2px;min-height:16px;');
     specTip.className = 'plm-smart-dlg-spectip';
@@ -1316,18 +1322,31 @@
       saveBtn.title = ok ? '' : '存在校验错误，请修改后再回填（或直接取消）';
     }
 
-    // 名称类提示：名称/品名、小类/分类相关
+    // 名称类提示：含「名称/品名」，或「小类/分类」+「不匹配/不符/选错/更像」
+    // 注意：「该小类的关键参数一个都没识别到」是规格侧提示，不能因为含“小类”就归到名称
     function isNameMsg(s) {
       var t = String(s || '');
-      return /名称|品名/.test(t) || /小类|分类/.test(t);
+      if (/名称|品名/.test(t)) return true;
+      if (/小类|分类/.test(t) && /不匹配|不符|选错|更像/.test(t)) return true;
+      return false;
     }
 
     function renderTips(r) {
-      errors = (r && r.errors) || [];
+      errors = ((r && r.errors) || []).slice();
       var ws = (r && r.warnings) || [];
       var nHtml = '';
       var sHtml = '';
       var i;
+
+      // 同小类已有完全相同规格 → 按 error 处理：红字提示 + 禁止回填
+      var dup = ((r && r.duplicates) || []).filter(function (d) {
+        return d.level === 'exact' || d.level === 'sep';
+      });
+      if (dup.length) {
+        // 注意：文案里不要出现「名称/小类/分类」，否则会被分到名称侧
+        errors.push('存在完全相同规格 ' + dup.length + ' 条，请优先复用已有编码，或确认确为新物料');
+      }
+
       for (i = 0; i < errors.length; i++) {
         var el = '<div style="color:' + C_ERR + '">✕ ' + escHtml(errors[i]) + '</div>';
         if (isNameMsg(errors[i])) nHtml += el; else sHtml += el;
@@ -1339,13 +1358,15 @@
       if (!nHtml && !sHtml) {
         sHtml = '<div style="color:' + C_OK + '">✓ 名称与规格符合录入规则</div>';
       }
-      var dup = ((r && r.duplicates) || []).filter(function (d) { return d.level === 'exact' || d.level === 'sep'; });
       if (dup.length) {
-        sHtml += '<div style="color:' + C_WARN + ';margin-top:6px">同小类已有完全相同规格：</div>';
+        sHtml += '<div style="color:' + C_ERR + ';margin-top:6px">✕ 同小类已有完全相同规格：</div>';
         for (i = 0; i < dup.length && i < 5; i++) {
+          // 接口字段是 fNumber / fName / fSpec（兼容旧的 code/name/spec）
+          var dc = dup[i].fNumber || dup[i].code || dup[i].fnumber || '';
+          var dn = dup[i].fName || dup[i].name || '';
+          var ds = dup[i].fSpec || dup[i].spec || '';
           sHtml += '<div style="color:' + C_MUTE + ';margin-left:12px">'
-            + escHtml(dup[i].code || dup[i].fnumber || '') + ' '
-            + escHtml(dup[i].name || '') + ' ' + escHtml(dup[i].spec || '') + '</div>';
+            + escHtml(dc) + '　' + escHtml(dn) + '　' + escHtml(ds) + '</div>';
         }
       }
       // 名称结构化建议：标准叫法 / 建议改为
@@ -1590,10 +1611,78 @@
       });
     }
 
+    /**
+     * 同型号系列近似联想：与看板同一接口（3130 /api/new-material/spec-suggest），
+     * 返回 modelSummary（该型号已有 N 条规格 / M 个物料）+ 候选规格（含型号段条数、库存）。
+     */
+    function loadSpecSuggest() {
+      var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
+      var q = String(specIn.value || '').trim();
+      if (!base || q.length < 2) {
+        specSug.style.display = 'none';
+        specSug.innerHTML = '';
+        return;
+      }
+      var url = base + '/api/new-material/spec-suggest?sub=' + encodeURIComponent(currentSub())
+        + '&q=' + encodeURIComponent(q);
+      apiAbsolute(url, function (r) {
+        if (!dlg) return;
+        if (!r || !r.items || !r.items.length) {
+          specSug.style.display = 'none';
+          specSug.innerHTML = '';
+          return;
+        }
+        var qn = q.toLowerCase();
+        var html = '';
+        if (r.modelSummary) {
+          html += '<div style="padding:6px 8px;border-bottom:' + C_LINE + ';line-height:1.6">ℹ 同型号系列 '
+            + '<b>' + escHtml(r.modelSummary.model) + '</b>（含变体）：同小类已有 <b>'
+            + escHtml(r.modelSummary.specCount) + '</b> 条规格 / <b>'
+            + escHtml(r.modelSummary.itemCount) + '</b> 个物料，挑最接近的即可</div>';
+        }
+        for (var i = 0; i < r.items.length && i < 10; i++) {
+          var it = r.items[i];
+          var s = String(it.spec || '');
+          if (s.trim().toLowerCase() === qn) continue;      // 不把自己列出来
+          var idx = s.toLowerCase().indexOf(qn);
+          var specHtml = idx >= 0
+            ? escHtml(s.slice(0, idx + q.length)) + '<b style="color:' + th.accent + '">'
+              + escHtml(s.slice(idx + q.length)) + '</b>'
+            : escHtml(s);
+          var meta = [];
+          if (it.model && it.seriesSpecs > 1) meta.push('型号段 ' + it.seriesSpecs + ' 条');
+          if (it.qty != null) meta.push('库存 ' + it.qty);
+          html += '<div class="plm-smart-sug-item" data-spec="' + escHtml(s) + '"'
+            + ' style="padding:5px 8px;border-bottom:1px solid rgba(127,127,127,.15);cursor:pointer;'
+            + 'display:flex;justify-content:space-between;gap:12px">'
+            + '<span style="word-break:break-all">' + specHtml + '</span>'
+            + '<span style="opacity:.65;white-space:nowrap">' + escHtml(meta.join(' · ')) + '</span></div>';
+        }
+        specSug.innerHTML = html;
+        specSug.style.display = 'block';
+        // 点行即填入
+        try {
+          var rows = specSug.children || [];
+          for (var k = 0; k < rows.length; k++) {
+            (function (row) {
+              if (String(row.className || '').indexOf('plm-smart-sug-item') < 0) return;
+              row.onclick = function () {
+                var v = row.getAttribute ? row.getAttribute('data-spec') : '';
+                if (!v) return;
+                specIn.value = v;
+                specSug.style.display = 'none';
+                checkNow();
+              };
+            })(rows[k]);
+          }
+        } catch (e) { }
+      });
+    }
+
     var timer = null;
     function onChange() {
       if (timer) clearTimeout(timer);
-      timer = setTimeout(checkNow, 250);
+      timer = setTimeout(function () { checkNow(); loadSpecSuggest(); }, 250);
     }
     // 多事件绑定：某些环境 input 不一定按预期触发（输入法、脚本赋值、平台键事件处理），
     // 用 keyup/change/paste 兜底，失焦时再强制校验一次
@@ -1602,7 +1691,12 @@
       el.onkeyup = onChange;
       el.onchange = onChange;
       el.onpaste = function () { setTimeout(onChange, 0); };
-      el.onblur = function () { if (timer) clearTimeout(timer); checkNow(); };
+      el.onblur = function () {
+        if (timer) clearTimeout(timer);
+        checkNow();
+        // 延后收起联想，保证点击候选能先触发
+        setTimeout(function () { if (specSug) specSug.style.display = 'none'; }, 180);
+      };
     }
     bindLive(nameIn);
     bindLive(specIn);
@@ -2186,7 +2280,7 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.36（api=' + apiUrl('')
+  log('脚本已加载 v1.39（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；外部配置=' + (EXT_KEYS.length ? EXT_KEYS.join('/') : '未使用')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')

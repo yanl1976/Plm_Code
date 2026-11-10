@@ -658,6 +658,56 @@ async function run() {
     ok('错误以红字显示在名称下方', !!nameTip && String(nameTip.innerHTML).indexOf('✕') >= 0)
   }
 
+  // S21 同小类已有完全相同规格：按错误处理，禁止回填，并显示重复明细
+  {
+    console.log('[S21] 完全相同规格 → 阻断回填')
+    const CHECK_DUP = {
+      ok: true, pass: false, errors: [], warnings: [],
+      duplicates: [{ fNumber: '10010100271', fName: '断路器', fSpec: 'IC65N C10A/2P', level: 'exact' }],
+    }
+    const p = newPage({ ctrls: baseCtrl(), ajaxHandler: router({ '/health': HEALTH_OK, '/check': CHECK_DUP }) })
+    p.ctl['ECODE_Value'].__text = '10010100435'
+    p.ctl['ECODE_Value'].__tag = { value: '10010100435' }
+    p.ctl['ENAME_Value'].__text = '断路器'
+    p.ctl['GGXH_Value'].__text = 'IC65N C10A/2P'
+    p.OnCreate()
+
+    const btn = findBtn(p)
+    if (btn) btn.onclick({ preventDefault() { }, stopPropagation() { } })
+    await sleep(80)
+
+    const save = findByClass(p, 'plm-smart-dlg-save')
+    const specTip = findByClass(p, 'plm-smart-dlg-spectip')
+    ok('有完全相同规格时「保存并回填」不可用', !!save && save.disabled === true)
+    ok('重复明细显示编码与规格', !!specTip
+      && String(specTip.innerHTML).indexOf('10010100271') >= 0
+      && String(specTip.innerHTML).indexOf('IC65N C10A/2P') >= 0)
+  }
+
+  // S22 含「小类」的规格侧警告应显示在规格下方，而不是名称下方
+  {
+    console.log('[S22] 规格侧警告归类')
+    const CHECK_SPEC_WARN = {
+      ok: true, pass: true, errors: [], duplicates: [],
+      warnings: ['该小类的关键参数一个都没识别到（型号/极数/额定电流），请按“参数+数值”补全'],
+    }
+    const p = newPage({ ctrls: baseCtrl(), ajaxHandler: router({ '/health': HEALTH_OK, '/check': CHECK_SPEC_WARN }) })
+    p.ctl['ECODE_Value'].__text = '10010100435'
+    p.ctl['ECODE_Value'].__tag = { value: '10010100435' }
+    p.ctl['ENAME_Value'].__text = '断路器'
+    p.ctl['GGXH_Value'].__text = 'IC65N'
+    p.OnCreate()
+
+    const btn = findBtn(p)
+    if (btn) btn.onclick({ preventDefault() { }, stopPropagation() { } })
+    await sleep(80)
+
+    const nameTip = findByClass(p, 'plm-smart-dlg-nametip')
+    const specTip = findByClass(p, 'plm-smart-dlg-spectip')
+    ok('规格警告不出现在名称下方', !!nameTip && String(nameTip.innerHTML).indexOf('关键参数') < 0)
+    ok('规格警告出现在规格下方', !!specTip && String(specTip.innerHTML).indexOf('关键参数') >= 0)
+  }
+
   console.log('\n----------------------------------------')
   console.log(`结果: ${pass} 通过 / ${fail} 失败`)
   if (fail) console.log('失败项: ' + failures.join(' | '))

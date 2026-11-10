@@ -263,19 +263,5 @@
   "material": {
     "nameEqualsSpecMsg": "名称与规格完全相同，名称应写“是什么”，规格写“型号+参数”",
     "requireUnit": false
-  },
-  "plm": {
-    "desc": "PLM 新建物料页面插件使用的限制与类型门控，由 /api/plm/meta 下发；前端只作兜底默认值，业务口径以本文件为准",
-    "limits": {
-      "nameMaxLen": 200,
-      "specMaxLen": 500,
-      "zycsMaxLen": 1000,
-      "flsxhbMaxLen": 100
-    },
-    "itemTypes": {
-      "restrict": true,
-      "allowText": ["电气元件", "原材料", "外购标准件"],
-      "allowValues": []
-    }
   }
 }

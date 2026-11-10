@@ -20,7 +20,7 @@
 import http from 'http'
 import os from 'os'
 import { loadIndex, indexStatus, queryDuplicates, suggestNames, suggestSpecs, categoryOf, tokensOf } from './plm-index.js'
-import { checkMaterial, suggestSpec, rules as materialRules } from './material-rules.js'
+import { checkMaterial, suggestSpec } from './material-rules.js'
 import { extractParams } from './struct-spec.js'
 import { env, envPort, logEnvSource } from './env.js'
 
@@ -292,30 +292,6 @@ const server = http.createServer(async (req, res) => {
             ...(OPEN_TO_LAN && PRIMARY_ADDR ? ['http://' + PRIMARY_ADDR.address + ':' + PORT] : [])
           ]
         }
-      })
-    }
-    // 治理配置下发：字段长度上限、类型白名单。
-    // 前端不再硬编码这些口径，改 material-rules.json 即可生效（按 mtime 热加载）。
-    if (p === '/api/plm/meta') {
-      const R = materialRules() || {}
-      const P = R.plm || {}
-      const L = P.limits || {}
-      const T = P.itemTypes || {}
-      const n = (v, d) => (v != null && !Number.isNaN(Number(v)) ? Number(v) : d)
-      return send(res, 200, {
-        ok: true,
-        version: VERSION,
-        limits: {
-          nameMaxLen: n(L.nameMaxLen, 200),
-          specMaxLen: n(L.specMaxLen, 500),
-          zycsMaxLen: n(L.zycsMaxLen, 1000),
-          flsxhbMaxLen: n(L.flsxhbMaxLen, 100),
-        },
-        itemTypes: {
-          restrict: T.restrict !== false,
-          allowText: Array.isArray(T.allowText) ? T.allowText : ['电气元件', '原材料', '外购标准件'],
-          allowValues: Array.isArray(T.allowValues) ? T.allowValues : [],
-        },
       })
     }
     if (p === '/api/plm/reload' && req.method === 'POST') {

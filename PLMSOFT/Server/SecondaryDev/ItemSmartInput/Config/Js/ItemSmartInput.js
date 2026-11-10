@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.39
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.40
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -19,7 +19,7 @@
  *        时机：规格输入/点选候选、进入步骤2、点"确定"前兜底
  *        宽度：严格按 PLM 元数据（GGXH 500 / ZYCS 1000 / FLSXHB 100）
  *              超限时【不做静默截断】：写入阶段跳过，保存/下一步时弹提示并阻断，让用户修改
- *   6) 「校验并回填」按钮 —— 新建零组件窗口里点一下：
+ *   6) 「智能录入」按钮 —— 新建零组件窗口里点一下：
  *        按编号前 6 位确定小类 → 校验名称/规格（书写规则、同义词、空格、分类是否相符、同小类查重）
  *        → 把合规写法回填到「名称」「规格型号/图号」输入框。
  *        编码始终由 PLM 编码器生成，本脚本不参与发号、不改编号。
@@ -68,8 +68,8 @@
     notifyDuplicateOnBlur: true, // 失焦时是否在浮层提示重复（不弹框）
     tidySpecSpace: true,         // 规格失焦/保存前自动整理空格（首尾 + 连续），不处理乘号
     domWatchDelay: 2500,         // DOM 兜底接管延时(ms)：给正常 OnCreate 留出时间，避免重复接管
-    showCheckButton: true,       // 在新建零组件窗口注入「校验并回填」按钮
-    checkButtonText: '校验并回填',
+    showCheckButton: true,       // 在新建零组件窗口注入「智能录入」按钮
+    checkButtonText: '智能录入',
     checkButtonHost: 'name',     // 按钮挂在哪个输入框旁：'name'（默认）| 'spec'
     checkButtonOffsetX: 6,       // 跟随定位时相对输入框右边缘的横向偏移(px)，负数可向左贴
     checkButtonOffsetY: 0,       // 纵向偏移(px)
@@ -122,7 +122,7 @@
     panelOwner: null,
     lastCheckKey: '',
     okConfirmed: '',        // 已人工确认过的 名称|规格，避免重复拦截
-    checkBtn: null,         // 「校验并回填」按钮
+    checkBtn: null,         // 「智能录入」按钮
     checkTip: null,         // 按钮右侧的状态文字
     btnPlace: '',           // 当前按钮位置模式，用于轮询时重新定位
     itemtype: null,         // 类型(ITEMTYPE) 下拉控件
@@ -744,7 +744,7 @@
     return true;
   }
 
-  // ======================= 「校验并回填」按钮 =======================
+  // ======================= 「智能录入」按钮 =======================
   // 只做名称/规格的校验与回填；编码一律由 PLM 编码器生成，本脚本不参与发号。
 
   function setCheckTip(text, kind) {
@@ -980,7 +980,7 @@
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'plm-smart-check-btn';
-    btn.textContent = CFG.checkButtonText || '校验并回填';
+    btn.textContent = CFG.checkButtonText || '智能录入';
     btn.style.cssText = 'margin-left:6px;padding:2px 8px;font:12px/18px inherit;cursor:pointer;'
       + 'border:1px solid #3f8fd2;background:#eaf3fb;color:#16558c;border-radius:3px;'
       + 'white-space:nowrap;vertical-align:middle;position:relative;z-index:9999;pointer-events:auto;';
@@ -1041,7 +1041,7 @@
     state.checkTip = tip;
     state.btnPlace = place;
     if (place === 'float' || place === 'left') placeFloat();
-    log('已注入「' + (CFG.checkButtonText || '校验并回填') + '」按钮（位置=' + place
+    log('已注入「' + (CFG.checkButtonText || '智能录入') + '」按钮（位置=' + place
       + '；挂载方式：' + (trace.join(' > ') || '未知') + '；锚点=' + (anchor.tagName || '?')
       + '；父节点=' + (host.tagName || '?') + '）');
     return true;
@@ -1815,7 +1815,7 @@
       var b2 = bindSuggest(state.ggxh, 'spec');
       log('已绑定：' + (b1 ? '名称 ' : '') + (b2 ? '规格 ' : '') + '联想；保存前查重已启用');
 
-      // 注入「校验并回填」按钮（编码仍由 PLM 编码器负责，这里完全不碰编号）
+      // 注入「智能录入」按钮（编码仍由 PLM 编码器负责，这里完全不碰编号）
       try { ensureCheckButton(); } catch (e) { log('按钮注入异常（已忽略）', e && e.message); }
 
       // 类型门控：只对「电气元件 / 原材料 / 外购标准件」启用按钮，其余类型置灰
@@ -2280,7 +2280,7 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.39（api=' + apiUrl('')
+  log('脚本已加载 v1.40（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；外部配置=' + (EXT_KEYS.length ? EXT_KEYS.join('/') : '未使用')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')

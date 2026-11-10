@@ -532,9 +532,9 @@ async function run() {
       'got=' + JSON.stringify(q.ctl['GGXH_Value'].__text))
   }
 
-  // S14 「校验并回填」按钮：注入 → 点击 → 名称/规格回填
+  // S14 「智能录入」按钮：注入 → 点击 → 名称/规格回填
   {
-    console.log('[S14] 校验并回填按钮（编码由 PLM 编码器提供，插件不碰编号）')
+    console.log('[S14] 智能录入按钮（编码由 PLM 编码器提供，插件不碰编号）')
     const p = newPage({ ctrls: baseCtrl(), ajaxHandler: router({ '/health': HEALTH_OK, '/check': CHECK_FILL }) })
     p.ctl['ECODE_Value'].__text = '10010100435'
     p.ctl['ECODE_Value'].__tag = { value: '10010100435' }

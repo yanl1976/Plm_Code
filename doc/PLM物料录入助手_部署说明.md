@@ -68,7 +68,7 @@
 **改动了什么**：新增插件 js + 地址配置，并在 `PLMFileRef.fileref` 追加两行注册；不改任何既有页面/模型。
 **没改动什么**：`PSEITEM-CREATE.page`、`PSEITEM.model`、菜单、编码规则、工作流、既有 `CreateItem.js` 全部保持原样。
 
-**交互（v1.23）**：「名称」标签左侧出现「校验并回填」按钮（类型不满足时**隐藏**）。点击弹出校验对话框：
+**交互（v1.23）**：「名称」标签左侧出现「智能录入」按钮（类型不满足时**隐藏**）。点击弹出校验对话框：
 
 - 名称 / 规格型号可编辑，输入 400ms 后自动校验
 - 显示错误（红）、提示（黄）、同小类重复明细
@@ -327,7 +327,7 @@ window.ItemSmartInputConfig = {
   showCheckButton: true,      // false = 不注入按钮
 
   // 按钮
-  checkButtonText: '校验并回填',
+  checkButtonText: '智能录入',
   checkButtonHost: 'name',    // 'name' | 'spec'
   checkButtonPlace: 'left',   // 'left' | 'float' | 'fixed' | 'after'
   checkButtonOffsetX: 6, checkButtonOffsetY: 0,
@@ -391,7 +391,7 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 [ItemSmartInput] 进入 PSEITEM$ 新增页（与 PSEITEM 共用同一套逻辑）      ← 仅 PSEITEM$ 入口
 [ItemSmartInput] 已绑定：名称 规格 联想；保存前查重已启用
 [ItemSmartInput] 检测到新增弹窗（DOM 兜底接管）：规格=…[规格型号/图号] 名称=…[名称*] 编号=…[编号*] 类型=…[类型*]
-[ItemSmartInput] 已注入「校验并回填」按钮（位置=left；…）
+[ItemSmartInput] 已注入「智能录入」按钮（位置=left；…）
 [ItemSmartInput] 当前类型：value="电气元件" text="电气元件" 允许表=[…] → 允许
 [ItemSmartInput] 治理服务就绪：索引 23036 条 / 200 个小类
 ```
@@ -427,8 +427,8 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 | `blockOnDuplicate` | `true` | 保存时命中 exact/sep 级重复是否二次确认 |
 | `notifyDuplicateOnBlur` | `true` | 失焦时在浮层提示重复（不弹框） |
 | `tidySpecSpace` | `true` | 失焦/保存前自动整理规格空格（首尾 + 连续 + 全角 U+3000/Tab）；乘号不处理 |
-| `showCheckButton` | `true` | 是否注入「校验并回填」按钮 |
-| `checkButtonText` | `校验并回填` | 按钮文字（`left` 模式下自动换行） |
+| `showCheckButton` | `true` | 是否注入「智能录入」按钮 |
+| `checkButtonText` | `智能录入` | 按钮文字（`left` 模式下自动换行） |
 | `checkButtonHost` | `name` | 按钮锚点：`name`（名称框）或 `spec`（规格框） |
 | `checkButtonPlace` | `left` | 位置模式：`left`=名称标签左侧；`float`=锚点右侧；`fixed`=窗口右下角；`after`=插进原布局 |
 | `checkButtonOffsetX` | `6` | 跟随定位的横向偏移(px)，负值向左 |
@@ -450,7 +450,7 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 
 改完配置后调用 `POST http://127.0.0.1:3100/api/plm/reload` 重载索引（规则文件本身带 mtime 缓存，多数情况无需重启）。
 
-### 5.1 「校验并回填」按钮与校验弹窗（v1.23）
+### 5.1 「智能录入」按钮与校验弹窗（v1.23）
 
 新建零组件窗口打开后，插件在「名称」标签左侧插入一个窄按钮（`checkButtonPlace: 'left'`）。**编码仍由 PLM 编码器负责，插件不参与发号、也不改编号**。
 
@@ -472,7 +472,7 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 使用流程：
 
 1. 点「编号」右侧「…」，在编码器里选大类 / 小类并「申请编码」；
-2. 点「校验并回填」→ 弹窗打开，名称与规格自动带入；
+2. 点「智能录入」→ 弹窗打开，名称与规格自动带入；
 3. 修改内容，观察校验提示；可用「类似型号」一键填入已有写法；
 4. 点「保存并回填」→ 写回 PLM 的「名称」「规格型号/图号」并关闭弹窗；**成功时不显示任何提示条**（界面保持干净），只有什么都没填时才提示「未回填（内容为空）」。
 
@@ -496,9 +496,9 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 | 8 | 停掉 Node 服务后再新建物料 | 页面正常打开、可正常保存；控制台提示「治理服务不可达（联想/查重将自动跳过，不影响原生录入）」 |
 | 9 | 未选物料编码就填名称/规格 | 不查重、不报错（控制台记录跳过原因），由 PLM 原生编码校验兜底 |
 | 10 | 连续开关新增页 3 次以上 | 每次都能联想与查重（不会因上一次页面关闭而失效） |
-| 11 | 「类型」选 电气元件 / 原材料 / 外购标准件 | 「名称」标签左侧出现「校验并回填」按钮 |
+| 11 | 「类型」选 电气元件 / 原材料 / 外购标准件 | 「名称」标签左侧出现「智能录入」按钮 |
 | 12 | 「类型」未选择，或选 非标自制件 / 成品 / 服务等 | 按钮**不出现**，页面无任何黄色提示 |
-| 13 | 点「校验并回填」 | 弹出「物料名称与规格校验」对话框，名称/规格自动带入 |
+| 13 | 点「智能录入」 | 弹出「物料名称与规格校验」对话框，名称/规格自动带入 |
 | 14 | 弹窗内把名称改成「空气 开关」、规格改成 `  NXB-63   C16  ` | 停 400ms 后出现校验提示；错误红、提示黄 |
 | 15 | 弹窗内点「类似型号」 | 列出同小类已有写法，点击即填入规格框 |
 | 16 | 点「保存并回填」 | PLM 名称=`微型断路器`、规格=`NXB-63 C16`，按钮旁显示「已回填名称、规格型号」 |

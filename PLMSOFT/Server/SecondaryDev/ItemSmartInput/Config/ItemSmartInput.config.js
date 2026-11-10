@@ -20,10 +20,10 @@ window.ItemSmartInputConfig = {
 
   // ---------- 总开关 ----------
   enabled: true,              // false = 插件完全静默（最快的止血手段）
-  showCheckButton: true,      // false = 不注入「校验并回填」按钮
+  showCheckButton: true,      // false = 不注入「智能录入」按钮
 
   // ---------- 按钮 ----------
-  checkButtonText: '校验并回填',
+  checkButtonText: '智能录入',
   checkButtonHost: 'name',    // 'name'（名称框）| 'spec'（规格框）
   checkButtonPlace: 'left',   // 'left' 名称标签左侧 | 'float' 锚点右侧 | 'fixed' 窗口右下角 | 'after' 原布局
   checkButtonOffsetX: 6,      // 横向偏移(px)，负值向左

@@ -1,13 +1,15 @@
 # PLM 物料新增「名称/规格型号」智能录入助手 — 部署说明
 
-> 版本 **v1.41** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
-> 插件文件：`ItemSmartInput.js` v1.41 — 105,885 字节 / 2,391 行 / UTF-8 无 BOM
-> SHA256：`719A1F37546C231128FEEB379E1A9007DF751F0C1C8548BB95E71F67A95C9F69`
+> 版本 **v1.43** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
+> 插件文件：`ItemSmartInput.js` v1.43 — 106,224 字节 / 2,396 行 / UTF-8 无 BOM
+> SHA256：`27E113ABC4F70001A4801974B0A1DF80A14A57F16AB8C6367DE66C3DDB6C1817`
 > 配置文件：`ItemSmartInput.config.js` — 2,994 字节 / 49 行 / UTF-8 无 BOM
 > SHA256：`04296D2284E884E73C513FC1D513BBF6BA208488A4FA53FD495853E8797CEBBE`
 >
 > **版本演进（近期）**
-> - **v1.41（当前）**：名称/规格**全锁**（只读 + 灰底），服务不可用时**自动解锁**、恢复后再锁；新增 `lockFields` 开关
+> - **v1.43（当前）**：字段锁定**只作用于 电气元件 / 原材料 / 外购标准件**，其它类型（含未选类型）保持原生可编辑
+> - v1.42：左侧按钮由「智能录/入」改为**两两排列**（「智能 / 录入」），不再出现单字换行
+> - v1.41：名称/规格**全锁**（只读 + 灰底），服务不可用时**自动解锁**、恢复后再锁；新增 `lockFields` 开关
 > - v1.40：按钮文案由「校验并回填」改为**「智能录入」**（含配置文件与日志）
 > - v1.39：修正提示归类——「该小类的关键参数…」属规格侧，不再错分到名称下方
 > - v1.38：同小类已有完全相同规格时**按 error 处理**（红字 + 禁止回填）；修复重复明细行取错字段（`fNumber/fName/fSpec`）导致的空白
@@ -431,7 +433,7 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 | `notifyDuplicateOnBlur` | `true` | 失焦时在浮层提示重复（不弹框） |
 | `tidySpecSpace` | `true` | 失焦/保存前自动整理规格空格（首尾 + 连续 + 全角 U+3000/Tab）；乘号不处理 |
 | `showCheckButton` | `true` | 是否注入「智能录入」按钮 |
-| `checkButtonText` | `智能录入` | 按钮文字（`left` 模式下自动换行） |
+| `checkButtonText` | `智能录入` | 按钮文字（`left` 模式下按**两字一行**排列，避免单字换行） |
 | `checkButtonHost` | `name` | 按钮锚点：`name`（名称框）或 `spec`（规格框） |
 | `checkButtonPlace` | `left` | 位置模式：`left`=名称标签左侧；`float`=锚点右侧；`fixed`=窗口右下角；`after`=插进原布局 |
 | `checkButtonOffsetX` | `6` | 跟随定位的横向偏移(px)，负值向左 |
@@ -470,7 +472,7 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 | 类似型号明细 | 点「类似型号（N）」打开**独立弹窗**：合计数量/可用、录入规格 + 黄色差异高亮 + 排序说明、五列表格（物料号/名称/规格型号/数量/项目号），按接近程度排序，点行填入规格框 |
 | 保存并回填 | **有 error 时按钮禁用**（含「名称与规格完全相同」「同小类已有完全相同规格」），点击会提示；无 error 时按规范写法回填（名称=同义词标准名+格式修正，规格=空格整理，并同步 ZYCS / FLSXHB） |
 | 关闭方式 | **只有右上角 × 和「取消」**；点击遮罩不会关闭 |
-| 字段锁定 | 名称/规格 **readOnly + 灰底**，用户不能手输，只能经弹窗写入；服务不可达时自动解锁（`lockFields: 'auto'`） |
+| 字段锁定 | **仅 电气元件 / 原材料 / 外购标准件**：名称/规格 readOnly + 灰底，只能经弹窗写入；服务不可达或类型不符时自动解锁（`lockFields: 'auto'`） |
 | 配色 | **继承 PLM 原有配色**：以规格框向上找弹窗容器，读 `background-color` / `color`；主色取页面按钮。输入框/边框用半透明灰，浅色与深色主题都适配 |
 
 使用流程：

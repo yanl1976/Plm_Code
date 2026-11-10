@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.42
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.43
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -2032,10 +2032,12 @@
     return svc.ok === true;            // 'auto'：服务可用才锁
   }
 
-  /** 是否应该锁：总开关、按钮开关、锁定开关三者都允许才锁 */
+  /** 是否应该锁：总开关、按钮开关、类型、锁定开关都允许才锁 */
   function shouldLock() {
     if (!CFG.enabled) return false;
     if (!CFG.showCheckButton) return false;   // 没有录入入口时不锁，避免无法录入
+    // 只锁「电气元件 / 原材料 / 外购标准件」，其它类型保持 PLM 原生可编辑
+    if (!isTypeAllowed()) return false;
     return lockMode();
   }
 
@@ -2378,7 +2380,7 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.42（api=' + apiUrl('')
+  log('脚本已加载 v1.43（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；外部配置=' + (EXT_KEYS.length ? EXT_KEYS.join('/') : '未使用')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')

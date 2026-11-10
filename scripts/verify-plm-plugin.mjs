@@ -745,6 +745,19 @@ async function run() {
     ok('关闭后名称框可编辑', p.doc.__byId['ENAME_Value'].readOnly !== true)
   }
 
+  // S26 非授权类型：不锁定（保持原生可编辑）
+  {
+    console.log('[S26] 非授权类型不锁定')
+    const p = newPage({ ctrls: baseCtrl(), ajaxHandler: router({ '/health': HEALTH_OK }) })
+    p.ctl['ITEMTYPE_Value'].__text = '非标自制件'
+    p.ctl['ECODE_Value'].__text = '10010100435'
+    p.ctl['ECODE_Value'].__tag = { value: '10010100435' }
+    p.OnCreate()
+    await sleep(120)
+    ok('非标自制件的名称框可编辑', p.doc.__byId['ENAME_Value'].readOnly !== true)
+    ok('非标自制件的规格框可编辑', p.doc.__byId['GGXH_Value'].readOnly !== true)
+  }
+
   console.log('\n----------------------------------------')
   console.log(`结果: ${pass} 通过 / ${fail} 失败`)
   if (fail) console.log('失败项: ' + failures.join(' | '))

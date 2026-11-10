@@ -634,6 +634,30 @@ async function run() {
     ok('输入框已绑定事件', (p.doc.__byId['ENAME_Value'].__handlers || []).length > 0)
   }
 
+  // S20 名称与规格完全相同：按错误处理，红字提示且禁止回填
+  {
+    console.log('[S20] 名称与规格相同 → 阻断回填')
+    const CHECK_SAME = {
+      ok: true, pass: false, duplicates: [], warnings: [],
+      errors: ['名称与规格完全相同，名称应写“是什么”，规格写“型号+参数”'],
+    }
+    const p = newPage({ ctrls: baseCtrl(), ajaxHandler: router({ '/health': HEALTH_OK, '/check': CHECK_SAME }) })
+    p.ctl['ECODE_Value'].__text = '10010500435'
+    p.ctl['ECODE_Value'].__tag = { value: '10010500435' }
+    p.ctl['ENAME_Value'].__text = 'IC65N'
+    p.ctl['GGXH_Value'].__text = 'IC65N'
+    p.OnCreate()
+
+    const btn = findBtn(p)
+    if (btn) btn.onclick({ preventDefault() { }, stopPropagation() { } })
+    await sleep(80)
+
+    const save = findByClass(p, 'plm-smart-dlg-save')
+    const nameTip = findByClass(p, 'plm-smart-dlg-nametip')
+    ok('有错误时「保存并回填」不可用', !!save && save.disabled === true)
+    ok('错误以红字显示在名称下方', !!nameTip && String(nameTip.innerHTML).indexOf('✕') >= 0)
+  }
+
   console.log('\n----------------------------------------')
   console.log(`结果: ${pass} 通过 / ${fail} 失败`)
   if (fail) console.log('失败项: ' + failures.join(' | '))

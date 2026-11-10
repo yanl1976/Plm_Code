@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.31
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.36
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -1118,6 +1118,11 @@
   // ======================= 编辑弹窗（名称/规格校验 + 回填） =======================
   var dlg = null;
 
+  /** 归一化用于比较：去空白 + 大写（避免“看起来一样却判为不同”） */
+  function normKey(s) {
+    return String(s == null ? '' : s).replace(/\s+/g, '').toUpperCase();
+  }
+
   function escHtml(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -1236,10 +1241,6 @@
         : '';
       var html = '<div>物料编码：<b>' + escHtml(code || '(未申请)') + '</b>'
         + (cat ? '　分类：' + escHtml(cat) : '') + '</div>';
-      if (r && r.tokens && r.tokens.length) {
-        html += '<div style="opacity:.75">该小类建议写清：'
-          + escHtml(r.tokens.slice(0, 8).join(' / ')) + '</div>';
-      }
       if (r && r.skipReason) {
         html += '<div style="color:' + C_WARN + '">' + escHtml(r.skipReason) + '</div>';
       }
@@ -1255,29 +1256,46 @@
 
     // 名称的问题只出现在名称框下面
     var nameTip = dlgEl('div', 'margin:4px 0 6px;min-height:16px;');
+    nameTip.className = 'plm-smart-dlg-nametip';
     body.appendChild(nameTip);
     // 名称联想（同 /api/plm/suggest field=name，与页面输入框同源）
     var nameSugBox = dlgEl('div', 'margin:0 0 8px;');
     body.appendChild(nameSugBox);
 
     body.appendChild(dlgEl('div', 'color:#666;margin-bottom:4px;', '规格型号'));
-    var specIn = dlgEl('input', 'width:100%;box-sizing:border-box;padding:6px 8px;border:' + C_LINE + ';'
+
+    // 规格输入框与右侧入口同一行：输入框自适应，入口固定宽度
+    var specRow = dlgEl('div', 'display:flex;align-items:center;gap:8px;');
+    var specIn = dlgEl('input', 'flex:1 1 auto;min-width:0;box-sizing:border-box;padding:6px 8px;border:' + C_LINE + ';'
       + 'border-radius:3px;font-size:13px;background:' + C_INPUT_BG + ';color:inherit;');
     specIn.className = 'plm-smart-dlg-spec';
     specIn.value = readRaw(state.ggxh);
-    body.appendChild(specIn);
+    specRow.appendChild(specIn);
+
+    // 规格框右侧：现有库存徽标 + 类似型号按钮
+    var quickRow = dlgEl('div', 'display:flex;align-items:center;gap:10px;font-size:12px;flex:0 0 auto;');
+    var invWrap = dlgEl('span', 'display:none;align-items:center;gap:6px;');
+    invWrap.appendChild(dlgEl('span', 'opacity:.75;', '现有库存'));
+    var invBadge = dlgEl('span', 'background:#ffc107;color:#333;border-radius:4px;padding:0 6px;'
+      + 'font-weight:bold;min-width:16px;text-align:center;', '0');
+    invWrap.appendChild(invBadge);
+    quickRow.appendChild(invWrap);
+
+    var simBtn = dlgEl('button', 'display:none;border:1px solid rgba(127,127,127,.45);background:transparent;'
+      + 'color:inherit;border-radius:4px;padding:2px 12px;cursor:pointer;font-size:12px;', '类似型号');
+    simBtn.className = 'plm-smart-sim-btn';
+    simBtn.onclick = function () { openSimilarModal(); };
+    quickRow.appendChild(simBtn);
+    specRow.appendChild(quickRow);
+    body.appendChild(specRow);
 
     // 规格的问题只出现在规格框下面
-    var specTip = dlgEl('div', 'margin-top:4px;min-height:16px;');
+    var specTip = dlgEl('div', 'margin-top:2px;min-height:16px;');
+    specTip.className = 'plm-smart-dlg-spectip';
     body.appendChild(specTip);
-    // 规范写法 / 参数提取 / 建议写清
+    // 规范写法
     var specMeta = dlgEl('div', 'margin-top:2px;');
     body.appendChild(specMeta);
-
-    var invBox = dlgEl('div', 'margin-top:10px;');
-    body.appendChild(invBox);
-    var simBox = dlgEl('div', 'margin-top:6px;');
-    body.appendChild(simBox);
 
     var foot = dlgEl('div', 'padding:10px 16px;border-top:' + C_LINE + ';text-align:right;background:' + C_HEAD_BG + ';');
     var cancelBtn = dlgEl('button', 'padding:4px 14px;margin-left:8px;border:' + C_LINE + ';background:transparent;'
@@ -1288,7 +1306,8 @@
     saveBtn.className = 'plm-smart-dlg-save';
 
     var errors = [];
-    var lastSimilar = null;   // 最近一次 similar-models 结果，供「类似型号明细」弹窗使用
+    var lastSimilar = null;        // 最近一次 similar-models 结果，供「类似型号明细」弹窗使用
+    var lastSpecSuggestion = '';   // 规格侧已提示过的目标写法，避免「建议改为 / 规范写法」重复
 
     function setSaveEnabled(ok) {
       saveBtn.disabled = !ok;
@@ -1338,7 +1357,9 @@
           + ' style="color:' + th.accent + ';text-decoration:underline">' + escHtml(r.nameFormat.final) + '</a></div>';
       }
       // 规格结构化建议：规范写法
+      lastSpecSuggestion = '';
       if (r && r.specFormat && r.specFormat.fixed && r.specFormat.fixed !== specIn.value) {
+        lastSpecSuggestion = r.specFormat.fixed;
         sHtml += '<div style="color:' + C_WARN + '">建议改为：<a href="javascript:void(0)" class="plm-smart-apply-spec"'
           + ' style="color:' + th.accent + ';text-decoration:underline">' + escHtml(r.specFormat.fixed) + '</a></div>';
       }
@@ -1386,14 +1407,12 @@
       apiAsync('/api/plm/suggest', { field: 'spec', value: sp, sub: currentSub() }, function (r) {
         if (!dlg || !r) return;
         var html = '';
-        if (r.normalized && r.normalized !== sp) {
+        // 与校验结果里的「建议改为」去重：同一个目标只提示一次
+        if (r.normalized && normKey(r.normalized) !== normKey(sp)
+          && normKey(r.normalized) !== normKey(lastSpecSuggestion)) {
           html += '<div style="color:' + C_WARN + ';font-size:12px">规范写法：<a href="javascript:void(0)"'
             + ' class="plm-smart-apply-norm" style="color:' + th.accent + ';text-decoration:underline">'
             + escHtml(r.normalized) + '</a></div>';
-        }
-        if (r.tokens && r.tokens.length) {
-          html += '<div style="opacity:.7;font-size:12px">该小类建议写清：'
-            + escHtml(r.tokens.slice(0, 8).join(' / ')) + '</div>';
         }
         if (!html) return;
         specMeta.innerHTML = html;
@@ -1406,11 +1425,10 @@
      * 未配置 inventoryBase 时退回 3100 的 suggest 频率序。
      */
     function loadSimilar(sp) {
-      simBox.innerHTML = '';
       lastSimilar = null;
+      simBtn.style.display = 'none';
       if (!sp) return;
       var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
-      // 只保留「类似型号明细」弹窗；未配置 inventoryBase 时不展示任何内联候选
       if (!base) return;
 
       var url = base + '/api/new-material/similar-models?sub=' + encodeURIComponent(currentSub())
@@ -1418,19 +1436,16 @@
       apiAbsolute(url, function (r) {
         if (!dlg || !r || !r.items || !r.items.length) return;
         lastSimilar = r;
-        simBox.appendChild(dlgEl('div', 'opacity:.75;font-size:12px;',
-          '类似型号：同小类共 ' + r.items.length + ' 条（按接近程度排序）'));
-        var link = dlgEl('span', 'color:' + th.accent + ';cursor:pointer;text-decoration:underline;font-size:12px;',
-          '查看类似型号明细');
-        link.className = 'plm-smart-sim-open';
-        link.onclick = openSimilarModal;
-        simBox.appendChild(link);
+        simBtn.textContent = '类似型号（' + r.items.length + '）';
+        simBtn.title = '同小类共 ' + r.items.length + ' 条，按接近程度排序';
+        simBtn.style.display = 'inline-block';
       });
     }
 
     /** 现有库存：走治理看板（3130）的只读接口；未配置 inventoryBase 则不显示 */
     function loadInventory(sp) {
-      invBox.innerHTML = '';
+      invWrap.style.display = 'none';
+      invBadge.textContent = '0';
       var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
       if (!base) return;
       var url = base + '/api/new-material/inventory?code=' + encodeURIComponent(readEcode())
@@ -1438,20 +1453,10 @@
         + '&spec=' + encodeURIComponent(sp || '');
       apiAbsolute(url, function (r) {
         if (!dlg || !r || !r.total) return;
-        var t = r.total;
-        var whs = r.warehouses || [];
-        var only = whs.length === 1 ? (whs[0].stockName || ('仓库#' + whs[0].stockId)) : '';
-        var html = '<div style="opacity:.75;margin-bottom:4px">现有库存</div>'
-          + '<div>数量 <b>' + t.qty + '</b>　可用 <b style="color:' + C_OK + '">' + t.avbqty + '</b>'
-          + (only ? '<span style="opacity:.7">（' + escHtml(only) + '）</span>' : '') + '</div>';
-        if (!only && whs.length) {
-          var parts = [];
-          for (var i = 0; i < whs.length && i < 6; i++) {
-            parts.push(escHtml(whs[i].stockName || ('仓库#' + whs[i].stockId)) + '：' + whs[i].qty);
-          }
-          html += '<div style="opacity:.75;font-size:12px">' + parts.join('　') + '</div>';
-        }
-        invBox.innerHTML = html;
+        var n = Number(r.total.qty || 0);
+        if (!n) return;                 // 无库存则不占位
+        invBadge.textContent = String(n);
+        invWrap.style.display = 'inline-flex';
       });
     }
 
@@ -1552,12 +1557,20 @@
       if (dlg) dlg.similarMask = m2;
     }
 
+    var lastCheckedKey = '';
     function checkNow() {
       var nm = nameIn.value;
       var sp = specIn.value;
+      // 内容没变就不重复发请求（防抖 + 失焦 + keyup 可能重复触发）
+      var key = nm + '|' + sp;
+      if (key === lastCheckedKey) return;
+      lastCheckedKey = key;
       if (!nm && !sp) {
-        nameTip.innerHTML = ''; specTip.innerHTML = ''; simBox.innerHTML = ''; invBox.innerHTML = '';
+        nameTip.innerHTML = ''; specTip.innerHTML = '';
         nameSugBox.innerHTML = ''; specMeta.innerHTML = '';
+        invWrap.style.display = 'none';
+        simBtn.style.display = 'none';
+        lastSimilar = null;
         errors = []; setSaveEnabled(true); return;
       }
       specTip.innerHTML = '<div style="opacity:.6">校验中…</div>';
@@ -1580,10 +1593,19 @@
     var timer = null;
     function onChange() {
       if (timer) clearTimeout(timer);
-      timer = setTimeout(checkNow, 400);
+      timer = setTimeout(checkNow, 250);
     }
-    nameIn.oninput = onChange;
-    specIn.oninput = onChange;
+    // 多事件绑定：某些环境 input 不一定按预期触发（输入法、脚本赋值、平台键事件处理），
+    // 用 keyup/change/paste 兜底，失焦时再强制校验一次
+    function bindLive(el) {
+      el.oninput = onChange;
+      el.onkeyup = onChange;
+      el.onchange = onChange;
+      el.onpaste = function () { setTimeout(onChange, 0); };
+      el.onblur = function () { if (timer) clearTimeout(timer); checkNow(); };
+    }
+    bindLive(nameIn);
+    bindLive(specIn);
 
     saveBtn.onclick = function () {
       var nm = nameIn.value;
@@ -1633,7 +1655,7 @@
     document.body.appendChild(mask);
     dlg = {
       mask: mask, panel: panel, nameIn: nameIn, specIn: specIn,
-      nameTip: nameTip, specTip: specTip, simBox: simBox, invBox: invBox
+      nameTip: nameTip, specTip: specTip, invWrap: invWrap, invBadge: invBadge, simBtn: simBtn
     };
 
     renderInfo(null);
@@ -2164,7 +2186,7 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.31（api=' + apiUrl('')
+  log('脚本已加载 v1.36（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；外部配置=' + (EXT_KEYS.length ? EXT_KEYS.join('/') : '未使用')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')

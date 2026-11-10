@@ -113,7 +113,7 @@
 
 | # | 文件 | 说明 |
 |---|---|---|
-| 1 | `src/material-rules.js` | 书写规则、`fixSpecFormat()` 空格整理、`detectSubMismatch()` 分类不符 |
+| 1 | `src/material-rules.js` | 书写规则、`fixSpecFormat()` 空格整理、`detectSubMismatch()` 分类不符（含「前缀命中」：`端子标记号` → `101601 端子`） |
 | 2 | `src/plm-server.js` | `/api/plm/check` 返回 `specFormat`、`subMismatch` |
 | 3 | `src/config/material-rules.json` | `name.subMismatch` 配置段 |
 | 4 | `src/name-synonyms.js` + `src/config/name-synonyms.json` | 名称同义词（回填标准名依赖） |

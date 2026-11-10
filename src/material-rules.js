@@ -106,6 +106,24 @@ export function detectSubMismatch(rawName, sub) {
   const curScore = diceOf(gq, bigramsOf(info.subName))
   if (curScore >= num(R, 'minCurrent', 0.4)) return null
 
+  // 短标准名兜底：像「端子」这种 1 个二元组的标准名，Dice 会被长名字稀释，
+  // 导致「端子标记号」这类明显同族的写法漏判。名称以其它小类标准名开头时直接命中。
+  const pref = SUB_GRAMS
+    .filter((x) => x.sub !== sub && x.subName && x.subName.length >= 2
+      && name.indexOf(x.subName) === 0
+      && name.indexOf(info.subName) !== 0)   // 当前小类名本身就是前缀时不判（避免误伤自身）
+    .sort((a, b) => b.subName.length - a.subName.length)[0]
+  if (pref) {
+    const cand0 = { sub: pref.sub, subName: pref.subName, midName: pref.midName, score: 1 }
+    return {
+      name,
+      current: { sub, subName: info.subName, score: +curScore.toFixed(3) },
+      best: cand0,
+      candidates: [cand0],
+      msg: `名称「${name}」与所选小类「${info.subName}」不匹配，更像 ${pref.sub} ${pref.subName}，请确认小类是否选错`,
+    }
+  }
+
   const ranked = SUB_GRAMS
     .filter((x) => x.sub !== sub && x.subName)
     .map((x) => ({ sub: x.sub, subName: x.subName, midName: x.midName, score: diceOf(gq, x.grams) }))

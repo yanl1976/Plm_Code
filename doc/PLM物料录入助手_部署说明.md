@@ -1,13 +1,14 @@
 # PLM 物料新增「名称/规格型号」智能录入助手 — 部署说明
 
-> 版本 **v1.31** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
-> 插件文件：`ItemSmartInput.js` v1.31 — 96,775 字节 / 2,180 行 / UTF-8 无 BOM
-> SHA256：`A8D2CEE692FAB87EC827404EC390F5DEE913CB2B9A5BEA218C40EDEBDF8946A7`
+> 版本 **v1.32** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
+> 插件文件：`ItemSmartInput.js` v1.32 — 98,247 字节 / 2,210 行 / UTF-8 无 BOM
+> SHA256：`D925EB2BC544EA468B18E014A5F5EEACE48BCF59360CE9F4ABF1B203229DD8BD`
 > 配置文件：`ItemSmartInput.config.js` — 2,812 字节 / 48 行 / UTF-8 无 BOM
 > SHA256：`B244444FF9426844EFB414A47B3BFE839A1C0AF25F44A20B7A21BE052D1277A2`
 >
 > **版本演进（近期）**
-> - **v1.31（当前）**：两个弹窗（主弹窗 + 类似型号明细）**继承 PLM 原有配色**——背景/文字取实际弹窗容器，主色取页面按钮，深色主题自动切换语义色
+> - **v1.32（当前）**：字段长度上限与类型白名单改为**服务端下发**（`/api/plm/meta`），前端只保留兜底默认值；改 `material-rules.json` 的 `plm` 段即可调整，无需改 JS
+> - v1.31：两个弹窗（主弹窗 + 类似型号明细）**继承 PLM 原有配色**——背景/文字取实际弹窗容器，主色取页面按钮，深色主题自动切换语义色
 > - v1.30：删除「类似型号」的内联候选列表（无实际价值），只保留独立的**类似型号明细弹窗**
 > - v1.29：「类似型号」改为独立的**类似型号明细弹窗**（合计数量/可用 + 录入规格与差异高亮 + 五列表格，按接近程度排序，点行填入）
 > - v1.28：弹窗补齐名称联想、标准叫法 / 建议改为（可点击）、规格规范写法与建议参数；**点遮罩不再关闭弹窗**，只能右上角 × 或「取消」
@@ -432,6 +433,8 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 | `itemTypeAllowText` | `['电气元件','原材料','外购标准件']` | 允许显示按钮的类型显示名 |
 | `itemTypeAllowValues` | `[]` | 若类型返回值是编码而非名称，在此补编码 |
 | `ctlEname / ctlGgxh / ctlZycs / ctlEcode / ctlItemType` | 见文件 | 控件 ID，与 `PSEITEM-CREATE.page` 一致，一般不改 |
+
+> **v1.32 起**：`enameMaxLen / ggxhMaxLen / zycsMaxLen / flsxhbMaxLen`、`itemTypeAllowText / Values`、`restrictItemType` 由服务端 `/api/plm/meta` 下发，配置在 `src/config/material-rules.json` 的 `plm` 段。前端同名配置仅作**服务不可达时的兜底**，实际口径以服务端为准。
 
 服务端业务规则**不在 js 里**，仍由既有配置文件驱动，改规则不需要动 PLM：
 

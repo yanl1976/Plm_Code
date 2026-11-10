@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.31
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.32
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -2164,7 +2164,34 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.31（api=' + apiUrl('')
+  /**
+   * 服务端下发治理配置：字段长度上限 + 类型白名单。
+   * 前端只保留兜底默认值，业务口径以服务端 material-rules.json 为准。
+   */
+  function loadMeta() {
+    apiAsync('/api/plm/meta', {}, function (r) {
+      if (!r || r.ok === false) {
+        log('服务端治理配置未取到，沿用内置默认值');
+        return;
+      }
+      try {
+        var L = r.limits || {};
+        if (L.nameMaxLen) CFG.enameMaxLen = Number(L.nameMaxLen);
+        if (L.specMaxLen) CFG.ggxhMaxLen = Number(L.specMaxLen);
+        if (L.zycsMaxLen) CFG.zycsMaxLen = Number(L.zycsMaxLen);
+        if (L.flsxhbMaxLen) CFG.flsxhbMaxLen = Number(L.flsxhbMaxLen);
+        var T = r.itemTypes || {};
+        if (Array.isArray(T.allowText) && T.allowText.length) CFG.itemTypeAllowText = T.allowText;
+        if (Array.isArray(T.allowValues)) CFG.itemTypeAllowValues = T.allowValues;
+        if (T.restrict != null) CFG.restrictItemType = !!T.restrict;
+        log('已加载服务端治理配置：长度上限 ' + CFG.enameMaxLen + '/' + CFG.ggxhMaxLen + '/' + CFG.zycsMaxLen
+          + '；类型门控=' + (CFG.restrictItemType ? CFG.itemTypeAllowText.join('/') : '关'));
+        try { refreshTypeGate(); } catch (e) { }
+      } catch (e) { log('治理配置解析异常（已忽略）', e && e.message); }
+    });
+  }
+
+  log('脚本已加载 v1.32（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；外部配置=' + (EXT_KEYS.length ? EXT_KEYS.join('/') : '未使用')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')
@@ -2177,4 +2204,7 @@
 
   // 兜底：PSE_ItemGuide 等不触发 CreatePage_OnCreate 的入口，靠 DOM 轮询接管
   watchDialog();
+
+  // 从服务端拉取治理配置（长度上限 / 类型白名单），取不到就用内置默认值
+  loadMeta();
 })(window, window.jQuery);

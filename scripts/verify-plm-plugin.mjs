@@ -634,6 +634,26 @@ async function run() {
     ok('输入框已绑定事件', (p.doc.__byId['ENAME_Value'].__handlers || []).length > 0)
   }
 
+  // S19 服务端下发治理配置：类型白名单以服务端为准
+  {
+    console.log('[S19] 服务端下发治理配置（/api/plm/meta）')
+    const META = {
+      ok: true,
+      limits: { nameMaxLen: 200, specMaxLen: 500 },
+      itemTypes: { restrict: true, allowText: ['非标自制件'], allowValues: [] },
+    }
+    const p = newPage({
+      ctrls: baseCtrl(),
+      ajaxHandler: router({ '/health': HEALTH_OK, '/meta': META, '/check': CHECK_CLEAN }),
+    })
+    p.OnCreate()
+    await sleep(60)
+    const btn = findBtn(p)
+    // 页面「类型」是电气元件，但服务端只允许非标自制件 → 按钮应被隐藏
+    ok('类型白名单以服务端为准', !!btn && btn.style.display === 'none',
+      'display=' + (btn && btn.style.display))
+  }
+
   console.log('\n----------------------------------------')
   console.log(`结果: ${pass} 通过 / ${fail} 失败`)
   if (fail) console.log('失败项: ' + failures.join(' | '))

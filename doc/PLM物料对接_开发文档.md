@@ -289,6 +289,18 @@ state.subs: Map<subKey(6位), {
   "fuzzyThreshold": 0.8, "source": "...\\data\\materials.ndjson" }
 ```
 
+### 6.1.1 `GET/POST /api/plm/meta`（v1.32 新增）
+
+下发 PLM 页面插件使用的限制与类型门控，前端不再硬编码；配置在 `src/config/material-rules.json` 的 `plm` 段，按 mtime 热加载，改完无需重启。
+
+```json
+{ "ok": true, "version": "1.1.0",
+  "limits": { "nameMaxLen": 200, "specMaxLen": 500, "zycsMaxLen": 1000, "flsxhbMaxLen": 100 },
+  "itemTypes": { "restrict": true, "allowText": ["电气元件", "原材料", "外购标准件"], "allowValues": [] } }
+```
+
+插件启动时拉取一次：成功则覆盖内置阈值与白名单；失败则沿用内置默认值（不影响录入）。
+
 ### 6.2 `POST /api/plm/suggest`
 
 请求（form 或 json）：

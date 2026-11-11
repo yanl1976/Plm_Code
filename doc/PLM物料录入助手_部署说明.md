@@ -1,14 +1,14 @@
 # PLM 物料新增「名称/规格型号」智能录入助手 — 部署说明
 
 > 版本 **v1.54** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
-> 插件文件：`ItemSmartInput.js` v1.54 — 128,014 字节 / 2,875 行 / UTF-8 无 BOM
-> SHA256：`B3D16E9E64CF478CB4313CDF24E6948AE512EFAB9CD5A2E6443F0B8F408D335B`
+> 插件文件：`ItemSmartInput.js` v1.54 — 128,011 字节 / 2,875 行 / UTF-8 无 BOM
+> SHA256：`958FA4D2191E8BE58C5EE4827B065BC5FBF4CE7774E5D79F2A7E1775563B5724`
 > **后端本次有改动**：`src/plm-index.js` 新增「仅规格相同」索引（12,174 字节），需部署并重启 3100（v1.52 起前端也做了兜底，后端没换也能拦住）
 > 配置文件：`ItemSmartInput.config.js` — 3,243 字节 / 51 行 / UTF-8 无 BOM
 > SHA256：`AB883C30C398DFD7712E46A116A579B8995E3B9CBAB259AE5BFF70079F9157D0`
 >
 > **版本演进（近期）**
-> - **v1.54（当前）**：库存查询改**异步串行**（`DataService.AsyncCall`，一条回来再发下一条），25 条明细不再卡住页面；弹窗标题显示 `版本号：V x.y`，与 `PLUGIN_VERSION` 常量同步
+> - **v1.54（当前）**：库存查询改**异步串行**（`DataService.AsyncCall`，一条回来再发下一条），25 条明细不再卡住页面；弹窗标题改为 **`智能数据治理平台　版本号：V x.y`**，版本号与 `PLUGIN_VERSION` 常量同步
 > - v1.53：明细的项目号也以 **PLM 返回的 `FMTONO`** 为准（逐条查完覆盖看板值），不再依赖 3130
 > - v1.52：**前端兜底判重**——`similar-models` 里 `similarity=1` 等价规格完全相同，即使 3100 未升级（不返回 `spec` 级）也能红字阻断 + 禁用按钮
 > - v1.51：查重新增「**仅规格相同**」判定（`level=spec`）——名称不同但规格一字不差也按 error 阻断，明细行标注「（名称不同）」

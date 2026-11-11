@@ -1241,7 +1241,7 @@
       + 'font:13px/1.6 "Microsoft YaHei",Arial,sans-serif;color:' + th.fg + ';');
 
     var head = dlgEl('div', 'padding:10px 16px;background:' + C_HEAD_BG + ';border-bottom:' + C_LINE + ';font-weight:bold;font-size:14px;');
-    head.textContent = '物料名称与规格校验　版本号：V ' + pluginVersion();
+    head.textContent = '智能数据治理平台　版本号：V ' + pluginVersion();
     head.className = 'plm-smart-dlg-title';
     var xBtn = dlgEl('span', 'float:right;cursor:pointer;color:#999;font-weight:normal;font-size:18px;line-height:18px;', '×');
     xBtn.onclick = closeEditor;

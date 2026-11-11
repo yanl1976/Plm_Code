@@ -1,13 +1,15 @@
 # PLM 物料新增「名称/规格型号」智能录入助手 — 部署说明
 
-> 版本 **v1.50** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
-> 插件文件：`ItemSmartInput.js` v1.50 — 122,412 字节 / 2,747 行 / UTF-8 无 BOM
-> SHA256：`E088CE151278CE408FFD073A11589C53D21D1BA7A234A062BD60BE6D3E6548FB`
+> 版本 **v1.51** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
+> 插件文件：`ItemSmartInput.js` v1.51 — 122,725 字节 / 2,750 行 / UTF-8 无 BOM
+> SHA256：`0571346E22F9F0821E2A4BF42490FC9C339AFD3BAB49E6478F98A4EE2BAFCA65`
+> **后端本次有改动**：`src/plm-index.js` 新增「仅规格相同」索引（12,174 字节），需部署并重启 3100
 > 配置文件：`ItemSmartInput.config.js` — 3,243 字节 / 51 行 / UTF-8 无 BOM
 > SHA256：`AB883C30C398DFD7712E46A116A579B8995E3B9CBAB259AE5BFF70079F9157D0`
 >
 > **版本演进（近期）**
-> - **v1.50（当前）**：明细弹窗**先出表格、库存后填**（数量列先 `…`，逐条查 PLM 后填，查不到显示 `-`，不再用看板数据兜底）；标题显示 `库存来源：查询中 n/N`；弹窗加宽到 1120px，标题不换行
+> - **v1.51（当前）**：查重新增「**仅规格相同**」判定（`level=spec`）——名称不同但规格一字不差也按 error 阻断，明细行标注「（名称不同）」
+> - v1.50：明细弹窗**先出表格、库存后填**（数量列先 `…`，逐条查 PLM 后填，查不到显示 `-`，不再用看板数据兜底）；标题显示 `库存来源：查询中 n/N`；弹窗加宽到 1120px，标题不换行
 > - v1.49：库存改查**最相似物料**（新建物料自身无编码，改查 `similar-models` 首条 `fnumber`）；类似型号明细的库存**逐条改走 PLM**，来源标在标题（`库存来源：PLM` 绿色加粗）
 > - v1.48：名称联想对齐看板——「建议采用」置顶可点、存量名称只读、小类标准名按**包含**匹配（`框架`/`断路器` 均能提示「固定式框架断路器」）；名称联想与库存**均标注数据来源**（`治理库`/`本地规则`、`PLM`/`ERP`）
 > - v1.47：按 PLM 原生请求实测重写库存链路（编码 → EID → `GetStockSearchData`），修正 `ViewName`、`ParaList`、`GridObject` 解析；**PLM 库存可正常返回**
@@ -540,6 +542,20 @@ HoteamUI.DataService.Call('Hoteam.InforCenter.ERPService.GetStockSearchData', {
 
 > 页签配置的 `PagePara` 只有 `{"ItemName":"StockSearchManagement"}`，ObjectID 是 `TabsCtrl_GetUrlPara` 从父页面参数 `para.ObjectID = para.SelectID` 整体继承的（见 `Platform/Js/Common/TabsCtrl.js` L68、`MenuCtrl.js` L724）。
 > `SearchStockData` 等批量方法未发布（404），当前只能**按单个对象**查询。
+
+### 5.3 查重口径（v1.51 起四级）
+
+同小类内比对，命中任一级即**阻断回填**（红字 + 按钮禁用）：
+
+| 级别 | 判定 | 典型场景 |
+|---|---|---|
+| `exact` | 名称 + 规格归一化后完全相同 | 同名同规格 |
+| `sep` | 仅分隔符/空格写法不同 | `IC65N C10A/2P` vs `IC65N C10A 2P` |
+| `spec` | **规格一字不差、名称不同** | `万能断路器` 与 `固定式框架断路器` 同为 `CDW3-1600H 1000A/3P iTR326A 600V` |
+| `fuzzy` | token 相似度 ≥ 0.8 且型号段相同 | 仅提示，不阻断 |
+
+> 背景：v1.50 及以前，签名是「名称 + 规格」的组合，名称一变就漏判。`spec` 级正是为这种「一物多号」补的。
+> 归一化见 `src/config/dedup-rules.json`：小写、全角转半角、去空格、分隔符统一为 `/`——所以 `ITR326A` 与 `iTR326A` 视为相同。
 
 ---
 

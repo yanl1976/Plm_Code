@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.50
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.51
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -1364,8 +1364,9 @@
       var i;
 
       // 同小类已有完全相同规格 → 按 error 处理：红字提示 + 禁止回填
+      // spec 级：规格一字不差但名称不同（典型一物多号），同样阻断
       var dup = ((r && r.duplicates) || []).filter(function (d) {
-        return d.level === 'exact' || d.level === 'sep';
+        return d.level === 'exact' || d.level === 'sep' || d.level === 'spec';
       });
       if (dup.length) {
         // 注意：文案里不要出现「名称/小类/分类」，否则会被分到名称侧
@@ -1390,8 +1391,10 @@
           var dc = dup[i].fNumber || dup[i].code || dup[i].fnumber || '';
           var dn = dup[i].fName || dup[i].name || '';
           var ds = dup[i].fSpec || dup[i].spec || '';
+          // spec 级：名称不同但规格相同，单独标出来，避免用户以为系统看错了
+          var diffName = dup[i].level === 'spec' ? '　（名称不同）' : '';
           sHtml += '<div style="color:' + C_MUTE + ';margin-left:12px">'
-            + escHtml(dc) + '　' + escHtml(dn) + '　' + escHtml(ds) + '</div>';
+            + escHtml(dc) + '　' + escHtml(dn) + '　' + escHtml(ds) + diffName + '</div>';
         }
       }
       // 名称结构化建议：标准叫法 / 建议改为
@@ -2731,7 +2734,7 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.50（api=' + apiUrl('')
+  log('脚本已加载 v1.51（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；外部配置=' + (EXT_KEYS.length ? EXT_KEYS.join('/') : '未使用')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')

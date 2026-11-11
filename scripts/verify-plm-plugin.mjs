@@ -1050,6 +1050,33 @@ async function run() {
     ok('来源为 PLM', !!srcTag && srcTag.textContent === 'PLM', 'got=' + (srcTag && srcTag.textContent))
   }
 
+  // S34 规格完全相同但名称不同（level=spec）→ 同样按 error 阻断
+  {
+    console.log('[S34] 规格相同、名称不同 → 阻断')
+    const CHECK_SPEC_DUP = {
+      ok: true, pass: false, errors: [], warnings: [],
+      duplicates: [{
+        fNumber: '10010100155', fName: '万能断路器',
+        fSpec: 'CDW3-1600H 1000A/3P iTR326A 600V', level: 'spec',
+      }],
+    }
+    const p = newPage({ ctrls: baseCtrl(), ajaxHandler: router({ '/health': HEALTH_OK, '/check': CHECK_SPEC_DUP }) })
+    p.ctl['ECODE_Value'].__text = '10010100435'
+    p.ctl['ECODE_Value'].__tag = { value: '10010100435' }
+    p.ctl['ENAME_Value'].__text = '固定式框架断路器'
+    p.ctl['GGXH_Value'].__text = 'CDW3-1600H 1000A/3P ITR326A 600V'
+    p.OnCreate()
+
+    const btn = findBtn(p)
+    if (btn) btn.onclick({ preventDefault() { }, stopPropagation() { } })
+    await sleep(120)
+
+    const save = findByClass(p, 'plm-smart-dlg-save')
+    const specTip = findByClass(p, 'plm-smart-dlg-spectip')
+    ok('规格相同（名称不同）时按钮禁用', !!save && save.disabled === true)
+    ok('提示标注「名称不同」', !!specTip && String(specTip.innerHTML).indexOf('名称不同') >= 0)
+  }
+
   console.log('\n----------------------------------------')
   console.log(`结果: ${pass} 通过 / ${fail} 失败`)
   if (fail) console.log('失败项: ' + failures.join(' | '))

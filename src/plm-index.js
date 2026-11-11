@@ -63,6 +63,7 @@ function ensureBucket(subs, subKey) {
     tokens: chooseTokens(info),
     bySig: new Map(),
     byLoose: new Map(),
+    bySpec: new Map(),      // 仅规格签名：识别「规格完全相同、名称不同」的一物多号
     items: [],
   }
   subs.set(subKey, bucket)
@@ -104,6 +105,12 @@ export function applyRecord(subs, rec, source) {
   if (item.loose) {
     if (!bucket.byLoose.has(item.loose)) bucket.byLoose.set(item.loose, [])
     bucket.byLoose.get(item.loose).push(item)
+  }
+  // 规格单独建索引：名称不同但规格一字不差，同样是「一物多号」
+  const specNorm = normalize(item.fSpec || '')
+  if (specNorm) {
+    if (!bucket.bySpec.has(specNorm)) bucket.bySpec.set(specNorm, [])
+    bucket.bySpec.get(specNorm).push(item)
   }
   return 'ok'
 }
@@ -222,6 +229,12 @@ export function queryDuplicates(q) {
   // 2) 分隔符无关
   if (loose) for (const it of bucket.byLoose.get(loose) || []) push(it, 'sep', 0.95)
 
+  // 2.5) 仅规格完全相同（名称不同）：同样属于一物多号，必须提示
+  const probeSpec = normalize(q.spec || '')
+  if (probeSpec) {
+    for (const it of bucket.bySpec.get(probeSpec) || []) push(it, 'spec', 0.98)
+  }
+
   // 3) 模糊：同小类内 token Jaccard + 型号段约束，避免把"同系列不同规格"误报
   if (out.length < limit && (q.name || q.spec)) {
     const probeTokens = tokenize(String(q.name || '') + ' ' + String(q.spec || ''))
@@ -242,7 +255,7 @@ export function queryDuplicates(q) {
   }
 
   // 排序：等级优先，其次相似度
-  const rank = { exact: 0, sep: 1, fuzzy: 2 }
+  const rank = { exact: 0, sep: 1, spec: 2, fuzzy: 3 }
   out.sort((a, b) => (rank[a.level] - rank[b.level]) || (b.score - a.score))
 
   const level = out.length === 0 ? 'none' : out[0].level

@@ -471,3 +471,9 @@ tr.saving { opacity:.45; }
 }
 .nm-sim-table .nm-diff-miss { color:var(--muted); font-size:11px; margin-left:8px; border-left:1px dashed rgba(250,200,0,.45); padding-left:6px; white-space:nowrap; }
 .nm-diff-legend { color:#ffd666; background:rgba(250,200,0,.20); border-radius:3px; padding:0 4px; }
+
+/* 选型助手：名称行右侧按钮 + 弹窗条件栏 */
+.nm-select-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 12px}
+.nm-select-bar label{font-size:12px;color:var(--muted);margin:0}
+.nm-select-bar select,.nm-select-bar input{padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel2);color:var(--text);font-size:13px}
+.nm-select-bar input{width:90px}

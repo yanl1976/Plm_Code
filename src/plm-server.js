@@ -19,14 +19,19 @@
  */
 import http from 'http'
 import os from 'os'
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import { loadIndex, indexStatus, queryDuplicates, suggestNames, suggestSpecs, categoryOf, tokensOf } from './plm-index.js'
 import { checkMaterial, suggestSpec } from './material-rules.js'
 import { extractParams } from './struct-spec.js'
 import { env, envPort, logEnvSource } from './env.js'
 
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+const SELECT_DIR = path.join(ROOT, 'data', 'selection')
 const PORT = envPort('PLM_API_PORT', 3100)
 const HOST = env('PLM_API_HOST', '0.0.0.0')
-const VERSION = '1.1.0'
+const VERSION = '1.2.0'
 
 /**
  * 内网地址判定与优先级。
@@ -175,6 +180,101 @@ function handleSuggest(body) {
   return { ...base, suggestions: suggestNames({ sub, value }) }
 }
 
+// ---------- 选型（厂家样本 → 参数组合 → 具体型号） ----------
+let selectCache = null
+let selectCacheAt = 0
+
+function loadSelection() {
+  const now = Date.now()
+  if (selectCache && now - selectCacheAt < 30000) return selectCache
+  const out = []
+  try {
+    if (fs.existsSync(SELECT_DIR)) {
+      for (const f of fs.readdirSync(SELECT_DIR)) {
+        if (!f.endsWith('.json')) continue
+        try {
+          const j = JSON.parse(fs.readFileSync(path.join(SELECT_DIR, f), 'utf8'))
+          if (Array.isArray(j.series)) out.push(...j.series)
+        } catch (e) { /* 单个文件坏不影响其它 */ }
+      }
+    }
+  } catch (e) { /* 目录不存在时返回空 */ }
+  selectCache = out
+  selectCacheAt = now
+  return out
+}
+
+/** 在系列档位里取第一个 >= need 的电流；都超出时取最大档 */
+function pickCurrent(list, need) {
+  const arr = (list || []).slice().sort((a, b) => a - b)
+  for (const c of arr) if (c >= need) return c
+  return arr.length ? arr[arr.length - 1] : 0
+}
+
+function handleSelect(body) {
+  const all = loadSelection()
+  const seriesId = String(body.series || '').trim()
+  const sub = String(body.sub || '').slice(0, 6)
+  const scene = String(body.scene || '').trim()
+  const poles = String(body.poles || '').trim()
+  const curveIn = String(body.curve || '').trim().toUpperCase()
+  const load = Number(body.current || 0)
+  const limit = Math.max(1, Math.min(Number(body.limit) || 20, 60))
+
+  const picked = all.filter((s) => (!seriesId || s.id === seriesId)
+    && (!sub || String(s.sub || '').startsWith(sub)))
+
+  const items = []
+  for (const s of picked) {
+    const p = s.params || {}
+    const currents = Array.isArray(p.ratedCurrent) ? p.ratedCurrent : []
+    if (!currents.length) continue
+    const poleList = Array.isArray(p.poles) && p.poles.length ? p.poles : ['']
+    const curves = Array.isArray(p.curve) && p.curve.length
+      ? p.curve : Object.keys(p.ratedBreaking || {})
+
+    const factor = Number((s.rules && s.rules.currentFactor) || 1.25)
+    const need = load > 0 ? load * factor : 0
+    const target = need > 0 ? pickCurrent(currents, need) : 0
+    const sceneCurve = (scene && s.rules && s.rules.curveByScene)
+      ? (s.rules.curveByScene[scene] || '') : ''
+    const curve = curveIn || sceneCurve || curves[0] || ''
+    const pattern = String(s.modelPattern || '{series} {poles} {curve}{current}')
+    const curList = target ? [target] : currents
+
+    for (const c of curList) {
+      for (const po of (poles ? [poles] : poleList)) {
+        items.push({
+          series: s.id,
+          brand: s.brand || '',
+          name: s.name || '',
+          model: pattern.replace('{series}', s.id).replace('{poles}', po)
+            .replace('{curve}', curve).replace('{current}', c),
+          poles: po,
+          current: c,
+          curve,
+          breaking: (p.ratedBreaking || {})[curve] || null,
+          voltage: p.voltage || '',
+          terminal: p.terminal || null,
+          source: s.source || '',
+          recommended: !!target && c === target,
+        })
+      }
+    }
+  }
+
+  items.sort((a, b) => (b.recommended - a.recommended)
+    || (a.current - b.current) || String(a.poles).localeCompare(String(b.poles)))
+
+  return {
+    ok: true,
+    version: VERSION,
+    query: { series: seriesId, sub, scene, poles, curve: curveIn, current: load },
+    total: items.length,
+    items: items.slice(0, limit),
+  }
+}
+
 function handleCheck(body) {
   const t0 = Date.now()
   const sub = subOf(body)
@@ -298,6 +398,24 @@ const server = http.createServer(async (req, res) => {
       const st = await loadIndex({ force: true })
       log('[reload]', JSON.stringify(st))
       return send(res, 200, { ok: true, ...st })
+    }
+    if (p === '/api/plm/select/series' && req.method === 'GET') {
+      const all = loadSelection()
+      return send(res, 200, {
+        ok: true,
+        series: all.map((s) => ({
+          id: s.id, brand: s.brand || '', name: s.name || '', sub: s.sub || '',
+          source: s.source || '', params: s.params || {}, rules: s.rules || {},
+        })),
+      })
+    }
+    if (p === '/api/plm/select' && (req.method === 'GET' || req.method === 'POST')) {
+      const body = req.method === 'POST'
+        ? await readBody(req)
+        : Object.fromEntries(url.searchParams.entries())
+      const out = handleSelect(body)
+      log('[select]', JSON.stringify(body), '->', out.total)
+      return send(res, 200, out)
     }
     if (p === '/api/plm/suggest' && req.method === 'POST') {
       const body = await readBody(req)

@@ -1337,6 +1337,8 @@ function bindNmEvents() {
   $('#nmSub').onchange = onNmSubChange
   $('#nmSave').onclick = nmSave
   $('#nmSimilar').onclick = () => nmShowSimilar(false)
+  const nmSelBtn = $('#nmSelect')
+  if (nmSelBtn) nmSelBtn.onclick = () => nmShowSelect()
   $('#nmExport').onclick = () => window.open('/api/new-material/export', '_blank')
   $('#nmSpec').addEventListener('input', () => {
     clearTimeout(nm.timer)
@@ -1834,6 +1836,102 @@ async function renderNmInv() {
     }
   }
   el.innerHTML = html
+}
+
+// 选型助手：按场景 / 极数 / 负载电流，从厂家样本结构化参数中筛型号，点行回填名称与规格
+// 数据源是治理服务 3100（与看板同机时直接用当前主机名拼端口，可用 SELECT_API_BASE 覆盖）
+function selectBase() {
+  return window.SELECT_API_BASE
+    || (location.protocol + '//' + (location.hostname || '127.0.0.1') + ':3100')
+}
+
+async function nmShowSelect() {
+  const body = $('#modalBody')
+  if (!body) return
+  body.innerHTML = '<h3>选型助手</h3><p class="muted">加载中…</p>'
+  $('#modal').classList.remove('hidden')
+
+  let series = []
+  try {
+    const r = await fetch(selectBase() + '/api/plm/select/series', { cache: 'no-store' }).then((x) => x.json())
+    series = (r && r.series) || []
+  } catch (e) {
+    body.innerHTML = '<h3>选型助手</h3><p class="muted">选型服务不可用（' + escapeHtml(selectBase())
+      + '），请确认 3100 服务已启动。</p>'
+    return
+  }
+  if (!series.length) {
+    body.innerHTML = '<h3>选型助手</h3><p class="muted">选型库为空：请在 data/selection/ 下添加系列参数文件。</p>'
+    return
+  }
+
+  const poleSet = new Set()
+  series.forEach((s) => ((s.params && s.params.poles) || []).forEach((p) => poleSet.add(p)))
+  const seriesOpts = series.map((s, i) => '<option value="' + i + '">' + escapeHtml(s.id)
+    + (s.brand ? ' · ' + escapeHtml(s.brand) : '') + (s.name ? ' · ' + escapeHtml(s.name) : '') + '</option>').join('')
+  const poleOpts = [...poleSet].map((p) => '<option>' + escapeHtml(p) + '</option>').join('')
+
+  body.innerHTML = '<h3>选型助手 <span class="muted">（参数来自厂家样本，最终以设计规范与最新样本为准）</span></h3>'
+    + '<div class="nm-select-bar">'
+    + '<label>系列</label><select id="nmSelSeries">' + seriesOpts + '</select>'
+    + '<label>场景</label><select id="nmSelScene"><option value="">不限</option><option>照明</option><option>动力</option><option>配电</option></select>'
+    + '<label>极数</label><select id="nmSelPoles"><option value="">不限</option>' + poleOpts + '</select>'
+    + '<label>曲线</label><select id="nmSelCurve"><option value="">自动</option><option>B</option><option>C</option><option>D</option></select>'
+    + '<label>负载电流</label><input id="nmSelCurrent" type="number" min="0" step="0.1" placeholder="A" />'
+    + '<button id="nmSelGo" class="ghost">查询</button>'
+    + '</div>'
+    + '<div id="nmSelResult" class="muted small">填写条件后点「查询」</div>'
+    + '<div id="nmSelInfo" class="muted small"></div>'
+
+  const run = async () => {
+    const idx = Number($('#nmSelSeries').value || 0)
+    const s = series[idx] || series[0]
+    const qs = '?series=' + encodeURIComponent(s.id)
+      + '&scene=' + encodeURIComponent($('#nmSelScene').value)
+      + '&poles=' + encodeURIComponent($('#nmSelPoles').value)
+      + '&curve=' + encodeURIComponent($('#nmSelCurve').value)
+      + '&current=' + encodeURIComponent($('#nmSelCurrent').value || '')
+      + '&limit=30'
+    const box = $('#nmSelResult')
+    box.innerHTML = '<span class="muted">查询中…</span>'
+    let r = null
+    try {
+      r = await fetch(selectBase() + '/api/plm/select' + qs, { cache: 'no-store' }).then((x) => x.json())
+    } catch (e) {
+      box.innerHTML = '<span class="muted">查询失败，请确认 3100 服务可访问</span>'
+      return
+    }
+    const items = (r && r.items) || []
+    if (!items.length) { box.innerHTML = '<span class="muted">没有匹配的型号</span>'; return }
+    let html = '<table class="mat"><thead><tr><th>型号</th><th>极数</th><th>电流</th><th>曲线</th><th>分断</th><th></th></tr></thead><tbody>'
+    html += items.map((it, k) => '<tr data-k="' + k + '" style="cursor:pointer">'
+      + '<td class="mono">' + escapeHtml(it.model) + '</td>'
+      + '<td>' + escapeHtml(it.poles) + '</td>'
+      + '<td class="num">' + it.current + 'A</td>'
+      + '<td>' + escapeHtml(it.curve) + '</td>'
+      + '<td>' + (it.breaking ? it.breaking + 'kA' : '') + '</td>'
+      + '<td>' + (it.recommended ? '<span class="nm-diff-legend">推荐</span>' : '') + '</td>'
+      + '</tr>').join('')
+    html += '</tbody></table>'
+    box.innerHTML = html
+    box.querySelectorAll('tr[data-k]').forEach((tr) => {
+      tr.addEventListener('click', () => {
+        const it = items[Number(tr.dataset.k)]
+        const nameEl = $('#nmName')
+        const specEl = $('#nmSpec')
+        if (nameEl) { nameEl.value = it.name || it.series; nmNameInput() }
+        if (specEl) { specEl.value = it.model; specEl.dispatchEvent(new Event('input')) }
+        $('#modal').classList.add('hidden')
+      })
+    })
+    const p = s.params || {}
+    $('#nmSelInfo').innerHTML = '电流档位：' + ((p.ratedCurrent || []).join(' / '))
+      + '　极数：' + ((p.poles || []).join(' / '))
+      + '　电压：' + escapeHtml(p.voltage || '')
+      + '　' + escapeHtml(s.source || '')
+  }
+  $('#nmSelGo').onclick = run
+  run()
 }
 
 // 类似型号弹窗：物料号 / 名称 / 规格 / 库存数量 / 项目号

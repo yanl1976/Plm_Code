@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.47
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.48
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -1413,10 +1413,34 @@
       if (a) a.onclick = function () { input.value = val; checkNow(); };
     }
 
-    /** 名称联想：与页面输入框同源（/api/plm/suggest field=name） */
+    /**
+     * 名称联想：与看板同源的三层规则（建议采用 / 存量只读 / 小类标准名兜底），
+     * 数据取自 3130 的 /api/name-synonyms/suggest；未配置 inventoryBase 或请求失败时，
+     * 退回 3100 的扁平建议（保持离线可用）。
+     */
     function loadNameSuggest(nm) {
       nameSugBox.innerHTML = '';
       if (!nm) return;
+      var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
+      if (base) {
+        var url = base + '/api/name-synonyms/suggest?name=' + encodeURIComponent(nm)
+          + '&sub=' + encodeURIComponent(currentSub());
+        apiAbsolute(url, function (r) {
+          if (!dlg) return;
+          if (r && (r.nameMatches || r.matches || r.subFallback || r.nameModel)) {
+            renderNameSuggest(r, nm);
+            return;
+          }
+          fallbackNameSuggest(nm);
+        });
+        return;
+      }
+      fallbackNameSuggest(nm);
+    }
+
+    /** 降级：3100 的扁平名称建议（3130 不可用时） */
+    function fallbackNameSuggest(nm) {
+      nameSugBox.innerHTML = '';
       apiAsync('/api/plm/suggest', { field: 'name', value: nm, sub: currentSub() }, function (r) {
         if (!dlg || !r || !r.suggestions || !r.suggestions.length) return;
         nameSugBox.appendChild(dlgEl('div', 'opacity:.7;font-size:12px;margin-bottom:2px;', '名称建议（点击填入）'));
@@ -1432,6 +1456,89 @@
         }
         nameSugBox.appendChild(wrap);
       });
+    }
+
+    /**
+     * 三层名称联想渲染（与看板 app.js 的 nmNameSuggest 保持一致）：
+     *   ① 建议采用：同义词 → 去型号 → 小类标准名，归一化去重后置顶，可点击填入
+     *   ② 存量已有名称：只读灰字，不绑定任何点击
+     *   ③ 小类标准名兜底：输入与标准名互为包含才出现（前缀、中间都支持）
+     */
+    function renderNameSuggest(r, raw) {
+      var keyRaw = normKey(raw);
+      var recs = [];
+      function pushRec(name, tag, note) {
+        if (!name) return;
+        var k = normKey(name);
+        if (!k || k === keyRaw) return;
+        for (var i = 0; i < recs.length; i++) if (normKey(recs[i].name) === k) return;
+        recs.push({ name: name, tag: tag || '', note: note || '' });
+      }
+      var stock = (r && r.nameMatches) || [];
+      var syn = (r && r.matches) || [];
+      var i, j;
+
+      for (i = 0; i < syn.length; i++) {
+        var hit = null;
+        for (j = 0; j < stock.length; j++) {
+          if (normKey(stock[j].name) === normKey(syn[i].std)) { hit = stock[j]; break; }
+        }
+        pushRec(syn[i].std, '同义词', hit ? '本小类 ' + (hit.count || 0) + ' 条在用' : '');
+      }
+      var mdl = r && r.nameModel;
+      if (mdl && mdl.core) {
+        var moved = (mdl.moved || []).join(' ');
+        pushRec(mdl.core, '去型号', moved ? '型号/参数 ' + moved + ' 请写进规格' : '');
+      }
+      var fb = r && r.subFallback;
+      if (fb && keyRaw.length >= 2) {
+        var f = normKey(fb.name);
+        // 前缀、包含都要支持：「框架」「断路器」都应提示「固定式框架断路器」
+        if (f.indexOf(keyRaw) >= 0 || keyRaw.indexOf(f) === 0) pushRec(fb.name, '小类标准名', '');
+      }
+
+      var rest = [];
+      for (i = 0; i < stock.length; i++) {
+        var dup = false;
+        for (j = 0; j < recs.length; j++) {
+          if (normKey(recs[j].name) === normKey(stock[i].name)) { dup = true; break; }
+        }
+        if (!dup) rest.push(stock[i]);
+      }
+      if (!recs.length && !rest.length) return;
+
+      nameSugBox.innerHTML = '';
+      if (recs.length) {
+        nameSugBox.appendChild(dlgEl('div', 'font-size:12px;margin-bottom:3px;color:' + C_OK + ';', '✓ 建议采用'));
+        for (i = 0; i < recs.length; i++) {
+          (function (rec) {
+            var row = dlgEl('div', 'cursor:pointer;font-size:12px;padding:2px 0 2px 6px;margin-bottom:2px;'
+              + 'border-left:3px solid ' + th.accent + ';');
+            row.className = 'plm-smart-ns-rec';
+            var b = document.createElement('b');
+            b.textContent = rec.name;
+            row.appendChild(b);
+            if (rec.tag) row.appendChild(dlgEl('span', 'opacity:.7;', ' [' + rec.tag + ']'));
+            if (rec.note) row.appendChild(dlgEl('span', 'opacity:.65;', ' ' + rec.note));
+            row.onclick = function () { nameIn.value = rec.name; checkNow(); };
+            nameSugBox.appendChild(row);
+          })(recs[i]);
+        }
+      }
+      if (rest.length) {
+        nameSugBox.appendChild(dlgEl('div', 'font-size:12px;margin:4px 0 2px;opacity:.75;', '存量已有名称（仅供参考，不可点）'));
+        for (i = 0; i < rest.length && i < 5; i++) {
+          var sm = rest[i];
+          var where = sm.inSub ? '本小类'
+            : (sm.sub ? '小类 ' + sm.sub + (sm.subName ? ' ' + sm.subName : '') : '其它小类');
+          var line = dlgEl('div', 'font-size:12px;opacity:.6;cursor:default;padding:1px 0 1px 6px;user-select:text;');
+          line.className = 'plm-smart-ns-stock';
+          line.appendChild(dlgEl('span', '', sm.name));
+          line.appendChild(dlgEl('span', 'opacity:.8;', ' ' + (sm.count || 0) + ' 条 · ' + where));
+          line.appendChild(dlgEl('span', 'opacity:.55;', ' 仅参考'));
+          nameSugBox.appendChild(line);
+        }
+      }
     }
 
     /** 规格元信息：规范写法 / 建议写清的参数（/api/plm/suggest field=spec） */
@@ -2507,7 +2614,7 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.47（api=' + apiUrl('')
+  log('脚本已加载 v1.48（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；外部配置=' + (EXT_KEYS.length ? EXT_KEYS.join('/') : '未使用')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')

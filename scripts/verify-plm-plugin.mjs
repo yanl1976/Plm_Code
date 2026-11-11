@@ -876,6 +876,55 @@ async function run() {
     ok('未触发直连降级', !calls.some((u) => String(u).indexOf('direct=1') >= 0))
   }
 
+  // S30 名称联想三层：建议置顶可点、存量只读、兜底按「包含」匹配
+  {
+    console.log('[S30] 名称联想：建议采用 / 存量只读 / 兜底包含匹配')
+    const NAMESUG = {
+      name: '框架', sub: '100101', knownCount: 0,
+      nameMatches: [{ name: '框架断路器', count: 62, inSub: true }],
+      matches: [],
+      subFallback: { name: '固定式框架断路器', sub: '100101' },
+      nameModel: null,
+    }
+    const p = newPage({
+      ctrls: baseCtrl(),
+      ajaxHandler: router({
+        '/health': HEALTH_OK,
+        '/check': CHECK_CLEAN,
+        'name-synonyms/suggest': NAMESUG,
+      }),
+      globalCfg: { inventoryBase: 'http://127.0.0.1:3130' },
+    })
+    p.ctl['ECODE_Value'].__text = '10010100435'
+    p.ctl['ECODE_Value'].__tag = { value: '10010100435' }
+    p.ctl['ENAME_Value'].__text = '框架'
+    p.OnCreate()
+
+    const btn = findBtn(p)
+    if (btn) btn.onclick({ preventDefault() { }, stopPropagation() { } })
+    await sleep(100)
+    p.input('ENAME_Value', '框架')
+    await sleep(420)
+
+    const textOf = (el) => {
+      if (!el) return ''
+      let s = String(el.textContent || '')
+      for (const c of (el.children || [])) s += textOf(c)
+      return s
+    }
+    const rec = findByClass(p, 'plm-smart-ns-rec')
+    const stockRow = findByClass(p, 'plm-smart-ns-stock')
+    ok('兜底按「包含」命中：框架 → 固定式框架断路器',
+      !!rec && textOf(rec).indexOf('固定式框架断路器') >= 0, textOf(rec))
+    ok('存量行只读，不绑定点击', !!stockRow && typeof stockRow.onclick !== 'function')
+    if (rec && rec.onclick) rec.onclick()
+    await sleep(60)
+    // 建议行写入的是弹窗内的名称输入框（plm-smart-dlg-name），不是 PLM 页面控件
+    const dlgName = findByClass(p, 'plm-smart-dlg-name')
+    ok('点建议行填入名称', !!dlgName && dlgName.value === '固定式框架断路器',
+      'got=' + (dlgName && dlgName.value))
+  }
+
   console.log('\n----------------------------------------')
   console.log(`结果: ${pass} 通过 / ${fail} 失败`)
   if (fail) console.log('失败项: ' + failures.join(' | '))

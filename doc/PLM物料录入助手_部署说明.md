@@ -1,13 +1,14 @@
 # PLM 物料新增「名称/规格型号」智能录入助手 — 部署说明
 
-> 版本 **v1.47** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
-> 插件文件：`ItemSmartInput.js` v1.47 — 111,898 字节 / 2,523 行 / UTF-8 无 BOM
-> SHA256：`7085250CE44E5551A078BE3F5691F8121D3927CA0293FB9310E3E467C057EFE5`
+> 版本 **v1.48** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
+> 插件文件：`ItemSmartInput.js` v1.48 — 116,702 字节 / 2,630 行 / UTF-8 无 BOM
+> SHA256：`FFA5150B2B42660C164E5F421E053C908FE12797211A52270FD505CAF59C9880`
 > 配置文件：`ItemSmartInput.config.js` — 3,243 字节 / 51 行 / UTF-8 无 BOM
 > SHA256：`AB883C30C398DFD7712E46A116A579B8995E3B9CBAB259AE5BFF70079F9157D0`
 >
 > **版本演进（近期）**
-> - **v1.47（当前）**：按 PLM 原生请求实测重写库存链路（编码 → EID → `GetStockSearchData`），修正 `ViewName`、`ParaList`、`GridObject` 解析；**PLM 库存可正常返回**
+> - **v1.48（当前）**：名称联想对齐看板——「建议采用」置顶可点、存量名称只读、小类标准名按**包含**匹配（`框架`/`断路器` 均能提示「固定式框架断路器」）
+> - v1.47：按 PLM 原生请求实测重写库存链路（编码 → EID → `GetStockSearchData`），修正 `ViewName`、`ParaList`、`GridObject` 解析；**PLM 库存可正常返回**
 > - v1.46：库存调用补齐平台 `OnePageGridDataPara` 结构（`Pager / ParaList / ViewName / ObjectType`），修复 PLM 服务端 `CreateInstance` 空对象异常
 > - v1.45：新增 `allowDirectErp` 开关（默认开），PLM 查不到时回落直连；库存徽标旁显示来源 **PLM / ERP**
 > - v1.44：库存改为**浏览器内直接调用 PLM 既有 `ERPService.GetStockSearchData`**（与 BOM「库存查询」同源）；新增 `inventorySource` 开关
@@ -475,7 +476,7 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 | 区域 | 说明 |
 |---|---|
 | 信息条 | 物料编码 + 大类/中类/小类；未查重原因 |
-| 物料名称 | 预填当前 PLM 名称，可编辑；**名称类问题显示在名称框正下方**；附带「名称建议」chips（同 `/api/plm/suggest` field=name，点击填入）、「标准叫法」「建议改为」可点击应用 |
+| 物料名称 | 预填当前 PLM 名称，可编辑；**名称类问题显示在名称框正下方**；下方为三层名称联想（v1.48）：**✓ 建议采用**（同义词 → 去型号 → 小类标准名，去重后置顶、可点）+ **存量已有名称**（灰字只读、不可点），小类标准名按**包含**匹配；数据来自 `inventoryBase` 的 `/api/name-synonyms/suggest`，不可用时回退 3100 的扁平建议 |
 | 规格型号 | 预填当前 PLM 规格，可编辑；**规格类问题显示在规格框正下方**；输入 2 字以上时下方出现**同型号系列联想**（型号汇总 + 候选规格，含型号段条数与库存，点击填入）；「建议改为」与「规范写法」同一目标只提示一次 |
 | 库存 / 类似型号入口 | **规格输入框右侧同一行**：`现有库存 [4]`（黄色徽标，数量为 0 时不显示）+ `类似型号（N）` 描边按钮；输入框自适应收缩给右侧让位。库存**直接调 PLM 的 `ERPService.GetStockSearchData`**（复用当前登录会话，参数见 5.2），徽标旁标注来源 `PLM`/`ERP`；PLM 无数据且 `allowDirectErp: true` 时回落直连。类似型号读 `inventoryBase` |
 | 类似型号明细 | 点「类似型号（N）」打开**独立弹窗**：合计数量/可用、录入规格 + 黄色差异高亮 + 排序说明、五列表格（物料号/名称/规格型号/数量/项目号），按接近程度排序，点行填入规格框 |

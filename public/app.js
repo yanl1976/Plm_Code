@@ -1852,8 +1852,9 @@ async function nmShowSelect() {
   $('#modal').classList.remove('hidden')
 
   let series = []
+  let r = null
   try {
-    const r = await fetch(selectBase() + '/api/plm/select/series', { cache: 'no-store' }).then((x) => x.json())
+    r = await fetch(selectBase() + '/api/plm/select/series', { cache: 'no-store' }).then((x) => x.json())
     // 旧版 3100 没有这个接口，会返回 {ok:false,error:'not found'} —— 不能当成「库为空」
     if (!r || r.ok === false || !Array.isArray(r.series)) {
       body.innerHTML = '<h3>选型助手</h3><p class="muted">选型接口不可用（' + escapeHtml(selectBase()) + '）'

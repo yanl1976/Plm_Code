@@ -1938,11 +1938,39 @@ async function nmShowSelect() {
         $('#modal').classList.add('hidden')
       })
     })
+    // 系列参数速查：把厂家样本里的关键项直接摊在弹窗底部，选型时不用再翻手册
     const p = s.params || {}
-    $('#nmSelInfo').innerHTML = '电流档位：' + ((p.ratedCurrent || []).join(' / '))
+    const bk = p.ratedBreaking || {}
+    const tr = p.tripRange || {}
+    const prot = p.protection || {}
+    const lines = []
+    lines.push('电流档位：' + ((p.ratedCurrent || []).join(' / '))
       + '　极数：' + ((p.poles || []).join(' / '))
-      + '　电压：' + escapeHtml(p.voltage || '')
-      + '　' + escapeHtml(s.source || '')
+      + '　电压：' + escapeHtml(p.voltage || ''))
+    if (Object.keys(bk).length) {
+      lines.push('分断能力：' + Object.keys(bk).map((k) => k + ' ' + bk[k] + 'kA').join(' / ')
+        + (p.tripType ? '　脱扣：' + escapeHtml(p.tripType) : '')
+        + (Object.keys(tr).length
+          ? '（' + Object.keys(tr).map((k) => k + ' ' + tr[k]).join(' / ') + '）'
+          : ''))
+    }
+    if (p.workTemp || p.altitude) {
+      lines.push('环境：' + escapeHtml(p.workTemp || '') + '℃（工作）　'
+        + escapeHtml(p.storeTemp || '') + '℃（储存）　海拔 ' + escapeHtml(p.altitude || '')
+        + (p.pollutionDegree ? '　污染等级 ' + p.pollutionDegree : ''))
+    }
+    if (p.mounting || p.wireEntry || prot.direct || prot.inBox) {
+      lines.push('安装：' + escapeHtml(p.mounting || '')
+        + (p.wireEntry ? '　进线：' + escapeHtml(p.wireEntry) : '')
+        + (prot.direct ? '　防护：' + escapeHtml(prot.direct) + '（直接）' : '')
+        + (prot.inBox ? ' / ' + escapeHtml(prot.inBox) + '（箱内）' : ''))
+    }
+    if (p.flameRetardant || (p.accessories || []).length) {
+      lines.push((p.flameRetardant ? '外壳阻燃 ' + escapeHtml(p.flameRetardant) + '　' : '')
+        + ((p.accessories || []).length ? '可拼装附件：' + escapeHtml(p.accessories.join(' / ')) : ''))
+    }
+    if (s.source) lines.push('来源：' + escapeHtml(s.source))
+    $('#nmSelInfo').innerHTML = lines.join('<br>')
   }
   $('#nmSelGo').onclick = run
   run()

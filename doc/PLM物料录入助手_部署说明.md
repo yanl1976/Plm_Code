@@ -1,13 +1,15 @@
 # PLM 物料新增「名称/规格型号」智能录入助手 — 部署说明
 
-> 版本 **v1.45** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
-> 插件文件：`ItemSmartInput.js` v1.45 — 111,549 字节 / 2,526 行 / UTF-8 无 BOM
-> SHA256：`CD66D3FC1F48D90232DE9D7B2708C1A5ADAF728C46459993DF0FA5A1CB54F544`
+> 版本 **v1.47** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
+> 插件文件：`ItemSmartInput.js` v1.47 — 111,556 字节 / 2,521 行 / UTF-8 无 BOM
+> SHA256：`446B20E3132EA681C28E210F9377CA58174C41752FD050EDD53267902953B7A2`
 > 配置文件：`ItemSmartInput.config.js` — 3,243 字节 / 51 行 / UTF-8 无 BOM
 > SHA256：`AB883C30C398DFD7712E46A116A579B8995E3B9CBAB259AE5BFF70079F9157D0`
 >
 > **版本演进（近期）**
-> - **v1.45（当前）**：新增 `allowDirectErp` 开关（默认开），PLM 查不到时回落直连；库存徽标旁显示来源 **PLM / ERP**
+> - **v1.47（当前）**：按 PLM 原生请求实测重写库存链路（编码 → EID → `GetStockSearchData`），修正 `ViewName`、`ParaList`、`GridObject` 解析；**PLM 库存可正常返回**
+> - v1.46：库存调用补齐平台 `OnePageGridDataPara` 结构（`Pager / ParaList / ViewName / ObjectType`），修复 PLM 服务端 `CreateInstance` 空对象异常
+> - v1.45：新增 `allowDirectErp` 开关（默认开），PLM 查不到时回落直连；库存徽标旁显示来源 **PLM / ERP**
 > - v1.44：库存改为**浏览器内直接调用 PLM 既有 `ERPService.GetStockSearchData`**（与 BOM「库存查询」同源）；新增 `inventorySource` 开关
 > - v1.43：字段锁定**只作用于 电气元件 / 原材料 / 外购标准件**，其它类型（含未选类型）保持原生可编辑
 > - v1.42：左侧按钮由「智能录/入」改为**两两排列**（「智能 / 录入」），不再出现单字换行
@@ -475,7 +477,7 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 | 信息条 | 物料编码 + 大类/中类/小类；未查重原因 |
 | 物料名称 | 预填当前 PLM 名称，可编辑；**名称类问题显示在名称框正下方**；附带「名称建议」chips（同 `/api/plm/suggest` field=name，点击填入）、「标准叫法」「建议改为」可点击应用 |
 | 规格型号 | 预填当前 PLM 规格，可编辑；**规格类问题显示在规格框正下方**；输入 2 字以上时下方出现**同型号系列联想**（型号汇总 + 候选规格，含型号段条数与库存，点击填入）；「建议改为」与「规范写法」同一目标只提示一次 |
-| 库存 / 类似型号入口 | **规格输入框右侧同一行**：`现有库存 [4]`（黄色徽标，数量为 0 时不显示）+ `类似型号（N）` 描边按钮；输入框自适应收缩给右侧让位。库存**直接调 PLM 的 `ERPService.GetStockSearchData`**（复用当前登录会话），徽标旁标注来源 `PLM`/`ERP`；PLM 无数据且 `allowDirectErp: true` 时回落直连。类似型号读 `inventoryBase` |
+| 库存 / 类似型号入口 | **规格输入框右侧同一行**：`现有库存 [4]`（黄色徽标，数量为 0 时不显示）+ `类似型号（N）` 描边按钮；输入框自适应收缩给右侧让位。库存**直接调 PLM 的 `ERPService.GetStockSearchData`**（复用当前登录会话，参数见 5.2），徽标旁标注来源 `PLM`/`ERP`；PLM 无数据且 `allowDirectErp: true` 时回落直连。类似型号读 `inventoryBase` |
 | 类似型号明细 | 点「类似型号（N）」打开**独立弹窗**：合计数量/可用、录入规格 + 黄色差异高亮 + 排序说明、五列表格（物料号/名称/规格型号/数量/项目号），按接近程度排序，点行填入规格框 |
 | 保存并回填 | **有 error 时按钮禁用**（含「名称与规格完全相同」「同小类已有完全相同规格」），点击会提示；无 error 时按规范写法回填（名称=同义词标准名+格式修正，规格=空格整理，并同步 ZYCS / FLSXHB） |
 | 关闭方式 | **只有右上角 × 和「取消」**；点击遮罩不会关闭 |
@@ -492,6 +494,49 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 > 尚未申请编码时弹窗仍可打开、可校验书写规则，但**分类相关校验与查重会跳过**（小类来自编码前 6 位）。
 > 有硬错误时点保存会弹二次确认，不硬阻断。
 > 按钮注入或接管失败只写控制台日志，不影响 PLM 正常录入；`CFG.showCheckButton=false` 可完全关闭。
+
+### 5.2 PLM 库存接口实测参数（v1.47，勿随意改动）
+
+浏览器内直接调用，复用当前登录会话，**不需要账号、不需要跨域、不访问 ERP 数据库**。
+
+**第一步：物料编码 → EID**
+
+```js
+HoteamUI.DataService.Call('InforCenter.Common.ObjectService.CommonGetObjectDataByFilter', {
+  para: { Data: JSON.stringify({
+    PSEITEM: { FilterInfo: [], FilterString: "ECODE='10010502239'", OrderbyString: '' }
+  }) }
+});
+// 返回是 JSON 字符串；解析后取 o.PSEITEM[0].EID（或 row['PSEITEM.EID']）
+```
+
+**第二步：EID → 库存**
+
+```js
+HoteamUI.DataService.Call('Hoteam.InforCenter.ERPService.GetStockSearchData', {
+  para: {
+    Pager: { CurrentPager: 1, RowNumber: 50, SortOrder: 'asc', SortName: '', Records: 0 },
+    ViewName: 'StockSearchListView',
+    ObjectType: 'PSEITEM',
+    OnlyQuery: 'true',
+    ParaList: JSON.stringify({ ObjectID: [eid] })
+  }
+});
+```
+
+**返回结构**：`GridObject`，`Rows` 是二维数组，每格 `{ColName, ColText}`；列含 `FMaterialId / FMaterialName / FStockName / FAVBQty / FMTONO`。按行汇总 `FAVBQty` 即为库存数量。
+
+**四个必须遵守的点**（都是实测踩过的坑）：
+
+| 项 | 正确值 | 错误值导致的报错 |
+|---|---|---|
+| `ViewName` | `StockSearchListView`（ListView 配置名） | 传 `StockSearchView` → `未能获取到物料编码` |
+| `ParaList` | JSON **对象**字符串，键 `ObjectID`（全大写），值**数组** | 传数组 → `JObject.Parse: StartArray`；传 `ObjectId` → `Object typename Prase Field!id=` |
+| `FilterString` | **不要传** | 传空串也可能干扰参数替换 |
+| `ObjectID` 值 | 当前 PLM 对象的 `EID`（`PSEITEM_<32hex>`），由编码查询得到 | 传物料编码 → `Parse FieldId=<编码>` |
+
+> 页签配置的 `PagePara` 只有 `{"ItemName":"StockSearchManagement"}`，ObjectID 是 `TabsCtrl_GetUrlPara` 从父页面参数 `para.ObjectID = para.SelectID` 整体继承的（见 `Platform/Js/Common/TabsCtrl.js` L68、`MenuCtrl.js` L724）。
+> `SearchStockData` 等批量方法未发布（404），当前只能**按单个对象**查询。
 
 ---
 

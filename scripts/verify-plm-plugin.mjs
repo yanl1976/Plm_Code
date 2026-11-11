@@ -759,16 +759,24 @@ async function run() {
     ok('非标自制件的规格框可编辑', p.doc.__byId['GGXH_Value'].readOnly !== true)
   }
 
-  // S27 库存走 PLM 既有 ERPService（浏览器内直调，不经 3130）
+  // S27 库存走 PLM 既有 ERPService（编码→EID→GridObject，浏览器内直调）
   {
     console.log('[S27] 库存直调 PLM ERPService')
     const calls = []
+    const cell = (name, text) => ({ ColName: name, ColText: String(text) })
     const ds = (uri, paras) => {
       calls.push({ uri, paras })
+      if (String(uri).indexOf('CommonGetObjectDataByFilter') >= 0) {
+        return JSON.stringify({ PSEITEM: [{ EID: 'PSEITEM_mock00000000000000000000000000' }] })
+      }
+      // 平台真实返回：Rows 是二维数组，每格 {ColName, ColText}
       return {
+        RecordsTotal: 2,
         Rows: [
-          { FMaterialId: '10010100435', FMaterialName: '断路器', FStockName: '元器件库1', FBaseQty: 3, FMTONO: 'S2026051' },
-          { FMaterialId: '10010100435', FMaterialName: '断路器', FStockName: '电气-元一', FBaseQty: 2, FMTONO: '' },
+          [cell('FMaterialId', '10010100435'), cell('FMaterialName', '断路器'),
+            cell('FStockName', '元器件库1'), cell('FAVBQty', 3), cell('FMTONO', 'S2026051')],
+          [cell('FMaterialId', '10010100435'), cell('FMaterialName', '断路器'),
+            cell('FStockName', '电气-元一'), cell('FAVBQty', 2), cell('FMTONO', '')],
         ],
       }
     }
@@ -789,9 +797,15 @@ async function run() {
 
     const badge = findByClass(p, 'plm-smart-inv-badge')
     const srcTag = findByClass(p, 'plm-smart-inv-src')
-    ok('调用了 PLM 库存服务', calls.length > 0 && calls[0].uri.indexOf('GetStockSearchData') >= 0,
-      'uri=' + (calls[0] && calls[0].uri))
-    ok('库存数量按编码汇总', !!badge && badge.textContent === '5', 'got=' + (badge && badge.textContent))
+    const stockCall = calls.find((c) => String(c.uri).indexOf('GetStockSearchData') >= 0)
+    const arg = stockCall && stockCall.paras && stockCall.paras.para
+    ok('先按编码查 EID，再调库存服务', calls.some((c) => String(c.uri).indexOf('CommonGetObjectDataByFilter') >= 0) && !!stockCall)
+    ok('ViewName 为 StockSearchListView', !!arg && arg.ViewName === 'StockSearchListView',
+      'got=' + (arg && arg.ViewName))
+    ok('ParaList 的 ObjectID 为数组', !!arg && (() => {
+      try { return Array.isArray(JSON.parse(arg.ParaList).ObjectID) } catch (e) { return false }
+    })())
+    ok('GridObject 数量按仓库汇总', !!badge && badge.textContent === '5', 'got=' + (badge && badge.textContent))
     ok('来源标记为 PLM', !!srcTag && srcTag.textContent === 'PLM', 'got=' + (srcTag && srcTag.textContent))
   }
 
@@ -806,7 +820,8 @@ async function run() {
         'direct=1': { found: true, source: 'erp', total: { qty: 7, avbqty: 7 }, warehouses: [] },
       }),
       globalCfg: { inventoryBase: 'http://127.0.0.1:3130' },
-      dataService: () => ({ Rows: [] }),
+      dataService: (uri) => String(uri).indexOf('CommonGetObjectDataByFilter') >= 0
+        ? JSON.stringify({ PSEITEM: [] }) : { Rows: [] },
     })
     p.ctl['ECODE_Value'].__text = '10010100435'
     p.ctl['ECODE_Value'].__tag = { value: '10010100435' }

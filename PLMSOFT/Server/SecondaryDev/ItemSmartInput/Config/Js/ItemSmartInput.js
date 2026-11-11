@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.45
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.47
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -1477,81 +1477,76 @@
     }
 
     /**
-     * PLM 既有库存服务（与 BOM「库存查询」同源）：
-     *   Hoteam.InforCenter.ERPService.GetStockSearchData
-     * 浏览器内直接调用，复用当前登录会话，无需账号、无需跨域、不碰 ERP 数据库。
-     * 参数取自 TSDC/PSE/Item/Config/Json/StockSearchRequest.json。
+     * PLM 既有库存服务（与 BOM「库存查询」同源，实测参数，勿随意改动）：
+     *   ① 物料编码 → ObjectService.CommonGetObjectDataByFilter → EID
+     *   ② EID → Hoteam.InforCenter.ERPService.GetStockSearchData → GridObject
+     *
+     * 关键点（都是踩过的坑）：
+     *   - ViewName 必须是 StockSearchListView（ListView 配置名），不是 StockSearchView
+     *   - ParaList 是 JSON 对象字符串，键为 ObjectID（全大写），值为数组
+     *   - 不能传 FilterString；Pager 要带 SortOrder / Records
+     *   - 返回 Rows 是二维数组，每格是 {ColName, ColText}
      */
+    function plmEidByCode(code) {
+      var root = window.HoteamUI;
+      if (!root || !root.DataService || !root.DataService.Call || !code) return '';
+      try {
+        var safe = String(code).replace(/'/g, "''");
+        var filter = {
+          PSEITEM: { FilterInfo: [], FilterString: "ECODE='" + safe + "'", OrderbyString: '' }
+        };
+        var raw = root.DataService.Call('InforCenter.Common.ObjectService.CommonGetObjectDataByFilter', {
+          para: { Data: JSON.stringify(filter) }
+        });
+        var o = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+        var arr = o.PSEITEM || o['PSEITEM$'] || o.Data;
+        var row = arr && arr[0];
+        return (row && (row.EID || row['PSEITEM.EID'] || row.EID_DisplayValue)) || '';
+      } catch (e) { return ''; }
+    }
+
+    /** 解析 GridObject.Rows → 与看板一致的库存结构 */
+    function parseStockGrid(ret) {
+      var rows = ret && ret.Rows;
+      if (!rows || !rows.length) return null;
+      var qty = 0, whs = [];
+      for (var i = 0; i < rows.length; i++) {
+        var cells = rows[i] || [];
+        var m = {};
+        for (var j = 0; j < cells.length; j++) {
+          var c = cells[j];
+          if (c && c.ColName) m[c.ColName] = (c.ColText == null ? c.ColValue : c.ColText);
+        }
+        var n = Number(m.FAVBQty != null ? m.FAVBQty : (m.FBaseQty || 0));
+        if (isNaN(n)) n = 0;
+        qty += n;
+        whs.push({
+          stockName: String(m.FStockName || ''),
+          qty: n,
+          projectNo: String(m.FMTONO || ''),
+          materialId: String(m.FMaterialId || '')
+        });
+      }
+      return { total: { qty: qty, avbqty: qty, lockqty: 0 }, warehouses: whs };
+    }
+
     function plmStockQuery(code, cb) {
       var root = window.HoteamUI;
-      if (!root || !root.DataService || !root.DataService.Call) { cb(null); return; }
-      var base = {
-        FormId: 'STK_Inventory',
-        FieldKeys: 'FMaterialId,FMaterialName,FStockName,FBaseQty,FMTONO,FStockId',
-        OrderString: '', TopRowCount: 0, StartRow: 0, Limit: 2000, SubSystemId: ''
-      };
-      var call = function (filter) {
-        var p = {};
-        for (var k in base) p[k] = base[k];
-        p.FilterString = filter || [];
-        return root.DataService.Call('Hoteam.InforCenter.ERPService.GetStockSearchData', { para: p });
-      };
-      var unwrap = function (v) {
-        var x = v;
-        for (var i = 0; i < 5; i++) {
-          if (typeof x === 'string') {
-            var s = x.replace(/^\s+|\s+$/g, '');
-            if (!s || (s.charAt(0) !== '{' && s.charAt(0) !== '[')) break;
-            try { x = JSON.parse(s); continue; } catch (e) { break; }
+      if (!root || !root.DataService || !root.DataService.Call || !code) { cb(null); return; }
+      var eid = plmEidByCode(code);
+      if (!eid) { cb(null); return; }
+      try {
+        var ret = root.DataService.Call('Hoteam.InforCenter.ERPService.GetStockSearchData', {
+          para: {
+            Pager: { CurrentPager: 1, RowNumber: 50, SortOrder: 'asc', SortName: '', Records: 0 },
+            ViewName: 'StockSearchListView',
+            ObjectType: 'PSEITEM',
+            OnlyQuery: 'true',
+            ParaList: JSON.stringify({ ObjectID: [eid] })
           }
-          if (x && typeof x === 'object' && !x.length) {
-            var ks = [], kk;
-            for (kk in x) ks.push(kk);
-            if (ks.length === 1) { x = x[ks[0]]; continue; }
-            if (x.d !== undefined) { x = x.d; continue; }
-          }
-          break;
-        }
-        return x;
-      };
-      var rowsOf = function (d) {
-        if (!d || typeof d === 'string') return null;
-        if (d.length) return d;
-        var keys = ['Rows', 'rows', 'Data', 'data', 'Result', 'result', 'Items', 'items'];
-        for (var i = 0; i < keys.length; i++) {
-          var v = d[keys[i]];
-          if (v && v.length) return v;
-          if (v && typeof v === 'object') {
-            var r = rowsOf(v);
-            if (r) return r;
-          }
-        }
-        return null;
-      };
-      var pick = function (rows) {
-        if (!rows || !rows.length) return null;
-        var qty = 0, whs = [];
-        for (var i = 0; i < rows.length; i++) {
-          var it = rows[i] || {};
-          var mid = String(it.FMaterialId == null ? '' : it.FMaterialId);
-          if (mid && code && mid !== String(code)) continue;
-          var n = Number(it.FBaseQty || 0);
-          qty += n;
-          whs.push({
-            stockName: String(it.FStockName || ''),
-            qty: n,
-            projectNo: String(it.FMTONO || '')
-          });
-        }
-        return { total: { qty: qty, avbqty: qty, lockqty: 0 }, warehouses: whs };
-      };
-
-      var rows = null;
-      try { rows = rowsOf(unwrap(call(["FMaterialId='" + code + "'"]))); } catch (e1) { rows = null; }
-      if (!rows || !rows.length) {            // 过滤语法不被接受时退回全量再本地筛
-        try { rows = rowsOf(unwrap(call([]))); } catch (e2) { rows = null; }
-      }
-      cb(pick(rows));
+        });
+        cb(parseStockGrid(ret));
+      } catch (e) { cb(null); }
     }
 
     /** 展示库存与来源标记；返回是否展示成功 */
@@ -2510,7 +2505,7 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.45（api=' + apiUrl('')
+  log('脚本已加载 v1.47（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；外部配置=' + (EXT_KEYS.length ? EXT_KEYS.join('/') : '未使用')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')

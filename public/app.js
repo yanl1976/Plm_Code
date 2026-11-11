@@ -1625,6 +1625,11 @@ function nmRuleCheck() {
   api('/api/new-material/validate?name=' + encodeURIComponent(name)
     + '&spec=' + encodeURIComponent(spec) + '&sub=' + encodeURIComponent(nm.cur.sub || ''))
     .then((r) => renderNmRule(r || {}))
+    .catch(() => {
+      // 请求失败时不能静默保留上一次的结果，否则看起来像「校验失效」
+      const box = $('#nmRuleCheck')
+      if (box) box.innerHTML = '<div class="nm-rule-warn">! 校验服务暂不可用，请稍后重试</div>'
+    })
 }
 
 function renderNmRule(r) {
@@ -1942,13 +1947,19 @@ async function nmShowSelect() {
         const it = items[Number(tr.dataset.k)]
         const nameEl = $('#nmName')
         const specEl = $('#nmSpec')
-        // 名称只在为空时补全，不覆盖用户已经写好的叫法
-        if (nameEl && !String(nameEl.value || '').trim()) {
-          nameEl.value = it.name || it.series
-          nmNameInput()
+        // 名称只在为空时补全，不覆盖用户已经写好的叫法。
+        // 关键：用 dispatchEvent('input') 走与手动输入完全相同的链路，
+        // 直接赋值不会触发 input，校验就会「看起来失效」。
+        if (nameEl) {
+          if (!String(nameEl.value || '').trim()) nameEl.value = it.name || it.series
+          nameEl.dispatchEvent(new Event('input'))
         }
         // 规格是选型的结果，直接覆盖
         if (specEl) { specEl.value = it.model; specEl.dispatchEvent(new Event('input')) }
+        // 立即校验一次，不走 350ms 防抖，回填后底部马上给出结果
+        setTimeout(() => {
+          try { clearTimeout(nm.ruleTimer); nmRuleCheck() } catch (e) { }
+        }, 0)
         // 附件属于「选完之后再配」，回填后在页面消息行提示一次
         const acc = it.accessories || []
         const msgEl = $('#nmMsg')

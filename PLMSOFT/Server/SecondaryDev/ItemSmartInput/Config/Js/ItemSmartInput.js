@@ -1505,10 +1505,10 @@
       } catch (e) { return ''; }
     }
 
-    /** 解析 GridObject.Rows → 与看板一致的库存结构 */
+    /** 解析 GridObject.Rows → 与看板一致的库存结构；返回 null 表示「查询失败」 */
     function parseStockGrid(ret) {
-      var rows = ret && ret.Rows;
-      if (!rows || !rows.length) return null;
+      if (!ret || typeof ret !== 'object') return null;
+      var rows = ret.Rows || [];          // 空数组 = 查询成功但无库存记录
       var qty = 0, whs = [];
       for (var i = 0; i < rows.length; i++) {
         var cells = rows[i] || [];
@@ -1527,7 +1527,8 @@
           materialId: String(m.FMaterialId || '')
         });
       }
-      return { total: { qty: qty, avbqty: qty, lockqty: 0 }, warehouses: whs };
+      // ok=true 表示「查询成功」（即使库存为 0），用于区分「查不到」与「没库存」
+      return { ok: true, total: { qty: qty, avbqty: qty, lockqty: 0 }, warehouses: whs };
     }
 
     function plmStockQuery(code, cb) {
@@ -1596,7 +1597,8 @@
         if (!code) return;
         plmStockQuery(code, function (r) {
           if (!dlg) return;
-          if (showInv(r, 'plm')) return;
+          // 查询成功（哪怕库存为 0）就不降级；只有查不到/异常才回落直连
+          if (r && r.ok) { showInv(r, 'plm'); return; }
           tryDirect();
         });
         return;

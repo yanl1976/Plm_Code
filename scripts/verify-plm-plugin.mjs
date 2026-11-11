@@ -839,6 +839,43 @@ async function run() {
     ok('来源标记为 ERP', !!srcTag && srcTag.textContent === 'ERP', 'got=' + (srcTag && srcTag.textContent))
   }
 
+  // S29 PLM 查询成功但库存为 0：不显示徽标，也不触发直连降级
+  {
+    console.log('[S29] PLM 成功但 0 库存 → 不降级')
+    const calls = []
+    const ds = (uri) => {
+      calls.push(uri)
+      if (String(uri).indexOf('CommonGetObjectDataByFilter') >= 0) {
+        return JSON.stringify({ PSEITEM: [{ EID: 'PSEITEM_mock00000000000000000000000000' }] })
+      }
+      return { RecordsTotal: 0, Rows: [] }        // 查得到对象，但没库存
+    }
+    const p = newPage({
+      ctrls: baseCtrl(),
+      ajaxHandler: router({
+        '/health': HEALTH_OK,
+        '/check': CHECK_CLEAN,
+        'direct=1': { found: true, source: 'erp', total: { qty: 9, avbqty: 9 }, warehouses: [] },
+      }),
+      globalCfg: { inventoryBase: 'http://127.0.0.1:3130' },
+      dataService: ds,
+    })
+    p.ctl['ECODE_Value'].__text = '10010100435'
+    p.ctl['ECODE_Value'].__tag = { value: '10010100435' }
+    p.ctl['ENAME_Value'].__text = '断路器'
+    p.ctl['GGXH_Value'].__text = 'IC65N C10A/2P'
+    p.OnCreate()
+
+    const btn = findBtn(p)
+    if (btn) btn.onclick({ preventDefault() { }, stopPropagation() { } })
+    await sleep(120)
+
+    const badge = findByClass(p, 'plm-smart-inv-badge')
+    ok('0 库存时不显示徽标', !badge || badge.textContent === '0' || badge.textContent === '',
+      'got=' + (badge && badge.textContent))
+    ok('未触发直连降级', !calls.some((u) => String(u).indexOf('direct=1') >= 0))
+  }
+
   console.log('\n----------------------------------------')
   console.log(`结果: ${pass} 通过 / ${fail} 失败`)
   if (fail) console.log('失败项: ' + failures.join(' | '))

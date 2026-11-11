@@ -925,6 +925,44 @@ async function run() {
       'got=' + (dlgName && dlgName.value))
   }
 
+  // S31 弹窗信息条显示治理服务状态（正常 / 不可用）
+  {
+    console.log('[S31] 弹窗显示治理服务状态')
+    const htmlAll = (el) => {
+      let s = String(el.innerHTML || '')
+      for (const c of (el.children || [])) s += htmlAll(c)
+      return s
+    }
+
+    const p1 = newPage({ ctrls: baseCtrl(), ajaxHandler: router({ '/health': HEALTH_OK, '/check': CHECK_CLEAN }) })
+    p1.ctl['ECODE_Value'].__text = '10010100435'
+    p1.ctl['ECODE_Value'].__tag = { value: '10010100435' }
+    p1.ctl['ENAME_Value'].__text = '断路器'
+    p1.ctl['GGXH_Value'].__text = 'IC65N C10A/2P'
+    p1.OnCreate()
+    await sleep(150)
+    const b1 = findBtn(p1)
+    if (b1) b1.onclick({ preventDefault() { }, stopPropagation() { } })
+    await sleep(150)
+    const h1 = htmlAll(p1.doc.body)
+    ok('服务正常时显示「治理服务…正常」', h1.indexOf('治理服务') >= 0 && h1.indexOf('正常') >= 0,
+      'has治理服务=' + (h1.indexOf('治理服务') >= 0))
+
+    const p2 = newPage({ ctrls: baseCtrl(), ajaxHandler: () => null })
+    p2.ctl['ECODE_Value'].__text = '10010100435'
+    p2.ctl['ECODE_Value'].__tag = { value: '10010100435' }
+    p2.ctl['ENAME_Value'].__text = '断路器'
+    p2.ctl['GGXH_Value'].__text = 'IC65N C10A/2P'
+    p2.OnCreate()
+    await sleep(150)
+    const b2 = findBtn(p2)
+    if (b2) b2.onclick({ preventDefault() { }, stopPropagation() { } })
+    await sleep(150)
+    const h2 = htmlAll(p2.doc.body)
+    ok('服务不可用时显示「不可用」', h2.indexOf('治理服务') >= 0 && h2.indexOf('不可用') >= 0,
+      'has不可用=' + (h2.indexOf('不可用') >= 0))
+  }
+
   console.log('\n----------------------------------------')
   console.log(`结果: ${pass} 通过 / ${fail} 失败`)
   if (fail) console.log('失败项: ' + failures.join(' | '))

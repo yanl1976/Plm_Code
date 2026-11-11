@@ -1242,13 +1242,23 @@
       + 'padding:6px 10px;margin-bottom:12px;color:' + C_MUTE + ';font-size:12px;line-height:1.7;');
     body.appendChild(infoBox);
 
+    var lastInfo = null;      // 最近一次校验结果，服务状态变化时用它重绘信息条
     function renderInfo(r) {
+      lastInfo = r;
       var code = readEcode();
       var cat = (r && r.category)
         ? (r.category.bigName + ' / ' + r.category.midName + ' / ' + r.category.subName)
         : '';
       var html = '<div>物料编码：<b>' + escHtml(code || '(未申请)') + '</b>'
         + (cat ? '　分类：' + escHtml(cat) : '') + '</div>';
+
+      // 治理服务（3100）状态：一眼看出联想/查重是否可用
+      var sOk = svc.ok;
+      var sColor = sOk === true ? C_OK : (sOk === false ? C_ERR : C_MUTE);
+      var sText = sOk === true ? '正常' : (sOk === false ? '不可用，联想/查重已跳过' : '检测中');
+      html += '<div class="plm-smart-svc-state" style="font-size:12px;color:' + sColor + '">'
+        + '● 治理服务（' + escHtml(CFG.apiLabel) + '）：' + sText + '</div>';
+
       if (r && r.skipReason) {
         html += '<div style="color:' + C_WARN + '">' + escHtml(r.skipReason) + '</div>';
       }
@@ -1443,7 +1453,10 @@
       nameSugBox.innerHTML = '';
       apiAsync('/api/plm/suggest', { field: 'name', value: nm, sub: currentSub() }, function (r) {
         if (!dlg || !r || !r.suggestions || !r.suggestions.length) return;
-        nameSugBox.appendChild(dlgEl('div', 'opacity:.7;font-size:12px;margin-bottom:2px;', '名称建议（点击填入）'));
+        var fbHead = dlgEl('div', 'font-size:12px;margin-bottom:2px;');
+        fbHead.appendChild(dlgEl('span', 'opacity:.7;', '名称建议（点击填入）'));
+        fbHead.appendChild(dlgEl('span', 'opacity:.5;font-size:11px;margin-left:8px;', '来源：本地规则'));
+        nameSugBox.appendChild(fbHead);
         var wrap = dlgEl('div', '');
         var list = r.suggestions.slice(0, 6);
         for (var i = 0; i < list.length; i++) {
@@ -1509,7 +1522,11 @@
 
       nameSugBox.innerHTML = '';
       if (recs.length) {
-        nameSugBox.appendChild(dlgEl('div', 'font-size:12px;margin-bottom:3px;color:' + C_OK + ';', '✓ 建议采用'));
+        var head = dlgEl('div', 'font-size:12px;margin-bottom:3px;');
+        head.appendChild(dlgEl('span', 'color:' + C_OK + ';', '✓ 建议采用'));
+        // 数据来源标识：一眼看出走的是治理库（3130）还是本地规则（3100 回退）
+        head.appendChild(dlgEl('span', 'opacity:.5;font-size:11px;margin-left:8px;', '来源：治理库'));
+        nameSugBox.appendChild(head);
         for (i = 0; i < recs.length; i++) {
           (function (rec) {
             var row = dlgEl('div', 'cursor:pointer;font-size:12px;padding:2px 0 2px 6px;margin-bottom:2px;'
@@ -1526,7 +1543,10 @@
         }
       }
       if (rest.length) {
-        nameSugBox.appendChild(dlgEl('div', 'font-size:12px;margin:4px 0 2px;opacity:.75;', '存量已有名称（仅供参考，不可点）'));
+        var sHead = dlgEl('div', 'font-size:12px;margin:4px 0 2px;opacity:.75;');
+        sHead.appendChild(dlgEl('span', '', '存量已有名称（仅供参考，不可点）'));
+        sHead.appendChild(dlgEl('span', 'opacity:.8;font-size:11px;margin-left:8px;', '来源：治理库'));
+        nameSugBox.appendChild(sHead);
         for (i = 0; i < rest.length && i < 5; i++) {
           var sm = rest[i];
           var where = sm.inSub ? '本小类'
@@ -1664,6 +1684,12 @@
       if (!n) return false;
       invBadge.textContent = String(n);
       invSrc.textContent = src === 'erp' ? 'ERP' : 'PLM';
+      // 来源做成有色小标签，避免灰字太淡看不出来
+      invSrc.style.opacity = '1';
+      invSrc.style.padding = '0 4px';
+      invSrc.style.borderRadius = '3px';
+      invSrc.style.background = src === 'erp' ? 'rgba(255,152,0,.18)' : 'rgba(76,175,80,.18)';
+      invSrc.style.color = src === 'erp' ? '#e8890c' : '#2e7d32';
       invSrc.title = src === 'erp'
         ? '数据来自直连 ERP（排查期保留，可在配置中关闭 allowDirectErp）'
         : '数据来自 PLM 库存查询服务（与 BOM「库存查询」同源）';
@@ -2254,6 +2280,8 @@
     svc.at = Date.now();
     apiAsync('/api/plm/health', {}, function (h) {
       svc.ok = !!(h && h.ok === true && h.ready !== false);
+      // 状态变化后立刻刷新弹窗里的「治理服务」提示
+      try { if (dlg) renderInfo(lastInfo); } catch (e) { }
     });
   }
 

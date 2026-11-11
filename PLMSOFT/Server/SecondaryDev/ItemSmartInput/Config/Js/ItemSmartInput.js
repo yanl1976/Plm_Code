@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.48
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.50
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -1336,6 +1336,8 @@
 
     var errors = [];
     var lastSimilar = null;        // 最近一次 similar-models 结果，供「类似型号明细」弹窗使用
+    var topSimilarCode = '';       // 最相似物料编码（明细首条），主弹窗库存查它
+    var lastInvKey = '';           // 库存查询去重：同一编码 + 同一来源不重复打请求
     var lastSpecSuggestion = '';   // 规格侧已提示过的目标写法，避免「建议改为 / 规范写法」重复
 
     function setSaveEnabled(ok) {
@@ -1587,6 +1589,8 @@
      */
     function loadSimilar(sp) {
       lastSimilar = null;
+      topSimilarCode = '';
+      lastInvKey = '';
       simBtn.style.display = 'none';
       if (!sp) return;
       var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
@@ -1597,9 +1601,12 @@
       apiAbsolute(url, function (r) {
         if (!dlg || !r || !r.items || !r.items.length) return;
         lastSimilar = r;
+        // 最相似物料（首条）的编码：主弹窗库存改查它，而不是尚未建档的新物料自己
+        topSimilarCode = String((r.items[0] && r.items[0].fnumber) || '');
         simBtn.textContent = '类似型号（' + r.items.length + '）';
         simBtn.title = '同小类共 ' + r.items.length + ' 条，按接近程度排序';
         simBtn.style.display = 'inline-block';
+        loadInventory(specIn.value);   // 拿到编码后刷新一次库存
       });
     }
 
@@ -1658,11 +1665,12 @@
       return { ok: true, total: { qty: qty, avbqty: qty, lockqty: 0 }, warehouses: whs };
     }
 
-    function plmStockQuery(code, cb) {
+    /** 同步版：供批量刷新逐条调用；查询失败返回 null */
+    function plmStockQuerySync(code) {
       var root = window.HoteamUI;
-      if (!root || !root.DataService || !root.DataService.Call || !code) { cb(null); return; }
+      if (!root || !root.DataService || !root.DataService.Call || !code) return null;
       var eid = plmEidByCode(code);
-      if (!eid) { cb(null); return; }
+      if (!eid) return null;
       try {
         var ret = root.DataService.Call('Hoteam.InforCenter.ERPService.GetStockSearchData', {
           para: {
@@ -1673,9 +1681,11 @@
             ParaList: JSON.stringify({ ObjectID: [eid] })
           }
         });
-        cb(parseStockGrid(ret));
-      } catch (e) { cb(null); }
+        return parseStockGrid(ret);
+      } catch (e) { return null; }
     }
+
+    function plmStockQuery(code, cb) { cb(plmStockQuerySync(code)); }
 
     /** 展示库存与来源标记；返回是否展示成功 */
     function showInv(r, src) {
@@ -1713,7 +1723,12 @@
         if (ec3 && ec3.allowDirectErp != null) allowErp = !!ec3.allowDirectErp;
       } catch (e) { }
 
-      var code = readEcode();
+      // 优先查「最相似物料」的库存：新建物料还没建档，自身编码在 PLM 里查不到对象
+      var code = topSimilarCode || readEcode();
+      if (!code) return;
+      var invKey = code + '|' + src;
+      if (invKey === lastInvKey) return;   // 同一编码同一来源不重复查
+      lastInvKey = invKey;
       var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
 
       // 直连兜底（默认开启）：走看板 3130 的直连查询，响应里带 source=erp
@@ -1786,33 +1801,42 @@
       var sp = specIn.value;
 
       var m2 = dlgEl('div', 'position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,.35);z-index:2147483010;');
-      var p2 = dlgEl('div', 'position:fixed;left:50%;top:8%;transform:translateX(-50%);width:880px;max-width:96vw;'
+      // 加宽到 1120：25 条时标题 + 来源标签不换行、表格不被挤压
+      var p2 = dlgEl('div', 'position:fixed;left:50%;top:8%;transform:translateX(-50%);width:1120px;max-width:97vw;'
         + 'max-height:82vh;overflow:auto;background:' + th.bg + ';color:' + th.fg + ';border-radius:6px;'
         + 'box-shadow:0 12px 36px rgba(0,0,0,.35);z-index:2147483011;'
         + 'font:13px/1.6 "Microsoft YaHei",Arial,sans-serif;');
 
       var h2 = dlgEl('div', 'padding:12px 18px;border-bottom:' + C_LINE + ';background:' + C_HEAD_BG
-        + ';font-size:15px;font-weight:bold;');
+        + ';font-size:15px;font-weight:bold;white-space:nowrap;overflow:hidden;');
       h2.innerHTML = '类似型号明细 <span style="font-weight:normal;opacity:.7;font-size:13px">'
         + '（同小类相同/相似规格，共 ' + items.length + ' 条）</span>';
       var x2 = dlgEl('span', 'float:right;cursor:pointer;opacity:.7;font-size:18px;line-height:18px;', '×');
       x2.onclick = closeSimilarModal;
       h2.appendChild(x2);
 
+      // 标题右侧标注库存来源：先显示「查询中…」，逐条查 PLM 后变为 PLM（绿）
+      var simSrc = dlgEl('span', 'margin-left:10px;font-weight:bold;font-size:12px;color:' + C_MUTE + ';', '库存来源：查询中…');
+      simSrc.className = 'plm-smart-sim-src';
+      h2.appendChild(simSrc);
+
       var b2 = dlgEl('div', 'padding:12px 18px 16px;');
-      // 明细数据来自治理看板（3130 直连 ERP），与主弹窗的 PLM/ERP 标记口径一致
-      var simSrc = (lastSimilar && lastSimilar.source) === 'plm' ? 'PLM' : 'ERP';
-      var simSrcStyle = simSrc === 'ERP'
-        ? 'background:rgba(255,152,0,.18);color:#e8890c;'
-        : 'background:rgba(76,175,80,.18);color:#2e7d32;';
-      b2.innerHTML = '<div style="opacity:.75;margin-bottom:8px">合计数量 <b style="opacity:1">'
-        + (total.qty == null ? 0 : total.qty) + '</b>　·　可用 <b style="opacity:1">'
-        + (total.avbqty == null ? 0 : total.avbqty) + '</b>'
-        + '<span class="plm-smart-sim-src" style="margin-left:8px;padding:0 4px;border-radius:3px;'
-        + 'font-size:11px;' + simSrcStyle + '">来源：' + simSrc + '</span></div>'
-        + '<div style="opacity:.75;margin-bottom:10px">录入规格：<span style="opacity:1">'
-        + escHtml(sp) + '</span>　<span style="background:#ffd54f;color:#333;padding:0 4px;border-radius:2px">黄色</span>'
-        + ' = 与该规格的差异部分　·　已按接近程度排序（越靠前差异越少）</div>';
+
+      // 合计先占位：数量列要等 PLM 逐条查完再显示（不再用看板数据兜底）
+      var sumRow = dlgEl('div', 'opacity:.75;margin-bottom:8px;');
+      sumRow.appendChild(dlgEl('span', '', '合计数量 '));
+      var sumQty = dlgEl('b', 'opacity:1;', '…');
+      sumRow.appendChild(sumQty);
+      sumRow.appendChild(dlgEl('span', '', '　·　可用 '));
+      var sumAvb = dlgEl('b', 'opacity:1;', '…');
+      sumRow.appendChild(sumAvb);
+      b2.appendChild(sumRow);
+
+      var legend = dlgEl('div', 'opacity:.75;margin-bottom:10px;');
+      legend.innerHTML = '录入规格：<span style="opacity:1">' + escHtml(sp) + '</span>　'
+        + '<span style="background:#ffd54f;color:#333;padding:0 4px;border-radius:2px">黄色</span>'
+        + ' = 与该规格的差异部分　·　已按接近程度排序（越靠前差异越少）';
+      b2.appendChild(legend);
 
       var table = dlgEl('table', 'width:100%;border-collapse:collapse;font-size:13px;');
       table.innerHTML = '<thead><tr style="background:' + C_HEAD_BG + ';opacity:.75;text-align:left">'
@@ -1824,15 +1848,28 @@
         + '</tr></thead>';
 
       var tb = dlgEl('tbody', '');
+      var qtyCells = [];
       for (var i = 0; i < items.length; i++) {
         (function (it) {
           var tr = dlgEl('tr', 'border-bottom:' + C_LINE + ';cursor:pointer;');
-          tr.innerHTML = '<td style="padding:6px 10px"><a href="javascript:void(0)"'
-            + ' style="color:' + th.accent + ';text-decoration:none">' + escHtml(it.fnumber || '') + '</a></td>'
-            + '<td style="padding:6px 10px">' + escHtml(it.name || '') + '</td>'
-            + '<td style="padding:6px 10px">' + diffSpec(sp, it.spec || '') + '</td>'
-            + '<td style="padding:6px 10px">' + (it.qty == null ? 0 : it.qty) + '</td>'
-            + '<td style="padding:6px 10px;opacity:.75">' + escHtml(it.projectNo || '') + '</td>';
+          var c0 = dlgEl('td', 'padding:6px 10px');
+          c0.innerHTML = '<a href="javascript:void(0)" style="color:' + th.accent
+            + ';text-decoration:none">' + escHtml(it.fnumber || '') + '</a>';
+          tr.appendChild(c0);
+          var c1 = dlgEl('td', 'padding:6px 10px');
+          c1.textContent = String(it.name || '');
+          tr.appendChild(c1);
+          var c2 = dlgEl('td', 'padding:6px 10px');
+          c2.innerHTML = diffSpec(sp, it.spec || '');
+          tr.appendChild(c2);
+          var c3 = dlgEl('td', 'padding:6px 10px');
+          c3.className = 'plm-smart-sim-qty';
+          c3.textContent = '…';          // 先占位，PLM 查到再填
+          tr.appendChild(c3);
+          var c4 = dlgEl('td', 'padding:6px 10px;opacity:.75');
+          c4.textContent = String(it.projectNo || '');
+          tr.appendChild(c4);
+          qtyCells.push(c3);
           tr.onclick = function () {
             specIn.value = it.spec;
             closeSimilarModal();
@@ -1849,6 +1886,51 @@
       m2.appendChild(p2);
       document.body.appendChild(m2);
       if (dlg) dlg.similarMask = m2;
+
+      // 先让表格显示出来，再逐条用 PLM 接口刷新库存（一条一条查，不整块卡住）
+      setTimeout(function () {
+        refreshSimilarStock(items, qtyCells, sumQty, sumAvb, simSrc);
+      }, 0);
+    }
+
+    /**
+     * 明细库存：逐条走 PLM（不用看板数据兜底）。
+     * 表格先以「…」占位，查到一条填一条；查不到的显示「-」，计入「未取到」。
+     */
+    function refreshSimilarStock(items, cells, sumQty, sumAvb, srcEl) {
+      var i = 0, sum = 0, okCount = 0;
+      function finish() {
+        if (!srcEl) return;
+        if (items.length > 0 && okCount === items.length) {
+          srcEl.textContent = '库存来源：PLM';
+          srcEl.style.color = '#2e7d32';
+        } else if (okCount > 0) {
+          srcEl.textContent = '库存来源：PLM（' + (items.length - okCount) + ' 条未取到）';
+          srcEl.style.color = '#e8890c';
+        } else {
+          srcEl.textContent = '库存来源：PLM 查询失败';
+          srcEl.style.color = '#d32f2f';
+        }
+        if (sumQty) sumQty.textContent = String(sum);
+        if (sumAvb) sumAvb.textContent = String(sum);
+      }
+      function step() {
+        if (!dlg) return;
+        if (i >= items.length) { finish(); return; }
+        var idx = i++;
+        if (srcEl) srcEl.textContent = '库存来源：查询中 ' + (idx + 1) + '/' + items.length;
+        var n = null;
+        try {
+          var r = plmStockQuerySync(items[idx].fnumber);
+          if (r && r.ok) { okCount++; n = Number((r.total && r.total.qty) || 0); }
+        } catch (e) { }
+        if (cells[idx]) cells[idx].textContent = (n == null ? '-' : String(n));
+        if (n != null) sum += n;
+        if (sumQty) sumQty.textContent = String(sum);
+        if (sumAvb) sumAvb.textContent = String(sum);
+        setTimeout(step, 0);
+      }
+      setTimeout(step, 0);
     }
 
     var lastCheckedKey = '';
@@ -2649,7 +2731,7 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.48（api=' + apiUrl('')
+  log('脚本已加载 v1.50（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；外部配置=' + (EXT_KEYS.length ? EXT_KEYS.join('/') : '未使用')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')

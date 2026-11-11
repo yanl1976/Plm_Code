@@ -963,9 +963,17 @@ async function run() {
       'has不可用=' + (h2.indexOf('不可用') >= 0))
   }
 
-  // S32 类似型号明细弹窗标注库存来源
+  // S32 类似型号明细：库存改走 PLM，来源标在标题
   {
     console.log('[S32] 类似型号明细标注来源')
+    const cell2 = (name, text) => ({ ColName: name, ColText: String(text) })
+    const ds = (uri) => {
+      if (String(uri).indexOf('CommonGetObjectDataByFilter') >= 0) {
+        return JSON.stringify({ PSEITEM: [{ EID: 'PSEITEM_mock00000000000000000000000000' }] })
+      }
+      // 故意返回 7（看板是 4）：能证明数量确实来自 PLM，而不是看板兜底
+      return { Rows: [[cell2('FAVBQty', 7), cell2('FStockName', '元器件库1')]] }
+    }
     const p = newPage({
       ctrls: baseCtrl(),
       ajaxHandler: router({
@@ -977,6 +985,7 @@ async function run() {
         },
       }),
       globalCfg: { inventoryBase: 'http://127.0.0.1:3130' },
+      dataService: ds,
     })
     p.ctl['ECODE_Value'].__text = '10010100435'
     p.ctl['ECODE_Value'].__tag = { value: '10010100435' }
@@ -991,15 +1000,54 @@ async function run() {
     const simBtn = findByClass(p, 'plm-smart-sim-btn')
     ok('类似型号按钮可用', !!simBtn && simBtn.style.display !== 'none')
     if (simBtn && simBtn.onclick) simBtn.onclick()
-    await sleep(80)
+    await sleep(200)
 
-    const htmlAll2 = (el) => {
-      let s = String(el.innerHTML || '')
-      for (const c of (el.children || [])) s += htmlAll2(c)
-      return s
+    const srcEl = findByClass(p, 'plm-smart-sim-src')
+    const qtyEl = findByClass(p, 'plm-smart-sim-qty')
+    ok('明细来源标在标题且为 PLM', !!srcEl && String(srcEl.textContent).indexOf('PLM') >= 0,
+      'got=' + (srcEl && srcEl.textContent))
+    ok('明细数量取自 PLM（非看板 4）', !!qtyEl && String(qtyEl.textContent) === '7',
+      'got=' + (qtyEl && qtyEl.textContent))
+  }
+
+  // S33 主弹窗库存改查「最相似物料」（新建物料自身无编码）
+  {
+    console.log('[S33] 主弹窗库存查最相似物料')
+    const cell3 = (name, text) => ({ ColName: name, ColText: String(text) })
+    const calls = []
+    const ds = (uri) => {
+      if (String(uri).indexOf('CommonGetObjectDataByFilter') >= 0) {
+        calls.push(uri)
+        return JSON.stringify({ PSEITEM: [{ EID: 'PSEITEM_mock00000000000000000000000000' }] })
+      }
+      return { Rows: [[cell3('FAVBQty', 4), cell3('FStockName', '元器件库1')]] }
     }
-    const h = htmlAll2(p.doc.body)
-    ok('明细弹窗标注「来源：ERP」', h.indexOf('来源：ERP') >= 0, 'has=' + (h.indexOf('来源：ERP') >= 0))
+    const p = newPage({
+      ctrls: baseCtrl(),
+      ajaxHandler: router({
+        '/health': HEALTH_OK,
+        '/check': CHECK_CLEAN,
+        'similar-models': {
+          items: [{ fnumber: '10010100271', name: '断路器', spec: 'IC65N C10A/2P', qty: 9, avbqty: 9, similarity: 1 }],
+          total: { qty: 9, avbqty: 9 },
+        },
+      }),
+      globalCfg: { inventoryBase: 'http://127.0.0.1:3130' },
+      dataService: ds,
+    })
+    // 故意不填编码：模拟新建物料尚未建档
+    p.ctl['ENAME_Value'].__text = '断路器'
+    p.ctl['GGXH_Value'].__text = 'IC65N C10A/2P'
+    p.OnCreate()
+
+    const btn = findBtn(p)
+    if (btn) btn.onclick({ preventDefault() { }, stopPropagation() { } })
+    await sleep(450)
+
+    const badge = findByClass(p, 'plm-smart-inv-badge')
+    const srcTag = findByClass(p, 'plm-smart-inv-src')
+    ok('无自身编码时仍显示库存', !!badge && badge.textContent === '4', 'got=' + (badge && badge.textContent))
+    ok('来源为 PLM', !!srcTag && srcTag.textContent === 'PLM', 'got=' + (srcTag && srcTag.textContent))
   }
 
   console.log('\n----------------------------------------')

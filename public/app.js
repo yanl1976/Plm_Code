@@ -1618,11 +1618,13 @@ function nmRuleTick() {
 function nmRuleCheck() {
   const el = $('#nmRuleCheck')
   if (!el) return
-  const name = ($('#nmName').value || '').trim()
+  // 名称也不 trim：首尾空格要能传到后端，否则「名称首尾有空格」永远不提示
+  const rawName = ($('#nmName').value || '')
+  const name = rawName.trim()
   // 规格不 trim：交给后端识别首尾空格，前端才能提示「保存时会自动整理」
   const spec = ($('#nmSpec').value || '')
   if (!name && !spec.trim()) { el.innerHTML = ''; return }
-  api('/api/new-material/validate?name=' + encodeURIComponent(name)
+  api('/api/new-material/validate?name=' + encodeURIComponent(rawName)
     + '&spec=' + encodeURIComponent(spec) + '&sub=' + encodeURIComponent(nm.cur.sub || ''))
     .then((r) => renderNmRule(r || {}))
     .catch(() => {

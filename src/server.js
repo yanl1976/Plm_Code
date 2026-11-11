@@ -1306,14 +1306,17 @@ const server = http.createServer(async (req, res) => {
 
     // 名称/规格书写规则校验（前端实时提示 + 保存前兜底）
     if (p === '/api/new-material/validate') {
+      // 名称同样保留原文：首尾空格必须能被 fixNameFormat 看到，
+      // 否则「名称首尾有空格」这条提示永远不会出现（内部规则自己会 trim 后再判断）
+      const rawName = url.searchParams.get('name') || ''
       const m = {
-        name: (url.searchParams.get('name') || '').trim(),
+        name: rawName,
         // 规格保留原文：首尾空格必须能被 checkSpec 看到，否则前端「会自动整理」的提醒永远不出现
         spec: url.searchParams.get('spec') || '',
         sub: (url.searchParams.get('sub') || '').trim(),
       }
       // knownCount：该名称在本小类的存量出现次数，用于区分「已是在用的完整名称」与「还在打字」
-      m.knownCount = nameCountInSub(m.sub, m.name)
+      m.knownCount = nameCountInSub(m.sub, rawName.trim())
       const verdict = checkMaterial(m)
       // 本小类常用名称（只作参考展示，不做模糊推荐：实测「子串+频次」自动推荐会误伤，
       // 例如 端子标记号→端子、动力电缆→电缆 都是不同物，故只呈现候选由人判断）

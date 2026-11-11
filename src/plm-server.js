@@ -184,24 +184,39 @@ function handleSuggest(body) {
 let selectCache = null
 let selectCacheAt = 0
 
+/**
+ * 读取选型库，同时把「为什么是空」一起带出来：
+ *   dirExists=false → 目录没建
+ *   files=[]        → 目录在但没有 json
+ *   errors 非空     → 文件解析失败
+ * 这样接口调用方不用猜，也不必把服务器路径写进界面。
+ */
 function loadSelection() {
   const now = Date.now()
   if (selectCache && now - selectCacheAt < 30000) return selectCache
-  const out = []
+  const info = { series: [], dir: SELECT_DIR, dirExists: false, files: [], errors: [] }
   try {
-    if (fs.existsSync(SELECT_DIR)) {
-      for (const f of fs.readdirSync(SELECT_DIR)) {
-        if (!f.endsWith('.json')) continue
+    info.dirExists = fs.existsSync(SELECT_DIR)
+    if (info.dirExists) {
+      // 跳过备份/临时文件，避免 series.bak.json 之类被当成正式数据
+      info.files = fs.readdirSync(SELECT_DIR)
+        .filter((f) => f.endsWith('.json') && !/\.(bak|backup|tmp|old)\b/i.test(f) && !/^[~#]/.test(f))
+      for (const f of info.files) {
         try {
           const j = JSON.parse(fs.readFileSync(path.join(SELECT_DIR, f), 'utf8'))
-          if (Array.isArray(j.series)) out.push(...j.series)
-        } catch (e) { /* 单个文件坏不影响其它 */ }
+          if (Array.isArray(j.series)) info.series.push(...j.series)
+          else info.errors.push(f + '：缺少 series 数组')
+        } catch (e) {
+          info.errors.push(f + '：' + String((e && e.message) || e))
+        }
       }
     }
-  } catch (e) { /* 目录不存在时返回空 */ }
-  selectCache = out
+  } catch (e) {
+    info.errors.push(String((e && e.message) || e))
+  }
+  selectCache = info
   selectCacheAt = now
-  return out
+  return info
 }
 
 /** 在系列档位里取第一个 >= need 的电流；都超出时取最大档 */
@@ -212,7 +227,7 @@ function pickCurrent(list, need) {
 }
 
 function handleSelect(body) {
-  const all = loadSelection()
+  const all = loadSelection().series
   const seriesId = String(body.series || '').trim()
   const sub = String(body.sub || '').slice(0, 6)
   const scene = String(body.scene || '').trim()
@@ -400,10 +415,14 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true, ...st })
     }
     if (p === '/api/plm/select/series' && req.method === 'GET') {
-      const all = loadSelection()
+      const info = loadSelection()
       return send(res, 200, {
         ok: true,
-        series: all.map((s) => ({
+        dirExists: info.dirExists,
+        fileCount: info.files.length,
+        files: info.files,
+        errors: info.errors,
+        series: info.series.map((s) => ({
           id: s.id, brand: s.brand || '', name: s.name || '', sub: s.sub || '',
           source: s.source || '', params: s.params || {}, rules: s.rules || {},
         })),

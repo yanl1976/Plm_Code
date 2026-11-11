@@ -1868,7 +1868,13 @@ async function nmShowSelect() {
     return
   }
   if (!series.length) {
-    body.innerHTML = '<h3>选型助手</h3><p class="muted">选型库为空：请在 data/selection/ 下添加系列参数文件。</p>'
+    // 按接口回传的诊断信息给出准确原因，不在界面暴露服务器路径
+    let why = '选型库暂未导入'
+    if (r && r.dirExists === false) why = '选型库目录未创建'
+    else if (r && r.fileCount === 0) why = '选型库目录下没有参数文件'
+    else if (r && r.errors && r.errors.length) why = '选型库文件解析失败（' + r.errors[0] + '）'
+    body.innerHTML = '<h3>选型助手</h3><p class="muted">' + escapeHtml(why)
+      + '</p><p class="muted small">请联系管理员导入厂家选型样本后重试。</p>'
     return
   }
 

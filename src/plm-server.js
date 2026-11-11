@@ -271,6 +271,8 @@ function handleSelect(body) {
           breaking: (p.ratedBreaking || {})[curve] || null,
           voltage: p.voltage || '',
           terminal: p.terminal || null,
+          // 附件是「选完之后再配」的东西，跟着型号回传，供回填后提示
+          accessories: Array.isArray(p.accessories) ? p.accessories : [],
           source: s.source || '',
           recommended: !!target && c === target,
         })

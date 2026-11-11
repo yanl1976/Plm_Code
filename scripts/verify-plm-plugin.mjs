@@ -972,7 +972,12 @@ async function run() {
         return JSON.stringify({ PSEITEM: [{ EID: 'PSEITEM_mock00000000000000000000000000' }] })
       }
       // 故意返回 7（看板是 4）：能证明数量确实来自 PLM，而不是看板兜底
-      return { Rows: [[cell2('FAVBQty', 7), cell2('FStockName', '元器件库1')]] }
+      return {
+        Rows: [[
+          cell2('FAVBQty', 7), cell2('FStockName', '元器件库1'),
+          cell2('FMTONO', 'PJ2026001'),
+        ]],
+      }
     }
     const p = newPage({
       ctrls: baseCtrl(),
@@ -1004,10 +1009,13 @@ async function run() {
 
     const srcEl = findByClass(p, 'plm-smart-sim-src')
     const qtyEl = findByClass(p, 'plm-smart-sim-qty')
+    const pjEl = findByClass(p, 'plm-smart-sim-pj')
     ok('明细来源标在标题且为 PLM', !!srcEl && String(srcEl.textContent).indexOf('PLM') >= 0,
       'got=' + (srcEl && srcEl.textContent))
     ok('明细数量取自 PLM（非看板 4）', !!qtyEl && String(qtyEl.textContent) === '7',
       'got=' + (qtyEl && qtyEl.textContent))
+    ok('明细项目号取自 PLM 的 FMTONO', !!pjEl && String(pjEl.textContent) === 'PJ2026001',
+      'got=' + (pjEl && pjEl.textContent))
   }
 
   // S33 主弹窗库存改查「最相似物料」（新建物料自身无编码）

@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.52
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.53
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -1878,6 +1878,7 @@
 
       var tb = dlgEl('tbody', '');
       var qtyCells = [];
+      var pjCells = [];
       for (var i = 0; i < items.length; i++) {
         (function (it) {
           var tr = dlgEl('tr', 'border-bottom:' + C_LINE + ';cursor:pointer;');
@@ -1896,9 +1897,11 @@
           c3.textContent = '…';          // 先占位，PLM 查到再填
           tr.appendChild(c3);
           var c4 = dlgEl('td', 'padding:6px 10px;opacity:.75');
+          c4.className = 'plm-smart-sim-pj';
           c4.textContent = String(it.projectNo || '');
           tr.appendChild(c4);
           qtyCells.push(c3);
+          pjCells.push(c4);
           tr.onclick = function () {
             specIn.value = it.spec;
             closeSimilarModal();
@@ -1918,15 +1921,30 @@
 
       // 先让表格显示出来，再逐条用 PLM 接口刷新库存（一条一条查，不整块卡住）
       setTimeout(function () {
-        refreshSimilarStock(items, qtyCells, sumQty, sumAvb, simSrc);
+        refreshSimilarStock(items, qtyCells, pjCells, sumQty, sumAvb, simSrc);
       }, 0);
+    }
+
+    /** 从 PLM 返回的仓库行里取项目号：优先数量最大的那行，其次任意有值的行 */
+    function pickStockProject(r) {
+      var ws = (r && r.warehouses) || [];
+      var best = '', bestQty = -1, any = '';
+      for (var i = 0; i < ws.length; i++) {
+        var pj = String(ws[i].projectNo || '').trim();
+        if (!pj) continue;
+        if (!any) any = pj;
+        var q = Number(ws[i].qty || 0);
+        if (q > bestQty) { bestQty = q; best = pj; }
+      }
+      return best || any;
     }
 
     /**
      * 明细库存：逐条走 PLM（不用看板数据兜底）。
      * 表格先以「…」占位，查到一条填一条；查不到的显示「-」，计入「未取到」。
+     * 项目号同样以 PLM 返回的 FMTONO 为准（与 ERP 库存页一致）。
      */
-    function refreshSimilarStock(items, cells, sumQty, sumAvb, srcEl) {
+    function refreshSimilarStock(items, cells, pjCells, sumQty, sumAvb, srcEl) {
       var i = 0, sum = 0, okCount = 0;
       function finish() {
         if (!srcEl) return;
@@ -1951,7 +1969,13 @@
         var n = null;
         try {
           var r = plmStockQuerySync(items[idx].fnumber);
-          if (r && r.ok) { okCount++; n = Number((r.total && r.total.qty) || 0); }
+          if (r && r.ok) {
+            okCount++;
+            n = Number((r.total && r.total.qty) || 0);
+            // 项目号以 PLM 返回的 FMTONO 为准
+            var pj = pickStockProject(r);
+            if (pj && pjCells && pjCells[idx]) pjCells[idx].textContent = pj;
+          }
         } catch (e) { }
         if (cells[idx]) cells[idx].textContent = (n == null ? '-' : String(n));
         if (n != null) sum += n;
@@ -2761,7 +2785,7 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.52（api=' + apiUrl('')
+  log('脚本已加载 v1.53（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；外部配置=' + (EXT_KEYS.length ? EXT_KEYS.join('/') : '未使用')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')

@@ -1640,7 +1640,9 @@ function renderNmRule(r) {
   // 空格类问题合并成一条「会自动整理成什么」，比逐条列「有空格」更有用；
   // 其余警告（乘号、括号、规范写法…）照常展示。
   const otherWarns = warns.filter((w) => {
-    if (/空格/.test(w)) return false                       // 已并入「自动整理」那一条
+    // 只合并「规格」的空格提示（下面会用「保存时会自动整理」替代）；
+    // 名称的空格必须单独显示，否则看起来像没做检查
+    if (/空格/.test(w) && !/名称/.test(w)) return false
     if (fmt && fmt.fixed && w === '规范写法：' + fmt.fixed) return false  // 与整理结果重复
     return true
   })

@@ -1846,6 +1846,8 @@ function selectBase() {
 }
 
 async function nmShowSelect() {
+  const sub = String((nm.cur && nm.cur.sub) || '').trim()
+  if (!sub) { alert('请先选择小类'); return }
   const body = $('#modalBody')
   if (!body) return
   body.innerHTML = '<h3>选型助手</h3><p class="muted">加载中…</p>'
@@ -1854,7 +1856,8 @@ async function nmShowSelect() {
   let series = []
   let r = null
   try {
-    r = await fetch(selectBase() + '/api/plm/select/series', { cache: 'no-store' }).then((x) => x.json())
+    r = await fetch(selectBase() + '/api/plm/select/series?sub=' + encodeURIComponent(sub),
+      { cache: 'no-store' }).then((x) => x.json())
     // 旧版 3100 没有这个接口，会返回 {ok:false,error:'not found'} —— 不能当成「库为空」
     if (!r || r.ok === false || !Array.isArray(r.series)) {
       body.innerHTML = '<h3>选型助手</h3><p class="muted">选型接口不可用（' + escapeHtml(selectBase()) + '）'
@@ -1874,8 +1877,8 @@ async function nmShowSelect() {
     if (r && r.dirExists === false) why = '选型库目录未创建'
     else if (r && r.fileCount === 0) why = '选型库目录下没有参数文件'
     else if (r && r.errors && r.errors.length) why = '选型库文件解析失败（' + r.errors[0] + '）'
-    body.innerHTML = '<h3>选型助手</h3><p class="muted">' + escapeHtml(why)
-      + '</p><p class="muted small">请联系管理员导入厂家选型样本后重试。</p>'
+    else if (r && r.fileCount > 0) why = '当前小类（' + sub + '）暂无选型库'
+    body.innerHTML = '<h3>选型助手</h3><p class="muted">' + escapeHtml(why) + '</p>'
     return
   }
 
@@ -1901,7 +1904,8 @@ async function nmShowSelect() {
   const run = async () => {
     const idx = Number($('#nmSelSeries').value || 0)
     const s = series[idx] || series[0]
-    const qs = '?series=' + encodeURIComponent(s.id)
+    const qs = '?sub=' + encodeURIComponent(sub)
+      + '&series=' + encodeURIComponent(s.id)
       + '&scene=' + encodeURIComponent($('#nmSelScene').value)
       + '&poles=' + encodeURIComponent($('#nmSelPoles').value)
       + '&curve=' + encodeURIComponent($('#nmSelCurve').value)

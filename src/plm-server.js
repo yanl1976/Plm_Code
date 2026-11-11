@@ -418,13 +418,19 @@ const server = http.createServer(async (req, res) => {
     }
     if (p === '/api/plm/select/series' && req.method === 'GET') {
       const info = loadSelection()
+      // 选型库必须按小类隔离：不同小类的系列不能混在一起选
+      const sub = String(url.searchParams.get('sub') || '').slice(0, 6)
+      const list = sub
+        ? info.series.filter((s) => String(s.sub || '').startsWith(sub))
+        : info.series
       return send(res, 200, {
         ok: true,
+        sub,
         dirExists: info.dirExists,
         fileCount: info.files.length,
         files: info.files,
         errors: info.errors,
-        series: info.series.map((s) => ({
+        series: list.map((s) => ({
           id: s.id, brand: s.brand || '', name: s.name || '', sub: s.sub || '',
           source: s.source || '', params: s.params || {}, rules: s.rules || {},
         })),

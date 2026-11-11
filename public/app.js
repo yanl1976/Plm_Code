@@ -1384,54 +1384,60 @@ async function nmNameSuggest() {
   const synMatches = (r && r.matches) || []
   const fallback = (r && r.subFallback) || null
   if (!stockMatches.length && !synMatches.length && !fallback && !modelTip) { hideNmNameTip(); return }
-  const tagOf = (m) => {
-    if (m.exact) return '完全一致'
-    if (m.from === 'prefix') return '打字中'
-    if (m.from === 'format') return (m.reasons || []).join(' · ') || '格式修正'
-    return '含此叫法'
+  const key = (s) => String(s || '').replace(/\s+/g, '').toUpperCase()
+  const keyRaw = key(raw)
+
+  // 「建议采用」：把同义词 / 去型号 / 小类标准名合并成一块，按优先级去重
+  const recs = []
+  const pushRec = (name, tag, note) => {
+    if (!name || key(name) === keyRaw) return
+    if (recs.some((x) => key(x.name) === key(name))) return
+    recs.push({ name, tag, note: note || '' })
   }
+  synMatches.forEach((m) => {
+    const hit = stockMatches.find((s) => key(s.name) === key(m.std))
+    pushRec(m.std, '同义词', hit ? `本小类 ${hit.count || 0} 条在用` : '')
+  })
+  if (modelTip) {
+    const moved = (modelTip.moved || []).join(' ')
+    pushRec(modelTip.core, '去型号', moved ? `型号/参数 ${moved} 请写进规格` : '')
+  }
+  // 小类标准名兜底：只在输入与标准名有前后缀关系时出现，避免每次输入都弹
+  if (fallback && keyRaw.length >= 2) {
+    const f = key(fallback.name)
+    if (f.indexOf(keyRaw) === 0 || keyRaw.indexOf(f) === 0) pushRec(fallback.name, '小类标准名', '')
+  }
+
+  // 存量：只读展示，且不重复展示「建议采用」里已经给出的名称
+  const stockList = stockMatches
+    .filter((m) => !recs.some((x) => key(x.name) === key(m.name)))
+    .slice(0, 5)
+
+  if (!recs.length && !stockList.length) { hideNmNameTip(); return }
+
   const stockTag = (m) => {
     const where = m.inSub ? '本小类' : (m.sub ? '小类 ' + m.sub + (m.subName ? ' ' + m.subName : '') : '其它小类')
     return `${m.count || 0} 条 · ${where}`
   }
+
   let html = ''
-  if (modelTip) {
-    // 只提示标准写法：点一下就把名称改成建议的实物名（规格不动，型号由用户自己写进规格）
-    html += '<div class="nm-name-tip-head">💡 建议用标准写法（名称只写实物名）</div>'
-      + `<div class="nm-name-tip-row nm-name-tip-split" data-split="1">
-          <b>${escapeHtml(modelTip.core)}</b>
-          <span class="nm-name-tip-arrow">← 型号/参数</span>
-          <span class="nm-name-tip-alias">${escapeHtml((modelTip.moved || []).join(' '))}</span>
-          <span class="nm-name-tip-tag">写进规格</span>
-        </div>`
-  }
-  if (stockMatches.length) {
-    html += '<div class="nm-name-tip-head">① 存量已有名称（点击填入）</div>'
-      + stockMatches.map((m, i) => `<div class="nm-name-tip-row" data-s="${i}">
+  if (recs.length) {
+    html += '<div class="nm-name-tip-head">✓ 建议采用</div>'
+      + recs.slice(0, 3).map((m, i) => `<div class="nm-name-tip-row nm-name-tip-rec" data-r="${i}">
           <b>${escapeHtml(m.name)}</b>
-          ${m.std ? `<span class="nm-name-tip-arrow">同义词</span><b class="nm-name-tip-std" data-std="${i}">${escapeHtml(m.std)}</b>` : ''}
+          <span class="nm-name-tip-src">${escapeHtml(m.tag)}</span>
+          ${m.note ? `<span class="nm-name-tip-tag">${escapeHtml(m.note)}</span>` : ''}
+        </div>`).join('')
+  }
+  if (stockList.length) {
+    html += '<div class="nm-name-tip-head">存量已有名称（仅供参考，不可点）</div>'
+      + stockList.map((m) => `<div class="nm-name-tip-row is-readonly">
+          <b>${escapeHtml(m.name)}</b>
           <span class="nm-name-tip-tag">${escapeHtml(stockTag(m))}</span>
+          <span class="nm-name-tip-lock">仅参考</span>
         </div>`).join('')
   }
-  if (synMatches.length) {
-    html += '<div class="nm-name-tip-head">② 统一叫法（同义词，点击填入）</div>'
-      + synMatches.map((m, i) => `<div class="nm-name-tip-row" data-i="${i}">
-          <span class="nm-name-tip-alias">${escapeHtml(m.alias)}</span>
-          <span class="nm-name-tip-arrow">→</span>
-          <b>${escapeHtml(m.std)}</b>
-          <span class="nm-name-tip-tag">${tagOf(m)}${m.scope === 'sub' ? ' · 本小类' : ''}</span>
-        </div>`).join('')
-  }
-  if (fallback) {
-    html += '<div class="nm-name-tip-head">③ 本小类标准名（兜底）</div>'
-      + `<div class="nm-name-tip-row" data-fb="1">
-          <b>${escapeHtml(fallback.name)}</b>
-          <span class="nm-name-tip-tag">存量无此叫法</span>
-        </div>`
-  }
-  html += modelTip
-    ? '<div class="nm-name-tip-sub">仅提示标准写法，不影响保存；型号/参数请自行写进规格</div>'
-    : '<div class="nm-name-tip-sub">仅提示，不影响保存</div>'
+  html += '<div class="nm-name-tip-sub">仅提示，不影响保存；灰色名称为历史写法，不能点击填入</div>'
   box.innerHTML = html
   box.classList.add('show')
 
@@ -1441,25 +1447,10 @@ async function nmNameSuggest() {
     inp.focus()
     nmRuleCheck() // 只刷新底部的规则校验
   }
-  box.querySelectorAll('[data-split]').forEach((row) => {
-    // 只改名称（采纳标准写法），规格一个字都不动
-    row.onclick = (ev) => { ev.stopPropagation(); fill(modelTip.core) }
-  })
-  box.querySelectorAll('.nm-name-tip-row[data-s]').forEach((row) => {
-    const m = stockMatches[Number(row.getAttribute('data-s'))]
+  // 只有「建议采用」可点；存量名称不绑事件
+  box.querySelectorAll('[data-r]').forEach((row) => {
+    const m = recs[Number(row.getAttribute('data-r'))]
     if (m) row.onclick = (ev) => { ev.stopPropagation(); fill(m.name) }
-  })
-  // 「同义词」标准名：点了才改成标准叫法（存量叫法本身可能已过时）
-  box.querySelectorAll('[data-std]').forEach((el) => {
-    const m = stockMatches[Number(el.getAttribute('data-std'))]
-    if (m && m.std) el.onclick = (ev) => { ev.stopPropagation(); fill(m.std) }
-  })
-  box.querySelectorAll('.nm-name-tip-row[data-i]').forEach((row) => {
-    const m = synMatches[Number(row.getAttribute('data-i'))]
-    if (m) row.onclick = (ev) => { ev.stopPropagation(); fill(m.std) }
-  })
-  box.querySelectorAll('.nm-name-tip-row[data-fb]').forEach((row) => {
-    if (fallback) row.onclick = (ev) => { ev.stopPropagation(); fill(fallback.name) }
   })
 }
 

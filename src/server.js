@@ -208,6 +208,15 @@ function startJob(label, fn) {
 }
 
 // ---- 工具 ----
+/** 库存告警：同一分钟内只打一次，避免每次查询都刷日志 */
+let invWarnAt = 0
+function warnInv(msg) {
+  const now = Date.now()
+  if (now - invWarnAt < 60000) return
+  invWarnAt = now
+  console.warn('[inventory] ' + msg)
+}
+
 function sendJson(res, code, obj) {
   const body = JSON.stringify(obj)
   res.writeHead(code, {
@@ -1353,7 +1362,9 @@ const server = http.createServer(async (req, res) => {
 
         // ③ 小类兜底：存量无候选、同义词也无建议、且该名称在本小类从未出现 → 提示本小类标准名。
         // knownCount>0 说明存量已有先例（属于在用写法），不应再被小类名纠正。
-        if (qname && sub && knownCount === 0 && !nameMatches.length && !matches.length) {
+        // 小类标准名兜底：始终算出来，由前端按「输入是否是标准名的前缀」决定是否展示，
+        // 这样即使存量已有若干写法（如“固定断路器”），也能给出唯一的标准叫法。
+        if (qname && sub) {
           const clsMap1 = readConfigJson('classification-map.json') || {}
           const sn = (clsMap1[sub] || {}).subName
           if (sn && sn !== qname) subFallback = { name: sn, sub }
@@ -1450,29 +1461,34 @@ const server = http.createServer(async (req, res) => {
           const inv = await queryInventory(code)
           return sendJson(res, 200, { ...inv, source: 'erp' })
         } catch (e) {
+          warnInv('直连库存查询失败：' + String((e && e.message) || e))
           return sendJson(res, 200, {
-            code, available: false, found: false, source: 'erp',
+            code, available: false, found: false, source: 'erp', reason: 'erp_error',
             total: { qty: 0, avbqty: 0, lockqty: 0 }, warehouses: [], details: [],
-            note: '直连库存查询失败：' + String((e && e.message) || e),
+            note: '库存查询失败',
           })
         }
       }
 
       // 默认：库存走 PLM 既有 ERPService（与 BOM「库存查询」同源）
+      // 对外文案统一、简短；具体原因只进日志与 reason 字段，避免把环境变量名暴露到界面
+      const INV_NOTE = '未配置 PLM 库存服务或服务中断'
       if (!plmConfigured()) {
+        warnInv('未配置 PLM 库存服务（PLM_BASE / PLM_USER / PLM_PASSWORD）')
         return sendJson(res, 200, {
-          code, available: false, found: false,
+          code, available: false, found: false, reason: 'not_configured',
           total: { qty: 0, avbqty: 0, lockqty: 0 }, warehouses: [], details: [],
-          note: '未配置 PLM 库存服务（PLM_BASE / PLM_USER / PLM_PASSWORD）',
+          note: INV_NOTE,
         })
       }
       try {
         return sendJson(res, 200, await plmStock(code))
       } catch (e) {
+        warnInv('PLM 库存查询失败：' + String((e && e.message) || e))
         return sendJson(res, 200, {
-          code, available: false, found: false,
+          code, available: false, found: false, reason: 'plm_error',
           total: { qty: 0, avbqty: 0, lockqty: 0 }, warehouses: [], details: [],
-          note: 'PLM 库存查询失败：' + String((e && e.message) || e),
+          note: INV_NOTE,
         })
       }
     }

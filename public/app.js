@@ -1854,10 +1854,17 @@ async function nmShowSelect() {
   let series = []
   try {
     const r = await fetch(selectBase() + '/api/plm/select/series', { cache: 'no-store' }).then((x) => x.json())
-    series = (r && r.series) || []
+    // 旧版 3100 没有这个接口，会返回 {ok:false,error:'not found'} —— 不能当成「库为空」
+    if (!r || r.ok === false || !Array.isArray(r.series)) {
+      body.innerHTML = '<h3>选型助手</h3><p class="muted">选型接口不可用（' + escapeHtml(selectBase()) + '）'
+        + (r && r.error ? '：' + escapeHtml(String(r.error)) : '')
+        + '</p><p class="muted small">该地址的 3100 可能是旧版本，需部署 src/plm-server.js 与 data/selection/ 后重启。</p>'
+      return
+    }
+    series = r.series
   } catch (e) {
     body.innerHTML = '<h3>选型助手</h3><p class="muted">选型服务不可用（' + escapeHtml(selectBase())
-      + '），请确认 3100 服务已启动。</p>'
+      + '），请确认 3100 服务已启动且本机可访问。</p>'
     return
   }
   if (!series.length) {

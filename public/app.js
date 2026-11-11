@@ -1402,10 +1402,11 @@ async function nmNameSuggest() {
     const moved = (modelTip.moved || []).join(' ')
     pushRec(modelTip.core, '去型号', moved ? `型号/参数 ${moved} 请写进规格` : '')
   }
-  // 小类标准名兜底：只在输入与标准名有前后缀关系时出现，避免每次输入都弹
+  // 小类标准名兜底：输入与标准名互为包含关系时出现
+  // （前缀、包含都要支持：「框架」「断路器」都应提示「固定式框架断路器」）
   if (fallback && keyRaw.length >= 2) {
     const f = key(fallback.name)
-    if (f.indexOf(keyRaw) === 0 || keyRaw.indexOf(f) === 0) pushRec(fallback.name, '小类标准名', '')
+    if (f.indexOf(keyRaw) >= 0 || keyRaw.indexOf(f) === 0) pushRec(fallback.name, '小类标准名', '')
   }
 
   // 存量：只读展示，且不重复展示「建议采用」里已经给出的名称

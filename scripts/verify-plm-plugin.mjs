@@ -1077,6 +1077,40 @@ async function run() {
     ok('提示标注「名称不同」', !!specTip && String(specTip.innerHTML).indexOf('名称不同') >= 0)
   }
 
+  // S35 后端未返回 spec 级时，用 similar-models 的 similarity=1 兜底阻断
+  {
+    console.log('[S35] 前端兜底：similarity=1 也阻断')
+    const p = newPage({
+      ctrls: baseCtrl(),
+      ajaxHandler: router({
+        '/health': HEALTH_OK,
+        '/check': { ok: true, pass: true, errors: [], warnings: [], duplicates: [] },   // 后端故意不返回重复
+        'similar-models': {
+          items: [{ fnumber: '10010100051', name: '框架断路器', spec: 'GSW1-1600/3', qty: 1, avbqty: 1, similarity: 1 }],
+          total: { qty: 1, avbqty: 1 },
+        },
+      }),
+      globalCfg: { inventoryBase: 'http://127.0.0.1:3130' },
+      dataService: (uri) => String(uri).indexOf('CommonGetObjectDataByFilter') >= 0
+        ? JSON.stringify({ PSEITEM: [] }) : { Rows: [] },
+    })
+    p.ctl['ECODE_Value'].__text = '10010100435'
+    p.ctl['ECODE_Value'].__tag = { value: '10010100435' }
+    p.ctl['ENAME_Value'].__text = '断路器'
+    p.ctl['GGXH_Value'].__text = 'GSW1-1600/3'
+    p.OnCreate()
+
+    const btn = findBtn(p)
+    if (btn) btn.onclick({ preventDefault() { }, stopPropagation() { } })
+    await sleep(450)
+
+    const save = findByClass(p, 'plm-smart-dlg-save')
+    const specTip = findByClass(p, 'plm-smart-dlg-spectip')
+    ok('后端无重复时由前端兜底禁用按钮', !!save && save.disabled === true)
+    ok('兜底提示含重复物料号', !!specTip && String(specTip.innerHTML).indexOf('10010100051') >= 0,
+      'has=' + (!!specTip && String(specTip.innerHTML).indexOf('10010100051') >= 0))
+  }
+
   console.log('\n----------------------------------------')
   console.log(`结果: ${pass} 通过 / ${fail} 失败`)
   if (fail) console.log('失败项: ' + failures.join(' | '))

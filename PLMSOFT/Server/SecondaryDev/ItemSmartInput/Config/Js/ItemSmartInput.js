@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.51
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.52
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -1338,6 +1338,8 @@
     var lastSimilar = null;        // 最近一次 similar-models 结果，供「类似型号明细」弹窗使用
     var topSimilarCode = '';       // 最相似物料编码（明细首条），主弹窗库存查它
     var lastInvKey = '';           // 库存查询去重：同一编码 + 同一来源不重复打请求
+    var specDupItems = [];         // 兜底判重：similar-models 里 similarity=1 的条目（不依赖 3100 是否已支持 spec 级）
+    var lastCheckResult = null;    // 最近一次校验结果，供兜底判重后重绘
     var lastSpecSuggestion = '';   // 规格侧已提示过的目标写法，避免「建议改为 / 规范写法」重复
 
     function setSaveEnabled(ok) {
@@ -1368,6 +1370,22 @@
       var dup = ((r && r.duplicates) || []).filter(function (d) {
         return d.level === 'exact' || d.level === 'sep' || d.level === 'spec';
       });
+
+      // 前端兜底：similar-models 里 similarity=1 等价于「规格完全相同」。
+      // 3100 尚未升级（不返回 spec 级）时，靠这一条也能拦住重复新增。
+      var selfCode = String(readEcode() || '');
+      for (var si = 0; si < specDupItems.length; si++) {
+        var sd = specDupItems[si];
+        var sdCode = String(sd.fnumber || '');
+        if (!sdCode || sdCode === selfCode) continue;
+        var existDup = false;
+        for (var dj = 0; dj < dup.length; dj++) {
+          if (String(dup[dj].fNumber || '') === sdCode) { existDup = true; break; }
+        }
+        if (!existDup) {
+          dup.push({ fNumber: sdCode, fName: sd.name, fSpec: sd.spec, level: 'spec' });
+        }
+      }
       if (dup.length) {
         // 注意：文案里不要出现「名称/小类/分类」，否则会被分到名称侧
         errors.push('存在完全相同规格 ' + dup.length + ' 条，请优先复用已有编码，或确认确为新物料');
@@ -1594,6 +1612,7 @@
       lastSimilar = null;
       topSimilarCode = '';
       lastInvKey = '';
+      specDupItems = [];
       simBtn.style.display = 'none';
       if (!sp) return;
       var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
@@ -1606,10 +1625,17 @@
         lastSimilar = r;
         // 最相似物料（首条）的编码：主弹窗库存改查它，而不是尚未建档的新物料自己
         topSimilarCode = String((r.items[0] && r.items[0].fnumber) || '');
+        // similarity=1 就是「规格完全相同」，用它兜底判重（不依赖 3100 是否已升级）
+        specDupItems = (r.items || []).filter(function (x) {
+          return Number(x.similarity || 0) >= 0.999;
+        });
         simBtn.textContent = '类似型号（' + r.items.length + '）';
         simBtn.title = '同小类共 ' + r.items.length + ' 条，按接近程度排序';
         simBtn.style.display = 'inline-block';
         loadInventory(specIn.value);   // 拿到编码后刷新一次库存
+        if (specDupItems.length && lastCheckResult) {
+          try { renderTips(lastCheckResult); } catch (e) { }   // 重新渲染红字 + 禁用按钮
+        }
       });
     }
 
@@ -1960,6 +1986,7 @@
           setSaveEnabled(false);
           return;
         }
+        lastCheckResult = r;     // 供 similar-models 兜底判重后重绘
         renderInfo(r);
         renderTips(r);
         loadNameSuggest(nm);
@@ -2734,7 +2761,7 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.51（api=' + apiUrl('')
+  log('脚本已加载 v1.52（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；外部配置=' + (EXT_KEYS.length ? EXT_KEYS.join('/') : '未使用')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')

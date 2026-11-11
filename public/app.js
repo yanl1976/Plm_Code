@@ -1845,6 +1845,60 @@ function selectBase() {
     || (location.protocol + '//' + (location.hostname || '127.0.0.1') + ':3100')
 }
 
+// 系列参数：作为主要信息块展示（工程师选型时要对比的就是这些），不是底部附注
+function renderSelectParams(s) {
+  const box = $('#nmSelParams')
+  if (!box) return
+  const p = (s && s.params) || {}
+  const rows = []
+  const add = (k, v) => { if (v) rows.push([k, String(v)]) }
+
+  if ((p.ratedCurrent || []).length) add('额定电流', p.ratedCurrent.join(' / ') + ' A')
+  if ((p.poles || []).length) add('极数', p.poles.join(' / '))
+  add('额定电压', (p.voltage || '') + (p.frequency ? '　' + p.frequency : ''))
+
+  const bk = p.ratedBreaking || {}
+  if (Object.keys(bk).length) {
+    add('分断能力', Object.keys(bk).map((k) => k + ' ' + bk[k] + 'kA').join(' / '))
+  }
+  if (p.tripType) {
+    const tr = p.tripRange || {}
+    add('脱扣形式', p.tripType + (Object.keys(tr).length
+      ? '（' + Object.keys(tr).map((k) => k + ' ' + tr[k]).join(' / ') + '）' : ''))
+  }
+
+  const t = p.terminal || {}
+  if (Object.keys(t).length) {
+    const parts = []
+    if (t.type) parts.push(t.type)
+    if (t.wireMin != null && t.wireMax != null) parts.push(t.wireMin + '~' + t.wireMax + 'mm²')
+    if (t.torque != null) parts.push('扭矩 ' + t.torque + 'N·m')
+    add('接线端子', parts.join('　'))
+  }
+
+  add('工作温度', p.workTemp ? p.workTemp + '℃' : '')
+  add('储存温度', p.storeTemp ? p.storeTemp + '℃' : '')
+  add('海拔', p.altitude)
+  add('污染等级', p.pollutionDegree)
+  add('安装方式', p.mounting)
+  add('进线方式', p.wireEntry)
+
+  const prot = p.protection || {}
+  add('防护等级', [prot.direct ? prot.direct + '（直接安装）' : '',
+    prot.inBox ? prot.inBox + '（配电箱内）' : ''].filter(Boolean).join(' / '))
+  add('外壳阻燃', p.flameRetardant)
+  if ((p.accessories || []).length) add('可拼装附件', p.accessories.join(' / '))
+  if (p.mechLife || p.elecLife) {
+    add('机械/电气寿命', (p.mechLife ? p.mechLife + ' 次' : '')
+      + (p.elecLife ? ' / ' + p.elecLife + ' 次' : ''))
+  }
+
+  box.innerHTML = rows.length
+    ? rows.map((r) => '<div class="nm-sel-pk">' + escapeHtml(r[0]) + '</div>'
+      + '<div class="nm-sel-pv">' + escapeHtml(r[1]) + '</div>').join('')
+    : '<div class="muted small">该系列暂无参数</div>'
+}
+
 async function nmShowSelect() {
   const body = $('#modalBody')
   if (!body) return
@@ -1894,12 +1948,15 @@ async function nmShowSelect() {
     + '<label>负载电流</label><input id="nmSelCurrent" type="number" min="0" step="0.1" placeholder="A" />'
     + '<button id="nmSelGo" class="ghost">查询</button>'
     + '</div>'
+    + '<div id="nmSelParams" class="nm-sel-params"></div>'
+    + '<div class="nm-sel-sub">匹配型号</div>'
     + '<div id="nmSelResult" class="muted small">填写条件后点「查询」</div>'
     + '<div id="nmSelInfo" class="muted small"></div>'
 
   const run = async () => {
     const idx = Number($('#nmSelSeries').value || 0)
     const s = series[idx] || series[0]
+    renderSelectParams(s)
     const qs = '?series=' + encodeURIComponent(s.id)
       + '&scene=' + encodeURIComponent($('#nmSelScene').value)
       + '&poles=' + encodeURIComponent($('#nmSelPoles').value)
@@ -1938,39 +1995,7 @@ async function nmShowSelect() {
         $('#modal').classList.add('hidden')
       })
     })
-    // 系列参数速查：把厂家样本里的关键项直接摊在弹窗底部，选型时不用再翻手册
-    const p = s.params || {}
-    const bk = p.ratedBreaking || {}
-    const tr = p.tripRange || {}
-    const prot = p.protection || {}
-    const lines = []
-    lines.push('电流档位：' + ((p.ratedCurrent || []).join(' / '))
-      + '　极数：' + ((p.poles || []).join(' / '))
-      + '　电压：' + escapeHtml(p.voltage || ''))
-    if (Object.keys(bk).length) {
-      lines.push('分断能力：' + Object.keys(bk).map((k) => k + ' ' + bk[k] + 'kA').join(' / ')
-        + (p.tripType ? '　脱扣：' + escapeHtml(p.tripType) : '')
-        + (Object.keys(tr).length
-          ? '（' + Object.keys(tr).map((k) => k + ' ' + tr[k]).join(' / ') + '）'
-          : ''))
-    }
-    if (p.workTemp || p.altitude) {
-      lines.push('环境：' + escapeHtml(p.workTemp || '') + '℃（工作）　'
-        + escapeHtml(p.storeTemp || '') + '℃（储存）　海拔 ' + escapeHtml(p.altitude || '')
-        + (p.pollutionDegree ? '　污染等级 ' + p.pollutionDegree : ''))
-    }
-    if (p.mounting || p.wireEntry || prot.direct || prot.inBox) {
-      lines.push('安装：' + escapeHtml(p.mounting || '')
-        + (p.wireEntry ? '　进线：' + escapeHtml(p.wireEntry) : '')
-        + (prot.direct ? '　防护：' + escapeHtml(prot.direct) + '（直接）' : '')
-        + (prot.inBox ? ' / ' + escapeHtml(prot.inBox) + '（箱内）' : ''))
-    }
-    if (p.flameRetardant || (p.accessories || []).length) {
-      lines.push((p.flameRetardant ? '外壳阻燃 ' + escapeHtml(p.flameRetardant) + '　' : '')
-        + ((p.accessories || []).length ? '可拼装附件：' + escapeHtml(p.accessories.join(' / ')) : ''))
-    }
-    if (s.source) lines.push('来源：' + escapeHtml(s.source))
-    $('#nmSelInfo').innerHTML = lines.join('<br>')
+    $('#nmSelInfo').innerHTML = s.source ? '来源：' + escapeHtml(s.source) : ''
   }
   $('#nmSelGo').onclick = run
   run()

@@ -477,3 +477,9 @@ tr.saving { opacity:.45; }
 .nm-select-bar label{font-size:12px;color:var(--muted);margin:0}
 .nm-select-bar select,.nm-select-bar input{padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel2);color:var(--text);font-size:13px}
 .nm-select-bar input{width:90px}
+
+/* 选型助手：系列参数主信息块 */
+.nm-sel-params{display:grid;grid-template-columns:104px 1fr;gap:6px 14px;font-size:13px;margin:10px 0 14px;padding:12px 14px;background:var(--panel2);border:1px solid var(--line);border-radius:6px}
+.nm-sel-pk{color:var(--muted);white-space:nowrap}
+.nm-sel-pv{color:var(--text)}
+.nm-sel-sub{font-size:13px;font-weight:600;margin:6px 0 4px}

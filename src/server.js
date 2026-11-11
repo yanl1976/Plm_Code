@@ -414,7 +414,8 @@ async function summarizeInventory(ids, code) {
   const ph = ids.map((id, i) => { params['id' + i] = Number(id); return '@id' + i }).join(',')
   const rows = await executeQuery(
     `SELECT i.FMATERIALID, i.FSTOCKORGID, i.FSTOCKID, i.FSTOCKLOCID, i.FSTOCKSTATUSID, i.FLOT,
-            i.FBASEQTY, i.FBASELOCKQTY, i.FBASEUNITID, i.FPRODUCEDATE, i.FEXPIRYDATE
+            i.FBASEQTY, i.FBASELOCKQTY, i.FBASEUNITID, i.FPRODUCEDATE, i.FEXPIRYDATE,
+            i.FMTONO, i.FPROJECTNO
        FROM T_STK_INVENTORY i
       WHERE i.FMATERIALID IN (${ph}) AND ISNULL(i.FISEFFECTIVED, '1') = '1'`,
     params, { timeout: INV_QUERY_TIMEOUT }
@@ -449,8 +450,13 @@ async function summarizeInventory(ids, code) {
     const sid = r.FSTOCKID != null ? Number(r.FSTOCKID) : null
     const g = byStock.get(sid) || {
       stockId: sid, stockName: stockNames[sid] || (sid != null ? '仓库#' + sid : ''), qty: 0, avbqty: 0, lockqty: 0, lines: 0,
+      projectNo: '',
     }
     g.qty += q; g.avbqty += a; g.lockqty += l; g.lines++
+    // 项目号取库存行上的 FMTONO（金蝶「跟踪号」字段，本账套实际存项目号）；
+    // 只认有数量的行，避免被已清零的历史项目覆盖
+    const mtno = String(r.FMTONO || '').trim() || String(r.FPROJECTNO || '').trim()
+    if (mtno && q > 0 && !g.projectNo) g.projectNo = mtno
     byStock.set(sid, g)
     if (details.length < 200) {
       details.push({
@@ -459,6 +465,7 @@ async function summarizeInventory(ids, code) {
         stockStatusId: r.FSTOCKSTATUSID != null ? Number(r.FSTOCKSTATUSID) : null,
         lot: r.FLOT != null ? Number(r.FLOT) : null,
         qty: q, avbqty: a, lockqty: l,
+        projectNo: mtno,
         produceDate: r.FPRODUCEDATE || null, expiryDate: r.FEXPIRYDATE || null,
       })
     }
@@ -581,9 +588,13 @@ async function refInventory(sub, spec, excludeCode) {
 async function fillInvCache(ids, timeout = INV_QUERY_TIMEOUT) {
   const params = {}
   const ph = ids.map((id, i) => { params['id' + i] = Number(id); return '@id' + i }).join(',')
+  // 项目号优先取库存行上的 FMTONO（金蝶里这是「跟踪号」，本账套实际存放项目号）；
+  // FPROJECTNO 全表为空，只能作为兜底。再优先取「有数量的行」，避免拿到已清零的历史项目。
   const rows = await executeQuery(
     `SELECT FMATERIALID, ISNULL(SUM(FBASEQTY), 0) AS qty,
             ISNULL(SUM(FBASELOCKQTY), 0) AS lockqty,
+            MAX(CASE WHEN ISNULL(FBASEQTY, 0) <> 0 THEN NULLIF(FMTONO, '') END) AS mtnoQty,
+            MAX(NULLIF(FMTONO, '')) AS mtno,
             MAX(NULLIF(FPROJECTNO, '')) AS projectNo
        FROM T_STK_INVENTORY
       WHERE FMATERIALID IN (${ph}) AND ISNULL(FISEFFECTIVED, '1') = '1'
@@ -593,9 +604,32 @@ async function fillInvCache(ids, timeout = INV_QUERY_TIMEOUT) {
   const got = new Map()
   for (const r of rows) {
     got.set(Number(r.FMATERIALID), {
-      qty: Number(r.qty || 0), lockqty: Number(r.lockqty || 0), projectNo: r.projectNo || '',
+      qty: Number(r.qty || 0),
+      lockqty: Number(r.lockqty || 0),
+      projectNo: r.mtnoQty || r.mtno || r.projectNo || '',
     })
   }
+
+  // 项目号精确到「有库存的那一行」：同一物料常有多行（不同跟踪号），
+  // 取数量最大的那一行，避免 MAX(FMTONO) 按字典序选出无库存的历史项目。
+  try {
+    const top = await executeQuery(
+      `WITH q AS (
+          SELECT FMATERIALID, NULLIF(FMTONO, '') AS mtno, ISNULL(FBASEQTY, 0) AS qty,
+                 ROW_NUMBER() OVER (PARTITION BY FMATERIALID ORDER BY ISNULL(FBASEQTY, 0) DESC) AS rn
+            FROM T_STK_INVENTORY
+           WHERE FMATERIALID IN (${ph}) AND ISNULL(FISEFFECTIVED, '1') = '1'
+             AND ISNULL(FBASEQTY, 0) <> 0
+        )
+        SELECT FMATERIALID, mtno FROM q WHERE rn = 1`,
+      params, { timeout }
+    )
+    for (const t of top) {
+      const id = Number(t.FMATERIALID)
+      const cur = got.get(id)
+      if (cur && t.mtno) cur.projectNo = String(t.mtno).trim()
+    }
+  } catch (e) { /* 取不到就沿用上面的兜底 */ }
   for (const id of ids) {
     const g = got.get(Number(id)) || { qty: 0, lockqty: 0, projectNo: '' }
     invCachePut(id, 'inv', { qty: g.qty, lockqty: g.lockqty, projectNo: g.projectNo })
@@ -720,8 +754,9 @@ async function similarModels(sub, spec, excludeCode, opts = {}) {
       spec: d.spec || '',
       qty,
       avbqty: Math.max(0, qty - lockqty),
-      // 项目号来自该物料最近一次业务单据（采购入库/生产领料）
-      projectNo: (pj && pj.projectNo) || '',
+      // 项目号优先取库存行上的 FMTONO（与 ERP 库存查询页一致）；
+      // 库存行没有时才退回「最近一次业务单据」（采购入库/生产领料）
+      projectNo: (c && c.projectNo) || (pj && pj.projectNo) || '',
       projectLastDate: (pj && pj.lastDate) || '',
       cached: !!(c && pj),
       // 接近度：按录入规格排序的主键；库存量只在同分时做次要排序

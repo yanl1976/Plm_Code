@@ -1942,7 +1942,12 @@ async function nmShowSelect() {
         const it = items[Number(tr.dataset.k)]
         const nameEl = $('#nmName')
         const specEl = $('#nmSpec')
-        if (nameEl) { nameEl.value = it.name || it.series; nmNameInput() }
+        // 名称只在为空时补全，不覆盖用户已经写好的叫法
+        if (nameEl && !String(nameEl.value || '').trim()) {
+          nameEl.value = it.name || it.series
+          nmNameInput()
+        }
+        // 规格是选型的结果，直接覆盖
         if (specEl) { specEl.value = it.model; specEl.dispatchEvent(new Event('input')) }
         // 附件属于「选完之后再配」，回填后在页面消息行提示一次
         const acc = it.accessories || []

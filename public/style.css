@@ -483,3 +483,10 @@ tr.saving { opacity:.45; }
 .nm-sel-pk{color:var(--muted);white-space:nowrap}
 .nm-sel-pv{color:var(--text)}
 .nm-sel-sub{font-size:13px;font-weight:600;margin:6px 0 4px}
+
+/* 系列参数折叠：默认收起，结果优先 */
+.nm-sel-more{margin:14px 0 4px}
+.nm-sel-more summary{cursor:pointer;font-size:13px;color:var(--muted);padding:4px 0;outline:none}
+.nm-sel-more summary:hover{color:var(--accent)}
+.nm-sel-more[open] summary{margin-bottom:8px}
+.nm-sel-more .nm-sel-params{margin:0 0 4px}

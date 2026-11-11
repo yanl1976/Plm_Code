@@ -1948,9 +1948,11 @@ async function nmShowSelect() {
     + '<label>负载电流</label><input id="nmSelCurrent" type="number" min="0" step="0.1" placeholder="A" />'
     + '<button id="nmSelGo" class="ghost">查询</button>'
     + '</div>'
-    + '<div id="nmSelParams" class="nm-sel-params"></div>'
     + '<div class="nm-sel-sub">匹配型号</div>'
     + '<div id="nmSelResult" class="muted small">填写条件后点「查询」</div>'
+    + '<details class="nm-sel-more"><summary>系列参数（点击展开）</summary>'
+    + '<div id="nmSelParams" class="nm-sel-params"></div>'
+    + '</details>'
     + '<div id="nmSelInfo" class="muted small"></div>'
 
   const run = async () => {
@@ -1974,7 +1976,11 @@ async function nmShowSelect() {
     }
     const items = (r && r.items) || []
     if (!items.length) { box.innerHTML = '<span class="muted">没有匹配的型号</span>'; return }
-    let html = '<table class="mat"><thead><tr><th>型号</th><th>极数</th><th>电流</th><th>曲线</th><th>分断</th><th></th></tr></thead><tbody>'
+    // 型号较多时说明截断情况，提示填负载电流可精确定位
+    let html = (r && r.total > items.length)
+      ? '<p class="muted small">共 ' + r.total + ' 条，显示前 ' + items.length + ' 条（填「负载电流」可精确到档位）</p>'
+      : ''
+    html += '<table class="mat"><thead><tr><th>型号</th><th>极数</th><th>电流</th><th>曲线</th><th>分断</th><th></th></tr></thead><tbody>'
     html += items.map((it, k) => '<tr data-k="' + k + '" style="cursor:pointer">'
       + '<td class="mono">' + escapeHtml(it.model) + '</td>'
       + '<td>' + escapeHtml(it.poles) + '</td>'

@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "description": "选型库：一个文件可放多个系列。params 为系列级参数，选型时按 params 组合生成具体型号。",
+    "version": "0.2",
+    "updatedAt": "2026-11-11"
+  },
+  "series": [
+    {
+      "id": "NB8-40J",
+      "brand": "正泰",
+      "sub": "100101",
+      "name": "小型断路器",
+      "source": "NB8-40J 技术参数表（样本第 1~2 页）",
+      "modelPattern": "NB8-40J {poles} {curve}{current}",
+      "params": {
+        "ratedCurrent": [1, 2, 3, 4, 6, 10, 16, 20, 25, 32, 40],
+        "poles": ["1P", "2P", "3P", "4P"],
+        "curve": ["B", "C", "D"],
+        "voltage": "AC230/400",
+        "frequency": "50Hz",
+        "ratedBreaking": { "B": 6, "C": 6, "D": 4.5 },
+        "runBreaking": { "B": 6, "C": 6, "D": 4.5 },
+        "insulationVoltage": 500,
+        "impulseWithstand": 4,
+        "dielectricTest": 2000,
+        "mechLife": 15000,
+        "elecLife": 10000,
+        "tripType": "热磁脱扣",
+        "tripRange": { "B": "3In~5In", "C": "5In~10In", "D": "10In~16In" },
+        "terminal": {
+          "type": "柱式接线端子",
+          "wireMin": 1,
+          "wireMax": 16,
+          "torque": 2.0,
+          "torqueMax": 2.5,
+          "insertDepth": 10
+        },
+        "baseTemp": 30,
+        "workTemp": "-35~+70",
+        "storeTemp": "-35~+85",
+        "altitude": "≤2000m",
+        "flameRetardant": "V-0",
+        "wireEntry": "上下均可",
+        "mounting": "TH35-7.5 型标准导轨",
+        "pollutionDegree": 2,
+        "protection": { "direct": "IP20B", "inBox": "IP40B" },
+        "accessories": ["S9", "V9", "XF9", "XF9J", "OVT-1", "OUVT-1"]
+      },
+      "rules": {
+        "currentFactor": 1.25,
+        "curveByScene": { "照明": "C", "动力": "D", "配电": "C" }
+      }
+    }
+  ]
+}

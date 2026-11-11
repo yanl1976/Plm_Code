@@ -1,5 +1,9 @@
 node_modules/
-data/
+# 运行数据整体不入库，但选型库（人工维护的厂家样本参数）需要版本化：
+# 目录一旦被忽略，子项无法用 ! 恢复，因此先忽略 data/ 下所有项，再逐级放行
+data/*
+!data/selection/
+!data/selection/*.json
 *.ndjson
 .env
 

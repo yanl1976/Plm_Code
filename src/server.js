@@ -24,6 +24,7 @@ import { normalize, tokenize, jaccard, looseSignature, modelOf } from './spec.js
 import { checkMaterial, fixSpecFormat, rules as materialRules, resolveNameFix, detectNameModel } from './material-rules.js'
 import * as nameSyn from './name-synonyms.js'
 import { snapshotStatus, invalidateSnapshotStatus, erpSubDocs, invalidateErpSub } from './snapshot.js'
+import { plmStock, plmProbe, plmConfigured } from './plm-inventory.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const PUBLIC = path.join(ROOT, 'public')
@@ -1424,24 +1425,54 @@ const server = http.createServer(async (req, res) => {
 
     // 即时库存：按物料编码查询 T_STK_INVENTORY（基本单位数量/可用量/锁库量 + 分仓汇总）
     // 新增物料尚未建档时，可用 sub+spec 查询「同小类相同/相似规格」的存量参考库存
+    // PLM 库存服务探针：直接打 PLM 既有接口，原样返回结构，用于现场确认
+    if (p === '/api/new-material/plm-probe') {
+      const code = (url.searchParams.get('code') || '').trim()
+      if (!plmConfigured()) {
+        return sendJson(res, 200, { ok: false, note: '未配置 PLM_BASE / PLM_USER / PLM_PASSWORD' })
+      }
+      try {
+        return sendJson(res, 200, await plmProbe(code))
+      } catch (e) {
+        return sendJson(res, 200, { ok: false, error: String((e && e.message) || e) })
+      }
+    }
+
     if (p === '/api/new-material/inventory') {
       const code = (url.searchParams.get('code') || '').trim()
-      const sub = (url.searchParams.get('sub') || '').trim()
-      const spec = (url.searchParams.get('spec') || '').trim()
       if (!code) {
         return sendJson(res, 200, { code, available: false, found: false, total: { qty: 0, avbqty: 0, lockqty: 0 }, warehouses: [], details: [], note: '缺少物料编码' })
       }
-      try {
-        const inv = await queryInventory(code)
-        if (inv.found === false && sub && spec) {
-          return sendJson(res, 200, { ...(await refInventory(sub, spec, code)), code })
+      // 直连兜底：仅当显式带 direct=1（插件 allowDirectErp=true 时才会带），用于排查期对比口径。
+      // PLM 接口稳定后，把插件里的 allowDirectErp 关掉即可，无需改这里。
+      if (url.searchParams.get('direct') === '1') {
+        try {
+          const inv = await queryInventory(code)
+          return sendJson(res, 200, { ...inv, source: 'erp' })
+        } catch (e) {
+          return sendJson(res, 200, {
+            code, available: false, found: false, source: 'erp',
+            total: { qty: 0, avbqty: 0, lockqty: 0 }, warehouses: [], details: [],
+            note: '直连库存查询失败：' + String((e && e.message) || e),
+          })
         }
-        return sendJson(res, 200, inv)
+      }
+
+      // 默认：库存走 PLM 既有 ERPService（与 BOM「库存查询」同源）
+      if (!plmConfigured()) {
+        return sendJson(res, 200, {
+          code, available: false, found: false,
+          total: { qty: 0, avbqty: 0, lockqty: 0 }, warehouses: [], details: [],
+          note: '未配置 PLM 库存服务（PLM_BASE / PLM_USER / PLM_PASSWORD）',
+        })
+      }
+      try {
+        return sendJson(res, 200, await plmStock(code))
       } catch (e) {
         return sendJson(res, 200, {
           code, available: false, found: false,
           total: { qty: 0, avbqty: 0, lockqty: 0 }, warehouses: [], details: [],
-          note: '库存查询失败：' + String((e && e.message) || e),
+          note: 'PLM 库存查询失败：' + String((e && e.message) || e),
         })
       }
     }

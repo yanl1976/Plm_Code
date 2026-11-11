@@ -1,13 +1,15 @@
 # PLM 物料新增「名称/规格型号」智能录入助手 — 部署说明
 
-> 版本 **v1.43** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
-> 插件文件：`ItemSmartInput.js` v1.43 — 106,224 字节 / 2,396 行 / UTF-8 无 BOM
-> SHA256：`27E113ABC4F70001A4801974B0A1DF80A14A57F16AB8C6367DE66C3DDB6C1817`
-> 配置文件：`ItemSmartInput.config.js` — 2,994 字节 / 49 行 / UTF-8 无 BOM
-> SHA256：`04296D2284E884E73C513FC1D513BBF6BA208488A4FA53FD495853E8797CEBBE`
+> 版本 **v1.45** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
+> 插件文件：`ItemSmartInput.js` v1.45 — 111,549 字节 / 2,526 行 / UTF-8 无 BOM
+> SHA256：`CD66D3FC1F48D90232DE9D7B2708C1A5ADAF728C46459993DF0FA5A1CB54F544`
+> 配置文件：`ItemSmartInput.config.js` — 3,243 字节 / 51 行 / UTF-8 无 BOM
+> SHA256：`AB883C30C398DFD7712E46A116A579B8995E3B9CBAB259AE5BFF70079F9157D0`
 >
 > **版本演进（近期）**
-> - **v1.43（当前）**：字段锁定**只作用于 电气元件 / 原材料 / 外购标准件**，其它类型（含未选类型）保持原生可编辑
+> - **v1.45（当前）**：新增 `allowDirectErp` 开关（默认开），PLM 查不到时回落直连；库存徽标旁显示来源 **PLM / ERP**
+> - v1.44：库存改为**浏览器内直接调用 PLM 既有 `ERPService.GetStockSearchData`**（与 BOM「库存查询」同源）；新增 `inventorySource` 开关
+> - v1.43：字段锁定**只作用于 电气元件 / 原材料 / 外购标准件**，其它类型（含未选类型）保持原生可编辑
 > - v1.42：左侧按钮由「智能录/入」改为**两两排列**（「智能 / 录入」），不再出现单字换行
 > - v1.41：名称/规格**全锁**（只读 + 灰底），服务不可用时**自动解锁**、恢复后再锁；新增 `lockFields` 开关
 > - v1.40：按钮文案由「校验并回填」改为**「智能录入」**（含配置文件与日志）
@@ -439,7 +441,9 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 | `checkButtonOffsetX` | `6` | 跟随定位的横向偏移(px)，负值向左 |
 | `checkButtonOffsetY` | `0` | 纵向偏移(px) |
 | `apiLabel` | `数据治理服务器` | 提示文案里代替 IP 显示的名字 |
-| `inventoryBase` | `''` | 看板地址（如 `http://192.168.20.31:3130`），用于弹窗内「现有库存」；留空则不显示 |
+| `inventorySource` | `'plm'` | 库存来源：`'plm'`=浏览器内直接调 PLM 的 `ERPService.GetStockSearchData`（与 BOM「库存查询」同源）；`'dashboard'`=走 `inventoryBase` |
+| `allowDirectErp` | `true` | PLM 查不到时是否回落**直连 ERP**；排查期保持开，PLM 稳定后改 `false` |
+| `inventoryBase` | `''` | 仅 `inventorySource='dashboard'` 时使用（看板地址，如 `http://192.168.20.31:3130`）；同时用于「类似型号」数据 |
 | `domWatchDelay` | `2500` | DOM 兜底接管延时(ms)；给正常 `OnCreate` 留出时间 |
 | `restrictItemType` | `true` | 是否按「类型」控制按钮可见性 |
 | `itemTypeAllowText` | `['电气元件','原材料','外购标准件']` | 允许显示按钮的类型显示名 |
@@ -457,6 +461,9 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 
 ### 5.1 「智能录入」按钮与校验弹窗（v1.23）
 
+> 全部校验提示的**文案、级别、触发条件、调整入口**见 `doc/PLM物料校验提示清单.md`（台账，改提示时先查这张表）。
+> 后续架构演进（查询全部走 PLM、是否脱离 3100）见 `doc/PLM接口化与去3100演进方案.md`（讨论稿，未执行）。
+
 新建零组件窗口打开后，插件在「名称」标签左侧插入一个窄按钮（`checkButtonPlace: 'left'`）。**编码仍由 PLM 编码器负责，插件不参与发号、也不改编号**。
 
 **类型门控**：只有「电气元件 / 原材料 / 外购标准件」显示按钮；未选择类型，或选了非标自制件 / 通用自制件 / 请购单 / 成品 / 服务等，**按钮直接不出现，也没有任何提示文字**。类型切换后 1.5 秒内自动跟随。
@@ -468,7 +475,7 @@ Get-NetTCPConnection -LocalPort 8890 -ErrorAction SilentlyContinue | ForEach-Obj
 | 信息条 | 物料编码 + 大类/中类/小类；未查重原因 |
 | 物料名称 | 预填当前 PLM 名称，可编辑；**名称类问题显示在名称框正下方**；附带「名称建议」chips（同 `/api/plm/suggest` field=name，点击填入）、「标准叫法」「建议改为」可点击应用 |
 | 规格型号 | 预填当前 PLM 规格，可编辑；**规格类问题显示在规格框正下方**；输入 2 字以上时下方出现**同型号系列联想**（型号汇总 + 候选规格，含型号段条数与库存，点击填入）；「建议改为」与「规范写法」同一目标只提示一次 |
-| 库存 / 类似型号入口 | **规格输入框右侧同一行**：`现有库存 [4]`（黄色徽标，数量为 0 时不显示）+ `类似型号（N）` 描边按钮；输入框自适应收缩给右侧让位。两者都读看板接口，未配置 `inventoryBase` 时不显示 |
+| 库存 / 类似型号入口 | **规格输入框右侧同一行**：`现有库存 [4]`（黄色徽标，数量为 0 时不显示）+ `类似型号（N）` 描边按钮；输入框自适应收缩给右侧让位。库存**直接调 PLM 的 `ERPService.GetStockSearchData`**（复用当前登录会话），徽标旁标注来源 `PLM`/`ERP`；PLM 无数据且 `allowDirectErp: true` 时回落直连。类似型号读 `inventoryBase` |
 | 类似型号明细 | 点「类似型号（N）」打开**独立弹窗**：合计数量/可用、录入规格 + 黄色差异高亮 + 排序说明、五列表格（物料号/名称/规格型号/数量/项目号），按接近程度排序，点行填入规格框 |
 | 保存并回填 | **有 error 时按钮禁用**（含「名称与规格完全相同」「同小类已有完全相同规格」），点击会提示；无 error 时按规范写法回填（名称=同义词标准名+格式修正，规格=空格整理，并同步 ZYCS / FLSXHB） |
 | 关闭方式 | **只有右上角 × 和「取消」**；点击遮罩不会关闭 |

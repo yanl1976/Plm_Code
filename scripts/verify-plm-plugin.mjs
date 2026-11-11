@@ -129,7 +129,7 @@ function makeJQ(doc, getAjax) {
 }
 
 /** 创建一个"页面实例"：控件 + DOM + sandbox，并执行插件脚本 */
-function newPage({ ctrls, ajaxHandler, confirmReturn = true, globalCfg = null }) {
+function newPage({ ctrls, ajaxHandler, confirmReturn = true, globalCfg = null, dataService = null }) {
   const doc = mkEl('body')
   doc.body = mkEl('body')
   doc.documentElement = mkEl('html')
@@ -196,6 +196,7 @@ function newPage({ ctrls, ajaxHandler, confirmReturn = true, globalCfg = null })
   sandbox.clearInterval = clearInterval
   sandbox.alert = () => { }
   sandbox.confirm = () => confirmReturn
+  if (dataService) HoteamUI.DataService = { Call: dataService }
   sandbox.HoteamUI = HoteamUI
   sandbox.jQuery = jq
   sandbox.$ = jq
@@ -756,6 +757,71 @@ async function run() {
     await sleep(120)
     ok('非标自制件的名称框可编辑', p.doc.__byId['ENAME_Value'].readOnly !== true)
     ok('非标自制件的规格框可编辑', p.doc.__byId['GGXH_Value'].readOnly !== true)
+  }
+
+  // S27 库存走 PLM 既有 ERPService（浏览器内直调，不经 3130）
+  {
+    console.log('[S27] 库存直调 PLM ERPService')
+    const calls = []
+    const ds = (uri, paras) => {
+      calls.push({ uri, paras })
+      return {
+        Rows: [
+          { FMaterialId: '10010100435', FMaterialName: '断路器', FStockName: '元器件库1', FBaseQty: 3, FMTONO: 'S2026051' },
+          { FMaterialId: '10010100435', FMaterialName: '断路器', FStockName: '电气-元一', FBaseQty: 2, FMTONO: '' },
+        ],
+      }
+    }
+    const p = newPage({
+      ctrls: baseCtrl(),
+      ajaxHandler: router({ '/health': HEALTH_OK, '/check': CHECK_CLEAN }),
+      dataService: ds,
+    })
+    p.ctl['ECODE_Value'].__text = '10010100435'
+    p.ctl['ECODE_Value'].__tag = { value: '10010100435' }
+    p.ctl['ENAME_Value'].__text = '断路器'
+    p.ctl['GGXH_Value'].__text = 'IC65N C10A/2P'
+    p.OnCreate()
+
+    const btn = findBtn(p)
+    if (btn) btn.onclick({ preventDefault() { }, stopPropagation() { } })
+    await sleep(120)
+
+    const badge = findByClass(p, 'plm-smart-inv-badge')
+    const srcTag = findByClass(p, 'plm-smart-inv-src')
+    ok('调用了 PLM 库存服务', calls.length > 0 && calls[0].uri.indexOf('GetStockSearchData') >= 0,
+      'uri=' + (calls[0] && calls[0].uri))
+    ok('库存数量按编码汇总', !!badge && badge.textContent === '5', 'got=' + (badge && badge.textContent))
+    ok('来源标记为 PLM', !!srcTag && srcTag.textContent === 'PLM', 'got=' + (srcTag && srcTag.textContent))
+  }
+
+  // S28 PLM 无数据 → 直连兜底，并在界面标出来源
+  {
+    console.log('[S28] PLM 无数据 → 直连兜底（来源 ERP）')
+    const p = newPage({
+      ctrls: baseCtrl(),
+      ajaxHandler: router({
+        '/health': HEALTH_OK,
+        '/check': CHECK_CLEAN,
+        'direct=1': { found: true, source: 'erp', total: { qty: 7, avbqty: 7 }, warehouses: [] },
+      }),
+      globalCfg: { inventoryBase: 'http://127.0.0.1:3130' },
+      dataService: () => ({ Rows: [] }),
+    })
+    p.ctl['ECODE_Value'].__text = '10010100435'
+    p.ctl['ECODE_Value'].__tag = { value: '10010100435' }
+    p.ctl['ENAME_Value'].__text = '断路器'
+    p.ctl['GGXH_Value'].__text = 'IC65N C10A/2P'
+    p.OnCreate()
+
+    const btn = findBtn(p)
+    if (btn) btn.onclick({ preventDefault() { }, stopPropagation() { } })
+    await sleep(120)
+
+    const badge = findByClass(p, 'plm-smart-inv-badge')
+    const srcTag = findByClass(p, 'plm-smart-inv-src')
+    ok('直连兜底后显示数量', !!badge && badge.textContent === '7', 'got=' + (badge && badge.textContent))
+    ok('来源标记为 ERP', !!srcTag && srcTag.textContent === 'ERP', 'got=' + (srcTag && srcTag.textContent))
   }
 
   console.log('\n----------------------------------------')

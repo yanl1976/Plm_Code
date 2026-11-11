@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.43
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.45
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -76,7 +76,9 @@
     checkButtonOffsetY: 0,       // 纵向偏移(px)
     checkButtonPlace: 'left',    // 'left'=名称标签左侧（默认）；'float'=输入框右侧；'fixed'=窗口右下角；'after'=插进布局
     apiLabel: '数据治理服务器',   // 提示文案里代替具体地址显示的名字
-    inventoryBase: '',           // 库存查询地址（治理看板），如 http://192.168.20.31:3130；留空则不显示库存
+    inventorySource: 'plm',      // 'plm'=直接用 PLM 的 ERPService（与 BOM 库存查询同源）；'dashboard'=走 inventoryBase
+    allowDirectErp: true,        // PLM 查不到时是否回落到直连 ERP（排查期默认开；PLM 稳定后改 false）
+    inventoryBase: '',           // 仅 inventorySource='dashboard' 或直连兜底时使用，如 http://192.168.20.31:3130
     // 按钮只对下列「类型(ITEMTYPE)」生效，其余类型置灰不可用
     restrictItemType: true,
     itemTypeAllowText: ['电气元件', '原材料', '外购标准件'],
@@ -95,7 +97,7 @@
   // 允许被外部配置文件（ItemSmartInput.config.js）覆盖的键。
   // 用白名单而不是全量合并：写错键名不会悄悄改掉别的行为。
   var CFG_OVERRIDABLE = [
-    'apiBase', 'apiPort', 'apiLabel', 'inventoryBase', 'enabled', 'showCheckButton', 'lockFields',
+    'apiBase', 'apiPort', 'apiLabel', 'inventoryBase', 'inventorySource', 'allowDirectErp', 'enabled', 'showCheckButton', 'lockFields',
     'checkButtonText', 'checkButtonHost', 'checkButtonPlace',
     'checkButtonOffsetX', 'checkButtonOffsetY',
     'restrictItemType', 'itemTypeAllowText', 'itemTypeAllowValues',
@@ -1284,7 +1286,12 @@
     invWrap.appendChild(dlgEl('span', 'opacity:.75;', '现有库存'));
     var invBadge = dlgEl('span', 'background:#ffc107;color:#333;border-radius:4px;padding:0 6px;'
       + 'font-weight:bold;min-width:16px;text-align:center;', '0');
+    invBadge.className = 'plm-smart-inv-badge';
     invWrap.appendChild(invBadge);
+    // 数据来源标记：PLM / ERP（排查用，一眼看出走的是哪条链路）
+    var invSrc = dlgEl('span', 'opacity:.55;font-size:11px;', '');
+    invSrc.className = 'plm-smart-inv-src';
+    invWrap.appendChild(invSrc);
     quickRow.appendChild(invWrap);
 
     var simBtn = dlgEl('button', 'display:none;border:1px solid rgba(127,127,127,.45);background:transparent;'
@@ -1469,21 +1476,144 @@
       });
     }
 
-    /** 现有库存：走治理看板（3130）的只读接口；未配置 inventoryBase 则不显示 */
+    /**
+     * PLM 既有库存服务（与 BOM「库存查询」同源）：
+     *   Hoteam.InforCenter.ERPService.GetStockSearchData
+     * 浏览器内直接调用，复用当前登录会话，无需账号、无需跨域、不碰 ERP 数据库。
+     * 参数取自 TSDC/PSE/Item/Config/Json/StockSearchRequest.json。
+     */
+    function plmStockQuery(code, cb) {
+      var root = window.HoteamUI;
+      if (!root || !root.DataService || !root.DataService.Call) { cb(null); return; }
+      var base = {
+        FormId: 'STK_Inventory',
+        FieldKeys: 'FMaterialId,FMaterialName,FStockName,FBaseQty,FMTONO,FStockId',
+        OrderString: '', TopRowCount: 0, StartRow: 0, Limit: 2000, SubSystemId: ''
+      };
+      var call = function (filter) {
+        var p = {};
+        for (var k in base) p[k] = base[k];
+        p.FilterString = filter || [];
+        return root.DataService.Call('Hoteam.InforCenter.ERPService.GetStockSearchData', { para: p });
+      };
+      var unwrap = function (v) {
+        var x = v;
+        for (var i = 0; i < 5; i++) {
+          if (typeof x === 'string') {
+            var s = x.replace(/^\s+|\s+$/g, '');
+            if (!s || (s.charAt(0) !== '{' && s.charAt(0) !== '[')) break;
+            try { x = JSON.parse(s); continue; } catch (e) { break; }
+          }
+          if (x && typeof x === 'object' && !x.length) {
+            var ks = [], kk;
+            for (kk in x) ks.push(kk);
+            if (ks.length === 1) { x = x[ks[0]]; continue; }
+            if (x.d !== undefined) { x = x.d; continue; }
+          }
+          break;
+        }
+        return x;
+      };
+      var rowsOf = function (d) {
+        if (!d || typeof d === 'string') return null;
+        if (d.length) return d;
+        var keys = ['Rows', 'rows', 'Data', 'data', 'Result', 'result', 'Items', 'items'];
+        for (var i = 0; i < keys.length; i++) {
+          var v = d[keys[i]];
+          if (v && v.length) return v;
+          if (v && typeof v === 'object') {
+            var r = rowsOf(v);
+            if (r) return r;
+          }
+        }
+        return null;
+      };
+      var pick = function (rows) {
+        if (!rows || !rows.length) return null;
+        var qty = 0, whs = [];
+        for (var i = 0; i < rows.length; i++) {
+          var it = rows[i] || {};
+          var mid = String(it.FMaterialId == null ? '' : it.FMaterialId);
+          if (mid && code && mid !== String(code)) continue;
+          var n = Number(it.FBaseQty || 0);
+          qty += n;
+          whs.push({
+            stockName: String(it.FStockName || ''),
+            qty: n,
+            projectNo: String(it.FMTONO || '')
+          });
+        }
+        return { total: { qty: qty, avbqty: qty, lockqty: 0 }, warehouses: whs };
+      };
+
+      var rows = null;
+      try { rows = rowsOf(unwrap(call(["FMaterialId='" + code + "'"]))); } catch (e1) { rows = null; }
+      if (!rows || !rows.length) {            // 过滤语法不被接受时退回全量再本地筛
+        try { rows = rowsOf(unwrap(call([]))); } catch (e2) { rows = null; }
+      }
+      cb(pick(rows));
+    }
+
+    /** 展示库存与来源标记；返回是否展示成功 */
+    function showInv(r, src) {
+      if (!dlg || !r || !r.total) return false;
+      var n = Number(r.total.qty || 0);
+      if (!n) return false;
+      invBadge.textContent = String(n);
+      invSrc.textContent = src === 'erp' ? 'ERP' : 'PLM';
+      invSrc.title = src === 'erp'
+        ? '数据来自直连 ERP（排查期保留，可在配置中关闭 allowDirectErp）'
+        : '数据来自 PLM 库存查询服务（与 BOM「库存查询」同源）';
+      invBadge.title = (r.warehouses || []).slice(0, 8).map(function (w) {
+        return (w.stockName || '未知仓库') + '：' + w.qty + (w.projectNo ? '（' + w.projectNo + '）' : '');
+      }).join('\n');
+      invWrap.style.display = 'inline-flex';
+      return true;
+    }
+
+    /** 现有库存：默认走 PLM 的 ERPService；PLM 拿不到且开关打开时回落直连 ERP */
     function loadInventory(sp) {
       invWrap.style.display = 'none';
       invBadge.textContent = '0';
+      invSrc.textContent = '';
+      var src = CFG.inventorySource || 'plm';
+      var allowErp = CFG.allowDirectErp !== false;
+      try {
+        var ec3 = extCfg();
+        if (ec3 && ec3.inventorySource) src = String(ec3.inventorySource);
+        if (ec3 && ec3.allowDirectErp != null) allowErp = !!ec3.allowDirectErp;
+      } catch (e) { }
+
+      var code = readEcode();
       var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
+
+      // 直连兜底（默认开启）：走看板 3130 的直连查询，响应里带 source=erp
+      function tryDirect() {
+        if (!allowErp || !base || !code) return;
+        var u = base + '/api/new-material/inventory?direct=1&code=' + encodeURIComponent(code);
+        apiAbsolute(u, function (r) {
+          if (!dlg || !r || !r.found) return;
+          showInv(r, 'erp');
+        });
+      }
+
+      if (src === 'plm') {
+        if (!code) return;
+        plmStockQuery(code, function (r) {
+          if (!dlg) return;
+          if (showInv(r, 'plm')) return;
+          tryDirect();
+        });
+        return;
+      }
+
       if (!base) return;
-      var url = base + '/api/new-material/inventory?code=' + encodeURIComponent(readEcode())
+      var url = base + '/api/new-material/inventory?code=' + encodeURIComponent(code)
         + '&sub=' + encodeURIComponent(currentSub())
         + '&spec=' + encodeURIComponent(sp || '');
       apiAbsolute(url, function (r) {
-        if (!dlg || !r || !r.total) return;
-        var n = Number(r.total.qty || 0);
-        if (!n) return;                 // 无库存则不占位
-        invBadge.textContent = String(n);
-        invWrap.style.display = 'inline-flex';
+        if (!dlg || !r) return;
+        showInv(r, r.source === 'erp' ? 'erp' : 'plm');
       });
     }
 
@@ -2380,7 +2510,7 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.43（api=' + apiUrl('')
+  log('脚本已加载 v1.45（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；外部配置=' + (EXT_KEYS.length ? EXT_KEYS.join('/') : '未使用')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')

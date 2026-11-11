@@ -963,6 +963,45 @@ async function run() {
       'has不可用=' + (h2.indexOf('不可用') >= 0))
   }
 
+  // S32 类似型号明细弹窗标注库存来源
+  {
+    console.log('[S32] 类似型号明细标注来源')
+    const p = newPage({
+      ctrls: baseCtrl(),
+      ajaxHandler: router({
+        '/health': HEALTH_OK,
+        '/check': CHECK_CLEAN,
+        'similar-models': {
+          items: [{ fnumber: '10010100271', name: '断路器', spec: 'IC65N C10A/2P', qty: 4, avbqty: 4, projectNo: 'S2026046', similarity: 1 }],
+          total: { qty: 4, avbqty: 4 },
+        },
+      }),
+      globalCfg: { inventoryBase: 'http://127.0.0.1:3130' },
+    })
+    p.ctl['ECODE_Value'].__text = '10010100435'
+    p.ctl['ECODE_Value'].__tag = { value: '10010100435' }
+    p.ctl['ENAME_Value'].__text = '断路器'
+    p.ctl['GGXH_Value'].__text = 'IC65N C10A/2P'
+    p.OnCreate()
+
+    const btn = findBtn(p)
+    if (btn) btn.onclick({ preventDefault() { }, stopPropagation() { } })
+    await sleep(420)
+
+    const simBtn = findByClass(p, 'plm-smart-sim-btn')
+    ok('类似型号按钮可用', !!simBtn && simBtn.style.display !== 'none')
+    if (simBtn && simBtn.onclick) simBtn.onclick()
+    await sleep(80)
+
+    const htmlAll2 = (el) => {
+      let s = String(el.innerHTML || '')
+      for (const c of (el.children || [])) s += htmlAll2(c)
+      return s
+    }
+    const h = htmlAll2(p.doc.body)
+    ok('明细弹窗标注「来源：ERP」', h.indexOf('来源：ERP') >= 0, 'has=' + (h.indexOf('来源：ERP') >= 0))
+  }
+
   console.log('\n----------------------------------------')
   console.log(`结果: ${pass} 通过 / ${fail} 失败`)
   if (fail) console.log('失败项: ' + failures.join(' | '))

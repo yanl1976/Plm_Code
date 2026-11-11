@@ -1800,9 +1800,16 @@
       h2.appendChild(x2);
 
       var b2 = dlgEl('div', 'padding:12px 18px 16px;');
+      // 明细数据来自治理看板（3130 直连 ERP），与主弹窗的 PLM/ERP 标记口径一致
+      var simSrc = (lastSimilar && lastSimilar.source) === 'plm' ? 'PLM' : 'ERP';
+      var simSrcStyle = simSrc === 'ERP'
+        ? 'background:rgba(255,152,0,.18);color:#e8890c;'
+        : 'background:rgba(76,175,80,.18);color:#2e7d32;';
       b2.innerHTML = '<div style="opacity:.75;margin-bottom:8px">合计数量 <b style="opacity:1">'
         + (total.qty == null ? 0 : total.qty) + '</b>　·　可用 <b style="opacity:1">'
-        + (total.avbqty == null ? 0 : total.avbqty) + '</b></div>'
+        + (total.avbqty == null ? 0 : total.avbqty) + '</b>'
+        + '<span class="plm-smart-sim-src" style="margin-left:8px;padding:0 4px;border-radius:3px;'
+        + 'font-size:11px;' + simSrcStyle + '">来源：' + simSrc + '</span></div>'
         + '<div style="opacity:.75;margin-bottom:10px">录入规格：<span style="opacity:1">'
         + escHtml(sp) + '</span>　<span style="background:#ffd54f;color:#333;padding:0 4px;border-radius:2px">黄色</span>'
         + ' = 与该规格的差异部分　·　已按接近程度排序（越靠前差异越少）</div>';

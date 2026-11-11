@@ -129,7 +129,7 @@ function makeJQ(doc, getAjax) {
 }
 
 /** 创建一个"页面实例"：控件 + DOM + sandbox，并执行插件脚本 */
-function newPage({ ctrls, ajaxHandler, confirmReturn = true, globalCfg = null, dataService = null }) {
+function newPage({ ctrls, ajaxHandler, confirmReturn = true, globalCfg = null, dataService = null, asyncService = null }) {
   const doc = mkEl('body')
   doc.body = mkEl('body')
   doc.documentElement = mkEl('html')
@@ -197,6 +197,10 @@ function newPage({ ctrls, ajaxHandler, confirmReturn = true, globalCfg = null, d
   sandbox.alert = () => { }
   sandbox.confirm = () => confirmReturn
   if (dataService) HoteamUI.DataService = { Call: dataService }
+  if (asyncService) {
+    HoteamUI.DataService = HoteamUI.DataService || {}
+    HoteamUI.DataService.AsyncCall = asyncService
+  }
   sandbox.HoteamUI = HoteamUI
   sandbox.jQuery = jq
   sandbox.$ = jq
@@ -1117,6 +1121,80 @@ async function run() {
     ok('后端无重复时由前端兜底禁用按钮', !!save && save.disabled === true)
     ok('兜底提示含重复物料号', !!specTip && String(specTip.innerHTML).indexOf('10010100051') >= 0,
       'has=' + (!!specTip && String(specTip.innerHTML).indexOf('10010100051') >= 0))
+  }
+
+  // S36 有 AsyncCall 时走异步（不阻塞页面），结果与同步版一致
+  {
+    console.log('[S36] 库存走异步调用（不阻塞页面）')
+    const asyncCalls = []
+    const asyncService = (arg) => {
+      asyncCalls.push(String(arg.serviceuri || ''))
+      if (String(arg.serviceuri).indexOf('CommonGetObjectDataByFilter') >= 0) {
+        arg.callback(JSON.stringify({ PSEITEM: [{ EID: 'PSEITEM_mock00000000000000000000000000' }] }))
+      } else {
+        arg.callback({
+          Rows: [[
+            { ColName: 'FAVBQty', ColText: '6' },
+            { ColName: 'FStockName', ColText: '元器件库1' },
+            { ColName: 'FMTONO', ColText: 'PJ2026009' },
+          ]],
+        })
+      }
+    }
+    const p = newPage({
+      ctrls: baseCtrl(),
+      ajaxHandler: router({
+        '/health': HEALTH_OK,
+        '/check': CHECK_CLEAN,
+        'similar-models': {
+          items: [{ fnumber: '10010100271', name: '断路器', spec: 'IC65N C10A/2P', qty: 1, avbqty: 1, similarity: 1 }],
+          total: { qty: 1, avbqty: 1 },
+        },
+      }),
+      globalCfg: { inventoryBase: 'http://127.0.0.1:3130' },
+      asyncService,
+    })
+    p.ctl['ECODE_Value'].__text = '10010100435'
+    p.ctl['ECODE_Value'].__tag = { value: '10010100435' }
+    p.ctl['ENAME_Value'].__text = '断路器'
+    p.ctl['GGXH_Value'].__text = 'IC65N C10A/2P'
+    p.OnCreate()
+
+    const btn = findBtn(p)
+    if (btn) btn.onclick({ preventDefault() { }, stopPropagation() { } })
+    await sleep(450)
+
+    const simBtn = findByClass(p, 'plm-smart-sim-btn')
+    if (simBtn && simBtn.onclick) simBtn.onclick()
+    await sleep(200)
+
+    const qtyEl = findByClass(p, 'plm-smart-sim-qty')
+    const pjEl = findByClass(p, 'plm-smart-sim-pj')
+    ok('走了 AsyncCall（EID + 库存两次）',
+      asyncCalls.filter((u) => u.indexOf('CommonGetObjectDataByFilter') >= 0).length > 0
+      && asyncCalls.filter((u) => u.indexOf('GetStockSearchData') >= 0).length > 0,
+      'calls=' + asyncCalls.length)
+    ok('异步路径数量正确', !!qtyEl && String(qtyEl.textContent) === '6', 'got=' + (qtyEl && qtyEl.textContent))
+    ok('异步路径项目号正确', !!pjEl && String(pjEl.textContent) === 'PJ2026009', 'got=' + (pjEl && pjEl.textContent))
+  }
+
+  // S37 弹窗标题显示版本号（与 PLUGIN_VERSION 同步）
+  {
+    console.log('[S37] 标题显示版本号')
+    const p = newPage({ ctrls: baseCtrl(), ajaxHandler: router({ '/health': HEALTH_OK, '/check': CHECK_CLEAN }) })
+    p.ctl['ECODE_Value'].__text = '10010100435'
+    p.ctl['ECODE_Value'].__tag = { value: '10010100435' }
+    p.ctl['ENAME_Value'].__text = '断路器'
+    p.ctl['GGXH_Value'].__text = 'IC65N C10A/2P'
+    p.OnCreate()
+
+    const btn = findBtn(p)
+    if (btn) btn.onclick({ preventDefault() { }, stopPropagation() { } })
+    await sleep(120)
+
+    const title = findByClass(p, 'plm-smart-dlg-title')
+    const txt = String((title && title.textContent) || '')
+    ok('标题含「版本号：V x.y」', /版本号：V \d+\.\d+/.test(txt), 'got=' + txt)
   }
 
   console.log('\n----------------------------------------')

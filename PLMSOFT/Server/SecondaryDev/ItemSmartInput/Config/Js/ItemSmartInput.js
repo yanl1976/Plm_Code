@@ -1,5 +1,5 @@
 /**
- * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.53
+ * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.54
  *
  * 生效原理：
  *   PLM 页面生成模板 Platform/Config/Generator/PAGE-CREATE.generator 固化了两个钩子调用：
@@ -37,6 +37,17 @@
  */
 (function (window, $) {
   'use strict';
+
+  // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
+  // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
+  var PLUGIN_VERSION = '1.54';
+  function pluginVersion() {
+    try {
+      var c = extCfg();
+      if (c && c.version) return String(c.version);
+    } catch (e) { }
+    return PLUGIN_VERSION;
+  }
 
   // ======================= 配置（部署时按现场修改） =======================
   var CFG = {
@@ -97,7 +108,7 @@
   // 允许被外部配置文件（ItemSmartInput.config.js）覆盖的键。
   // 用白名单而不是全量合并：写错键名不会悄悄改掉别的行为。
   var CFG_OVERRIDABLE = [
-    'apiBase', 'apiPort', 'apiLabel', 'inventoryBase', 'inventorySource', 'allowDirectErp', 'enabled', 'showCheckButton', 'lockFields',
+    'version', 'apiBase', 'apiPort', 'apiLabel', 'inventoryBase', 'inventorySource', 'allowDirectErp', 'enabled', 'showCheckButton', 'lockFields',
     'checkButtonText', 'checkButtonHost', 'checkButtonPlace',
     'checkButtonOffsetX', 'checkButtonOffsetY',
     'restrictItemType', 'itemTypeAllowText', 'itemTypeAllowValues',
@@ -1230,7 +1241,8 @@
       + 'font:13px/1.6 "Microsoft YaHei",Arial,sans-serif;color:' + th.fg + ';');
 
     var head = dlgEl('div', 'padding:10px 16px;background:' + C_HEAD_BG + ';border-bottom:' + C_LINE + ';font-weight:bold;font-size:14px;');
-    head.textContent = '物料名称与规格校验';
+    head.textContent = '物料名称与规格校验　版本号：V ' + pluginVersion();
+    head.className = 'plm-smart-dlg-title';
     var xBtn = dlgEl('span', 'float:right;cursor:pointer;color:#999;font-weight:normal;font-size:18px;line-height:18px;', '×');
     xBtn.onclick = closeEditor;
     head.appendChild(xBtn);
@@ -1714,7 +1726,68 @@
       } catch (e) { return null; }
     }
 
-    function plmStockQuery(code, cb) { cb(plmStockQuerySync(code)); }
+    /**
+     * 异步版：平台有 DataService.AsyncCall 时走异步（不阻塞页面），
+     * 没有则退回同步 Call（旧环境/测试桩）。
+     * 回调 cb(结果 | null)，结果结构与同步版一致。
+     */
+    function plmStockQueryAsync(code, cb) {
+      var root = window.HoteamUI;
+      var ds = root && root.DataService;
+      if (!ds || !code) { cb(null); return; }
+      if (typeof ds.AsyncCall !== 'function') { cb(plmStockQuerySync(code)); return; }
+
+      function queryStock(eid) {
+        if (!eid) { cb(null); return; }
+        try {
+          ds.AsyncCall({
+            serviceuri: 'Hoteam.InforCenter.ERPService.GetStockSearchData',
+            paras: {
+              para: {
+                Pager: { CurrentPager: 1, RowNumber: 50, SortOrder: 'asc', SortName: '', Records: 0 },
+                ViewName: 'StockSearchListView',
+                ObjectType: 'PSEITEM',
+                OnlyQuery: 'true',
+                ParaList: JSON.stringify({ ObjectID: [eid] })
+              }
+            },
+            callback: function (ret) {
+              try { cb(parseStockGrid(ret)); } catch (e) { cb(null); }
+            },
+            errorCallback: function () { cb(null); },
+            showErrorMessage: false
+          });
+        } catch (e) { cb(null); }
+      }
+
+      try {
+        var safe = String(code).replace(/'/g, "''");
+        ds.AsyncCall({
+          serviceuri: 'InforCenter.Common.ObjectService.CommonGetObjectDataByFilter',
+          paras: {
+            para: {
+              Data: JSON.stringify({
+                PSEITEM: { FilterInfo: [], FilterString: "ECODE='" + safe + "'", OrderbyString: '' }
+              })
+            }
+          },
+          callback: function (raw) {
+            var eid = '';
+            try {
+              var o = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+              var arr = o.PSEITEM || o['PSEITEM$'] || o.Data;
+              var row = arr && arr[0];
+              eid = (row && (row.EID || row['PSEITEM.EID'] || row.EID_DisplayValue)) || '';
+            } catch (e) { eid = ''; }
+            queryStock(eid);
+          },
+          errorCallback: function () { cb(null); },
+          showErrorMessage: false
+        });
+      } catch (e) { cb(null); }
+    }
+
+    function plmStockQuery(code, cb) { plmStockQueryAsync(code, cb); }
 
     /** 展示库存与来源标记；返回是否展示成功 */
     function showInv(r, src) {
@@ -1966,9 +2039,10 @@
         if (i >= items.length) { finish(); return; }
         var idx = i++;
         if (srcEl) srcEl.textContent = '库存来源：查询中 ' + (idx + 1) + '/' + items.length;
-        var n = null;
-        try {
-          var r = plmStockQuerySync(items[idx].fnumber);
+        // 串行异步：前一条回来再发下一条，既不阻塞页面，也不会瞬间打爆服务端
+        plmStockQueryAsync(items[idx].fnumber, function (r) {
+          if (!dlg) return;
+          var n = null;
           if (r && r.ok) {
             okCount++;
             n = Number((r.total && r.total.qty) || 0);
@@ -1976,12 +2050,12 @@
             var pj = pickStockProject(r);
             if (pj && pjCells && pjCells[idx]) pjCells[idx].textContent = pj;
           }
-        } catch (e) { }
-        if (cells[idx]) cells[idx].textContent = (n == null ? '-' : String(n));
-        if (n != null) sum += n;
-        if (sumQty) sumQty.textContent = String(sum);
-        if (sumAvb) sumAvb.textContent = String(sum);
-        setTimeout(step, 0);
+          if (cells[idx]) cells[idx].textContent = (n == null ? '-' : String(n));
+          if (n != null) sum += n;
+          if (sumQty) sumQty.textContent = String(sum);
+          if (sumAvb) sumAvb.textContent = String(sum);
+          setTimeout(step, 0);
+        });
       }
       setTimeout(step, 0);
     }
@@ -2785,7 +2859,7 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
-  log('脚本已加载 v1.53（api=' + apiUrl('')
+  log('脚本已加载 v' + pluginVersion() + '（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；外部配置=' + (EXT_KEYS.length ? EXT_KEYS.join('/') : '未使用')
     + '；规格同步ZYCS/FLSXHB=' + (CFG.fillSpecToParams ? '开' : '关')

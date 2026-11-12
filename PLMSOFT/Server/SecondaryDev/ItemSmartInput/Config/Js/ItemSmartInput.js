@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.54';
+  var PLUGIN_VERSION = '1.55';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1630,8 +1630,10 @@
       var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
       if (!base) return;
 
+      // limit=20：明细里每条都要 2 次 PLM 调用，默认只取最接近的 20 条
       var url = base + '/api/new-material/similar-models?sub=' + encodeURIComponent(currentSub())
-        + '&spec=' + encodeURIComponent(sp) + '&code=' + encodeURIComponent(readEcode());
+        + '&spec=' + encodeURIComponent(sp) + '&code=' + encodeURIComponent(readEcode())
+        + '&limit=20';
       apiAbsolute(url, function (r) {
         if (!dlg || !r || !r.items || !r.items.length) return;
         lastSimilar = r;
@@ -1662,9 +1664,24 @@
      *   - 不能传 FilterString；Pager 要带 SortOrder / Records
      *   - 返回 Rows 是二维数组，每格是 {ColName, ColText}
      */
+    // EID 缓存：编码 → EID，10 分钟内复用，避免同一次选型里反复查对象
+    var eidCache = {};
+    var EID_TTL = 10 * 60 * 1000;
+
+    function eidCached(code) {
+      var c = eidCache[code];
+      return (c && Date.now() - c.at < EID_TTL) ? c.eid : '';
+    }
+    function eidStore(code, eid) {
+      if (eid) eidCache[code] = { eid: eid, at: Date.now() };
+    }
+
     function plmEidByCode(code) {
+      if (!code) return '';
+      var hit0 = eidCached(code);
+      if (hit0) return hit0;
       var root = window.HoteamUI;
-      if (!root || !root.DataService || !root.DataService.Call || !code) return '';
+      if (!root || !root.DataService || !root.DataService.Call) return '';
       try {
         var safe = String(code).replace(/'/g, "''");
         var filter = {
@@ -1676,7 +1693,9 @@
         var o = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
         var arr = o.PSEITEM || o['PSEITEM$'] || o.Data;
         var row = arr && arr[0];
-        return (row && (row.EID || row['PSEITEM.EID'] || row.EID_DisplayValue)) || '';
+        var eid = (row && (row.EID || row['PSEITEM.EID'] || row.EID_DisplayValue)) || '';
+        eidStore(code, eid);
+        return eid;
       } catch (e) { return ''; }
     }
 
@@ -1737,6 +1756,10 @@
       if (!ds || !code) { cb(null); return; }
       if (typeof ds.AsyncCall !== 'function') { cb(plmStockQuerySync(code)); return; }
 
+      // 命中 EID 缓存时直接查库存，省掉一次对象查询
+      var eidHit = eidCached(code);
+      if (eidHit) { queryStock(eidHit); return; }
+
       function queryStock(eid) {
         if (!eid) { cb(null); return; }
         try {
@@ -1779,6 +1802,7 @@
               var row = arr && arr[0];
               eid = (row && (row.EID || row['PSEITEM.EID'] || row.EID_DisplayValue)) || '';
             } catch (e) { eid = ''; }
+            eidStore(code, eid);
             queryStock(eid);
           },
           errorCallback: function () { cb(null); },
@@ -1911,8 +1935,10 @@
 
       var h2 = dlgEl('div', 'padding:12px 18px;border-bottom:' + C_LINE + ';background:' + C_HEAD_BG
         + ';font-size:15px;font-weight:bold;white-space:nowrap;overflow:hidden;');
+      var matchedTotal = (lastSimilar && lastSimilar.matchedTotal) || items.length;
       h2.innerHTML = '类似型号明细 <span style="font-weight:normal;opacity:.7;font-size:13px">'
-        + '（同小类相同/相似规格，共 ' + items.length + ' 条）</span>';
+        + '（同小类相同/相似规格，共 ' + matchedTotal + ' 条'
+        + (matchedTotal > items.length ? '，本次查前 ' + items.length + ' 条' : '') + '）</span>';
       var x2 = dlgEl('span', 'float:right;cursor:pointer;opacity:.7;font-size:18px;line-height:18px;', '×');
       x2.onclick = closeSimilarModal;
       h2.appendChild(x2);

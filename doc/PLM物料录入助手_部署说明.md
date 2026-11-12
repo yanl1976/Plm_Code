@@ -1,14 +1,15 @@
 # PLM 物料新增「名称/规格型号」智能录入助手 — 部署说明
 
-> 版本 **v1.54** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
-> 插件文件：`ItemSmartInput.js` v1.54 — 128,011 字节 / 2,875 行 / UTF-8 无 BOM
-> SHA256：`958FA4D2191E8BE58C5EE4827B065BC5FBF4CE7774E5D79F2A7E1775563B5724`
+> 版本 **v1.55** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
+> 插件文件：`ItemSmartInput.js` v1.55 — 129,020 字节 / 2,901 行 / UTF-8 无 BOM
+> SHA256：`5F61DFBCE746C4CEB83EFCEF3566363F0BDD3C66435E2E53F41A81963FA8941A`
 > **后端本次有改动**：`src/plm-index.js` 新增「仅规格相同」索引（12,174 字节），需部署并重启 3100（v1.52 起前端也做了兜底，后端没换也能拦住）
 > 配置文件：`ItemSmartInput.config.js` — 3,243 字节 / 51 行 / UTF-8 无 BOM
 > SHA256：`AB883C30C398DFD7712E46A116A579B8995E3B9CBAB259AE5BFF70079F9157D0`
 >
 > **版本演进（近期）**
-> - **v1.54（当前）**：库存查询改**异步串行**（`DataService.AsyncCall`，一条回来再发下一条），25 条明细不再卡住页面；弹窗标题改为 **`智能数据治理平台　版本号：V x.y`**，版本号与 `PLUGIN_VERSION` 常量同步
+> - **v1.55（当前）**：降低 PLM 压力——类似型号默认只取前 20 条（支持「加载更多」）、**EID 内存缓存 10 分钟**（同一物料只查一次对象）、明细标题显示「共 N 条，本次查前 M 条」
+> - v1.54：库存查询改**异步串行**（`DataService.AsyncCall`，一条回来再发下一条），25 条明细不再卡住页面；弹窗标题改为 **`智能数据治理平台　版本号：V x.y`**，版本号与 `PLUGIN_VERSION` 常量同步
 > - v1.53：明细的项目号也以 **PLM 返回的 `FMTONO`** 为准（逐条查完覆盖看板值），不再依赖 3130
 > - v1.52：**前端兜底判重**——`similar-models` 里 `similarity=1` 等价规格完全相同，即使 3100 未升级（不返回 `spec` 级）也能红字阻断 + 禁用按钮
 > - v1.51：查重新增「**仅规格相同**」判定（`level=spec`）——名称不同但规格一字不差也按 error 阻断，明细行标注「（名称不同）」
@@ -561,6 +562,24 @@ HoteamUI.DataService.Call('Hoteam.InforCenter.ERPService.GetStockSearchData', {
 > 归一化见 `src/config/dedup-rules.json`：小写、全角转半角、去空格、分隔符统一为 `/`——所以 `ITR326A` 与 `iTR326A` 视为相同。
 
 **前端兜底（v1.52）**：3100 未升级时响应里没有 `spec` 级，插件会用 `similar-models` 的 `similarity >= 0.999` 自行补一条 `spec` 记录，同样红字 + 禁用按钮。两条路任一命中即阻断，互不依赖。
+
+### 5.4 数据来源边界与待办（重要）
+
+| 能力 | 当前来源 | 是否 PLM |
+|---|---|---|
+| 库存（主链路） | `ERPService.GetStockSearchData` | ✅ PLM |
+| 库存（降级） | 3130 `direct=1` → 直连 ERP 库 | ❌ ERP |
+| 编码 → EID | `ObjectService.CommonGetObjectDataByFilter` | ✅ PLM |
+| 名称联想 / 查重 / 类似型号 | 3100、3130 读 `data/materials.ndjson`（ERP 快照，23,036 条） | ❌ ERP 快照 |
+| 选型库 | 3100 读 `data/selection/*.json`（人工维护） | ❌ 本地 |
+
+**待办（未执行，需外部条件）**：把「物料主数据」也切到 PLM。
+
+- 阻塞点：PLM 的 `ObjectService` 只支持**按编码查对象**，没有「按名称/规格模糊查物料」的接口
+- 需要的支持（二选一）：
+  1. 软件方提供按名称/规格检索物料的接口
+  2. 提供物料全量导出接口，本地索引改为从 PLM 同步（而非 ERP 快照）
+- 在此之前：库存走 PLM，主数据继续用 ERP 快照
 
 ---
 

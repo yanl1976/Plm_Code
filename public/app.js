@@ -1982,21 +1982,25 @@ async function nmShowSelect() {
 }
 
 // 类似型号弹窗：物料号 / 名称 / 规格 / 库存数量 / 项目号
-async function nmShowSimilar(refresh) {
+async function nmShowSimilar(refresh, limitArg) {
   if (!nm.cur.sub) { alert('请先选择小类'); return }
   const spec = ($('#nmSpec').value || '').trim()
   if (!spec) { alert('请先填写规格型号'); return }
   const body = $('#modalBody')
   if (!body) return
+  // 分页：默认只取前 20 条，避免一次拉全量后端要批量补库存/项目号
+  const limit = Number(limitArg) || 20
   // 先弹窗再查：ERP 首次查询库存/项目号较慢，先给出"查询中"反馈，不让用户觉得按钮没反应
   body.innerHTML = '<h3>类似型号明细</h3><p class="muted">查询中…（首次查询较慢，结果会缓存到本地，下次秒开）</p>'
   $('#modal').classList.remove('hidden')
   const r = await api('/api/new-material/similar-models?sub=' + encodeURIComponent(nm.cur.sub)
     + '&spec=' + encodeURIComponent(spec) + '&code=' + encodeURIComponent(nm.cur.code || '')
+    + '&limit=' + limit
     + (refresh === true ? '&refresh=1' : ''))
   const items = (r && r.items) || []
   const total = (r && r.total) || { qty: 0, avbqty: 0 }
-  let html = `<h3>类似型号明细 <span class="muted">（同小类相同/相似规格，共 ${items.length} 条）</span></h3>`
+  const matchedTotal = (r && r.matchedTotal) || items.length
+  let html = `<h3>类似型号明细 <span class="muted">（同小类相同/相似规格，共 ${matchedTotal} 条）</span></h3>`
   if (r && r.error) {
     html += `<p class="muted">查询失败：${escapeHtml(String(r.error))}</p>`
     body.innerHTML = html
@@ -2025,9 +2029,16 @@ async function nmShowSimilar(refresh) {
     }).join('')
     html += '</tbody></table>'
   }
+  // 分页提示：总数多于当前条数时给出「加载更多」
+  if (matchedTotal > items.length) {
+    html += `<p class="muted small">当前显示前 ${items.length} 条，共 ${matchedTotal} 条　
+      <a href="javascript:void 0" id="nmSimMore">加载更多（+20）</a></p>`
+  }
   body.innerHTML = html
   const btn = $('#nmSimRefresh')
-  if (btn) btn.addEventListener('click', (ev) => { ev.preventDefault(); nmShowSimilar(true) })
+  if (btn) btn.addEventListener('click', (ev) => { ev.preventDefault(); nmShowSimilar(true, limit) })
+  const more = $('#nmSimMore')
+  if (more) more.addEventListener('click', (ev) => { ev.preventDefault(); nmShowSimilar(false, limit + 20) })
 }
 
 async function nmSave() {

@@ -718,9 +718,13 @@ function bgFill(kind, ids) {
 // 缓存优先：命中 data/inv-cache.json 直接出数；缺失项才补查，单条查询 10 秒超时，
 // 超时/报错只丢该项，绝不阻塞整页（历史上这里会一直等到 120 秒 requestTimeout）。
 async function similarModels(sub, spec, excludeCode, opts = {}) {
-  const matched = matchSimilarDocs(sub, spec, excludeCode)
+  // 分页：默认只返回前 20 条（前端逐条查库存时每条要 2 次 PLM 调用，量大代价高）
+  const all = matchSimilarDocs(sub, spec, excludeCode)
+  const limit = Math.max(1, Math.min(Number(opts.limit) || 20, 50))
+  const matched = all.slice(0, limit)
+  const matchedTotal = all.length
   const ids = [...new Set(matched.map((d) => d.mid))]
-  if (!ids.length) return { items: [], total: { qty: 0, avbqty: 0 } }
+  if (!ids.length) return { items: [], total: { qty: 0, avbqty: 0 }, matchedTotal: 0, limit }
 
   const fresh = !!opts.refresh
   const fns = [...new Set(matched.map((d) => d.fnumber))]
@@ -764,7 +768,10 @@ async function similarModels(sub, spec, excludeCode, opts = {}) {
     }
   }).sort((a, b) => (b.similarity - a.similarity) || (b.qty - a.qty))
   const total = items.reduce((s, x) => ({ qty: s.qty + x.qty, avbqty: s.avbqty + x.avbqty }), { qty: 0, avbqty: 0 })
-  return { items, total, pending, cachedCount: items.length - pending }
+  return {
+    items, total, pending, cachedCount: items.length - pending,
+    matchedTotal, limit,           // 供前端显示「共 N 条，当前显示 M 条」
+  }
 }
 
 // ---- 路由 ----
@@ -1298,7 +1305,8 @@ const server = http.createServer(async (req, res) => {
       if (!sub || !spec) return sendJson(res, 200, { items: [], total: { qty: 0, avbqty: 0 } })
       try {
         const refresh = url.searchParams.get('refresh') === '1'
-        return sendJson(res, 200, await similarModels(sub, spec, code, { refresh }))
+        const limit = parseInt(url.searchParams.get('limit') || '20', 10)
+        return sendJson(res, 200, await similarModels(sub, spec, code, { refresh, limit }))
       } catch (e) {
         return sendJson(res, 200, { items: [], total: { qty: 0, avbqty: 0 }, error: String((e && e.message) || e) })
       }

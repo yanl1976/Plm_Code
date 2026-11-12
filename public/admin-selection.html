@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>选型库管理</title>
+<style>
+  /* 与看板（3130）完全一致的配色 */
+  :root { --bg:#0f1419; --panel:#1a2230; --panel2:#222c3c; --line:#2c3a4f; --text:#e6edf3; --muted:#8b9bb0; --accent:#3ea6ff; --green:#3fb950; --red:#f85149; --amber:#d29922; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.6 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif; }
+  .wrap { max-width:1320px; margin:20px auto 60px; padding:0 18px; }
+  h1 { font-size:18px; margin:0 0 4px; }
+  h2 { font-size:13px; margin:16px 0 8px; color:var(--muted); font-weight:500; }
+  .sub { color:var(--muted); font-size:12px; margin-bottom:14px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px 16px; margin-bottom:14px; }
+  .row { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; }
+  label { display:block; font-size:12px; color:var(--muted); margin-bottom:4px; }
+  input[type=text], input[type=number], select {
+    padding:6px 9px; border:1px solid var(--line); border-radius:5px; font-size:13px;
+    background:var(--panel2); color:var(--text); min-width:130px;
+  }
+  input[type=file] { font-size:13px; color:var(--muted); }
+  button { padding:6px 14px; border:1px solid var(--line); background:var(--panel2); color:var(--text); border-radius:5px; cursor:pointer; font-size:13px; }
+  button:hover { border-color:var(--accent); }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#06121f; font-weight:600; }
+  button.primary:hover { filter:brightness(1.08); }
+  button.danger { color:var(--red); border-color:#5a2b2b; }
+  button.danger:hover { background:#3a2020; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { padding:6px 9px; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle; }
+  th { background:var(--panel2); color:var(--muted); font-weight:500; white-space:nowrap; }
+  td.mono { font-family:ui-monospace,Consolas,monospace; font-size:12px; }
+  .tag { display:inline-block; padding:0 6px; border-radius:3px; font-size:11px; background:var(--panel2); color:var(--muted); }
+  .tag.model { background:rgba(63,185,80,.16); color:var(--green); }
+  .tag.num { background:rgba(62,166,255,.16); color:var(--accent); }
+  .tag.enum { background:rgba(210,153,34,.16); color:var(--amber); }
+  .hidden { display:none !important; }
+  .hint { color:var(--muted); font-size:12px; margin-top:8px; }
+  .msg { font-size:13px; margin-top:8px; }
+  .msg.err { color:var(--red); }
+  .msg.ok { color:var(--green); }
+  /* 不再限高：内容全部展开，只保留页面级一个滚动条（避免二次纵向滚动） */
+  .scroll { border:1px solid var(--line); border-radius:6px; background:var(--panel); }
+  .empty { color:var(--muted); padding:16px; text-align:center; }
+  /* 弹窗：margin:auto 实现垂直居中，内容超高时由遮罩层滚动 */
+  .mask { position:fixed; inset:0; background:rgba(0,0,0,.62); z-index:100; display:flex; align-items:flex-start; justify-content:center; padding:20px 16px; overflow:auto; }
+  .modal { margin:auto; width:1180px; max-width:97vw; background:var(--panel); border:1px solid var(--line); border-radius:8px; box-shadow:0 16px 48px rgba(0,0,0,.5); }
+  .modal-head { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--line); background:var(--panel2); font-weight:600; }
+  .modal-head .x { cursor:pointer; color:var(--muted); font-size:20px; line-height:18px; padding:0 4px; }
+  .modal-head .x:hover { color:var(--text); }
+  .modal-body { padding:14px 16px; }
+  .modal-foot { display:flex; align-items:center; gap:12px; padding:12px 16px; border-top:1px solid var(--line); background:var(--panel2); }
+  .cell-edit { width:100%; border:1px solid transparent; background:transparent; color:var(--text); padding:3px 4px; border-radius:3px; font-size:12px; }
+  .cell-edit:focus { border-color:var(--accent); background:var(--panel2); outline:none; }
+  td[contenteditable="true"] { cursor:text; }
+  td[contenteditable="true"]:focus { outline:1px solid var(--accent); background:var(--panel2); }
+  .add-col-row td { background:var(--panel2); }
+  .add-col-row button { color:var(--muted); }
+  .add-col-row button:hover { color:var(--accent); border-color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>选型库管理</h1>
+  <div class="sub">上传厂家选型表（xlsx / xls / csv）。<b>列即参数</b>，无需固定模板；每行是一个具体型号。保存后立刻生效，无需重启。</div>
+
+  <div class="card">
+    <div class="row">
+      <div><label>选择文件</label><input type="file" id="file" accept=".xlsx,.xls,.csv"></div>
+      <div><button id="btnParse" class="primary">解析</button></div>
+      <div id="parseMsg" class="msg"></div>
+    </div>
+  </div>
+
+  <div class="card hidden" id="step2">
+    <h2>① 基本信息</h2>
+    <div class="row">
+      <div><label>小类号（6 位）</label><input type="text" id="sub" placeholder="如 100105" maxlength="6"></div>
+      <div><label>系列代号</label><input type="text" id="seriesId" placeholder="如 NB8-40J"></div>
+      <div><label>品牌</label><input type="text" id="brand" placeholder="如 正泰"></div>
+      <div><label>物料名称</label><input type="text" id="name" placeholder="如 小型断路器"></div>
+    </div>
+    <div class="hint" id="sheetInfo"></div>
+
+    <h2>② 参数列（列即参数，可调整类型；指定一列为「型号」）</h2>
+    <div class="scroll">
+      <table id="cols"><thead>
+        <tr><th>Excel 列名</th><th>参数名</th><th>单位</th><th>类型</th><th>角色</th><th title="勾选后才会出现在选型助手的筛选条件栏">可筛</th><th>取值数</th><th>示例</th></tr>
+      </thead><tbody></tbody></table>
+    </div>
+
+    <h2>③ 预览（前 10 行）</h2>
+    <div class="scroll"><table id="preview"><thead></thead><tbody></tbody></table></div>
+
+    <div class="row" style="margin-top:14px">
+      <div><button id="btnSave" class="primary">保存入库</button></div>
+      <div id="saveMsg" class="msg"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>已有选型库</h2>
+    <div class="row" style="margin-bottom:10px">
+      <div><button id="btnReload">刷新</button></div>
+      <div id="listMsg" class="msg"></div>
+    </div>
+    <div class="scroll"><table id="list"><thead>
+      <tr><th>小类号</th><th>系列</th><th>品牌</th><th>名称</th><th>方式</th><th>型号数</th><th>参数数</th><th>来源</th><th>状态</th><th>操作</th></tr>
+    </thead><tbody></tbody></table></div>
+  </div>
+</div>
+
+<!-- 编辑弹窗 -->
+<div id="editMask" class="mask hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <span>编辑选型库　<span class="mono" id="editFile" style="color:var(--muted);font-size:12px"></span></span>
+      <span class="x" id="editClose">×</span>
+    </div>
+    <div class="modal-body">
+      <h2>基本信息</h2>
+      <div class="row">
+        <div><label>小类号（6 位）</label><input type="text" id="eSub" maxlength="6" style="width:110px"></div>
+        <div><label>系列代号</label><input type="text" id="eId" style="width:170px"></div>
+        <div><label>品牌</label><input type="text" id="eBrand" style="width:120px"></div>
+        <div><label>物料名称</label><input type="text" id="eName" style="width:160px"></div>
+      </div>
+
+      <h2>参数列</h2>
+      <div class="scroll">
+        <table id="eCols"><thead>
+          <tr><th>参数名</th><th>单位</th><th>类型</th><th>角色</th><th title="勾选后才会出现在选型助手的筛选条件栏">可筛</th><th>取值数</th><th style="width:76px">操作</th></tr>
+        </thead><tbody></tbody></table>
+      </div>
+
+      <h2>型号数据（<span id="eRowCount">0</span> 行，单元格可直接修改）</h2>
+      <div class="scroll">
+        <table id="eRows"><thead></thead><tbody></tbody></table>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button id="editSave" class="primary">保存修改</button>
+      <button id="editCancel">取消</button>
+      <span id="editMsg" class="msg"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+var STATE = { columns: [], rows: [], fileName: '' };
+var EDIT = null;   // { file, series }
+var $ = function (id) { return document.getElementById(id); };
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+  });
+}
+function say(el, text, ok) {
+  var e = $(el); if (!e) return;
+  e.textContent = text || '';
+  e.className = 'msg' + (text ? (ok ? ' ok' : ' err') : '');
+}
+function opt(v, cur, label) {
+  return '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + label + '</option>';
+}
+function typeTag(t) {
+  return t === 'number' ? '<span class="tag num">数字</span>'
+    : t === 'enum' ? '<span class="tag enum">枚举</span>'
+    : '<span class="tag">文本</span>';
+}
+
+// ---------- 解析上传 ----------
+$('btnParse').onclick = function () {
+  var f = $('file').files && $('file').files[0];
+  if (!f) { say('parseMsg', '请先选择文件', false); return; }
+  say('parseMsg', '解析中…', true);
+  var reader = new FileReader();
+  reader.onload = function () {
+    fetch('/api/plm/select/parse', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileName: f.name, data: String(reader.result || '') }),
+    }).then(function (r) { return r.json(); }).then(function (r) {
+      if (!r || !r.ok) { say('parseMsg', (r && r.error) || '解析失败', false); return; }
+      STATE.columns = r.columns || [];
+      STATE.rows = r.rows || [];
+      STATE.fileName = f.name;
+      say('parseMsg', '解析成功：' + r.sheetName + '，表头第 ' + r.headerRow + ' 行，' + r.total + ' 行数据'
+        + (r.halfWidthConverted ? '（已自动把 ' + r.halfWidthConverted + ' 处全角字符转为半角）' : ''), true);
+      $('step2').classList.remove('hidden');
+      $('sheetInfo').textContent = '工作表：' + r.sheetName + '　表头行：第 ' + r.headerRow + ' 行　数据行：' + r.total
+        + '（预览/保存最多 5000 行）';
+      if (!$('seriesId').value) $('seriesId').value = (f.name || '').replace(/\.[^.]+$/, '').slice(0, 40);
+      var subCol = STATE.columns.find(function (c) { return /小类/.test(c.key); });
+      if (subCol && STATE.rows.length) {
+        var v = String(STATE.rows[0][subCol.key] == null ? '' : STATE.rows[0][subCol.key]).trim();
+        if (/^\d{6}$/.test(v)) $('sub').value = v;
+      }
+      renderCols(); renderPreview();
+    }).catch(function (e) { say('parseMsg', '请求失败：' + (e && e.message ? e.message : e), false); });
+  };
+  reader.readAsDataURL(f);
+};
+
+function renderCols() {
+  var tb = $('cols').querySelector('tbody');
+  tb.innerHTML = STATE.columns.map(function (c, i) {
+    return '<tr>'
+      + '<td class="mono">' + esc(c.raw) + '</td>'
+      + '<td><input type="text" data-k="key" data-i="' + i + '" value="' + esc(c.key) + '" style="min-width:120px"></td>'
+      + '<td><input type="text" data-k="unit" data-i="' + i + '" value="' + esc(c.unit) + '" style="min-width:56px;width:66px"></td>'
+      + '<td><select data-k="type" data-i="' + i + '">'
+        + opt('number', c.type, '数字') + opt('enum', c.type, '枚举') + opt('text', c.type, '文本')
+      + '</select></td>'
+      + '<td><select data-k="role" data-i="' + i + '">' + opt('', c.role, '参数') + opt('model', c.role, '型号列') + '</select></td>'
+      + '<td style="text-align:center"><input type="checkbox" data-k="filterable" data-i="' + i + '"'
+        + (c.filterable !== false ? ' checked' : '') + ' title="勾选后才会出现在选型助手的筛选条件栏"></td>'
+      + '<td>' + (c.count || 0) + '</td>'
+      + '<td class="mono">' + esc((c.samples || []).join(' / ')) + '</td>'
+      + '</tr>';
+  }).join('');
+  tb.querySelectorAll('select,input').forEach(function (el) {
+    el.onchange = function () {
+      var i = Number(el.dataset.i), k = el.dataset.k;
+      if (k === 'filterable') { STATE.columns[i].filterable = !!el.checked; return; }   // 勾选不重绘，避免丢焦点
+      if (k === 'role' && el.value === 'model') STATE.columns.forEach(function (x) { x.role = ''; });
+      STATE.columns[i][k] = el.value;
+      if (k === 'role' || k === 'key' || k === 'type') renderCols();
+    };
+  });
+}
+
+function renderPreview() {
+  var head = $('preview').querySelector('thead');
+  var body = $('preview').querySelector('tbody');
+  head.innerHTML = '<tr>' + STATE.columns.map(function (c) {
+    return '<th>' + esc(c.key) + (c.unit ? '（' + esc(c.unit) + '）' : '') + '</th>';
+  }).join('') + '</tr>';
+  body.innerHTML = STATE.rows.slice(0, 10).map(function (r) {
+    return '<tr>' + STATE.columns.map(function (c) { return '<td class="mono">' + esc(r[c.key]) + '</td>'; }).join('') + '</tr>';
+  }).join('') || '<tr><td class="empty" colspan="' + STATE.columns.length + '">无数据</td></tr>';
+}
+
+// ---------- 保存上传结果 ----------
+$('btnSave').onclick = function () {
+  var sub = ($('sub').value || '').trim();
+  var id = ($('seriesId').value || '').trim();
+  if (!/^\d{6}$/.test(sub)) { say('saveMsg', '小类号必须是 6 位数字', false); return; }
+  if (!id) { say('saveMsg', '请填写系列代号', false); return; }
+  if (!STATE.columns.length || !STATE.rows.length) { say('saveMsg', '没有可保存的数据，请先解析', false); return; }
+
+  // 二次导入：同小类 + 同系列已存在时先确认，覆盖后旧版会自动备份
+  fetch('/api/plm/select/list', { cache: 'no-store' })
+    .then(function (r) { return r.json(); })
+    .catch(function () { return { series: [] }; })
+    .then(function (list) {
+      var exists = (list.series || []).some(function (s) {
+        return s.sub === sub && s.id === id && s.mode === 'table';
+      });
+      if (exists && !confirm('系列「' + sub + ' / ' + id + '」已存在。\n继续将覆盖原文件（旧版自动备份到 .history/），是否继续？')) return;
+      doImportUpload(sub, id);
+    });
+};
+
+function doImportUpload(sub, id) {
+  say('saveMsg', '保存中…', true);
+  fetch('/api/plm/select/import', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sub: sub, id: id,
+      brand: ($('brand').value || '').trim(),
+      name: ($('name').value || '').trim(),
+      source: STATE.fileName,
+      columns: STATE.columns, rows: STATE.rows,
+    }),
+  }).then(function (r) { return r.json(); }).then(function (r) {
+    if (!r || !r.ok) { say('saveMsg', (r && r.error) || '保存失败', false); return; }
+    say('saveMsg', (r.replaced ? '已覆盖原文件（旧版已备份）：' : '已保存：')
+      + r.file + '（' + r.count + ' 个型号 / ' + r.columns + ' 个参数）', true);
+    loadList();
+  }).catch(function (e) { say('saveMsg', '请求失败：' + (e && e.message ? e.message : e), false); });
+}
+
+// ---------- 列表 ----------
+function loadList() {
+  fetch('/api/plm/select/list', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (r) {
+    var tb = $('list').querySelector('tbody');
+    var arr = (r && r.series) || [];
+    if (!arr.length) {
+      tb.innerHTML = '<tr><td class="empty" colspan="10">暂无选型库，先上传一个 Excel</td></tr>';
+      return;
+    }
+    tb.innerHTML = arr.map(function (s) {
+      var editable = s.file && s.file.indexOf('series/') === 0;
+      var on = s.enabled !== false;
+      return '<tr' + (on ? '' : ' style="opacity:.55"') + '>'
+        + '<td class="mono">' + esc(s.sub) + '</td>'
+        + '<td class="mono">' + esc(s.id) + '</td>'
+        + '<td>' + esc(s.brand) + '</td>'
+        + '<td>' + esc(s.name) + '</td>'
+        + '<td><span class="tag ' + (s.mode === 'table' ? 'model' : '') + '">' + (s.mode === 'table' ? '表格' : '规则') + '</span></td>'
+        + '<td>' + (s.rowCount || 0) + '</td>'
+        + '<td>' + (s.columnCount || 0) + '</td>'
+        + '<td class="mono">' + esc(s.source || s.file) + '</td>'
+        + '<td>' + (editable
+          ? '<span class="tag ' + (on ? 'model' : '') + '">' + (on ? '启用' : '已停用') + '</span> '
+            + '<button data-toggle="' + esc(s.file) + '" data-enabled="' + (on ? '1' : '0') + '">'
+            + (on ? '停用' : '启用') + '</button>'
+          : '<span class="tag model">启用</span>') + '</td>'
+        + '<td>' + (editable
+          ? '<button data-edit="' + esc(s.file) + '">编辑</button> <button class="danger" data-del="'
+            + esc(s.file) + '" data-id="' + esc(s.id) + '">删除</button>'
+          : '<span class="tag">手写库</span> <button class="danger" data-del="'
+            + esc(s.file) + '" data-id="' + esc(s.id) + '">删除</button>') + '</td>'
+        + '</tr>';
+    }).join('');
+
+    // 启用 / 停用：停用后不再出现在选型助手里，但历史数据保留
+    tb.querySelectorAll('[data-toggle]').forEach(function (b) {
+      b.onclick = function () {
+        var next = b.getAttribute('data-enabled') !== '1';
+        fetch('/api/plm/select/toggle', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ file: b.getAttribute('data-toggle'), enabled: next }),
+        }).then(function (x) { return x.json(); }).then(function (x) {
+          if (x && x.ok) loadList();
+          else alert((x && x.error) || '切换失败');
+        }).catch(function (e) { alert('请求失败：' + (e && e.message ? e.message : e)); });
+      };
+    });
+
+    tb.querySelectorAll('[data-del]').forEach(function (b) {
+      b.onclick = function () {
+        var f = b.getAttribute('data-del')
+        var sid = b.getAttribute('data-id') || ''
+        var tip = f.indexOf('series/') === 0
+          ? '确认删除文件 ' + f + '？'
+          : '确认删除 ' + f + ' 中的系列「' + sid + '」？（文件里其它系列保留）'
+        if (!confirm(tip)) return
+        fetch('/api/plm/select/delete', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ file: f, id: sid }),
+        }).then(function (x) { return x.json(); }).then(function (x) {
+          if (x && x.ok) loadList(); else alert((x && x.error) || '删除失败');
+        })
+      };
+    });
+    tb.querySelectorAll('[data-edit]').forEach(function (b) {
+      b.onclick = function () { openEdit(b.dataset.edit); };
+    });
+
+    if (r && r.errors && r.errors.length) say('listMsg', '有 ' + r.errors.length + ' 个文件解析失败：' + r.errors[0], false);
+    else say('listMsg', '', true);
+  }).catch(function (e) { say('listMsg', '加载失败：' + (e && e.message ? e.message : e), false); });
+}
+$('btnReload').onclick = loadList;
+
+// ---------- 编辑 ----------
+function openEdit(file) {
+  say('editMsg', '', true);
+  fetch('/api/plm/select/detail?file=' + encodeURIComponent(file), { cache: 'no-store' })
+    .then(function (r) { return r.json(); }).then(function (r) {
+      if (!r || !r.ok) { alert((r && r.error) || '读取失败'); return; }
+      var s = r.series || {};
+      EDIT = { file: file, series: s, columns: (s.columns || []).slice(), rows: (s.rows || []).slice() };
+      $('editFile').textContent = file;
+      $('eSub').value = s.sub || '';
+      $('eId').value = s.id || '';
+      $('eBrand').value = s.brand || '';
+      $('eName').value = s.name || '';
+      renderEditCols(); renderEditRows();
+      $('editMask').classList.remove('hidden');
+    }).catch(function (e) { alert('请求失败：' + (e && e.message ? e.message : e)); });
+}
+
+function closeEdit() { $('editMask').classList.add('hidden'); EDIT = null; }
+$('editClose').onclick = closeEdit;
+$('editCancel').onclick = closeEdit;
+
+/** 实时统计某列的取值数（按当前数据行算，不是导入时的快照） */
+function colStats(key) {
+  var set = {}, filled = 0;
+  (EDIT.rows || []).forEach(function (r) {
+    var v = String(r[key] == null ? '' : r[key]).trim();
+    if (v === '') return;
+    filled++;
+    set[v] = 1;
+  });
+  return { count: Object.keys(set).length, filled: filled };
+}
+
+function renderEditCols() {
+  var tb = $('eCols').querySelector('tbody');
+  tb.innerHTML = EDIT.columns.map(function (c, i) {
+    return '<tr>'
+      + '<td><input class="cell-edit" type="text" data-k="key" data-i="' + i + '" value="' + esc(c.key) + '"></td>'
+      + '<td><input class="cell-edit" type="text" data-k="unit" data-i="' + i + '" value="' + esc(c.unit) + '" style="width:64px"></td>'
+      + '<td><select data-k="type" data-i="' + i + '">'
+        + opt('number', c.type, '数字') + opt('enum', c.type, '枚举') + opt('text', c.type, '文本')
+      + '</select></td>'
+      + '<td><select data-k="role" data-i="' + i + '">' + opt('', c.role, '参数') + opt('model', c.role, '型号列') + '</select></td>'
+      + '<td style="text-align:center"><input type="checkbox" data-k="filterable" data-i="' + i + '"'
+        + (c.filterable !== false ? ' checked' : '') + ' title="勾选后才会出现在选型助手的筛选条件栏"></td>'
+      + '<td data-count-i="' + i + '">' + colStats(c.key).count + '</td>'
+      + '<td><button class="danger" data-delcol="' + i + '" style="padding:1px 8px;font-size:12px">删除</button></td>'
+      + '</tr>';
+  }).join('')
+    // 「插入参数列」放在表格行末尾，点一下在末尾追加一行空白
+    + '<tr class="add-col-row"><td colspan="7" style="padding:5px 9px">'
+    + '<button class="add-col" style="padding:2px 10px;font-size:12px">＋ 插入参数列</button>'
+    + '</td></tr>';
+  tb.querySelectorAll('select,input').forEach(function (el) {
+    el.onchange = function () {
+      var i = Number(el.dataset.i), k = el.dataset.k;
+
+      // 参数改名 / 新列命名
+      if (k === 'key') {
+        var oldKey = EDIT.columns[i].key;
+        var newKey = String(el.value || '').trim();
+        if (newKey && EDIT.columns.some(function (c, j) { return j !== i && c.key === newKey; })) {
+          alert('参数名「' + newKey + '」已存在');
+          renderEditCols(); renderEditRows();
+          return;
+        }
+        EDIT.columns[i].key = newKey;
+        if (newKey) EDIT.columns[i].raw = newKey;
+        EDIT.rows.forEach(function (row) {
+          if (!oldKey && newKey) {
+            if (row[newKey] === undefined) row[newKey] = '';      // 新列首次命名：补空值
+          } else if (oldKey && newKey) {
+            if (row[oldKey] !== undefined && row[newKey] === undefined) {
+              row[newKey] = row[oldKey];
+              delete row[oldKey];                                  // 改名：搬移数据
+            }
+          } else if (oldKey && !newKey) {
+            if (row[oldKey] !== undefined) { row[''] = row[oldKey]; delete row[oldKey]; }
+          }
+        });
+        renderEditCols(); renderEditRows();
+        return;
+      }
+
+      // 可筛勾选：只改标记，不重绘（否则焦点丢失）
+      if (k === 'filterable') {
+        EDIT.columns[i].filterable = !!el.checked;
+        return;
+      }
+
+      if (k === 'role' && el.value === 'model') EDIT.columns.forEach(function (x) { x.role = ''; });
+      EDIT.columns[i][k] = el.value;
+      renderEditCols(); renderEditRows();
+    };
+  });
+  tb.querySelectorAll('[data-delcol]').forEach(function (b) {
+    b.onclick = function () { delEditCol(Number(b.dataset.delcol)); };
+  });
+  var addBtn = tb.querySelector('.add-col');
+  if (addBtn) addBtn.onclick = addEditCol;
+}
+
+// 插入一个参数列：直接长出一行空白，光标定位到新行的参数名输入框
+function addEditCol() {
+  if (!EDIT) return;
+  // 新列默认不可筛，勾上之后才进条件栏（避免条件栏无意变长）
+  EDIT.columns.push({ key: '', raw: '', unit: '', type: 'text', role: '', options: [], count: 0, samples: [], filterable: false });
+  renderEditCols(); renderEditRows();
+  var inp = $('eCols').querySelector('input[data-k="key"][data-i="' + (EDIT.columns.length - 1) + '"]');
+  if (inp) {
+    inp.focus();
+    var box = $('eCols').parentNode;
+    if (box) box.scrollTop = box.scrollHeight;
+  }
+}
+
+// 删除参数列：该列数据一并删除
+function delEditCol(i) {
+  if (!EDIT || !EDIT.columns[i]) return;
+  var c = EDIT.columns[i];
+  if (!confirm('删除参数列「' + c.key + '」？该列数据会一并删除')) return;
+  EDIT.columns.splice(i, 1);
+  EDIT.rows.forEach(function (r) { delete r[c.key]; });
+  renderEditCols(); renderEditRows();
+}
+
+function renderEditRows() {
+  var MAX = 500;
+  var cols = EDIT.columns;
+  var head = $('eRows').querySelector('thead');
+  var body = $('eRows').querySelector('tbody');
+  head.innerHTML = '<tr>' + cols.map(function (c) {
+    if (!c.key) return '<th style="color:var(--muted)">(未命名)</th>';
+    return '<th>' + esc(c.key) + (c.unit ? '（' + esc(c.unit) + '）' : '') + '</th>';
+  }).join('') + '</tr>';
+  var list = EDIT.rows.slice(0, MAX);
+  body.innerHTML = list.map(function (row, ri) {
+    return '<tr>' + cols.map(function (c) {
+      return '<td contenteditable="true" data-r="' + ri + '" data-k="' + esc(c.key) + '" class="mono">'
+        + esc(row[c.key]) + '</td>';
+    }).join('') + '</tr>';
+  }).join('') || '<tr><td class="empty" colspan="' + Math.max(1, cols.length) + '">无数据</td></tr>';
+
+  // 「增加一行 / 删除最后一行」放在表格末尾，与「插入参数列」一致
+  body.innerHTML += '<tr class="add-col-row"><td colspan="' + Math.max(1, cols.length) + '" style="padding:5px 9px">'
+    + '<button class="add-row" style="padding:2px 10px;font-size:12px">＋ 增加一行</button>'
+    + '<button class="danger del-last" style="padding:2px 10px;font-size:12px;margin-left:8px">删除最后一行</button>'
+    + (EDIT.rows.length > MAX
+      ? '<span class="hint" style="margin-left:12px">仅渲染前 ' + MAX + ' 行，其余 ' + (EDIT.rows.length - MAX) + ' 行保存时原样保留</span>'
+      : '')
+    + '</td></tr>';
+
+  body.querySelectorAll('td[contenteditable]').forEach(function (td) {
+    td.onblur = function () {
+      var r = Number(td.dataset.r), k = td.dataset.k;
+      if (k && EDIT.rows[r]) EDIT.rows[r][k] = td.textContent.trim();
+      // 改完数据后同步刷新该列的「取值数」，不用手动改也看得见变化
+      var ci = EDIT.columns.findIndex(function (c) { return c.key === k; });
+      if (ci >= 0) {
+        var cell = $('eCols').querySelector('[data-count-i="' + ci + '"]');
+        if (cell) cell.textContent = String(colStats(k).count);
+      }
+    };
+    td.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); td.blur(); } };
+  });
+
+  var addRowBtn = body.querySelector('.add-row');
+  if (addRowBtn) addRowBtn.onclick = addEditRow;
+  var delLastBtn = body.querySelector('.del-last');
+  if (delLastBtn) delLastBtn.onclick = delEditLastRow;
+
+  $('eRowCount').textContent = EDIT.rows.length;
+}
+
+// 增加一行 / 删除最后一行：按钮已移到数据表末尾，渲染时绑定
+function addEditRow() {
+  if (!EDIT) return;
+  var row = {};
+  EDIT.columns.forEach(function (c) { row[c.key] = ''; });
+  EDIT.rows.push(row);
+  renderEditRows();
+  var box = $('eRows').parentNode;
+  if (box) box.scrollTop = box.scrollHeight;
+}
+function delEditLastRow() {
+  if (!EDIT || !EDIT.rows.length) return;
+  if (!confirm('确认删除最后一行？')) return;
+  EDIT.rows.pop();
+  renderEditRows();
+  $('eRowCount').textContent = EDIT.rows.length;
+}
+
+$('editSave').onclick = function () {
+  if (!EDIT) return;
+  var sub = ($('eSub').value || '').trim();
+  var id = ($('eId').value || '').trim();
+  if (!/^\d{6}$/.test(sub)) { say('editMsg', '小类号必须是 6 位数字', false); return; }
+  if (!id) { say('editMsg', '系列代号不能为空', false); return; }
+  var emptyCols = EDIT.columns.filter(function (c) { return !String(c.key || '').trim(); });
+  if (emptyCols.length) { say('editMsg', '有 ' + emptyCols.length + ' 个参数列还没有名称', false); return; }
+  var dupKey = (function () {
+    var seen = {}, dup = '';
+    EDIT.columns.forEach(function (c) { if (seen[c.key]) dup = c.key; seen[c.key] = 1; });
+    return dup;
+  })();
+  if (dupKey) { say('editMsg', '参数名「' + dupKey + '」重复', false); return; }
+  var modelCol = EDIT.columns.filter(function (c) { return c.role === 'model'; });
+  if (modelCol.length > 1) { say('editMsg', '只能有一列作为型号列', false); return; }
+  if (!EDIT.rows.length) { say('editMsg', '至少保留一行数据', false); return; }
+
+  say('editMsg', '保存中…', true);
+  var oldFile = EDIT.file;
+  fetch('/api/plm/select/import', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sub: sub, id: id,
+      brand: ($('eBrand').value || '').trim(),
+      name: ($('eName').value || '').trim(),
+      source: (EDIT.series && EDIT.series.source) || '',
+      columns: EDIT.columns, rows: EDIT.rows,
+    }),
+  }).then(function (r) { return r.json(); }).then(function (r) {
+    if (!r || !r.ok) { say('editMsg', (r && r.error) || '保存失败', false); return; }
+    // 小类号/系列代号改过时，文件路径会变，删掉旧文件避免重复
+    var cleanup = (r.file && r.file !== oldFile)
+      ? fetch('/api/plm/select/delete', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ file: oldFile }),
+        }).catch(function () { })
+      : Promise.resolve();
+    cleanup.then(function () {
+      say('editMsg', (r.replaced ? '已覆盖（旧版已备份）：' : '已保存：')
+        + r.file + '（' + r.count + ' 个型号）', true);
+      loadList();
+      setTimeout(closeEdit, 600);
+    });
+  }).catch(function (e) { say('editMsg', '请求失败：' + (e && e.message ? e.message : e), false); });
+};
+
+loadList();
+</script>
+</body>
+</html>
+

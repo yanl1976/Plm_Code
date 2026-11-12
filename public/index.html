@@ -31,6 +31,7 @@
     <button class="tab" data-tab="settings">系统设置</button>
     <button class="tab" data-tab="feature">特征参数录入</button>
     <button class="tab" data-tab="newmat">新增物料</button>
+    <button class="tab" data-tab="selection">选型库</button>
   </nav>
 
   <main>
@@ -172,6 +173,16 @@
       <div id="feat-tpl" class="feat-pane"></div>
       <div id="feat-work" class="feat-pane active"></div>
     </section>
+    <!-- 选型库：厂家样本 Excel 导入与管理（页面由治理服务 3100 提供，这里内嵌） -->
+    <section class="panel" id="tab-selection">
+      <h3>选型库</h3>
+      <p class="muted">
+        上传厂家选型表（xlsx / xls / csv），<b>列即参数</b>，每行是一个型号；按小类号绑定后，
+        「新增物料 → 选型助手」即可按参数筛选。保存后立刻生效，无需重启。
+      </p>
+      <iframe id="selFrame" class="sel-frame" src="about:blank" title="选型库管理"></iframe>
+    </section>
+
     <!-- 新增物料（按小类生成编码 + 规格查重/联想 + 库存占位 + 本地草稿） -->
     <section class="panel" id="tab-newmat">
       <div class="nm-grid">
@@ -193,7 +204,7 @@
           </div>
           <div class="nm-row nm-spec"><label>规格型号</label>
             <div class="nm-spec-wrap">
-              <input id="nmSpec" placeholder="如 C65N-C16/3P AC400V" autocomplete="off" />
+              <textarea id="nmSpec" rows="2" placeholder="如 C65N-C16/3P AC400V" autocomplete="off"></textarea>
               <div id="nmSuggest" class="nm-suggest"></div>
             </div>
             <span id="nmSpecStock" class="nm-spec-stock">现有库存 -</span>

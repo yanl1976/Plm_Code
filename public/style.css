@@ -490,3 +490,29 @@ tr.saving { opacity:.45; }
 .nm-sel-more summary:hover{color:var(--accent)}
 .nm-sel-more[open] summary{margin-bottom:8px}
 .nm-sel-more .nm-sel-params{margin:0 0 4px}
+
+/* 选型库管理：内嵌 3100 管理页 */
+.sel-frame{width:100%;height:calc(100vh - 250px);min-height:640px;border:1px solid var(--line);border-radius:8px;background:#fff}
+
+/* 选型助手：表格按内容撑开，列不换行；超宽时横向滚动 */
+.nm-table-wrap{overflow-x:auto;margin-top:4px}
+.nm-table-wrap table.mat{width:max-content;min-width:100%}
+.nm-table-wrap table.mat th,.nm-table-wrap table.mat td{white-space:nowrap}
+.nm-filter-item{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+
+/* 选型助手·筛选字段面板 */
+.nm-col-picker{margin:8px 0 4px;padding:10px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:6px}
+.nm-col-picker-head{font-size:12px;color:var(--muted);margin-bottom:8px}
+.nm-col-picker-list{display:flex;flex-wrap:wrap;gap:8px 18px}
+.nm-col-picker-list label{font-size:13px;color:var(--text);display:inline-flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap}
+.nm-col-picker-foot{margin-top:10px;display:flex;gap:8px}
+.nm-col-picker-group{font-size:12px;color:var(--accent);margin:10px 0 6px}
+.nm-col-picker-group:first-of-type{margin-top:0}
+.nm-col-picker.hidden{display:none}
+
+/* 规格型号改多行：选型回填内容较长，方便看清与删减 */
+.nm-row textarea{flex:1;min-width:0;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:7px 9px;font-family:inherit;font-size:13px;line-height:1.5;resize:vertical}
+.nm-row textarea:focus{outline:none;border-color:var(--accent)}
+.nm-spec-wrap textarea{width:100%;min-height:56px}
+.nm-row.nm-spec{align-items:flex-start}
+.nm-row.nm-spec>label{padding-top:8px}

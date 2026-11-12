@@ -4,6 +4,8 @@ node_modules/
 data/*
 !data/selection/
 !data/selection/*.json
+# Excel 导入的选型库属于现场业务数据（每个环境不同），不入库
+data/selection/series/
 *.ndjson
 .env
 

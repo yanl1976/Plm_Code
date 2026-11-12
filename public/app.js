@@ -19,7 +19,20 @@ document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () 
   if (t.dataset.tab === 'settings') loadSettings()
   if (t.dataset.tab === 'feature') loadFeature()
   if (t.dataset.tab === 'newmat') loadNewMat()
+  if (t.dataset.tab === 'selection') loadSelectionAdmin()
 }))
+
+// 选型库管理页由治理服务 3100 提供，这里用 iframe 内嵌；首次切到该页签时才加载
+let selAdminLoaded = false
+function loadSelectionAdmin() {
+  if (selAdminLoaded) return
+  const f = $('#selFrame')
+  if (!f) return
+  const base = window.SELECT_ADMIN_BASE
+    || (location.protocol + '//' + (location.hostname || '127.0.0.1') + ':3100')
+  f.src = base + '/admin/selection'
+  selAdminLoaded = true
+}
 
 // ---------- 概览 + 阶段 ----------
 async function loadOverview() {
@@ -387,6 +400,7 @@ async function openCluster(index) {
   })
   html += `</tbody></table>`
   $('#modalBody').innerHTML = html
+  setModalWidth(false)
   $('#modal').classList.remove('hidden')
   $('#btnMapCluster').addEventListener('click', async () => {
     const canon = $('#canonSel').value
@@ -1638,13 +1652,16 @@ function renderNmRule(r) {
   const el = $('#nmRuleCheck')
   if (!el) return
   const errs = r.errors || [], warns = r.warnings || []
-  const fmt = r.specFormat
+  const specLen = ($('#nmSpec').value || '').length
+  // 规格很长时（选型回填的完整参数串），"规范写法"会把整串再重复一遍，直接不显示
+  const fmt = specLen > 120 ? null : r.specFormat
   // 空格类问题合并成一条「会自动整理成什么」，比逐条列「有空格」更有用；
   // 其余警告（乘号、括号、规范写法…）照常展示。
   const otherWarns = warns.filter((w) => {
     // 只合并「规格」的空格提示（下面会用「保存时会自动整理」替代）；
     // 名称的空格必须单独显示，否则看起来像没做检查
     if (/空格/.test(w) && !/名称/.test(w)) return false
+    if (/^规范写法：/.test(w) && specLen > 120) return false
     if (fmt && fmt.fixed && w === '规范写法：' + fmt.fixed) return false  // 与整理结果重复
     return true
   })
@@ -1854,12 +1871,19 @@ function selectBase() {
     || (location.protocol + '//' + (location.hostname || '127.0.0.1') + ':3100')
 }
 
+// 弹窗宽度：选型助手表格列多，单独放宽；其它弹窗恢复默认
+function setModalWidth(wide) {
+  const mb = document.querySelector('#modal .modal-box')
+  if (mb) mb.style.width = wide ? 'min(1320px, 96vw)' : ''
+}
+
 async function nmShowSelect() {
   const sub = String((nm.cur && nm.cur.sub) || '').trim()
   if (!sub) { alert('请先选择小类'); return }
   const body = $('#modalBody')
   if (!body) return
   body.innerHTML = '<h3>选型助手</h3><p class="muted">加载中…</p>'
+  setModalWidth(true)
   $('#modal').classList.remove('hidden')
 
   let series = []
@@ -1874,7 +1898,14 @@ async function nmShowSelect() {
         + '</p><p class="muted small">该地址的 3100 可能是旧版本，需部署 src/plm-server.js 与 data/selection/ 后重启。</p>'
       return
     }
-    series = r.series
+    // 停用的系列不参与选型（厂家换代后旧产品停用）
+    const all = r.series || []
+    series = all.filter((s) => s.enabled !== false)
+    if (!series.length && all.length) {
+      body.innerHTML = '<h3>选型助手</h3><p class="muted">该小类下的选型库均已停用</p>'
+        + '<p class="muted small">如需使用，请到「选型库」管理页重新启用。</p>'
+      return
+    }
   } catch (e) {
     body.innerHTML = '<h3>选型助手</h3><p class="muted">选型服务不可用（' + escapeHtml(selectBase())
       + '），请确认 3100 服务已启动且本机可访问。</p>'
@@ -1891,60 +1922,230 @@ async function nmShowSelect() {
     return
   }
 
-  const poleSet = new Set()
-  series.forEach((s) => ((s.params && s.params.poles) || []).forEach((p) => poleSet.add(p)))
   const seriesOpts = series.map((s, i) => '<option value="' + i + '">' + escapeHtml(s.id)
     + (s.brand ? ' · ' + escapeHtml(s.brand) : '') + (s.name ? ' · ' + escapeHtml(s.name) : '') + '</option>').join('')
-  const poleOpts = [...poleSet].map((p) => '<option>' + escapeHtml(p) + '</option>').join('')
 
   body.innerHTML = '<h3>选型助手 <span class="muted">（参数来自厂家样本，最终以设计规范与最新样本为准）</span></h3>'
     + '<div class="nm-select-bar">'
     + '<label>系列</label><select id="nmSelSeries">' + seriesOpts + '</select>'
-    + '<label>场景</label><select id="nmSelScene"><option value="">不限</option><option>照明</option><option>动力</option><option>配电</option></select>'
-    + '<label>极数</label><select id="nmSelPoles"><option value="">不限</option>' + poleOpts + '</select>'
-    + '<label>曲线</label><select id="nmSelCurve"><option value="">自动</option><option>B</option><option>C</option><option>D</option></select>'
-    + '<label>负载电流</label><input id="nmSelCurrent" type="number" min="0" step="0.1" placeholder="A" />'
+    + '<span id="nmSelFilters" style="display:contents"></span>'
     + '<button id="nmSelGo" class="ghost">查询</button>'
+    + '<button id="nmSelPick" class="ghost" title="选择哪些参数出现在条件栏，选择会记住">筛选字段</button>'
     + '</div>'
+    + '<div id="nmSelPicker" class="nm-col-picker hidden"></div>'
+    + '<div id="nmSelMore"></div>'
     + '<div class="nm-sel-sub">匹配型号</div>'
     + '<div id="nmSelResult" class="muted small">填写条件后点「查询」</div>'
     + '<div id="nmSelInfo" class="muted small"></div>'
 
+  // 条件栏不写死：按当前系列的列定义生成
+  //   表格系列（Excel 导入）→ 每个参数一列：枚举出下拉、数字出输入框、文本出精确匹配框
+  //   规则系列（手写库）    → 场景 / 极数 / 曲线 / 负载电流
+  function filterControl(c) {
+    const label = escapeHtml(c.key) + (c.unit ? '（' + escapeHtml(c.unit) + '）' : '')
+    const attr = 'data-col="' + escapeHtml(c.key) + '"'
+    let ctrl = ''
+    if (c.type === 'enum' && (c.options || []).length) {
+      ctrl = '<select ' + attr + '><option value="">不限</option>'
+        + c.options.map((o) => '<option>' + escapeHtml(o) + '</option>').join('') + '</select>'
+    } else if (c.type === 'number') {
+      ctrl = '<input type="number" step="any" ' + attr + ' placeholder="不限" />'
+    } else {
+      ctrl = '<input type="text" ' + attr + ' placeholder="不限" />'
+    }
+    // 标签和控件包成一个整体，换行时不会被拆开
+    return '<span class="nm-filter-item"><label>' + label + '</label>' + ctrl + '</span>'
+  }
+
+  // 可选列：排除型号列与小类号
+  function allCols(s) {
+    return (s.columns || []).filter((c) => c.role !== 'model' && c.key !== '小类号')
+  }
+  // 默认勾选：管理页标了「可筛」的列
+  function defaultCols(s) {
+    return allCols(s).filter((c) => c.filterable !== false)
+  }
+  // 使用者自己的选择优先（按系列记在本机），没有记录才用管理页默认
+  function loadColKeys(s) {
+    try {
+      const raw = localStorage.getItem('nm.filterCols.' + (s.sub || '') + '.' + s.id)
+      if (raw) {
+        const arr = JSON.parse(raw)
+        if (Array.isArray(arr)) return arr
+      }
+    } catch (e) { }
+    return defaultCols(s).map((c) => c.key)
+  }
+  function saveColKeys(s, keys) {
+    try {
+      localStorage.setItem('nm.filterCols.' + (s.sub || '') + '.' + s.id, JSON.stringify(keys))
+    } catch (e) { }
+  }
+
+  // 条件栏只放当前选中的列
+  function buildFilters(s) {
+    const cols = allCols(s)
+    if (s.mode === 'table' && cols.length) {
+      const keys = loadColKeys(s)
+      const vis = cols.filter((c) => keys.indexOf(c.key) >= 0)
+      return {
+        main: vis.length
+          ? vis.map(filterControl).join('')
+          : '<span class="muted small">未选择筛选字段，点右侧「筛选字段」勾选</span>',
+        more: '',
+      }
+    }
+    const poleSet = new Set()
+    ;((s.params && s.params.poles) || []).forEach((p) => poleSet.add(p))
+    const poleOpts = [...poleSet].map((p) => '<option>' + escapeHtml(p) + '</option>').join('')
+    return {
+      main: '<label>场景</label><select id="nmSelScene"><option value="">不限</option><option>照明</option><option>动力</option><option>配电</option></select>'
+        + '<label>极数</label><select id="nmSelPoles"><option value="">不限</option>' + poleOpts + '</select>'
+        + '<label>曲线</label><select id="nmSelCurve"><option value="">自动</option><option>B</option><option>C</option><option>D</option></select>'
+        + '<label>负载电流</label><input id="nmSelCurrent" type="number" min="0" step="0.1" placeholder="A" />',
+      more: '',
+    }
+  }
+
+  function refreshFilters() {
+    const idx = Number($('#nmSelSeries').value || 0)
+    const s = series[idx] || series[0]
+    const out = buildFilters(s)
+    const mainBox = $('#nmSelFilters')
+    if (mainBox) mainBox.innerHTML = out.main
+    const moreBox = $('#nmSelMore')
+    if (moreBox) moreBox.innerHTML = ''
+    const picker = $('#nmSelPicker')
+    if (picker) { picker.classList.add('hidden'); picker.innerHTML = '' }
+  }
+
+  // 「筛选字段」面板：使用者按习惯自行勾选，结果记在本机
+  function renderPicker() {
+    const idx = Number($('#nmSelSeries').value || 0)
+    const s = series[idx] || series[0]
+    const cols = allCols(s)
+    const keys = loadColKeys(s)
+    const box = $('#nmSelPicker')
+    if (!box) return
+    if (!cols.length) {
+      box.innerHTML = '<div class="nm-col-picker-head">该系列没有可选参数</div>'
+      return
+    }
+    const mainCols = defaultCols(s)
+    const otherCols = cols.filter((c) => mainCols.indexOf(c) < 0)
+    const item = (c) => '<label><input type="checkbox" data-key="' + escapeHtml(c.key) + '"'
+      + (keys.indexOf(c.key) >= 0 ? ' checked' : '') + '> ' + escapeHtml(c.key)
+      + (c.unit ? '（' + escapeHtml(c.unit) + '）' : '') + '</label>'
+
+    box.innerHTML = '<div class="nm-col-picker-head">主要参数默认已勾选；需要时再补选其他参数（选择会记住）</div>'
+      + (mainCols.length
+        ? '<div class="nm-col-picker-group">主要参数</div>'
+          + '<div class="nm-col-picker-list">' + mainCols.map(item).join('') + '</div>'
+        : '')
+      + (otherCols.length
+        ? '<div class="nm-col-picker-group">其他参数</div>'
+          + '<div class="nm-col-picker-list">' + otherCols.map(item).join('') + '</div>'
+        : '')
+      + '<div class="nm-col-picker-foot">'
+      + '<button data-act="all">全选</button><button data-act="none">清空</button>'
+      + '</div>'
+
+    const apply = (nextKeys) => {
+      saveColKeys(s, nextKeys)
+      box.innerHTML = ''
+      renderPicker()
+      const mainBox = $('#nmSelFilters')
+      if (mainBox) mainBox.innerHTML = buildFilters(s).main
+    }
+    box.querySelectorAll('input[type=checkbox]').forEach((el) => {
+      el.onchange = () => {
+        const picked = Array.prototype.map.call(
+          box.querySelectorAll('input[type=checkbox]:checked'), (x) => x.getAttribute('data-key'))
+        apply(picked)
+      }
+    })
+    const allBtn = box.querySelector('[data-act="all"]')
+    if (allBtn) allBtn.onclick = () => apply(cols.map((c) => c.key))
+    const noneBtn = box.querySelector('[data-act="none"]')
+    if (noneBtn) noneBtn.onclick = () => apply([])
+  }
+
   const run = async () => {
     const idx = Number($('#nmSelSeries').value || 0)
     const s = series[idx] || series[0]
-    const qs = '?sub=' + encodeURIComponent(sub)
-      + '&series=' + encodeURIComponent(s.id)
-      + '&scene=' + encodeURIComponent($('#nmSelScene').value)
-      + '&poles=' + encodeURIComponent($('#nmSelPoles').value)
-      + '&curve=' + encodeURIComponent($('#nmSelCurve').value)
-      + '&current=' + encodeURIComponent($('#nmSelCurrent').value || '')
-      + '&limit=30'
     const box = $('#nmSelResult')
     box.innerHTML = '<span class="muted">查询中…</span>'
+
+    // 全部取出：型号条数有限，一屏滚动比「显示前 N 条」更好用
+    const payload = { sub: sub, series: s.id, limit: 500 }
+    // 表格系列：收集每个筛选控件的值（含「更多筛选」里的），组装成 filters 交给后端
+    const colEls = body.querySelectorAll('[data-col]')
+    if (colEls.length) {
+      const filters = {}
+      let any = false
+      colEls.forEach((el) => {
+        const v = String(el.value == null ? '' : el.value).trim()
+        if (v !== '') { filters[el.getAttribute('data-col')] = v; any = true }
+      })
+      if (any) payload.filters = filters
+    } else {
+      payload.scene = ($('#nmSelScene') || {}).value || ''
+      payload.poles = ($('#nmSelPoles') || {}).value || ''
+      payload.curve = ($('#nmSelCurve') || {}).value || ''
+      payload.current = ($('#nmSelCurrent') || {}).value || ''
+    }
+
     let r = null
     try {
-      r = await fetch(selectBase() + '/api/plm/select' + qs, { cache: 'no-store' }).then((x) => x.json())
+      r = await fetch(selectBase() + '/api/plm/select', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }).then((x) => x.json())
     } catch (e) {
       box.innerHTML = '<span class="muted">查询失败，请确认 3100 服务可访问</span>'
       return
     }
     const items = (r && r.items) || []
     if (!items.length) { box.innerHTML = '<span class="muted">没有匹配的型号</span>'; return }
-    // 型号较多时说明截断情况，提示填负载电流可精确定位
-    let html = (r && r.total > items.length)
-      ? '<p class="muted small">共 ' + r.total + ' 条，显示前 ' + items.length + ' 条（填「负载电流」可精确到档位）</p>'
-      : ''
-    html += '<table class="mat"><thead><tr><th>型号</th><th>极数</th><th>电流</th><th>曲线</th><th>分断</th><th></th></tr></thead><tbody>'
-    html += items.map((it, k) => '<tr data-k="' + k + '" style="cursor:pointer">'
-      + '<td class="mono">' + escapeHtml(it.model) + '</td>'
-      + '<td>' + escapeHtml(it.poles) + '</td>'
-      + '<td class="num">' + it.current + 'A</td>'
-      + '<td>' + escapeHtml(it.curve) + '</td>'
-      + '<td>' + (it.breaking ? it.breaking + 'kA' : '') + '</td>'
-      + '<td>' + (it.recommended ? '<span class="nm-diff-legend">推荐</span>' : '') + '</td>'
-      + '</tr>').join('')
-    html += '</tbody></table>'
+
+    // 按后端返回的 columns 动态出列（Excel 导入的系列有任意多个参数列）
+    const allCols = (r && r.columns) || []
+    const paramCols = allCols.filter((c) => c.role !== 'model' && c.key !== '小类号')
+
+    // 默认全量显示；只有超过上限（500）时才提示细化筛选
+    const totalN = (r && r.total) || items.length
+    let html = '<p class="muted small">共 ' + totalN + ' 条'
+      + (totalN > items.length ? '，已显示前 ' + items.length + ' 条，请细化筛选条件' : '') + '</p>'
+
+    if (paramCols.length) {
+      html += '<div class="nm-table-wrap"><table class="mat"><thead><tr><th>型号</th>'
+        + paramCols.map((c) => '<th>' + escapeHtml(c.key)
+          + (c.unit ? '（' + escapeHtml(c.unit) + '）' : '') + '</th>').join('')
+        + '<th></th></tr></thead><tbody>'
+      html += items.map((it, k) => '<tr data-k="' + k + '" style="cursor:pointer">'
+        + '<td class="mono">' + escapeHtml(it.model) + '</td>'
+        + paramCols.map((c) => {
+          const v = it.cells && it.cells[c.key] != null ? it.cells[c.key]
+            : (it[c.key] != null ? it[c.key] : '')
+          return '<td>' + escapeHtml(v) + '</td>'
+        }).join('')
+        + '<td>' + (it.recommended ? '<span class="nm-diff-legend">推荐</span>' : '') + '</td>'
+        + '</tr>').join('')
+      html += '</tbody></table></div>'
+    } else {
+      // 规则式系列（手写库）：固定四列
+      html += '<div class="nm-table-wrap"><table class="mat"><thead><tr><th>型号</th><th>极数</th><th>电流</th><th>曲线</th><th>分断</th><th></th></tr></thead><tbody>'
+      html += items.map((it, k) => '<tr data-k="' + k + '" style="cursor:pointer">'
+        + '<td class="mono">' + escapeHtml(it.model) + '</td>'
+        + '<td>' + escapeHtml(it.poles) + '</td>'
+        + '<td class="num">' + (it.current == null ? '' : it.current) + 'A</td>'
+        + '<td>' + escapeHtml(it.curve) + '</td>'
+        + '<td>' + (it.breaking ? it.breaking + 'kA' : '') + '</td>'
+        + '<td>' + (it.recommended ? '<span class="nm-diff-legend">推荐</span>' : '') + '</td>'
+        + '</tr>').join('')
+      html += '</tbody></table></div>'
+    }
     box.innerHTML = html
     box.querySelectorAll('tr[data-k]').forEach((tr) => {
       tr.addEventListener('click', () => {
@@ -1958,8 +2159,8 @@ async function nmShowSelect() {
           if (!String(nameEl.value || '').trim()) nameEl.value = it.name || it.series
           nameEl.dispatchEvent(new Event('input'))
         }
-        // 规格是选型的结果，直接覆盖
-        if (specEl) { specEl.value = it.model; specEl.dispatchEvent(new Event('input')) }
+        // 规格是选型的结果，直接覆盖；优先用「型号 + 全部参数（含附件）」的完整规格
+        if (specEl) { specEl.value = it.spec || it.model; specEl.dispatchEvent(new Event('input')) }
         // 立即校验一次，不走 350ms 防抖，回填后底部马上给出结果
         setTimeout(() => {
           try { clearTimeout(nm.ruleTimer); nmRuleCheck() } catch (e) { }
@@ -1978,6 +2179,18 @@ async function nmShowSelect() {
     $('#nmSelInfo').innerHTML = s.source ? '来源：' + escapeHtml(s.source) : ''
   }
   $('#nmSelGo').onclick = run
+  $('#nmSelSeries').onchange = () => { refreshFilters(); run() }
+  $('#nmSelPick').onclick = () => {
+    const box = $('#nmSelPicker')
+    if (!box) return
+    if (box.classList.contains('hidden')) {
+      renderPicker()
+      box.classList.remove('hidden')
+    } else {
+      box.classList.add('hidden')
+    }
+  }
+  refreshFilters()
   run()
 }
 
@@ -1992,6 +2205,7 @@ async function nmShowSimilar(refresh, limitArg) {
   const limit = Number(limitArg) || 20
   // 先弹窗再查：ERP 首次查询库存/项目号较慢，先给出"查询中"反馈，不让用户觉得按钮没反应
   body.innerHTML = '<h3>类似型号明细</h3><p class="muted">查询中…（首次查询较慢，结果会缓存到本地，下次秒开）</p>'
+  setModalWidth(false)
   $('#modal').classList.remove('hidden')
   const r = await api('/api/new-material/similar-models?sub=' + encodeURIComponent(nm.cur.sub)
     + '&spec=' + encodeURIComponent(spec) + '&code=' + encodeURIComponent(nm.cur.code || '')

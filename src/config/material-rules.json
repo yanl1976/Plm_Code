@@ -194,7 +194,7 @@
   },
   "spec": {
     "minLen": 2,
-    "maxLen": 64,
+    "maxLen": 500,
     "desc": "规格 = 型号 + 关键参数，按固定顺序、固定写法；只写能唯一确定实物的信息，不写项目/供应商/客户/图号。",
     "halfWidthOnly": true,
     "halfWidthMsg": "请使用半角字符（全角字母/数字/标点会导致同物不同码）",
@@ -207,7 +207,7 @@
       "X"
     ],
     "multiplyMsg": "乘号统一用 *（如 6*80、3*25+1*16），不要用 × / x",
-    "bracketToHalf": true,
+    "bracketToHalf": false,
     "forbidPatterns": [
       {
         "re": "[Ss]20\\d{5}",

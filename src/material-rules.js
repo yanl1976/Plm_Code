@@ -38,7 +38,9 @@ export function rules() {
 }
 
 const esc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-const hasFullWidth = (s) => /[\uFF01-\uFF5E\u3000]/.test(s)
+// 只把「全角字母数字与运算符」视为需要半角化；
+// 中文标点（：；！？，。、（））属正常书写，附件描述里大量出现，不应报错
+const hasFullWidth = (s) => /[\uFF10-\uFF19\uFF21-\uFF3A\uFF41-\uFF5A\u3000／＼－＋＊＝％＆＠＃．｜～＜＞]/.test(s)
 // 中文没有 \b，用分隔符/首尾做词边界，避免「无」误命中「无锡」
 const wordBound = (w) => new RegExp('(?:^|[\\s+*/·\\-,()、，。])' + esc(w) + '(?:$|[\\s+*/·\\-,()、，。])')
 const num = (o, k, d) => (o && o[k] != null && !Number.isNaN(Number(o[k])) ? Number(o[k]) : d)
@@ -207,7 +209,8 @@ export function checkSpec(raw, sub) {
   // 只把「数字之间的 x/X/×」当乘号；型号里的 X 不算（NXB-63、NSX100F、CJX4 曾全部误报）
   const mult = (R.multiplyChars || []).filter((c) => new RegExp('\\d\\s*' + esc(c) + '\\s*(?=\\d)').test(s))
   if (mult.length) warnings.push(R.multiplyMsg || '乘号统一用 *')
-  if (/[（）]/.test(s)) warnings.push('括号请使用半角 ()')
+  // 规格里允许中文括号（附件描述常用），由 bracketToHalf 控制是否提示
+  if (R.bracketToHalf && /[（）]/.test(s)) warnings.push('括号请使用半角 ()')
   // 空格：首尾只能从原文看出来（s 已 trim），中间连续空格/非常规空白沿用原提示
   if (fmt && fmt.reasons.includes('首尾有空格')) {
     warnings.push('规格首尾有多余空格，建议去除')

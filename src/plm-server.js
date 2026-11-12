@@ -476,7 +476,12 @@ function handleSelect(body) {
   let matched = 0        // 完整匹配数（不受 limit*3 截断影响），供前端显示「共 N 条」
 
   // Excel 导入的「列驱动」系列：直接按列值过滤 rows，参数组合即型号
-  const filters = (body.filters && typeof body.filters === 'object') ? body.filters : {}
+  // filters 允许传对象（POST）或 JSON 字符串（GET 拼接）
+  let filters = body.filters
+  if (typeof filters === 'string') {
+    try { filters = JSON.parse(filters) } catch (e) { filters = {} }
+  }
+  if (!filters || typeof filters !== 'object') filters = {}
   const MODEL_NAME = /^(型号|规格型号|产品型号|型号规格|model|type)$/i
   for (const s of usable) {
     if (!Array.isArray(s.rows) || !s.rows.length) continue

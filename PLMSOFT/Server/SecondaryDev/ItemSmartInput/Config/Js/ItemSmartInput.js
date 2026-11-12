@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.56';
+  var PLUGIN_VERSION = '1.57';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1278,11 +1278,21 @@
     }
 
     body.appendChild(dlgEl('div', 'color:#666;margin-bottom:4px;', '物料名称'));
-    var nameIn = dlgEl('input', 'width:100%;box-sizing:border-box;padding:6px 8px;border:' + C_LINE + ';'
-      + 'border-radius:3px;font-size:13px;margin-bottom:12px;background:' + C_INPUT_BG + ';color:inherit;');
+    // 名称框与右侧「选型助手」同一行，和下方「规格 + 类似型号」的排版保持一致
+    var nameRow = dlgEl('div', 'display:flex;align-items:center;gap:8px;margin-bottom:12px;');
+    var nameIn = dlgEl('input', 'flex:1 1 auto;min-width:0;box-sizing:border-box;padding:6px 8px;border:' + C_LINE + ';'
+      + 'border-radius:3px;font-size:13px;background:' + C_INPUT_BG + ';color:inherit;');
     nameIn.className = 'plm-smart-dlg-name';
     nameIn.value = readText(state.ename);
-    body.appendChild(nameIn);
+    nameRow.appendChild(nameIn);
+
+    var selBtn = dlgEl('button', 'flex:0 0 auto;border:1px solid rgba(127,127,127,.45);background:transparent;'
+      + 'color:inherit;border-radius:4px;padding:5px 12px;cursor:pointer;font-size:12px;', '选型助手');
+    selBtn.className = 'plm-smart-sel-btn';
+    selBtn.title = '按厂家样本的参数筛选型号，点行回填规格';
+    selBtn.onclick = function () { openSelectModal(); };
+    nameRow.appendChild(selBtn);
+    body.appendChild(nameRow);
 
     // 名称的问题只出现在名称框下面
     var nameTip = dlgEl('div', 'margin:4px 0 6px;min-height:16px;');
@@ -1916,6 +1926,262 @@
         dlg.similarMask.parentNode.removeChild(dlg.similarMask);
       }
       if (dlg) dlg.similarMask = null;
+    }
+
+    // ================= 选型助手（与 3100 看板同源，行为一致） =================
+    var selMask = null;
+
+    function closeSelectModal() {
+      if (!selMask) return;
+      try { selMask.parentNode.removeChild(selMask); } catch (e) { }
+      selMask = null;
+    }
+
+    function selColKey(sub, id) { return 'plm.sel.cols.' + sub + '.' + id; }
+
+    // 默认勾选：管理页标了「可筛」的列；使用者勾过的优先
+    function selLoadKeys(sub, id, cols) {
+      try {
+        var raw = localStorage.getItem(selColKey(sub, id));
+        if (raw) {
+          var arr = JSON.parse(raw);
+          if (arr && arr.length !== undefined) return arr;
+        }
+      } catch (e) { }
+      var out = [];
+      for (var i = 0; i < cols.length; i++) {
+        if (cols[i].role === 'model' || cols[i].key === '小类号') continue;
+        if (cols[i].filterable !== false) out.push(cols[i].key);
+      }
+      return out;
+    }
+
+    function selSaveKeys(sub, id, keys) {
+      try { localStorage.setItem(selColKey(sub, id), JSON.stringify(keys)); } catch (e) { }
+    }
+
+    function openSelectModal() {
+      if (selMask) return;
+      var sub = String(currentSub() || '');
+      if (!sub) { alert('请先选择小类'); return; }
+
+      selMask = dlgEl('div', 'position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,.35);z-index:2147483020;');
+      selMask.className = 'plm-smart-sel-mask';
+      selMask.onclick = function (e) { if (e && e.target === selMask) closeSelectModal(); };
+
+      var panel = dlgEl('div', 'position:fixed;left:50%;top:6%;transform:translateX(-50%);width:1280px;max-width:97vw;'
+        + 'max-height:84vh;overflow:auto;background:' + th.bg + ';color:' + th.fg + ';border-radius:6px;'
+        + 'box-shadow:0 12px 36px rgba(0,0,0,.35);z-index:2147483021;'
+        + 'font:13px/1.6 "Microsoft YaHei",Arial,sans-serif;');
+      selMask.appendChild(panel);
+
+      var head = dlgEl('div', 'padding:12px 18px;border-bottom:' + C_LINE + ';background:' + C_HEAD_BG
+        + ';font-size:15px;font-weight:bold;white-space:nowrap;overflow:hidden;');
+      head.innerHTML = '选型助手 <span style="font-weight:normal;opacity:.7;font-size:13px">'
+        + '（参数来自厂家样本，最终以设计规范与最新样本为准）</span>';
+      var x = dlgEl('span', 'float:right;cursor:pointer;opacity:.7;font-size:18px;line-height:18px;', '×');
+      x.onclick = closeSelectModal;
+      head.appendChild(x);
+      panel.appendChild(head);
+
+      var box = dlgEl('div', 'padding:14px 18px;');
+      panel.appendChild(box);
+      box.innerHTML = '<div style="opacity:.7">加载中…</div>';
+
+      apiAbsolute(apiUrl('/api/plm/select/series?sub=' + encodeURIComponent(sub)), function (r) {
+        if (!selMask) return;
+        var all = (r && r.series) || [];
+        var list = [];
+        for (var i = 0; i < all.length; i++) if (all[i].enabled !== false) list.push(all[i]);
+        if (!list.length) {
+          box.innerHTML = '<div style="opacity:.7">当前小类暂无选型库</div>';
+          return;
+        }
+        renderSelUI(box, list, sub);
+      });
+    }
+
+    function renderSelUI(box, series, sub) {
+      var opts = '';
+      for (var i = 0; i < series.length; i++) {
+        var s = series[i];
+        opts += '<option value="' + i + '">' + escHtml(s.id)
+          + (s.brand ? ' · ' + escHtml(s.brand) : '')
+          + (s.name ? ' · ' + escHtml(s.name) : '') + '</option>';
+      }
+      var inputStyle = 'padding:4px 6px;border:' + C_LINE + ';border-radius:4px;background:' + C_INPUT_BG + ';color:inherit;font-size:12px;';
+      var btnStyle = 'border:1px solid rgba(127,127,127,.45);background:transparent;color:inherit;border-radius:4px;padding:4px 12px;cursor:pointer;font-size:12px;';
+
+      box.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px;">'
+        + '<label style="font-size:12px;opacity:.75">系列</label>'
+        + '<select class="plm-sel-series" style="' + inputStyle + '">' + opts + '</select>'
+        + '<span class="plm-sel-filters" style="display:contents"></span>'
+        + '<button class="plm-sel-go" style="' + btnStyle + '">查询</button>'
+        + '<button class="plm-sel-pick" style="' + btnStyle + '" title="选择哪些参数出现在条件栏">筛选字段</button>'
+        + '</div>'
+        + '<div class="plm-sel-picker" style="display:none;margin-bottom:10px;padding:10px 12px;'
+        + 'background:rgba(127,127,127,.08);border:' + C_LINE + ';border-radius:4px;"></div>'
+        + '<div style="font-size:13px;font-weight:bold;margin:6px 0 6px;">匹配型号</div>'
+        + '<div class="plm-sel-result" style="font-size:12px;opacity:.75;">填写条件后点「查询」</div>';
+
+      var selSeries = box.querySelector('.plm-sel-series');
+      var filtersBox = box.querySelector('.plm-sel-filters');
+      var resultBox = box.querySelector('.plm-sel-result');
+      var pickerBox = box.querySelector('.plm-sel-picker');
+      var goBtn = box.querySelector('.plm-sel-go');
+      var pickBtn = box.querySelector('.plm-sel-pick');
+
+      function curSeries() { return series[Number(selSeries.value) || 0] || series[0]; }
+      function allCols(s) {
+        var out = [];
+        var cs = (s && s.columns) || [];
+        for (var i = 0; i < cs.length; i++) {
+          if (cs[i].role === 'model' || cs[i].key === '小类号') continue;
+          out.push(cs[i]);
+        }
+        return out;
+      }
+      function control(c) {
+        var label = escHtml(c.key) + (c.unit ? '（' + escHtml(c.unit) + '）' : '');
+        var attr = 'data-col="' + escHtml(c.key) + '"';
+        var ctrl = '';
+        if (c.type === 'enum' && c.options && c.options.length) {
+          var o = '<option value="">不限</option>';
+          for (var i = 0; i < c.options.length; i++) o += '<option>' + escHtml(c.options[i]) + '</option>';
+          ctrl = '<select ' + attr + ' style="' + inputStyle + '">' + o + '</select>';
+        } else if (c.type === 'number') {
+          ctrl = '<input type="number" step="any" ' + attr + ' placeholder="不限" style="width:92px;' + inputStyle + '" />';
+        } else {
+          ctrl = '<input type="text" ' + attr + ' placeholder="不限" style="width:110px;' + inputStyle + '" />';
+        }
+        return '<span style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap;">'
+          + '<label style="font-size:12px;opacity:.75">' + label + '</label>' + ctrl + '</span>';
+      }
+
+      function buildFilters() {
+        var s = curSeries();
+        var cols = allCols(s);
+        var keys = selLoadKeys(sub, s.id, cols);
+        var html = '';
+        for (var i = 0; i < cols.length; i++) {
+          if (keys.indexOf(cols[i].key) < 0) continue;
+          html += control(cols[i]);
+        }
+        filtersBox.innerHTML = html
+          || '<span style="font-size:12px;opacity:.6">未选择筛选字段，点「筛选字段」勾选</span>';
+      }
+
+      function buildPicker() {
+        var s = curSeries();
+        var cols = allCols(s);
+        var keys = selLoadKeys(sub, s.id, cols);
+        var main = '', other = '';
+        for (var i = 0; i < cols.length; i++) {
+          var c = cols[i];
+          var checked = keys.indexOf(c.key) >= 0 ? ' checked' : '';
+          var item = '<label style="display:inline-flex;align-items:center;gap:5px;margin:0 16px 6px 0;cursor:pointer;">'
+            + '<input type="checkbox" data-key="' + escHtml(c.key) + '"' + checked + ' />'
+            + escHtml(c.key) + (c.unit ? '（' + escHtml(c.unit) + '）' : '') + '</label>';
+          if (c.filterable !== false) main += item; else other += item;
+        }
+        pickerBox.innerHTML = '<div style="font-size:12px;opacity:.75;margin-bottom:6px;">'
+          + '主要参数默认已勾选；需要时再补选其他参数（选择会记住）</div>'
+          + (main ? '<div style="font-size:12px;color:' + C_MUTE + ';margin:8px 0 4px;">主要参数</div><div>' + main + '</div>' : '')
+          + (other ? '<div style="font-size:12px;color:' + C_MUTE + ';margin:8px 0 4px;">其他参数</div><div>' + other + '</div>' : '');
+
+        var cbs = pickerBox.querySelectorAll('input[type=checkbox]');
+        for (var j = 0; j < cbs.length; j++) {
+          cbs[j].onchange = function () {
+            var arr = [];
+            var all = pickerBox.querySelectorAll('input[type=checkbox]');
+            for (var k = 0; k < all.length; k++) if (all[k].checked) arr.push(all[k].getAttribute('data-key'));
+            selSaveKeys(sub, curSeries().id, arr);
+            buildFilters();
+          };
+        }
+      }
+
+      function runQuery() {
+        var s = curSeries();
+        var filters = {};
+        var els = filtersBox.querySelectorAll('[data-col]');
+        for (var i = 0; i < els.length; i++) {
+          var v = String(els[i].value == null ? '' : els[i].value).trim();
+          if (v !== '') filters[els[i].getAttribute('data-col')] = v;
+        }
+        var url = apiUrl('/api/plm/select?sub=' + encodeURIComponent(sub)
+          + '&series=' + encodeURIComponent(s.id)
+          + '&limit=500'
+          + '&filters=' + encodeURIComponent(JSON.stringify(filters)));
+        resultBox.innerHTML = '<span style="opacity:.7">查询中…</span>';
+        apiAbsolute(url, function (r) {
+          if (!selMask) return;
+          if (!r || r.ok === false) { resultBox.innerHTML = '<span style="opacity:.7">查询失败</span>'; return; }
+          renderSelResult(r);
+        });
+      }
+
+      function renderSelResult(r) {
+        var items = (r && r.items) || [];
+        if (!items.length) { resultBox.innerHTML = '<span style="opacity:.7">没有匹配的型号</span>'; return; }
+        var total = (r && r.total) || items.length;
+        var paramCols = [];
+        var cs = (r && r.columns) || [];
+        for (var i = 0; i < cs.length; i++) {
+          if (cs[i].role === 'model' || cs[i].key === '小类号') continue;
+          paramCols.push(cs[i]);
+        }
+        var h = '<div style="font-size:12px;opacity:.7;margin-bottom:6px;">共 ' + total + ' 条'
+          + (total > items.length ? '，已显示前 ' + items.length + ' 条' : '') + '</div>'
+          + '<div style="overflow-x:auto;"><table style="width:max-content;min-width:100%;border-collapse:collapse;font-size:12px;">'
+          + '<thead><tr style="background:' + C_HEAD_BG + ';">'
+          + '<th style="padding:6px 10px;border-bottom:' + C_LINE + ';text-align:left;white-space:nowrap;">型号</th>';
+        for (var j = 0; j < paramCols.length; j++) {
+          h += '<th style="padding:6px 10px;border-bottom:' + C_LINE + ';text-align:left;white-space:nowrap;">'
+            + escHtml(paramCols[j].key) + (paramCols[j].unit ? '（' + escHtml(paramCols[j].unit) + '）' : '') + '</th>';
+        }
+        h += '</tr></thead><tbody>';
+        for (var k = 0; k < items.length; k++) {
+          var it = items[k];
+          h += '<tr data-k="' + k + '" style="cursor:pointer;">'
+            + '<td style="padding:6px 10px;border-bottom:' + C_LINE + ';font-family:monospace;white-space:nowrap;">'
+            + escHtml(it.model) + '</td>';
+          for (var m = 0; m < paramCols.length; m++) {
+            var cv = (it.cells && it.cells[paramCols[m].key] != null) ? it.cells[paramCols[m].key] : '';
+            h += '<td style="padding:6px 10px;border-bottom:' + C_LINE + ';white-space:nowrap;">' + escHtml(cv) + '</td>';
+          }
+          h += '</tr>';
+        }
+        h += '</tbody></table></div>';
+        resultBox.innerHTML = h;
+
+        var rows = resultBox.querySelectorAll('tr[data-k]');
+        for (var n = 0; n < rows.length; n++) {
+          rows[n].onclick = function () {
+            var it2 = items[Number(this.getAttribute('data-k'))];
+            if (!it2) return;
+            // 名称只在为空时补，不覆盖用户已写的叫法；规格是选型结果，直接覆盖
+            if (!String(nameIn.value || '').trim()) nameIn.value = it2.name || it2.series || '';
+            specIn.value = it2.spec || it2.model || '';
+            closeSelectModal();
+            checkNow();
+          };
+        }
+      }
+
+      selSeries.onchange = function () { buildFilters(); runQuery(); };
+      goBtn.onclick = runQuery;
+      pickBtn.onclick = function () {
+        if (pickerBox.style.display === 'none') {
+          buildPicker();
+          pickerBox.style.display = '';
+        } else {
+          pickerBox.style.display = 'none';
+        }
+      };
+
+      buildFilters();
+      runQuery();
     }
 
     function openSimilarModal() {

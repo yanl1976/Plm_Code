@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.57';
+  var PLUGIN_VERSION = '1.59';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1930,6 +1930,7 @@
 
     // ================= 选型助手（与 3100 看板同源，行为一致） =================
     var selMask = null;
+    var selDebounce = null;
 
     function closeSelectModal() {
       if (!selMask) return;
@@ -1987,6 +1988,9 @@
       var box = dlgEl('div', 'padding:14px 18px;');
       panel.appendChild(box);
       box.innerHTML = '<div style="opacity:.7">加载中…</div>';
+
+      // 必须挂到 document 上，否则元素只在内存里，界面看不到
+      document.body.appendChild(selMask);
 
       apiAbsolute(apiUrl('/api/plm/select/series?sub=' + encodeURIComponent(sub)), function (r) {
         if (!selMask) return;
@@ -2069,6 +2073,21 @@
         }
         filtersBox.innerHTML = html
           || '<span style="font-size:12px;opacity:.6">未选择筛选字段，点「筛选字段」勾选</span>';
+
+        // 筛选条件变化后自动查询（下拉立即查、输入框防抖），不必再去点「查询」
+        var els = filtersBox.querySelectorAll('[data-col]');
+        for (var j2 = 0; j2 < els.length; j2++) {
+          (function (el) {
+            if (el.tagName === 'SELECT') {
+              el.onchange = function () { runQuery(); };
+            } else {
+              el.oninput = function () {
+                clearTimeout(selDebounce);
+                selDebounce = setTimeout(runQuery, 350);
+              };
+            }
+          })(els[j2]);
+        }
       }
 
       function buildPicker() {
@@ -2113,10 +2132,16 @@
           + '&series=' + encodeURIComponent(s.id)
           + '&limit=500'
           + '&filters=' + encodeURIComponent(JSON.stringify(filters)));
+        log('选型查询', 'series=' + s.id, 'filters=' + JSON.stringify(filters));
         resultBox.innerHTML = '<span style="opacity:.7">查询中…</span>';
         apiAbsolute(url, function (r) {
           if (!selMask) return;
-          if (!r || r.ok === false) { resultBox.innerHTML = '<span style="opacity:.7">查询失败</span>'; return; }
+          if (!r || r.ok === false) {
+            log('选型查询失败', r && r.error);
+            resultBox.innerHTML = '<span style="opacity:.7">查询失败</span>';
+            return;
+          }
+          log('选型结果', 'total=' + r.total, 'returned=' + r.returned);
           renderSelResult(r);
         });
       }

@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.55';
+  var PLUGIN_VERSION = '1.56';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -2020,9 +2020,14 @@
 
       // 先让表格显示出来，再逐条用 PLM 接口刷新库存（一条一条查，不整块卡住）
       setTimeout(function () {
-        refreshSimilarStock(items, qtyCells, pjCells, sumQty, sumAvb, simSrc);
+        // 传当前规格作为缓存 key：同一规格反复打开明细时直接复用上次结果
+        refreshSimilarStock(items, qtyCells, pjCells, sumQty, sumAvb, simSrc, specIn.value);
       }, 0);
     }
+
+    // 明细库存缓存：小类 + 规格 → { at, map:{编码:{qty,projectNo}} }，3 分钟内复用
+    var detailStockCache = {};
+    var DETAIL_TTL = 3 * 60 * 1000;
 
     /** 从 PLM 返回的仓库行里取项目号：优先数量最大的那行，其次任意有值的行 */
     function pickStockProject(r) {
@@ -2043,7 +2048,36 @@
      * 表格先以「…」占位，查到一条填一条；查不到的显示「-」，计入「未取到」。
      * 项目号同样以 PLM 返回的 FMTONO 为准（与 ERP 库存页一致）。
      */
-    function refreshSimilarStock(items, cells, pjCells, sumQty, sumAvb, srcEl) {
+    function refreshSimilarStock(items, cells, pjCells, sumQty, sumAvb, srcEl, specKey) {
+      // 命中缓存：不再打 PLM，直接把上次的数量/项目号填回去
+      var cacheKey = String(currentSub() || '') + '|' + String(specKey || '').trim();
+      var hit = detailStockCache[cacheKey];
+      if (hit && (Date.now() - hit.at) < DETAIL_TTL) {
+        var s0 = 0;
+        for (var ci = 0; ci < items.length; ci++) {
+          var cv = hit.map[String(items[ci].fnumber || '')];
+          if (!cv) continue;
+          if (cells[ci]) cells[ci].textContent = (cv.qty == null ? '-' : String(cv.qty));
+          if (cv.projectNo && pjCells && pjCells[ci]) pjCells[ci].textContent = cv.projectNo;
+          if (cv.qty != null) s0 += cv.qty;
+        }
+        if (sumQty) sumQty.textContent = String(s0);
+        if (sumAvb) sumAvb.textContent = String(s0);
+        if (srcEl) {
+          var mins = Math.max(1, Math.ceil((DETAIL_TTL - (Date.now() - hit.at)) / 60000));
+          srcEl.textContent = '库存来源：缓存（' + mins + ' 分钟内有效，点此重查）';
+          srcEl.style.color = '#2e7d32';
+          srcEl.style.cursor = 'pointer';
+          srcEl.onclick = function () {
+            delete detailStockCache[cacheKey];
+            srcEl.onclick = null;
+            srcEl.style.cursor = '';
+            refreshSimilarStock(items, cells, pjCells, sumQty, sumAvb, srcEl, specKey);
+          };
+        }
+        return;
+      }
+
       var i = 0, sum = 0, okCount = 0;
       function finish() {
         if (!srcEl) return;
@@ -2075,6 +2109,12 @@
             // 项目号以 PLM 返回的 FMTONO 为准
             var pj = pickStockProject(r);
             if (pj && pjCells && pjCells[idx]) pjCells[idx].textContent = pj;
+            // 写入缓存：同一规格再次打开明细时直接复用，不再逐条查 PLM
+            if (!detailStockCache[cacheKey]) detailStockCache[cacheKey] = { at: Date.now(), map: {} };
+            detailStockCache[cacheKey].at = Date.now();
+            detailStockCache[cacheKey].map[String(items[idx].fnumber || '')] = {
+              qty: n, projectNo: pj || '',
+            };
           }
           if (cells[idx]) cells[idx].textContent = (n == null ? '-' : String(n));
           if (n != null) sum += n;

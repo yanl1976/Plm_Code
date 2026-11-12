@@ -516,3 +516,8 @@ tr.saving { opacity:.45; }
 .nm-spec-wrap textarea{width:100%;min-height:56px}
 .nm-row.nm-spec{align-items:flex-start}
 .nm-row.nm-spec>label{padding-top:8px}
+.nm-similar-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* 选型助手可用时用强调色，与普通 ghost 按钮区分 */
+#nmSelect:not(:disabled){color:var(--accent);border-color:var(--accent)}
+#nmSelect:not(:disabled):hover{background:rgba(62,166,255,.12);filter:none}

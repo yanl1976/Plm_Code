@@ -1529,6 +1529,7 @@ function onNmSubPicked() {
   if (($('#nmName').value || '').trim()) nmNameSuggest()
   else hideNmNameTip()
   refreshNmCode()
+  checkSelectAvailable()      // 该小类没有选型库时，按钮置灰
 }
 
 async function refreshNmCode() {
@@ -1869,6 +1870,37 @@ async function renderNmInv() {
 function selectBase() {
   return window.SELECT_API_BASE
     || (location.protocol + '//' + (location.hostname || '127.0.0.1') + ':3100')
+}
+
+// 选型按钮可用性：当前小类下有「启用」的选型库才可点
+let selCheckSeq = 0
+async function checkSelectAvailable() {
+  const btn = $('#nmSelect')
+  if (!btn) return
+  const sub = String((nm.cur && nm.cur.sub) || '').trim()
+  if (!sub) {
+    btn.disabled = true
+    btn.title = '请先选择小类'
+    return
+  }
+  const seq = ++selCheckSeq
+  btn.disabled = true
+  btn.title = '正在检查选型库…'
+  try {
+    const r = await fetch(selectBase() + '/api/plm/select/series?sub=' + encodeURIComponent(sub),
+      { cache: 'no-store' }).then((x) => x.json())
+    if (seq !== selCheckSeq) return            // 小类又变了，丢弃过期结果
+    const list = (r && Array.isArray(r.series)) ? r.series : []
+    const usable = list.filter((s) => s.enabled !== false)
+    btn.disabled = !usable.length
+    btn.title = usable.length
+      ? '按参数从厂家样本中选型（' + usable.length + ' 个系列）'
+      : '当前小类暂无选型库'
+  } catch (e) {
+    if (seq !== selCheckSeq) return
+    btn.disabled = true
+    btn.title = '选型服务不可用'
+  }
 }
 
 // 弹窗宽度：选型助手表格列多，单独放宽；其它弹窗恢复默认

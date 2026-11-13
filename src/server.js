@@ -20,6 +20,7 @@ import { getCategory } from './classify.js'
 import { loadTemplates, buildTree, rebuildMid, addCustomParam, removeCustomParam, saveTemplates } from './feature-templates.js'
 import { getOverride, saveOverride, deleteOverride, bulkPrefill, overrideMtime, countParamUsage } from './feature-store.js'
 import XLSX from 'xlsx'
+import { cableSpecHints } from './cable-spec.js'
 import { normalize, tokenize, jaccard, looseSignature, modelOf } from './spec.js'
 import { checkMaterial, fixSpecFormat, rules as materialRules, resolveNameFix, detectNameModel } from './material-rules.js'
 import * as nameSyn from './name-synonyms.js'
@@ -1336,6 +1337,11 @@ const server = http.createServer(async (req, res) => {
       if (m.sub) {
         try { verdict.frequentNames = frequentNamesInSub(m.sub, 8) } catch (e) { verdict.frequentNames = [] }
       }
+      // 电缆专项提示（仅 110302）：电压写法等，不阻断
+      try {
+        const hints = cableSpecHints(m.spec, m.sub)
+        if (hints.length) verdict.warnings = (verdict.warnings || []).concat(hints)
+      } catch (e) { /* 提示失败不影响主校验 */ }
       return sendJson(res, 200, verdict)
     }
 

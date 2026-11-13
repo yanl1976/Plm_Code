@@ -25,6 +25,7 @@ import XLSX from 'xlsx'
 import { fileURLToPath } from 'url'
 import { loadIndex, indexStatus, queryDuplicates, suggestNames, suggestSpecs, categoryOf, tokensOf } from './plm-index.js'
 import { checkMaterial, suggestSpec } from './material-rules.js'
+import { cableSpecHints } from './cable-spec.js'
 import { extractParams } from './struct-spec.js'
 import { env, envPort, logEnvSource } from './env.js'
 
@@ -600,6 +601,8 @@ function handleSelect(body) {
         type: c.type || 'text',
         role: c.role || '',
         options: Array.isArray(c.options) ? c.options.slice(0, 60) : [],
+        // 与 /api/plm/select/series 保持一致：管理页勾选优先，老数据按规则兜底
+        filterable: (typeof c.filterable === 'boolean') ? c.filterable : isPrimaryColumn(c),
       })
     }
   }
@@ -782,6 +785,11 @@ function handleCheck(body) {
     const r = checkMaterial({ name, spec, sub: sub || undefined })
     result.errors = r.errors || []
     result.warnings = r.warnings || []
+    // 电缆专项提示（仅 110302）：电压写法等，不阻断
+    try {
+      const hints = cableSpecHints(spec, sub)
+      if (hints.length) result.warnings.push(...hints)
+    } catch (e) { /* 提示失败不影响主校验 */ }
     result.rulesVersion = r.rulesVersion || ''
     result.suggestion.name = r.suggestion?.name || ''
     result.suggestion.spec = r.suggestion?.spec || ''

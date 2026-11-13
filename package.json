@@ -12,7 +12,8 @@
     "report": "node src/cli.js report",
     "server": "node src/server.js",
     "plm": "node src/plm-server.js",
-    "verify:plm": "node scripts/verify-plm-plugin.mjs"
+    "verify:plm": "node scripts/verify-plm-plugin.mjs",
+    "test:cable": "node scripts/test-cable-deep.mjs"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

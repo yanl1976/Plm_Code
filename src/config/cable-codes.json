@@ -1,0 +1,376 @@
+{
+  "meta": {
+    "description": "线缆型号代码表：型号代号 → 执行标准 / 电压范围 / 全称 / 品类。用于从规格首段识别型号并补标准号与说明。",
+    "basis": "GB/T 12706（1~35kV 挤包绝缘电力电缆）、GB/T 5023（450/750V 及以下聚氯乙烯绝缘电缆）、GB/T 5013（450/750V 及以下橡皮绝缘电缆）、GB/T 9330（塑料绝缘控制电缆）、GB/T 9331（船用电力电缆）、GB/T 13033（矿物绝缘电缆）",
+    "rule": "国标命名：系列代号 + 导体 + 绝缘 + 护套 + 特征 + 额定电压 + 芯数×截面 + 标准号。导体 T(铜)可省略、L(铝)；绝缘/护套 V(聚氯乙烯)、YJ(交联聚乙烯)、E(乙丙橡胶)；特征 ZR(阻燃)、NH(耐火)、WDZ(低烟无卤)、ZA/ZB/ZC(阻燃等级)。",
+    "version": "1.0",
+    "updatedAt": "2026-11-13"
+  },
+  "prefixes": [
+    "WDZA",
+    "WDZB",
+    "WDZC",
+    "WDZ",
+    "ZRA",
+    "ZRB",
+    "ZRC",
+    "ZR",
+    "NHA",
+    "NHB",
+    "NHC",
+    "NH",
+    "ZA",
+    "ZB",
+    "ZC"
+  ],
+  "codes": {
+    "BV": {
+      "std": "GB/T 5023",
+      "voltage": "300/500V、450/750V",
+      "full": "铜芯聚氯乙烯绝缘电线",
+      "category": "布电线"
+    },
+    "BVR": {
+      "std": "GB/T 5023",
+      "voltage": "450/750V",
+      "full": "铜芯聚氯乙烯绝缘软电线",
+      "category": "布电线"
+    },
+    "BVV": {
+      "std": "GB/T 5023",
+      "voltage": "300/500V",
+      "full": "铜芯聚氯乙烯绝缘聚氯乙烯护套圆电线",
+      "category": "布电线"
+    },
+    "BLV": {
+      "std": "GB/T 5023",
+      "voltage": "450/750V",
+      "full": "铝芯聚氯乙烯绝缘电线",
+      "category": "布电线"
+    },
+    "BLVV": {
+      "std": "GB/T 5023",
+      "voltage": "300/500V",
+      "full": "铝芯聚氯乙烯绝缘聚氯乙烯护套圆电线",
+      "category": "布电线"
+    },
+    "RV": {
+      "std": "GB/T 5023",
+      "voltage": "450/750V",
+      "full": "铜芯聚氯乙烯绝缘连接软电线",
+      "category": "布电线"
+    },
+    "RVV": {
+      "std": "GB/T 5023",
+      "voltage": "300/500V",
+      "full": "铜芯聚氯乙烯绝缘聚氯乙烯护套软电缆",
+      "category": "布电线"
+    },
+    "RVVP": {
+      "std": "GB/T 5023",
+      "voltage": "300/300V",
+      "full": "铜芯聚氯乙烯绝缘屏蔽聚氯乙烯护套软电缆",
+      "category": "布电线"
+    },
+    "RVS": {
+      "std": "GB/T 5023",
+      "voltage": "300/300V",
+      "full": "铜芯聚氯乙烯绝缘双绞软电线",
+      "category": "布电线"
+    },
+    "YQ": {
+      "std": "GB/T 5013",
+      "voltage": "300/300V",
+      "full": "轻型橡套软电缆",
+      "category": "橡套电缆"
+    },
+    "YZ": {
+      "std": "GB/T 5013",
+      "voltage": "300/500V",
+      "full": "中型橡套软电缆",
+      "category": "橡套电缆"
+    },
+    "YZW": {
+      "std": "GB/T 5013",
+      "voltage": "300/500V",
+      "full": "中型橡套软电缆（户外型）",
+      "category": "橡套电缆"
+    },
+    "YC": {
+      "std": "GB/T 5013",
+      "voltage": "450/750V",
+      "full": "重型橡套软电缆",
+      "category": "橡套电缆"
+    },
+    "YCW": {
+      "std": "GB/T 5013",
+      "voltage": "450/750V",
+      "full": "重型橡套软电缆（户外型）",
+      "category": "橡套电缆"
+    },
+    "YH": {
+      "std": "GB/T 5013",
+      "voltage": "450/750V",
+      "full": "电焊机用橡套软电缆",
+      "category": "橡套电缆"
+    },
+    "YGC": {
+      "std": "GB/T 5013",
+      "voltage": "450/750V",
+      "full": "重型橡套钢丝铠装软电缆",
+      "category": "橡套电缆"
+    },
+    "YGU": {
+      "std": "GB/T 5013",
+      "voltage": "450/750V",
+      "full": "低温环境用橡套软电缆",
+      "category": "橡套电缆"
+    },
+    "YGF": {
+      "std": "GB/T 5013",
+      "voltage": "450/750V",
+      "full": "氟塑料绝缘橡套软电缆",
+      "category": "橡套电缆"
+    },
+    "YFFB": {
+      "std": "GB/T 5013",
+      "voltage": "450/750V",
+      "full": "丁腈绝缘扁平软电缆",
+      "category": "橡套电缆"
+    },
+    "JBQ": {
+      "std": "JB/T 6213",
+      "voltage": "1140V 及以下",
+      "full": "电机绕组引接软电缆",
+      "category": "引接线"
+    },
+    "KVV": {
+      "std": "GB/T 9330",
+      "voltage": "450/750V",
+      "full": "聚氯乙烯绝缘聚氯乙烯护套控制电缆",
+      "category": "控制电缆"
+    },
+    "KVV22": {
+      "std": "GB/T 9330",
+      "voltage": "450/750V",
+      "full": "聚氯乙烯绝缘钢带铠装控制电缆",
+      "category": "控制电缆"
+    },
+    "KVVP": {
+      "std": "GB/T 9330",
+      "voltage": "450/750V",
+      "full": "聚氯乙烯绝缘屏蔽控制电缆",
+      "category": "控制电缆"
+    },
+    "KVVP22": {
+      "std": "GB/T 9330",
+      "voltage": "450/750V",
+      "full": "聚氯乙烯绝缘屏蔽钢带铠装控制电缆",
+      "category": "控制电缆"
+    },
+    "KYJV": {
+      "std": "GB/T 9330",
+      "voltage": "450/750V",
+      "full": "交联聚乙烯绝缘控制电缆",
+      "category": "控制电缆"
+    },
+    "KYJVP": {
+      "std": "GB/T 9330",
+      "voltage": "450/750V",
+      "full": "交联聚乙烯绝缘屏蔽控制电缆",
+      "category": "控制电缆"
+    },
+    "KYJVP2": {
+      "std": "GB/T 9330",
+      "voltage": "450/750V",
+      "full": "交联聚乙烯绝缘铜带屏蔽控制电缆",
+      "category": "控制电缆"
+    },
+    "DJYVP": {
+      "std": "GB/T 9330",
+      "voltage": "300/500V",
+      "full": "聚乙烯绝缘铜丝编织总屏蔽计算机电缆",
+      "category": "计算机电缆"
+    },
+    "DJYPVP": {
+      "std": "GB/T 9330",
+      "voltage": "300/500V",
+      "full": "聚乙烯绝缘分屏蔽及总屏蔽计算机电缆",
+      "category": "计算机电缆"
+    },
+    "YJV": {
+      "std": "GB/T 12706",
+      "voltage": "0.6/1kV~35kV",
+      "full": "铜芯交联聚乙烯绝缘聚氯乙烯护套电力电缆",
+      "category": "电力电缆"
+    },
+    "YJLV": {
+      "std": "GB/T 12706",
+      "voltage": "0.6/1kV~35kV",
+      "full": "铝芯交联聚乙烯绝缘聚氯乙烯护套电力电缆",
+      "category": "电力电缆"
+    },
+    "YJV22": {
+      "std": "GB/T 12706",
+      "voltage": "0.6/1kV~35kV",
+      "full": "铜芯交联聚乙烯绝缘钢带铠装电力电缆",
+      "category": "电力电缆"
+    },
+    "YJLV22": {
+      "std": "GB/T 12706",
+      "voltage": "0.6/1kV~35kV",
+      "full": "铝芯交联聚乙烯绝缘钢带铠装电力电缆",
+      "category": "电力电缆"
+    },
+    "YJV32": {
+      "std": "GB/T 12706",
+      "voltage": "0.6/1kV~35kV",
+      "full": "铜芯交联聚乙烯绝缘细钢丝铠装电力电缆",
+      "category": "电力电缆"
+    },
+    "YJY": {
+      "std": "GB/T 12706",
+      "voltage": "0.6/1kV~35kV",
+      "full": "铜芯交联聚乙烯绝缘聚乙烯护套电力电缆",
+      "category": "电力电缆"
+    },
+    "VVR": {
+      "std": "GB/T 12706",
+      "voltage": "0.6/1kV",
+      "full": "铜芯聚氯乙烯绝缘聚氯乙烯护套软电力电缆",
+      "category": "电力电缆"
+    },
+    "VV": {
+      "std": "GB/T 12706",
+      "voltage": "0.6/1kV~6kV",
+      "full": "铜芯聚氯乙烯绝缘聚氯乙烯护套电力电缆",
+      "category": "电力电缆"
+    },
+    "VLV": {
+      "std": "GB/T 12706",
+      "voltage": "0.6/1kV~6kV",
+      "full": "铝芯聚氯乙烯绝缘聚氯乙烯护套电力电缆",
+      "category": "电力电缆"
+    },
+    "VV22": {
+      "std": "GB/T 12706",
+      "voltage": "0.6/1kV~6kV",
+      "full": "铜芯聚氯乙烯绝缘钢带铠装电力电缆",
+      "category": "电力电缆"
+    },
+    "VLV22": {
+      "std": "GB/T 12706",
+      "voltage": "0.6/1kV~6kV",
+      "full": "铝芯聚氯乙烯绝缘钢带铠装电力电缆",
+      "category": "电力电缆"
+    },
+    "CEF": {
+      "std": "GB/T 9331",
+      "voltage": "0.6/1kV",
+      "full": "乙丙橡胶绝缘氯丁橡胶护套船用电力电缆",
+      "category": "船用电缆"
+    },
+    "CEFR": {
+      "std": "GB/T 9331",
+      "voltage": "0.6/1kV",
+      "full": "乙丙橡胶绝缘氯丁橡胶护套船用软电缆",
+      "category": "船用电缆"
+    },
+    "CEPJ": {
+      "std": "GB/T 9331",
+      "voltage": "0.6/1kV",
+      "full": "乙丙橡胶绝缘聚烯烃护套船用电力电缆",
+      "category": "船用电缆"
+    },
+    "CJPF": {
+      "std": "GB/T 9331",
+      "voltage": "0.6/1kV",
+      "full": "交联聚乙烯绝缘船用电力电缆",
+      "category": "船用电缆"
+    },
+    "BTTZ": {
+      "std": "GB/T 13033",
+      "voltage": "0.6/1kV",
+      "full": "铜芯铜护套氧化镁绝缘矿物电缆",
+      "category": "矿物绝缘电缆"
+    },
+    "BTLY": {
+      "std": "GB/T 13033",
+      "voltage": "0.6/1kV",
+      "full": "铜芯隔离型矿物绝缘电缆",
+      "category": "矿物绝缘电缆"
+    },
+    "CEPF": {
+      "std": "GB/T 9331",
+      "system": "GB",
+      "voltage": "0.6/1kV",
+      "full": "乙丙橡胶绝缘氯丁护套编织船用电力电缆",
+      "category": "船用电缆"
+    },
+    "DJYPVRP": {
+      "std": "GB/T 9330",
+      "system": "GB",
+      "voltage": "300/500V",
+      "full": "计算机电缆（分屏+总屏+铠装）",
+      "category": "计算机电缆"
+    },
+    "EFR": {
+      "std": "GB/T 5013",
+      "system": "GB",
+      "voltage": "450/750V",
+      "full": "乙丙橡胶绝缘氯丁护套软电缆",
+      "category": "橡套电缆"
+    },
+    "EFRP": {
+      "std": "GB/T 5013",
+      "system": "GB",
+      "voltage": "450/750V",
+      "full": "乙丙橡胶绝缘编织屏蔽软电缆",
+      "category": "橡套电缆"
+    },
+    "MHYBV": {
+      "std": "MT 818",
+      "system": "MT",
+      "voltage": "0.6/1kV",
+      "full": "煤矿用移动屏蔽橡套软电缆",
+      "category": "矿用电缆"
+    },
+    "BPYJVP": {
+      "std": "企业标准",
+      "system": "other",
+      "voltage": "0.6/1kV",
+      "full": "变频器用交联聚乙烯绝缘屏蔽电缆",
+      "category": "变频电缆"
+    },
+    "H1Z2Z2-K": {
+      "std": "EN 50618",
+      "system": "EN",
+      "voltage": "1.5kV DC",
+      "full": "光伏系统用无卤低烟交联电缆",
+      "category": "光伏电缆"
+    },
+    "PV1-F": {
+      "std": "TÜV 2PfG 1169",
+      "system": "other",
+      "voltage": "0.6/1kV",
+      "full": "光伏系统用单芯软电缆",
+      "category": "光伏电缆"
+    }
+  },
+  "externSystems": [
+    {
+      "re": "^IEEE\\s*-?\\s*45",
+      "std": "IEEE 45",
+      "system": "IEEE",
+      "full": "船用电缆（美标 IEEE 45）",
+      "category": "船用电缆"
+    },
+    {
+      "re": "^WDZ-?[O0]IL",
+      "std": "企业标准",
+      "system": "other",
+      "full": "低烟无卤耐油电缆",
+      "category": "特种电缆"
+    }
+  ]
+}

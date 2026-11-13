@@ -253,7 +253,10 @@
       "mm²": "mm²",
       "ohm": "Ω",
       "OHM": "Ω",
-      "ω": "Ω"
+      "ω": "Ω",
+      "mm^2": "mm²",
+      "m㎡": "mm²",
+      "mm^": "mm²"
     },
     "spaceBeforeUnit": false,
     "paramOrderHint": "型号 → 额定电压 → 极数 → 额定电流 → 附件/后缀",

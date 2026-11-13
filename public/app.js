@@ -744,6 +744,45 @@ async function addSynonym() {
   loadSynonyms()
 }
 $('#btnAddSyn') && ($('#btnAddSyn').onclick = addSynonym)
+
+// 同义词字典：导出 Excel（后端生成，带表头与列宽）
+$('#btnExportSyn') && ($('#btnExportSyn').onclick = () => {
+  location.href = '/api/name-synonyms/export'
+})
+
+// 同义词字典：从 Excel 批量导入（合并模式，同别名同范围且标准名一致的跳过）
+const synFileEl = $('#synFile')
+$('#btnImportSyn') && ($('#btnImportSyn').onclick = () => { if (synFileEl) synFileEl.click() })
+synFileEl && (synFileEl.onchange = () => {
+  const f = synFileEl.files && synFileEl.files[0]
+  if (!f) return
+  const msg = $('#synMsg')
+  if (msg) { msg.className = 'syn-msg'; msg.textContent = '导入中…' }
+  const reader = new FileReader()
+  reader.onload = async () => {
+    try {
+      const r = await apiPost('/api/name-synonyms/import', {
+        fileName: f.name, data: String(reader.result || ''),
+      })
+      if (!r || !r.ok) {
+        if (msg) { msg.className = 'syn-msg err'; msg.textContent = '导入失败：' + ((r && r.error) || '未知错误') }
+        return
+      }
+      const bad = (r.errors || []).length
+      if (msg) {
+        msg.className = 'syn-msg' + (bad ? ' err' : '')
+        msg.textContent = '导入完成：新增 ' + r.added + ' 条，更新 ' + r.updated + ' 条，跳过 ' + r.skipped + ' 条'
+          + (bad ? '；' + bad + ' 条失败（' + r.errors[0] + '）' : '')
+      }
+      await loadSynonyms()
+    } catch (e) {
+      if (msg) { msg.className = 'syn-msg err'; msg.textContent = '导入失败：' + (e && e.message ? e.message : e) }
+    } finally {
+      synFileEl.value = ''
+    }
+  }
+  reader.readAsDataURL(f)
+})
 $('#synAlias') && $('#synAlias').addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); $('#synStd').focus() } })
 $('#synStd') && $('#synStd').addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); addSynonym() } })
 let synSearchTimer = null

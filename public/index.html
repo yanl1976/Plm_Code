@@ -157,6 +157,9 @@
           <input id="synStd" placeholder="标准名称" autocomplete="off" />
           <select id="synSub"><option value="">全局</option></select>
           <button id="btnAddSyn" class="primary">添加</button>
+          <button id="btnExportSyn" class="ghost" title="导出为 Excel，便于线下批量编辑">导出</button>
+          <button id="btnImportSyn" class="ghost" title="从 Excel 批量导入（合并模式）">导入</button>
+          <input type="file" id="synFile" accept=".xlsx,.xls,.csv" style="display:none" />
           <input id="synSearch" placeholder="搜索叫法 / 标准名" autocomplete="off" />
           <span id="synStats" class="syn-stats"></span>
         </div>

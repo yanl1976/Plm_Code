@@ -554,7 +554,51 @@ HoteamUI.DataService.Call('Hoteam.InforCenter.ERPService.GetStockSearchData', {
 > 页签配置的 `PagePara` 只有 `{"ItemName":"StockSearchManagement"}`，ObjectID 是 `TabsCtrl_GetUrlPara` 从父页面参数 `para.ObjectID = para.SelectID` 整体继承的（见 `Platform/Js/Common/TabsCtrl.js` L68、`MenuCtrl.js` L724）。
 > `SearchStockData` 等批量方法未发布（404），当前只能**按单个对象**查询。
 
-### 5.3 查重口径（v1.51 起四级）
+### 5.3 名称同义词字典（导入 / 导出）
+
+维护入口：**看板 → 系统设置 → 「名称同义词字典」**，列表可直接编辑，改完即时生效。
+
+| 操作 | 说明 |
+|---|---|
+| **导出** | 生成 `name-synonyms-YYYY-MM-DD.xlsx`，四列：`小类号 / 别名（非标准叫法） / 标准名 / 范围` |
+| **导入** | 上传同一格式的 Excel，**合并模式**：同别名 + 同范围且标准名一致 → 跳过；一致则新增/更新 |
+
+**导入文件格式**
+
+```
+小类号   别名（非标准叫法）   标准名      范围
+          空气开关            微型断路器   全局
+100105    小型断路器          微型断路器   小类
+```
+
+- 小类号留空 → 全局条目
+- 小类号填 6 位 → 仅在该小类生效，优先级高于全局
+- 表头必须是「别名/非标准」+「标准」两列，脚本按列名自动定位
+
+**接口**
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/api/name-synonyms` | 列表（支持 `sub` / `kw` / `scope` 过滤） |
+| POST | `/api/name-synonyms` | 新增一条 |
+| PUT | `/api/name-synonyms` | 修改一条 |
+| DELETE | `/api/name-synonyms?alias=&sub=` | 删除一条 |
+| GET | `/api/name-synonyms/export` | 导出 xlsx |
+| POST | `/api/name-synonyms/import` | 导入 xlsx（body: `{fileName, data:base64}`） |
+
+**收录口径**（重要）
+
+| 收录 | 不收录 |
+|---|---|
+| 同物异名（空气开关 → 微型断路器） | 子类与泛指（继电器 / 中间继电器） |
+| 简称（熔芯 → 熔断器熔芯） | 材质差异（不锈钢平垫 / 平垫） |
+| 错别字（热宿管 → 热缩管） | 颜色/方向/电压等级差异（红/绿、明装/暗装、低压/高压） |
+| 不可见差异（空格、大小写、全角符号） | 形态差异（紫铜板 / 紫铜棒） |
+
+> 标准名一律取「该小类内出现次数最多」的写法，不凭印象。
+> 存量为 5,962 个去重名称，当前字典 121 条（global 41 + bySub 80），覆盖约 2.4%——覆盖率不是目标，**避免同物不同码**才是。
+
+### 5.4 查重口径（v1.51 起四级）
 
 同小类内比对，命中任一级即**阻断回填**（红字 + 按钮禁用）：
 
@@ -570,7 +614,7 @@ HoteamUI.DataService.Call('Hoteam.InforCenter.ERPService.GetStockSearchData', {
 
 **前端兜底（v1.52）**：3100 未升级时响应里没有 `spec` 级，插件会用 `similar-models` 的 `similarity >= 0.999` 自行补一条 `spec` 记录，同样红字 + 禁用按钮。两条路任一命中即阻断，互不依赖。
 
-### 5.4 数据来源边界与待办（重要）
+### 5.5 数据来源边界与待办（重要）
 
 | 能力 | 当前来源 | 是否 PLM |
 |---|---|---|
@@ -588,7 +632,7 @@ HoteamUI.DataService.Call('Hoteam.InforCenter.ERPService.GetStockSearchData', {
   2. 提供物料全量导出接口，本地索引改为从 PLM 同步（而非 ERP 快照）
 - 在此之前：库存走 PLM，主数据继续用 ERP 快照
 
-### 5.5 选型库管理页（3100，原型）
+### 5.6 选型库管理页（3100，原型）
 
 **入口有两个**
 

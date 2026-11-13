@@ -229,10 +229,15 @@ function sendJson(res, code, obj) {
   })
   res.end(body)
 }
-function readBody(req) {
+function readBody(req, maxBytes = 1e6) {
   return new Promise((resolve, reject) => {
     let data = ''
-    req.on('data', (c) => { data += c; if (data.length > 1e6) req.destroy() })
+    let size = 0
+    req.on('data', (c) => {
+      size += c.length
+      if (size > maxBytes) { req.destroy(); return }   // 默认 1MB，Excel 导入单独放宽
+      data += c
+    })
     req.on('end', () => { try { resolve(data ? JSON.parse(data) : {}) } catch (e) { reject(e) } })
     req.on('error', reject)
   })
@@ -1423,6 +1428,95 @@ const server = http.createServer(async (req, res) => {
         // 兼容旧字段：frequentMatches 现为「存量名称联想」的简表
         frequentMatches: nameMatches.map((x) => ({ name: x.name, count: x.count })),
       })
+    }
+
+    // 同义词字典：导出 Excel（便于批量查看与线下编辑后再导入）
+    if (p === '/api/name-synonyms/export' && req.method === 'GET') {
+      const items = nameSyn.listSynonyms({})
+      items.sort((a, b) => {
+        if (a.scope !== b.scope) return a.scope === 'global' ? -1 : 1
+        return String(a.sub || '').localeCompare(String(b.sub || ''))
+      })
+      const aoa = [['小类号', '别名（非标准叫法）', '标准名', '范围']]
+      // 全局条目在小类号列直接写「全局」，避免留空被误认为漏填（导入时非 6 位数字一律按全局处理）
+      for (const x of items) aoa.push([x.sub || '全局', x.alias, x.std, x.scope === 'sub' ? '小类' : '全局'])
+      const ws = XLSX.utils.aoa_to_sheet(aoa)
+      ws['!cols'] = [{ wch: 10 }, { wch: 28 }, { wch: 28 }, { wch: 8 }]
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, '同义词')
+      const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+      const fname = 'name-synonyms-' + new Date().toISOString().slice(0, 10) + '.xlsx'
+      res.writeHead(200, {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': 'attachment; filename="' + fname + '"',
+        'Content-Length': buf.length,
+        'Cache-Control': 'no-store',
+      })
+      res.end(buf)
+      return
+    }
+
+    // 同义词字典：从 Excel 批量导入（合并模式；同别名同范围且标准名一致的跳过）
+    if (p === '/api/name-synonyms/import' && req.method === 'POST') {
+      const b = await readBody(req, 12 * 1024 * 1024)
+      try {
+        const raw = String(b.data || '').replace(/^data:[^,]+,/, '')
+        const buf = Buffer.from(raw, 'base64')
+        if (!buf.length) return sendJson(res, 200, { ok: false, error: '文件为空' })
+        const wb = XLSX.read(buf, { type: 'buffer' })
+        const sheet = wb.Sheets[wb.SheetNames[0]]
+        if (!sheet) return sendJson(res, 200, { ok: false, error: '工作簿里没有工作表' })
+        const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' })
+
+        // 表头行：同时含「别名/非标准」与「标准」的那一行
+        let hr = -1
+        for (let i = 0; i < Math.min(aoa.length, 10); i++) {
+          const row = (aoa[i] || []).map((x) => String(x || '').trim())
+          if (row.some((x) => /别名|非标准/.test(x)) && row.some((x) => /标准/.test(x))) { hr = i; break }
+        }
+        if (hr < 0) return sendJson(res, 200, { ok: false, error: '未找到表头（需要「别名」「标准名」两列）' })
+
+        const head = (aoa[hr] || []).map((x) => String(x || '').trim())
+        const iSub = head.findIndex((x) => /小类/.test(x))
+        const iAlias = head.findIndex((x) => /别名|非标准/.test(x))
+        // 「别名（非标准叫法）」里也含「标准」二字，必须先排除，否则会指到别名列
+        const iStd = head.findIndex((x) => /标准/.test(x) && !/别名|非标准/.test(x))
+        if (iAlias < 0 || iStd < 0) {
+          return sendJson(res, 200, { ok: false, error: '表头缺少「别名」或「标准名」列' })
+        }
+
+        // 现有条目：alias|sub → std
+        const exist = new Map()
+        for (const x of nameSyn.listSynonyms({})) exist.set(x.alias + '|' + (x.sub || ''), x.std)
+
+        let added = 0, updated = 0, skipped = 0
+        const errors = []
+        for (let i = hr + 1; i < aoa.length; i++) {
+          const row = aoa[i] || []
+          const alias = String(row[iAlias] || '').trim()
+          const std = String(row[iStd] || '').trim()
+          // 小类号列：只有 6 位数字才算小类专属；「全局」、空、其它文字一律按全局
+          const subRaw = iSub >= 0 ? String(row[iSub] || '').trim() : ''
+          const sub = /^\d{6}$/.test(subRaw) ? subRaw : ''
+          if (!alias && !std) continue
+          if (!alias || !std) { errors.push('第 ' + (i + 1) + ' 行：别名或标准名为空'); continue }
+          const key = alias + '|' + sub
+          if (exist.get(key) === std) { skipped++; continue }
+          try {
+            nameSyn.setSynonym({ alias, std, sub })
+            if (exist.has(key)) updated++; else added++
+          } catch (e) {
+            errors.push('第 ' + (i + 1) + ' 行（' + alias + '）：' + String((e && e.message) || e))
+          }
+        }
+        return sendJson(res, 200, {
+          ok: true, added, updated, skipped, errors,
+          total: aoa.length - hr - 1,
+          stats: nameSyn.stats(),
+        })
+      } catch (e) {
+        return sendJson(res, 200, { ok: false, error: '导入失败：' + String((e && e.message) || e) })
+      }
     }
 
     // 名称同义词字典维护（真源 src/config/name-synonyms.json，改动即时生效）

@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.59';
+  var PLUGIN_VERSION = '1.61';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1931,11 +1931,44 @@
     // ================= 选型助手（与 3100 看板同源，行为一致） =================
     var selMask = null;
     var selDebounce = null;
+    var selTipEl = null;
 
     function closeSelectModal() {
+      if (selTipEl) selTipEl.style.display = 'none';
       if (!selMask) return;
       try { selMask.parentNode.removeChild(selMask); } catch (e) { }
       selMask = null;
+    }
+
+    // 结果表格：长文本单元格悬停显示全文
+    function bindSelTips(root) {
+      if (!root) return;
+      if (!selTipEl) {
+        selTipEl = dlgEl('div', 'position:fixed;z-index:2147483030;display:none;max-width:420px;max-height:240px;'
+          + 'overflow:auto;padding:8px 10px;background:' + th.bg + ';color:' + th.fg + ';border:' + C_LINE + ';'
+          + 'border-radius:6px;font-size:12px;line-height:1.65;white-space:pre-wrap;'
+          + 'box-shadow:0 10px 28px rgba(0,0,0,.45);pointer-events:none;');
+        selTipEl.className = 'plm-smart-sel-tip';
+        document.body.appendChild(selTipEl);
+      }
+      var tds = root.querySelectorAll('td[data-full]');
+      for (var i = 0; i < tds.length; i++) {
+        (function (td) {
+          td.onmouseenter = function () {
+            selTipEl.textContent = td.getAttribute('data-full') || '';
+            selTipEl.style.display = 'block';
+            var r = td.getBoundingClientRect();
+            var left = Math.min(r.left, window.innerWidth - 440);
+            selTipEl.style.left = Math.max(8, left) + 'px';
+            var top = r.bottom + 6;
+            if (top + 200 > window.innerHeight) {
+              top = Math.max(8, r.top - 6 - selTipEl.offsetHeight);
+            }
+            selTipEl.style.top = top + 'px';
+          };
+          td.onmouseleave = function () { selTipEl.style.display = 'none'; };
+        })(tds[i]);
+      }
     }
 
     function selColKey(sub, id) { return 'plm.sel.cols.' + sub + '.' + id; }
@@ -2173,20 +2206,26 @@
             + escHtml(it.model) + '</td>';
           for (var m = 0; m < paramCols.length; m++) {
             var cv = (it.cells && it.cells[paramCols[m].key] != null) ? it.cells[paramCols[m].key] : '';
-            h += '<td style="padding:6px 10px;border-bottom:' + C_LINE + ';white-space:nowrap;">' + escHtml(cv) + '</td>';
+            var sv = String(cv == null ? '' : cv);
+            // 长文本收窄 + 省略号，悬停看全文（「中文说明」这类列很容易把表格撑爆）
+            var full = sv.length > 18 ? ' data-full="' + escHtml(sv) + '"' : '';
+            var clip = sv.length > 18 ? 'max-width:240px;overflow:hidden;text-overflow:ellipsis;' : '';
+            h += '<td style="padding:6px 10px;border-bottom:' + C_LINE + ';white-space:nowrap;' + clip + '"' + full + '>'
+              + escHtml(sv) + '</td>';
           }
           h += '</tr>';
         }
         h += '</tbody></table></div>';
         resultBox.innerHTML = h;
+        bindSelTips(resultBox);
 
         var rows = resultBox.querySelectorAll('tr[data-k]');
         for (var n = 0; n < rows.length; n++) {
           rows[n].onclick = function () {
             var it2 = items[Number(this.getAttribute('data-k'))];
             if (!it2) return;
-            // 名称只在为空时补，不覆盖用户已写的叫法；规格是选型结果，直接覆盖
-            if (!String(nameIn.value || '').trim()) nameIn.value = it2.name || it2.series || '';
+            // 名称由使用者手工输入（配合同义词点选）；只在为空且系列带名称时补全
+            if (!String(nameIn.value || '').trim() && it2.name) nameIn.value = it2.name;
             specIn.value = it2.spec || it2.model || '';
             closeSelectModal();
             checkNow();

@@ -55,6 +55,14 @@
   .cell-edit:focus { border-color:var(--accent); background:var(--panel2); outline:none; }
   td[contenteditable="true"] { cursor:text; }
   td[contenteditable="true"]:focus { outline:1px solid var(--accent); background:var(--panel2); }
+  /* 预览：长文本列收窄显示，悬停浮出全文 */
+  #preview td[data-full] { max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:help; }
+  .cell-tip {
+    position:fixed; z-index:210; display:none; max-width:420px; max-height:240px; overflow:auto;
+    padding:8px 10px; background:var(--panel2); border:1px solid var(--line); border-radius:6px;
+    color:var(--text); font-size:12px; line-height:1.65; white-space:pre-wrap;
+    box-shadow:0 10px 28px rgba(0,0,0,.45); pointer-events:none;
+  }
   .add-col-row td { background:var(--panel2); }
   .add-col-row button { color:var(--muted); }
   .add-col-row button:hover { color:var(--accent); border-color:var(--accent); }
@@ -86,12 +94,13 @@
     <h2>② 参数列（列即参数，可调整类型；指定一列为「型号」）</h2>
     <div class="scroll">
       <table id="cols"><thead>
-        <tr><th>Excel 列名</th><th>参数名</th><th>单位</th><th>类型</th><th>角色</th><th title="勾选后才会出现在选型助手的筛选条件栏">可筛</th><th>取值数</th><th>示例</th></tr>
+        <tr><th>Excel 列名</th><th>参数名</th><th>单位</th><th>类型</th><th>角色</th><th title="勾选后才会出现在选型助手的筛选条件栏">可筛</th><th title="勾选后该列的值会拼进「规格型号」；型号列永远作为开头">进规格</th><th>取值数</th><th>示例</th></tr>
       </thead><tbody></tbody></table>
     </div>
 
     <h2>③ 预览（前 10 行）</h2>
     <div class="scroll"><table id="preview"><thead></thead><tbody></tbody></table></div>
+    <div id="specSampleTip" class="hint"></div>
 
     <div class="row" style="margin-top:14px">
       <div><button id="btnSave" class="primary">保存入库</button></div>
@@ -130,7 +139,7 @@
       <h2>参数列</h2>
       <div class="scroll">
         <table id="eCols"><thead>
-          <tr><th>参数名</th><th>单位</th><th>类型</th><th>角色</th><th title="勾选后才会出现在选型助手的筛选条件栏">可筛</th><th>取值数</th><th style="width:76px">操作</th></tr>
+          <tr><th>参数名</th><th>单位</th><th>类型</th><th>角色</th><th title="勾选后才会出现在选型助手的筛选条件栏">可筛</th><th title="勾选后该列的值会拼进「规格型号」；型号列永远作为开头">进规格</th><th>取值数</th><th style="width:76px">操作</th></tr>
         </thead><tbody></tbody></table>
       </div>
 
@@ -215,6 +224,11 @@ function renderCols() {
       + '<td><select data-k="role" data-i="' + i + '">' + opt('', c.role, '参数') + opt('model', c.role, '型号列') + '</select></td>'
       + '<td style="text-align:center"><input type="checkbox" data-k="filterable" data-i="' + i + '"'
         + (c.filterable !== false ? ' checked' : '') + ' title="勾选后才会出现在选型助手的筛选条件栏"></td>'
+      + '<td style="text-align:center">' + (c.role === 'model'
+        ? '<span style="color:var(--muted)" title="型号列永远作为规格开头">—</span>'
+        : '<input type="checkbox" data-k="specPart" data-i="' + i + '"'
+          + (c.specPart !== false ? ' checked' : '') + ' title="勾选后该列的值会拼进规格型号">')
+      + '</td>'
       + '<td>' + (c.count || 0) + '</td>'
       + '<td class="mono">' + esc((c.samples || []).join(' / ')) + '</td>'
       + '</tr>';
@@ -223,11 +237,38 @@ function renderCols() {
     el.onchange = function () {
       var i = Number(el.dataset.i), k = el.dataset.k;
       if (k === 'filterable') { STATE.columns[i].filterable = !!el.checked; return; }   // 勾选不重绘，避免丢焦点
+      if (k === 'specPart') { STATE.columns[i].specPart = !!el.checked; refreshSampleSpec(); return; }
       if (k === 'role' && el.value === 'model') STATE.columns.forEach(function (x) { x.role = ''; });
       STATE.columns[i][k] = el.value;
       if (k === 'role' || k === 'key' || k === 'type') renderCols();
     };
   });
+}
+
+// 按当前「进规格」勾选，生成第一行回填后的规格（与后端 buildRowSpec 同规则）
+function buildSpecPreview() {
+  var model = STATE.columns.filter(function (c) { return c.role === 'model'; })[0];
+  if (!model || !STATE.rows.length) return '';
+  var row = STATE.rows[0];
+  var base = String(row[model.key] == null ? '' : row[model.key]).trim();
+  var parts = base ? [base] : [];
+  STATE.columns.forEach(function (c) {
+    if (c === model || c.key === '小类号') return;
+    if (c.specPart === false) return;
+    var v = String(row[c.key] == null ? '' : row[c.key]).trim();
+    if (!v || v === '—' || v === '-') return;
+    var skip = v.length === 1 && /\d/.test(v);
+    if (base && !skip && base.indexOf(v) >= 0) return;
+    parts.push(c.unit && /^-?\d+(\.\d+)?$/.test(v) ? v + c.unit : v);
+  });
+  return parts.join(' ');
+}
+
+function refreshSampleSpec() {
+  var tip = document.getElementById('specSampleTip');
+  if (!tip) return;
+  var s = buildSpecPreview();
+  tip.textContent = s ? '规格回填示例（第一行）：' + s : '';
 }
 
 function renderPreview() {
@@ -237,8 +278,41 @@ function renderPreview() {
     return '<th>' + esc(c.key) + (c.unit ? '（' + esc(c.unit) + '）' : '') + '</th>';
   }).join('') + '</tr>';
   body.innerHTML = STATE.rows.slice(0, 10).map(function (r) {
-    return '<tr>' + STATE.columns.map(function (c) { return '<td class="mono">' + esc(r[c.key]) + '</td>'; }).join('') + '</tr>';
+    return '<tr>' + STATE.columns.map(function (c) {
+      var s = String(r[c.key] == null ? '' : r[c.key]);
+      // 长文本收窄 + 省略号，悬停看全文（避免「中文说明」这类列把表格撑爆）
+      var full = s.length > 18 ? ' data-full="' + esc(s) + '"' : '';
+      return '<td class="mono"' + full + '>' + esc(s) + '</td>';
+    }).join('') + '</tr>';
   }).join('') || '<tr><td class="empty" colspan="' + STATE.columns.length + '">无数据</td></tr>';
+  bindCellTips(body);
+  refreshSampleSpec();
+}
+
+// 悬停显示单元格完整内容（长文本列专用）
+var cellTipEl = null;
+function bindCellTips(root) {
+  if (!root) return;
+  if (!cellTipEl) {
+    cellTipEl = document.createElement('div');
+    cellTipEl.className = 'cell-tip';
+    document.body.appendChild(cellTipEl);
+  }
+  root.querySelectorAll('td[data-full]').forEach(function (td) {
+    td.onmouseenter = function () {
+      cellTipEl.textContent = td.getAttribute('data-full') || '';
+      cellTipEl.style.display = 'block';
+      var r = td.getBoundingClientRect();
+      var left = Math.min(r.left, window.innerWidth - 440);
+      cellTipEl.style.left = Math.max(8, left) + 'px';
+      var top = r.bottom + 6;
+      if (top + 200 > window.innerHeight) top = Math.max(8, r.top - 6 - cellTipEl.offsetHeight);
+      cellTipEl.style.top = top + 'px';
+    };
+    td.onmouseleave = function () { cellTipEl.style.display = 'none'; };
+    // 进入编辑（聚焦）时隐藏浮层，避免挡住输入
+    td.onfocus = function () { cellTipEl.style.display = 'none'; };
+  });
 }
 
 // ---------- 保存上传结果 ----------
@@ -401,12 +475,17 @@ function renderEditCols() {
       + '<td><select data-k="role" data-i="' + i + '">' + opt('', c.role, '参数') + opt('model', c.role, '型号列') + '</select></td>'
       + '<td style="text-align:center"><input type="checkbox" data-k="filterable" data-i="' + i + '"'
         + (c.filterable !== false ? ' checked' : '') + ' title="勾选后才会出现在选型助手的筛选条件栏"></td>'
+      + '<td style="text-align:center">' + (c.role === 'model'
+        ? '<span style="color:var(--muted)" title="型号列永远作为规格开头">—</span>'
+        : '<input type="checkbox" data-k="specPart" data-i="' + i + '"'
+          + (c.specPart !== false ? ' checked' : '') + ' title="勾选后该列的值会拼进规格型号">')
+      + '</td>'
       + '<td data-count-i="' + i + '">' + colStats(c.key).count + '</td>'
       + '<td><button class="danger" data-delcol="' + i + '" style="padding:1px 8px;font-size:12px">删除</button></td>'
       + '</tr>';
   }).join('')
     // 「插入参数列」放在表格行末尾，点一下在末尾追加一行空白
-    + '<tr class="add-col-row"><td colspan="7" style="padding:5px 9px">'
+    + '<tr class="add-col-row"><td colspan="8" style="padding:5px 9px">'
     + '<button class="add-col" style="padding:2px 10px;font-size:12px">＋ 插入参数列</button>'
     + '</td></tr>';
   tb.querySelectorAll('select,input').forEach(function (el) {
@@ -440,9 +519,13 @@ function renderEditCols() {
         return;
       }
 
-      // 可筛勾选：只改标记，不重绘（否则焦点丢失）
+      // 可筛 / 进规格勾选：只改标记，不重绘（否则焦点丢失）
       if (k === 'filterable') {
         EDIT.columns[i].filterable = !!el.checked;
+        return;
+      }
+      if (k === 'specPart') {
+        EDIT.columns[i].specPart = !!el.checked;
         return;
       }
 
@@ -462,7 +545,10 @@ function renderEditCols() {
 function addEditCol() {
   if (!EDIT) return;
   // 新列默认不可筛，勾上之后才进条件栏（避免条件栏无意变长）
-  EDIT.columns.push({ key: '', raw: '', unit: '', type: 'text', role: '', options: [], count: 0, samples: [], filterable: false });
+  EDIT.columns.push({
+    key: '', raw: '', unit: '', type: 'text', role: '', options: [], count: 0, samples: [],
+    filterable: false, specPart: false,
+  });
   renderEditCols(); renderEditRows();
   var inp = $('eCols').querySelector('input[data-k="key"][data-i="' + (EDIT.columns.length - 1) + '"]');
   if (inp) {
@@ -494,8 +580,10 @@ function renderEditRows() {
   var list = EDIT.rows.slice(0, MAX);
   body.innerHTML = list.map(function (row, ri) {
     return '<tr>' + cols.map(function (c) {
-      return '<td contenteditable="true" data-r="' + ri + '" data-k="' + esc(c.key) + '" class="mono">'
-        + esc(row[c.key]) + '</td>';
+      var s = String(row[c.key] == null ? '' : row[c.key]);
+      var full = s.length > 18 ? ' data-full="' + esc(s) + '"' : '';
+      return '<td contenteditable="true" data-r="' + ri + '" data-k="' + esc(c.key) + '" class="mono"' + full + '>'
+        + esc(s) + '</td>';
     }).join('') + '</tr>';
   }).join('') || '<tr><td class="empty" colspan="' + Math.max(1, cols.length) + '">无数据</td></tr>';
 
@@ -527,6 +615,7 @@ function renderEditRows() {
   var delLastBtn = body.querySelector('.del-last');
   if (delLastBtn) delLastBtn.onclick = delEditLastRow;
 
+  bindCellTips(body);          // 编辑表里的长文本同样可悬停看全文
   $('eRowCount').textContent = EDIT.rows.length;
 }
 
@@ -599,4 +688,5 @@ loadList();
 </script>
 </body>
 </html>
+
 

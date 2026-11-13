@@ -1903,6 +1903,30 @@ async function checkSelectAvailable() {
   }
 }
 
+// 选型结果表格：长文本单元格悬停显示全文
+function bindSelCellTips(root) {
+  if (!root) return
+  let tip = document.getElementById('nmCellTip')
+  if (!tip) {
+    tip = document.createElement('div')
+    tip.id = 'nmCellTip'
+    tip.className = 'nm-cell-tip'
+    document.body.appendChild(tip)
+  }
+  root.querySelectorAll('td[data-full]').forEach((td) => {
+    td.addEventListener('mouseenter', () => {
+      tip.textContent = td.getAttribute('data-full') || ''
+      tip.style.display = 'block'
+      const r = td.getBoundingClientRect()
+      tip.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 440)) + 'px'
+      let top = r.bottom + 6
+      if (top + 200 > window.innerHeight) top = Math.max(8, r.top - 6 - tip.offsetHeight)
+      tip.style.top = top + 'px'
+    })
+    td.addEventListener('mouseleave', () => { tip.style.display = 'none' })
+  })
+}
+
 // 弹窗宽度：选型助手表格列多，单独放宽；其它弹窗恢复默认
 function setModalWidth(wide) {
   const mb = document.querySelector('#modal .modal-box')
@@ -2160,7 +2184,11 @@ async function nmShowSelect() {
         + paramCols.map((c) => {
           const v = it.cells && it.cells[c.key] != null ? it.cells[c.key]
             : (it[c.key] != null ? it[c.key] : '')
-          return '<td>' + escapeHtml(v) + '</td>'
+          const s = String(v == null ? '' : v)
+          // 长文本收窄 + 省略号，悬停看全文（「中文说明」这类列否则会把表格撑爆）
+          const full = s.length > 18 ? ' data-full="' + escapeHtml(s) + '"' : ''
+          const clip = s.length > 18 ? ' style="max-width:240px;overflow:hidden;text-overflow:ellipsis;"' : ''
+          return '<td' + clip + full + '>' + escapeHtml(s) + '</td>'
         }).join('')
         + '<td>' + (it.recommended ? '<span class="nm-diff-legend">推荐</span>' : '') + '</td>'
         + '</tr>').join('')
@@ -2179,6 +2207,7 @@ async function nmShowSelect() {
       html += '</tbody></table></div>'
     }
     box.innerHTML = html
+    bindSelCellTips(box)
     box.querySelectorAll('tr[data-k]').forEach((tr) => {
       tr.addEventListener('click', () => {
         const it = items[Number(tr.dataset.k)]
@@ -2187,12 +2216,25 @@ async function nmShowSelect() {
         // 名称只在为空时补全，不覆盖用户已经写好的叫法。
         // 关键：用 dispatchEvent('input') 走与手动输入完全相同的链路，
         // 直接赋值不会触发 input，校验就会「看起来失效」。
+        // 名称由使用者手工输入（配合同义词点选），选型只在为空且系列有名称时补全。
+        // 这里不派发 input：否则会弹出名称联想浮层，干扰操作；校验由规格的 input 统一触发
         if (nameEl) {
-          if (!String(nameEl.value || '').trim()) nameEl.value = it.name || it.series
-          nameEl.dispatchEvent(new Event('input'))
+          if (!String(nameEl.value || '').trim() && it.name) nameEl.value = it.name
+          try { hideNmNameTip() } catch (e) { }
         }
         // 规格是选型的结果，直接覆盖；优先用「型号 + 全部参数（含附件）」的完整规格
-        if (specEl) { specEl.value = it.spec || it.model; specEl.dispatchEvent(new Event('input')) }
+        if (specEl) {
+          specEl.value = it.spec || it.model
+          specEl.dispatchEvent(new Event('input'))
+          // 回填不是「打字」，清掉 300ms 后要弹的规格联想，避免挡住页面
+          setTimeout(() => {
+            try {
+              clearTimeout(nm.timer)
+              const sug = $('#nmSuggest')
+              if (sug) sug.innerHTML = ''
+            } catch (e) { }
+          }, 0)
+        }
         // 立即校验一次，不走 350ms 防抖，回填后底部马上给出结果
         setTimeout(() => {
           try { clearTimeout(nm.ruleTimer); nmRuleCheck() } catch (e) { }

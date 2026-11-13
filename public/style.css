@@ -521,3 +521,4 @@ tr.saving { opacity:.45; }
 /* 选型助手可用时用强调色，与普通 ghost 按钮区分 */
 #nmSelect:not(:disabled){color:var(--accent);border-color:var(--accent)}
 #nmSelect:not(:disabled):hover{background:rgba(62,166,255,.12);filter:none}
+.nm-cell-tip{position:fixed;z-index:120;display:none;max-width:420px;max-height:240px;overflow:auto;padding:8px 10px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;color:var(--text);font-size:12px;line-height:1.65;white-space:pre-wrap;box-shadow:0 10px 28px rgba(0,0,0,.45);pointer-events:none}

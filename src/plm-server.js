@@ -32,7 +32,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const SELECT_DIR = path.join(ROOT, 'data', 'selection')
 const PORT = envPort('PLM_API_PORT', 3100)
 const HOST = env('PLM_API_HOST', '0.0.0.0')
-const VERSION = '1.3.0'
+const VERSION = '1.4.0'
 
 /**
  * 内网地址判定与优先级。
@@ -348,10 +348,32 @@ function parseExcelBase64(base64) {
     return o
   })
 
+  // 「进规格」默认值：判断型号列是否已经包含该列的值
+  //   已包含（如型号里已有 M6、12、8.8）→ 不重复拼
+  //   中文描述类 / 长文本 → 不拼
+  //   剩下短参数（3P、400、LSI）→ 拼进去
+  const modelColTmp = columns.find((c) => c.role === 'model')
+  const modelText = modelColTmp
+    ? rows.slice(0, 30).map((r) => String(r[modelColTmp.key] == null ? '' : r[modelColTmp.key])).join(' ')
+    : ''
+  for (const c of columns) {
+    if (c === modelColTmp) { c.specPart = true; continue }
+    if (c.key === '小类号') { c.specPart = false; continue }
+    if (SECONDARY_KEYS.test(String(c.key || ''))) { c.specPart = false; continue }
+    const s0 = (c.samples || [])[0]
+    const covered = !!(modelText && s0 && modelText.indexOf(String(s0)) >= 0)
+    const short = !!(s0 && String(s0).length <= 8 && !/[\u4e00-\u9fa5]/.test(String(s0)))
+    c.specPart = !covered && short
+  }
+
+  // 回填示例：让导入时就能看到规格会长什么样
+  const sampleSpec = modelColTmp ? buildRowSpec(rows[0] || {}, columns, modelColTmp) : ''
+
   return {
     ok: true, sheetName, headerRow: headerRow + 1, columns, rows,
     total: body.length,
     halfWidthConverted,     // 本次自动转换的全角字符数
+    sampleSpec,             // 第一行按当前「进规格」勾选回填后的样子
   }
 }
 
@@ -369,9 +391,11 @@ const SECONDARY_KEYS = /附件|接线|端子|备注|说明|寿命|温度|海拔|
 function isPrimaryColumn(c) {
   if (!c || c.role === 'model') return false
   const k = String(c.key || '')
+  if (k === '小类号') return false
   if (SECONDARY_KEYS.test(k)) return false
   if (c.type === 'enum') return true
-  if (c.type === 'number') return PRIMARY_KEYS.test(k)
+  // 数字列：列名命中关键词，或档位很少（≤10，如性能等级 8.8、长度 12/16）也算关键参数
+  if (c.type === 'number') return PRIMARY_KEYS.test(k) || (Number(c.count) > 0 && Number(c.count) <= 10)
   return false
 }
 
@@ -427,6 +451,8 @@ function buildRowSpec(row, cols, modelCol) {
     if (k === '小类号') continue                    // 每行都一样，无意义
     const v = String(row[c.key] == null ? '' : row[c.key]).trim()
     if (!v || v === '—' || v === '-') continue      // 纯占位符跳过
+    // 显式标了「不进规格」的列（如说明、附件、已被型号覆盖的参数）
+    if (c.specPart === false) continue
     // 型号里已包含则不重复；单字符数字（如电流 1）容易误判，不参与比对
     const skipCmp = v.length === 1 && /\d/.test(v)
     if (base && !skipCmp && base.indexOf(v) >= 0) continue

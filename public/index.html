@@ -166,6 +166,20 @@
         <div id="synMsg" class="syn-msg"></div>
         <div id="synList" class="syn-list"></div>
       </div>
+
+      <div class="settings-card" style="margin-top:18px">
+        <h3>国标命名范式库 <span class="syn-tip">按小类给出国标名称与规格写法 · 录入时提示 · 改这里即时生效</span></h3>
+        <div class="syn-bar">
+          <input id="ngSearch" placeholder="搜索小类号 / 名称 / 规格结构" autocomplete="off" />
+          <button id="btnAddNg" class="primary">新增</button>
+          <button id="btnExportNg" class="ghost" title="导出为 Excel，便于线下批量编辑">导出</button>
+          <button id="btnImportNg" class="ghost" title="从 Excel 批量导入（按小类号覆盖）">导入</button>
+          <input type="file" id="ngFile" accept=".xlsx,.xls,.csv" style="display:none" />
+          <span id="ngStats" class="syn-stats"></span>
+        </div>
+        <div id="ngMsg" class="syn-msg"></div>
+        <div id="ngList" class="ng-list"></div>
+      </div>
     </section>
     <!-- 特征参数录入（新增菜单，不动其它页） -->
     <section class="panel" id="tab-feature">

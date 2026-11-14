@@ -576,6 +576,7 @@ async function loadSettings() {
   renderChips()
   await loadOrgs()
   loadSynonyms()
+  loadGuideList()
 }
 
 // ---------- 名称同义词字典维护（真源 src/config/name-synonyms.json；列表可直接编辑） ----------
@@ -789,6 +790,222 @@ let synSearchTimer = null
 $('#synSearch') && $('#synSearch').addEventListener('input', () => {
   clearTimeout(synSearchTimer)
   synSearchTimer = setTimeout(loadSynonyms, 300)
+})
+
+// ================= 国标命名范式库（管理） =================
+let ngItems = []
+let ngKw = ''
+
+function ngSend(method, path, body) {
+  return fetch(path, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body || {}),
+  }).then((r) => r.json())
+}
+
+async function loadGuideList() {
+  const box = $('#ngList')
+  if (!box) return
+  try {
+    const r = await api('/api/naming-guide/list' + (ngKw ? '?kw=' + encodeURIComponent(ngKw) : ''))
+    ngItems = (r && r.items) || []
+    const st = $('#ngStats')
+    if (st) st.textContent = '共 ' + ((r && r.total) || 0) + ' 个小类' + (ngKw ? '，筛选 ' + ngItems.length + ' 条' : '')
+    renderGuideList()
+  } catch (e) {
+    const m = $('#ngMsg')
+    if (m) { m.className = 'syn-msg err'; m.textContent = '加载失败：' + (e && e.message ? e.message : e) }
+  }
+}
+
+function renderGuideList() {
+  const box = $('#ngList')
+  if (!box) return
+  if (!ngItems.length) {
+    box.innerHTML = '<div class="muted" style="padding:10px">' + (ngKw ? '没有匹配的小类' : '暂无数据') + '</div>'
+    return
+  }
+  let h = '<table class="ng-table"><thead><tr>'
+    + '<th style="width:78px">小类号</th>'
+    + '<th style="width:150px">小类名</th>'
+    + '<th>依据</th>'
+    + '<th style="width:270px">规格结构</th>'
+    + '<th style="width:230px">示例</th>'
+    + '<th style="width:50px">字段</th>'
+    + '<th style="width:104px">操作</th>'
+    + '</tr></thead><tbody>'
+  for (const it of ngItems) {
+    h += '<tr>'
+      + '<td class="mono">' + it.sub + '</td>'
+      + '<td>' + escapeHtml(it.subName) + (it.hasStd ? '' : ' <span class="ng-nostd">无国标</span>') + '</td>'
+      + '<td class="ng-clip" title="' + escapeHtml(it.source) + '">' + escapeHtml(it.source) + '</td>'
+      + '<td class="mono ng-clip" title="' + escapeHtml(it.specPattern) + '">' + escapeHtml(it.specPattern) + '</td>'
+      + '<td class="mono ng-clip" title="' + escapeHtml(it.example) + '">' + escapeHtml(it.example) + '</td>'
+      + '<td style="text-align:center">' + it.fieldCount + '</td>'
+      + '<td class="ng-ops"><button class="ghost ng-edit" data-sub="' + it.sub + '">编辑</button>'
+      + '<button class="ghost ng-del" data-sub="' + it.sub + '">删除</button></td>'
+      + '</tr>'
+  }
+  h += '</tbody></table>'
+  box.innerHTML = h
+  box.querySelectorAll('.ng-edit').forEach((b) => { b.onclick = () => openGuideEdit(b.dataset.sub) })
+  box.querySelectorAll('.ng-del').forEach((b) => { b.onclick = () => delGuide(b.dataset.sub) })
+}
+
+function ngFieldRow(f) {
+  return '<tr>'
+    + '<td><input class="ng-fk" value="' + escapeHtml(f.key || '') + '" placeholder="字段名（对应 {占位符}）" /></td>'
+    + '<td><input class="ng-fd" value="' + escapeHtml(f.desc || '') + '" placeholder="说明" /></td>'
+    + '<td><input class="ng-fe" value="' + escapeHtml(f.example || '') + '" placeholder="示例" /></td>'
+    + '<td style="width:36px"><button class="ghost ng-fdel" title="删除该字段">×</button></td></tr>'
+}
+
+async function openGuideEdit(sub) {
+  let g = { sub: sub || '', subName: '', source: '', nameRule: '', nameAliases: [], specPattern: '', fields: [], example: '', avoid: '' }
+  if (sub) {
+    try {
+      const r = await api('/api/naming-guide?sub=' + encodeURIComponent(sub))
+      if (r && r.guide) g = Object.assign(g, r.guide, { sub })
+    } catch (e) { }
+  }
+  const html = '<h3 style="margin:0 0 6px;font-size:15px">' + (sub ? '编辑范式 · ' + escapeHtml(sub) : '新增范式') + '</h3>'
+    + '<div class="ng-form">'
+    + '<label>小类号 *</label><input id="ngSub" class="mono" value="' + escapeHtml(g.sub) + '" placeholder="6 位数字"' + (sub ? ' readonly' : '') + ' />'
+    + '<label>小类名 *</label><input id="ngSubName" value="' + escapeHtml(g.subName || '') + '" />'
+    + '<label>依据 *</label><input id="ngSource" value="' + escapeHtml(g.source || '') + '" placeholder="GB/T xxx-YYYY《…》 或 无对应国标（按行业惯例：…）" />'
+    + '<label>名称规则</label><input id="ngRule" value="' + escapeHtml(g.nameRule || '') + '" />'
+    + '<label>常见错叫</label><input id="ngAlias" value="' + escapeHtml((g.nameAliases || []).join('、')) + '" placeholder="顿号分隔" />'
+    + '<label>规格结构 *</label><input id="ngPat" class="mono" value="' + escapeHtml(g.specPattern || '') + '" />'
+    + '<label>示例 *</label><input id="ngEg" class="mono" value="' + escapeHtml(g.example || '') + '" />'
+    + '<label>避免</label><input id="ngAvoid" value="' + escapeHtml(g.avoid || '') + '" />'
+    + '<label>字段</label>'
+    + '<div><table class="ng-ftable"><thead><tr><th>字段名</th><th>说明</th><th>示例</th><th></th></tr></thead>'
+    + '<tbody id="ngFields">' + (g.fields || []).map(ngFieldRow).join('') + '</tbody></table>'
+    + '<button class="ghost" id="ngAddField" style="margin-top:4px">+ 加字段</button></div>'
+    + '</div>'
+    + '<div class="ng-foot"><span id="ngEditMsg" class="syn-msg"></span>'
+    + '<button class="ghost" id="ngCancel">取消</button>'
+    + '<button class="primary" id="ngSave">保存</button></div>'
+  $('#modalBody').innerHTML = html
+  $('#modal').classList.remove('hidden')
+
+  const bindDel = () => {
+    document.querySelectorAll('#ngFields .ng-fdel').forEach((b) => { b.onclick = () => b.closest('tr').remove() })
+  }
+  bindDel()
+  $('#ngAddField').onclick = () => {
+    $('#ngFields').insertAdjacentHTML('beforeend', ngFieldRow({}))
+    bindDel()
+  }
+  $('#ngCancel').onclick = () => $('#modal').classList.add('hidden')
+  $('#ngSave').onclick = () => saveGuide(!!sub)
+}
+
+async function saveGuide(isEdit) {
+  const msg = $('#ngEditMsg')
+  const fields = []
+  document.querySelectorAll('#ngFields tr').forEach((tr) => {
+    const k = tr.querySelector('.ng-fk').value.trim()
+    if (!k) return
+    fields.push({
+      key: k,
+      desc: tr.querySelector('.ng-fd').value.trim(),
+      example: tr.querySelector('.ng-fe').value.trim(),
+    })
+  })
+  const body = {
+    sub: $('#ngSub').value.trim(),
+    subName: $('#ngSubName').value.trim(),
+    source: $('#ngSource').value.trim(),
+    nameRule: $('#ngRule').value.trim(),
+    nameAliases: $('#ngAlias').value.split(/[、,，\/]/).map((x) => x.trim()).filter(Boolean),
+    specPattern: $('#ngPat').value.trim(),
+    example: $('#ngEg').value.trim(),
+    avoid: $('#ngAvoid').value.trim(),
+    fields,
+  }
+  if (!/^\d{6}$/.test(body.sub)) {
+    if (msg) { msg.className = 'syn-msg err'; msg.textContent = '小类号必须是 6 位数字' }
+    return
+  }
+  if (!body.subName || !body.source || !body.specPattern || !body.example) {
+    if (msg) { msg.className = 'syn-msg err'; msg.textContent = '小类名 / 依据 / 规格结构 / 示例 都不能为空' }
+    return
+  }
+  if (msg) { msg.className = 'syn-msg'; msg.textContent = '保存中…' }
+  try {
+    const r = await ngSend(isEdit ? 'PUT' : 'POST', '/api/naming-guide', body)
+    if (!r || !r.ok) {
+      if (msg) { msg.className = 'syn-msg err'; msg.textContent = '保存失败：' + ((r && r.error) || '未知错误') }
+      return
+    }
+    $('#modal').classList.add('hidden')
+    const m = $('#ngMsg')
+    if (m) { m.className = 'syn-msg'; m.textContent = '已保存 ' + body.sub + '（共 ' + r.total + ' 个小类）' }
+    await loadGuideList()
+  } catch (e) {
+    if (msg) { msg.className = 'syn-msg err'; msg.textContent = '保存失败：' + (e && e.message ? e.message : e) }
+  }
+}
+
+async function delGuide(sub) {
+  const it = ngItems.find((x) => x.sub === sub)
+  if (!confirm('确认删除 ' + sub + '（' + (it ? it.subName : '') + '）的范式？')) return
+  try {
+    const r = await ngSend('DELETE', '/api/naming-guide?sub=' + encodeURIComponent(sub))
+    const m = $('#ngMsg')
+    if (!r || !r.ok) {
+      if (m) { m.className = 'syn-msg err'; m.textContent = '删除失败：' + ((r && r.error) || '') }
+      return
+    }
+    if (m) { m.className = 'syn-msg'; m.textContent = '已删除 ' + sub + '（剩余 ' + r.total + ' 个）' }
+    await loadGuideList()
+  } catch (e) {
+    const m = $('#ngMsg')
+    if (m) { m.className = 'syn-msg err'; m.textContent = '删除失败：' + (e && e.message ? e.message : e) }
+  }
+}
+
+$('#btnAddNg') && ($('#btnAddNg').onclick = () => openGuideEdit(''))
+$('#btnExportNg') && ($('#btnExportNg').onclick = () => { location.href = '/api/naming-guide/export' })
+$('#btnImportNg') && ($('#btnImportNg').onclick = () => { const f = $('#ngFile'); if (f) f.click() })
+$('#ngFile') && ($('#ngFile').onchange = () => {
+  const el = $('#ngFile')
+  const f = el.files && el.files[0]
+  if (!f) return
+  const msg = $('#ngMsg')
+  if (msg) { msg.className = 'syn-msg'; msg.textContent = '导入中…' }
+  const reader = new FileReader()
+  reader.onload = async () => {
+    try {
+      const r = await ngSend('POST', '/api/naming-guide/import', { fileName: f.name, data: String(reader.result || '') })
+      if (!r || !r.ok) {
+        if (msg) { msg.className = 'syn-msg err'; msg.textContent = '导入失败：' + ((r && r.error) || '未知错误') }
+        return
+      }
+      const bad = (r.errors || []).length
+      if (msg) {
+        msg.className = 'syn-msg' + (bad ? ' err' : '')
+        msg.textContent = '导入完成：新增 ' + r.added + ' 条，更新 ' + r.updated + ' 条，跳过 ' + r.skipped + ' 条'
+          + (bad ? '；' + bad + ' 条失败（' + r.errors[0] + '）' : '')
+      }
+      await loadGuideList()
+    } catch (e) {
+      if (msg) { msg.className = 'syn-msg err'; msg.textContent = '导入失败：' + (e && e.message ? e.message : e) }
+    } finally {
+      el.value = ''
+    }
+  }
+  reader.readAsDataURL(f)
+})
+let ngSearchTimer = null
+$('#ngSearch') && $('#ngSearch').addEventListener('input', () => {
+  clearTimeout(ngSearchTimer)
+  ngSearchTimer = setTimeout(() => {
+    ngKw = ($('#ngSearch').value || '').trim()
+    loadGuideList()
+  }, 300)
 })
 
 // ---------- 启动 ----------

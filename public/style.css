@@ -544,3 +544,24 @@ tr.saving { opacity:.45; }
 .nm-guide-field b{color:var(--text);font-weight:500}
 .nm-guide-eg{color:var(--green);font-family:monospace}
 .nm-guide-name{color:var(--muted);margin-top:3px}
+
+/* 命名范式库管理 */
+.ng-list{margin-top:8px;max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:6px}
+.ng-table{width:100%;border-collapse:collapse;font-size:12px}
+.ng-table th{position:sticky;top:0;background:var(--panel2);padding:7px 8px;text-align:left;font-weight:600;border-bottom:1px solid var(--line);white-space:nowrap;z-index:1}
+.ng-table td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.ng-table tr:hover td{background:rgba(127,127,127,.06)}
+.ng-clip{max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:help}
+.ng-nostd{font-size:10px;opacity:.65;border:1px solid currentColor;border-radius:3px;padding:0 3px;margin-left:4px}
+.ng-ops{white-space:nowrap}
+.ng-ops button{margin-right:4px;padding:2px 8px;font-size:12px}
+.ng-form{display:grid;grid-template-columns:86px 1fr;gap:6px 10px;align-items:center;margin-top:6px}
+.ng-form label{font-size:12px;color:var(--muted);text-align:right}
+.ng-form input{width:100%}
+.ng-form>div{grid-column:2}
+.ng-ftable{width:100%;border-collapse:collapse;margin-top:2px}
+.ng-ftable th{font-size:11px;color:var(--muted);font-weight:500;text-align:left;padding:2px 4px}
+.ng-ftable td{padding:2px 4px}
+.ng-ftable input{width:100%}
+.ng-foot{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:12px}
+.ng-foot .syn-msg{flex:1;text-align:left}

@@ -103,6 +103,14 @@ function readConfigJson(name) {
   return data
 }
 
+// 写配置：先落盘再清缓存，保证下一次读拿到新内容
+function saveConfigJson(name, data) {
+  const file = path.join(CONFIG, name)
+  fs.writeFileSync(file, JSON.stringify(data, null, 2) + '\n', 'utf8')
+  cache.delete('cfg:' + name)
+  return true
+}
+
 const PORT = envPort('PORT', 3000)
 // 监听地址留空 = Node 默认（所有网卡，含 IPv6）；需要只绑 IPv4 时在 .env 设 WEB_HOST=0.0.0.0
 const WEB_HOST = process.env.WEB_HOST || ''
@@ -1343,6 +1351,183 @@ const server = http.createServer(async (req, res) => {
         if (hints.length) verdict.warnings = (verdict.warnings || []).concat(hints)
       } catch (e) { /* 提示失败不影响主校验 */ }
       return sendJson(res, 200, verdict)
+    }
+
+    // 命名范式库：管理接口（列表 / 保存 / 删除 / 导入导出）
+    if (p === '/api/naming-guide/list') {
+      const j = readConfigJson('naming-guide.json') || { subs: {} }
+      const clsMap = readConfigJson('classification-map.json') || {}
+      const kw = (url.searchParams.get('kw') || '').trim().toLowerCase()
+      let items = Object.entries(j.subs || {}).map(([sub, g]) => ({
+        sub,
+        subName: g.subName || (clsMap[sub] || {}).subName || '',
+        source: g.source || '',
+        specPattern: g.specPattern || '',
+        example: g.example || '',
+        nameRule: g.nameRule || '',
+        avoid: g.avoid || '',
+        fieldCount: (g.fields || []).length,
+        hasStd: !/^无对应国标/.test(g.source || ''),
+      }))
+      if (kw) {
+        items = items.filter((x) => (x.sub + ' ' + x.subName + ' ' + x.source + ' ' + x.specPattern + ' ' + x.example).toLowerCase().indexOf(kw) >= 0)
+      }
+      items.sort((a, b) => a.sub.localeCompare(b.sub))
+      return sendJson(res, 200, { ok: true, items, total: Object.keys(j.subs || {}).length })
+    }
+
+    if (p === '/api/naming-guide' && (req.method === 'PUT' || req.method === 'POST')) {
+      const b = await readBody(req, 4 * 1024 * 1024)
+      const sub = String(b.sub || '').trim().slice(0, 6)
+      if (!/^\d{6}$/.test(sub)) return sendJson(res, 400, { ok: false, error: '小类号必须是 6 位数字' })
+      const j = readConfigJson('naming-guide.json') || { subs: {} }
+      j.subs = j.subs || {}
+      if (req.method === 'POST' && j.subs[sub]) {
+        return sendJson(res, 400, { ok: false, error: '该小类已有范式，请直接编辑' })
+      }
+      const cur = j.subs[sub] || {}
+      const fields = Array.isArray(b.fields)
+        ? b.fields.filter((f) => f && String(f.key || '').trim())
+          .map((f) => ({ key: String(f.key).trim(), desc: String(f.desc || '').trim(), example: String(f.example || '').trim() }))
+        : (cur.fields || [])
+      const g = {
+        subName: String(b.subName || cur.subName || '').trim(),
+        source: String(b.source || cur.source || '').trim(),
+        nameRule: String(b.nameRule || cur.nameRule || '').trim(),
+        nameAliases: Array.isArray(b.nameAliases)
+          ? b.nameAliases.map((x) => String(x).trim()).filter(Boolean)
+          : (cur.nameAliases || []),
+        specPattern: String(b.specPattern || cur.specPattern || '').trim(),
+        fields,
+        example: String(b.example || cur.example || '').trim(),
+        avoid: String(b.avoid || cur.avoid || '').trim(),
+      }
+      if (!g.subName || !g.source || !g.specPattern || !g.example) {
+        return sendJson(res, 400, { ok: false, error: '小类名 / 依据 / 规格结构 / 示例 均不能为空' })
+      }
+      j.subs[sub] = g
+      j.meta = j.meta || {}
+      j.meta.updatedAt = new Date().toISOString()
+      saveConfigJson('naming-guide.json', j)
+      return sendJson(res, 200, { ok: true, sub, guide: g, total: Object.keys(j.subs).length })
+    }
+
+    if (p === '/api/naming-guide' && req.method === 'DELETE') {
+      const sub = (url.searchParams.get('sub') || '').trim()
+      const j = readConfigJson('naming-guide.json') || { subs: {} }
+      j.subs = j.subs || {}
+      if (!j.subs[sub]) return sendJson(res, 404, { ok: false, error: '该小类没有范式' })
+      delete j.subs[sub]
+      j.meta = j.meta || {}
+      j.meta.updatedAt = new Date().toISOString()
+      saveConfigJson('naming-guide.json', j)
+      return sendJson(res, 200, { ok: true, sub, total: Object.keys(j.subs).length })
+    }
+
+    if (p === '/api/naming-guide/export' && req.method === 'GET') {
+      const j = readConfigJson('naming-guide.json') || { subs: {} }
+      const aoa = [['小类号', '小类名', '依据', '名称规则', '常见错叫', '规格结构', '示例', '避免', '字段(JSON)']]
+      Object.keys(j.subs || {}).sort().forEach((sub) => {
+        const g = j.subs[sub]
+        aoa.push([
+          sub, g.subName || '', g.source || '', g.nameRule || '',
+          (g.nameAliases || []).join('、'), g.specPattern || '', g.example || '', g.avoid || '',
+          JSON.stringify(g.fields || []),
+        ])
+      })
+      const ws = XLSX.utils.aoa_to_sheet(aoa)
+      ws['!cols'] = [{ wch: 10 }, { wch: 20 }, { wch: 40 }, { wch: 40 }, { wch: 20 }, { wch: 44 }, { wch: 40 }, { wch: 30 }, { wch: 60 }]
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, '命名范式')
+      const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+      const fname = 'naming-guide-' + new Date().toISOString().slice(0, 10) + '.xlsx'
+      res.writeHead(200, {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': 'attachment; filename="' + fname + '"',
+        'Content-Length': buf.length,
+        'Cache-Control': 'no-store',
+      })
+      res.end(buf)
+      return
+    }
+
+    if (p === '/api/naming-guide/import' && req.method === 'POST') {
+      const b = await readBody(req, 12 * 1024 * 1024)
+      try {
+        const raw = String(b.data || '').replace(/^data:[^,]+,/, '')
+        const buf = Buffer.from(raw, 'base64')
+        if (!buf.length) return sendJson(res, 200, { ok: false, error: '文件为空' })
+        const wb = XLSX.read(buf, { type: 'buffer' })
+        const sheet = wb.Sheets[wb.SheetNames[0]]
+        if (!sheet) return sendJson(res, 200, { ok: false, error: '工作簿里没有工作表' })
+        const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' })
+
+        let hr = -1
+        for (let i = 0; i < Math.min(aoa.length, 10); i++) {
+          const row = (aoa[i] || []).map((x) => String(x || '').trim())
+          if (row.some((x) => /小类号/.test(x)) && row.some((x) => /规格结构|规格范式/.test(x))) { hr = i; break }
+        }
+        if (hr < 0) return sendJson(res, 200, { ok: false, error: '未找到表头（需要「小类号」与「规格结构」两列）' })
+
+        const head = (aoa[hr] || []).map((x) => String(x || '').trim())
+        const iSub = head.findIndex((x) => /小类号/.test(x))
+        const iName = head.findIndex((x) => /小类名/.test(x))
+        const iSrc = head.findIndex((x) => /依据/.test(x))
+        const iRule = head.findIndex((x) => /名称规则/.test(x) && !/依据/.test(x))
+        const iAlias = head.findIndex((x) => /错叫|别名/.test(x))
+        const iPat = head.findIndex((x) => /规格结构|规格范式/.test(x))
+        const iEg = head.findIndex((x) => /示例/.test(x))
+        const iAvoid = head.findIndex((x) => /避免/.test(x))
+        const iField = head.findIndex((x) => /字段/.test(x))
+        if (iSub < 0 || iPat < 0) return sendJson(res, 200, { ok: false, error: '表头缺少「小类号」或「规格结构」' })
+
+        const j = readConfigJson('naming-guide.json') || { subs: {} }
+        j.subs = j.subs || {}
+        let added = 0, updated = 0, skipped = 0
+        const errors = []
+        for (let i = hr + 1; i < aoa.length; i++) {
+          const row = aoa[i] || []
+          const subRaw = String(row[iSub] || '').trim()
+          if (!subRaw) { skipped++; continue }
+          const sub = subRaw.slice(0, 6)
+          if (!/^\d{6}$/.test(sub)) { errors.push('第 ' + (i + 1) + ' 行：小类号不是 6 位数字'); continue }
+
+          const g = {
+            subName: iName >= 0 ? String(row[iName] || '').trim() : '',
+            source: iSrc >= 0 ? String(row[iSrc] || '').trim() : '',
+            nameRule: iRule >= 0 ? String(row[iRule] || '').trim() : '',
+            nameAliases: iAlias >= 0
+              ? String(row[iAlias] || '').split(/[、,，\/]/).map((x) => x.trim()).filter(Boolean)
+              : [],
+            specPattern: String(row[iPat] || '').trim(),
+            example: iEg >= 0 ? String(row[iEg] || '').trim() : '',
+            avoid: iAvoid >= 0 ? String(row[iAvoid] || '').trim() : '',
+            fields: [],
+          }
+          if (iField >= 0) {
+            const raw2 = String(row[iField] || '').trim()
+            if (raw2) {
+              try {
+                const arr = JSON.parse(raw2)
+                if (Array.isArray(arr)) g.fields = arr.filter((f) => f && String(f.key || '').trim())
+              } catch (e) { errors.push('第 ' + (i + 1) + ' 行：字段 JSON 解析失败') }
+            }
+          }
+          if (!g.subName || !g.source || !g.specPattern || !g.example) {
+            errors.push('第 ' + (i + 1) + ' 行（' + sub + '）：小类名/依据/规格结构/示例 有空值')
+            continue
+          }
+          if (j.subs[sub]) updated++
+          else added++
+          j.subs[sub] = g
+        }
+        j.meta = j.meta || {}
+        j.meta.updatedAt = new Date().toISOString()
+        saveConfigJson('naming-guide.json', j)
+        return sendJson(res, 200, { ok: true, added, updated, skipped, errors, total: Object.keys(j.subs).length })
+      } catch (e) {
+        return sendJson(res, 200, { ok: false, error: '导入失败：' + String((e && e.message) || e) })
+      }
     }
 
     // 命名范式：按小类返回国标规定的名称定义与规格书写格式（仅提示，不参与校验）

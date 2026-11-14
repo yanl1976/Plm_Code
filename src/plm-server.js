@@ -453,6 +453,24 @@ function countFullWidth(v) {
  * 厂家表里型号常只是基础代号（如 3WT11N04），极数/电流/脱扣/分断都在别的列，
  * 只回填型号会丢掉这些信息。
  */
+// 选型字段别名表（select-field-alias.json）：按 mtime 缓存，改文件即生效
+let selectAliasCache = null
+let selectAliasMtime = 0
+function loadSelectAlias() {
+  const f = path.join(ROOT, 'src', 'config', 'select-field-alias.json')
+  try {
+    const st = fs.statSync(f)
+    if (selectAliasCache && selectAliasMtime === st.mtimeMs) return selectAliasCache
+    const j = JSON.parse(fs.readFileSync(f, 'utf8'))
+    selectAliasCache = j.alias || {}
+    selectAliasMtime = st.mtimeMs
+    return selectAliasCache
+  } catch (e) {
+    if (!selectAliasCache) selectAliasCache = {}
+    return selectAliasCache
+  }
+}
+
 /**
  * 按命名范式的 specPattern 重新拼装规格（国标顺序 + 乘号统一）
  *
@@ -479,23 +497,39 @@ function composeSpecByGuide(sub, row, cols) {
   }
   const modelTxt = cell['型号'] || cell['规格型号'] || ''
 
-  // 字段取值：同名列优先 → 常见别名 → 从型号首词推导（产品名称）
+  // 字段取值优先级：小类 selectMap（显式映射）→ 同名列 → 全局别名表 → 产品名称取型号首词
+  // 别名表见 src/config/select-field-alias.json，209 个小类共用一份，新增小类只需补别名
+  const selectMap = (g && g.selectMap) || {}
   const pick = (field) => {
+    const mapped = selectMap[field]
+    if (mapped) {
+      const v = cell[mapped]
+      if (v) return v
+    }
     if (cell[field]) return cell[field]
-    const alias = {
-      '产品名称': ['产品名称', '品名'],
-      '螺纹规格': ['螺纹规格', '规格', '螺纹'],
-      '公称长度': ['公称长度', '长度'],
-      '性能等级': ['性能等级', '等级'],
-      '标准号': ['标准号', '国标号', '执行标准'],
-      '表面处理': ['表面处理', '镀层', '镀锌'],
-    }[field] || []
+    const alias = loadSelectAlias()[field] || []
     for (const a of alias) if (cell[a]) return cell[a]
     if (field === '产品名称') return modelTxt.split(/\s+/)[0] || ''
     return ''
   }
 
-  // 值规整：间隔号 → 点；表面处理去掉中文前缀（「白锌 Zn·D」→「Zn.D」）；乘号统一
+  // 占位符在 pattern 中紧跟的字符（到空格或下一个 { 为止）
+  //   {额定电压}V  → 'V'   （单位已由范式提供，数据不该再带）
+  //   {分断能力}   → ''    （单位必须由数据自带）
+  const suffixAfter = (field) => {
+    const m = pattern.match(new RegExp('\\{' + String(field).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\}([^\\s{]*)'))
+    return m ? m[1] : ''
+  }
+
+  // 从范式字段的 example 末尾推断单位（「65/50kA」→ kA，「230/400V」→ V，「2.5mm²」→ mm²）
+  const unitFromExample = (field) => {
+    const f = (g.fields || []).find((x) => String((x && x.key) || '').trim() === field)
+    const ex = String((f && f.example) || '').trim()
+    const m = ex.match(/([A-Za-z²]+)$/)
+    return m ? m[1] : ''
+  }
+
+  // 值规整：间隔号 → 点；表面处理去掉中文前缀（「白锌 Zn·D」→「Zn.D」）；乘号统一；裸数字补单位
   const tidy = (field, v) => {
     let s = String(v || '').replace(/·/g, '.').replace(/\s+/g, ' ').trim()
     if (field === '表面处理') {
@@ -503,6 +537,11 @@ function composeSpecByGuide(sub, row, cols) {
       if (m) s = m[1]
     }
     if (field === '公称长度' || field === '螺纹规格') s = s.replace(/\s*[×xX]\s*/g, '*')
+    // 补单位：范式里没写单位、数据又是裸数字时才补（避免「3P」变成「3PP」）
+    if (/^\d+(?:\.\d+)?$/.test(s) && !suffixAfter(field)) {
+      const u = unitFromExample(field)
+      if (u) s += u
+    }
     return s
   }
 

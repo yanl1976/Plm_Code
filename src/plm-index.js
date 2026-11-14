@@ -1,4 +1,4 @@
-/**
+﻿/**
  * PLM 新增物料「实时联想 + 查重」内存索引。
  *
  * 与 dedup.js 的区别：
@@ -98,6 +98,7 @@ export function applyRecord(subs, rec, source) {
   item.sig = sig
   item.loose = looseSignature(sig)
   item.tokens = tokenize((item.fName || '') + ' ' + (item.fSpec || ''))
+  item.orderSig = orderSignature(item.fSpec || '')
 
   bucket.items.push(item)
   if (!bucket.bySig.has(sig)) bucket.bySig.set(sig, [])
@@ -169,6 +170,30 @@ export async function loadIndex({ force = false } = {}) {
   }
 }
 
+/**
+ * 参数顺序无关签名：把规格按空格与 / 、- 等切开，各段归一化后排序拼接。
+ *   IC65N 2P/C10A  → IC65N|2P|C10
+ *   IC65N C10A/2P  → IC65N|2P|C10   （相同）
+ *   IC65N 3P/C10A  → IC65N|3P|C10   （不同）
+ * 只对「单字母+数字+单字母」去尾缀（C10A → C10），避免把 IC65N 误伤成 IC65。
+ */
+export function orderSignature(spec) {
+  const s = String(spec || '').toUpperCase()
+    .replace(/[×✕✖]/g, ' ')
+    .replace(/[/\\,，、;；|·]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (!s) return ''
+  const parts = s.split(' ')
+    .map((x) => x.replace(/[^A-Z0-9.]/g, ''))
+    .filter(Boolean)
+    .map((x) => x.replace(/^([A-Z]\d+)[A-Z]$/, '$1'))   // C10A → C10
+  if (parts.length < 2) return ''
+  const model = parts[0]
+  const rest = parts.slice(1).sort()
+  return model + '|' + rest.join('|')
+}
+
 /** 小类信息（给前端展示"当前小类：断路器 / 微型断路器"） */
 export function categoryOf(sub) {
   return getCategory(sub) || null
@@ -235,6 +260,17 @@ export function queryDuplicates(q) {
     for (const it of bucket.bySpec.get(probeSpec) || []) push(it, 'spec', 0.98)
   }
 
+  // 2.8) 参数顺序无关：把规格拆成参数片段，排序后比较
+  //      例：IC65N 2P/C10A 与 IC65N C10A/2P —— 同一型号规格的两种写法
+  //      不能用 tokenize：它先去空格，IC65N 2P 会粘成 ic65n2p，切分点就变了
+  const probeOrder = orderSignature(q.spec || '')
+  if (probeOrder && probeOrder.indexOf('|') > 0 && out.length < limit) {
+    for (const it of bucket.items) {
+      if (seen.has(it.fNumber)) continue
+      if (it.orderSig === probeOrder) push(it, 'order', 0.99)
+    }
+  }
+
   // 3) 模糊：同小类内 token Jaccard + 型号段约束，避免把"同系列不同规格"误报
   if (out.length < limit && (q.name || q.spec)) {
     const probeTokens = tokenize(String(q.name || '') + ' ' + String(q.spec || ''))
@@ -255,7 +291,7 @@ export function queryDuplicates(q) {
   }
 
   // 排序：等级优先，其次相似度
-  const rank = { exact: 0, sep: 1, spec: 2, fuzzy: 3 }
+  const rank = { exact: 0, sep: 1, order: 2, spec: 3, fuzzy: 4 }
   out.sort((a, b) => (rank[a.level] - rank[b.level]) || (b.score - a.score))
 
   const level = out.length === 0 ? 'none' : out[0].level

@@ -2238,6 +2238,7 @@ function renderNmSuggest(q, items, summary) {
 function renderNmSpecCheck(c) {
   const el = $('#nmSpecCheck')
   const exact = c.exact || [], similar = c.similar || [], separatorOnly = c.separatorOnly || []
+  const orderSame = c.orderSame || []
   const series = c.series || null
   // 同型号系列提示：输入只到型号阶段时（如 iC65N），完全/相似都命中不了，
   // 但同小类可能已有一批该型号的规格 —— 这类"半截输入"恰恰是设计人员最需要提醒的时刻
@@ -2247,7 +2248,7 @@ function renderNmSpecCheck(c) {
       + (series.samples || []).slice(0, 4).map((x) => `<div class="nm-hit nm-hit-series"><b>${escapeHtml(x.fnumber)}</b> · <span class="mono nm-series-spec" data-fill="${escapeHtml(x.spec)}">${escapeHtml(x.spec)}</span></div>`).join('')
       + '</div>'
     : ''
-  if (!exact.length && !separatorOnly.length && !similar.length) {
+  if (!exact.length && !separatorOnly.length && !similar.length && !orderSame.length) {
     el.innerHTML = seriesHtml || (c.erpChecked
       ? '<span class="nm-ok">✓ 未发现相同规格（已实时核对 ERP）</span>'
       : '<span class="nm-ok">✓ 未发现相同规格</span>')
@@ -2263,6 +2264,15 @@ function renderNmSpecCheck(c) {
     return ` · <span class="nm-stock">库存 <span class="nm-stock-num">${fmt(h.qty)}</span>${avb}</span>`
   }
   let html = seriesHtml
+  // 参数顺序不同但参数集合完全相同 → 同一个规格的两种写法，折叠式强提示，需勾选确认才能保存
+  if (orderSame.length) {
+    html += '<div class="nm-warn">⚠ 疑似相同规格（参数完全相同，仅书写顺序不同）：</div>'
+    html += orderSame.slice(0, 5).map((h) =>
+      `<div class="nm-hit nm-hit-order"><span class="nm-badge order">顺序不同</span> <b>${escapeHtml(h.fnumber)}</b> · <span class="mono">${escapeHtml(h.spec)}</span>${escapeHtml(h.name || '')}</div>`
+    ).join('')
+    html += '<label class="nm-dup-confirm"><input type="checkbox" id="nmConfirmOrder" />'
+      + ' 我已确认与上述物料<b>不是同一物料</b>（如参数顺序在本品类有不同含义），允许继续录入</label>'
+  }
   if (exact.length) {
     html += '<div class="nm-warn">⚠ 同小类已存在完全相同型号规格，不能重复新增：</div>'
     html += exact.slice(0, 5).map((h) => `<div class="nm-hit">${erpTag(h)}<span class="nm-badge exact">完全相同</span> <b>${escapeHtml(h.fnumber)}</b> · ${escapeHtml(h.spec)}${stockHtml(h)}</div>`).join('')
@@ -2875,6 +2885,16 @@ async function nmSave() {
   const spec = ($('#nmSpec').value || '')
   if (!name) { msg('请填写物料名称'); return }
   if (!spec.trim()) { msg('请填写规格型号'); return }
+  // 参数顺序不同但参数集合完全相同 → 疑似同一规格，必须勾选确认才能继续
+  if (document.querySelector('.nm-hit-order')) {
+    const ck = document.getElementById('nmConfirmOrder')
+    if (!ck || !ck.checked) {
+      msg('存在疑似相同规格（参数相同、仅书写顺序不同），请先勾选下方确认项')
+      const el = $('#nmSpecCheck')
+      if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      return
+    }
+  }
   $('#nmSave').disabled = true
   try {
     const r = await apiPost('/api/new-material', {

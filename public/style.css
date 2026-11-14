@@ -593,3 +593,9 @@ tr.saving { opacity:.45; }
 .ng-nowrap{white-space:nowrap}
 #sub-guide .ng-table td.ng-clip{max-width:none}
 .std-subs{font-size:11px;color:var(--muted)}
+
+/* 疑似相同规格（参数顺序不同）：需勾选确认 */
+.nm-badge.order{background:rgba(255,170,0,.18);color:var(--amber);border:1px solid rgba(255,170,0,.35)}
+.nm-hit-order{color:var(--amber)}
+.nm-dup-confirm{display:flex;align-items:flex-start;gap:6px;margin:8px 0 2px;padding:7px 9px;background:rgba(255,170,0,.08);border-left:3px solid var(--amber);border-radius:4px;font-size:12px;line-height:1.6;color:var(--text);cursor:pointer}
+.nm-dup-confirm input{margin-top:2px}

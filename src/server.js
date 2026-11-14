@@ -23,6 +23,7 @@ import XLSX from 'xlsx'
 import { cableSpecHints } from './cable-spec.js'
 import { summary as stdWatchSummary, runCheck as stdWatchRun, loadWatch as stdWatchLoad, saveWatch as stdWatchSave, isDue as stdWatchDue } from './std-watch.js'
 import { normalize, tokenize, jaccard, looseSignature, modelOf } from './spec.js'
+import { orderSignature } from './plm-index.js'
 import { checkMaterial, fixSpecFormat, rules as materialRules, resolveNameFix, detectNameModel } from './material-rules.js'
 import * as nameSyn from './name-synonyms.js'
 import { snapshotStatus, invalidateSnapshotStatus, erpSubDocs, invalidateErpSub } from './snapshot.js'
@@ -1300,10 +1301,26 @@ const server = http.createServer(async (req, res) => {
           h.avbqty = g ? +g.avbqty.toFixed(3) : 0
         }
       } catch (e) { /* 库存查询失败不影响查重 */ }
+      // 参数顺序无关：参数集合完全相同、只是书写顺序不同（IC65N 2P/C10A ↔ IC65N C10A/2P）
+      // 这类就是同一个规格，须提示「疑似重复」；仅在前两级都没命中时才算，省一次全表遍历
+      let orderSame = []
+      const qOrder = orderSignature(spec)
+      if (qOrder && qOrder.indexOf('|') > 0 && !exact.length && !separatorOnly.length) {
+        for (const d of allDocs()) {
+          if (!d.spec) continue
+          if (d.sub !== sub && !String(d.fnumber || '').startsWith(sub)) continue
+          if (orderSignature(d.spec) === qOrder) {
+            orderSame.push({ fnumber: d.fnumber, spec: d.spec, name: d.name })
+            if (orderSame.length >= 10) break
+          }
+        }
+      }
+
       return sendJson(res, 200, {
         exact: exact.slice(0, 10),
         separatorOnly: separatorOnly.slice(0, 10),
         similar: similar.slice(0, 10),
+        orderSame,
         // 同型号系列（仅提示，不阻断）：model + 已有规格数/物料数 + 几条样例
         series: (qModel.length >= 3 && seriesItems)
           ? { model: qModel, specCount: seriesSpecs.size, itemCount: seriesItems, samples: seriesSamples }

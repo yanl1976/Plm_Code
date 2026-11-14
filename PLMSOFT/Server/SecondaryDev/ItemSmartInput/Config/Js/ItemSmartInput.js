@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.64';
+  var PLUGIN_VERSION = '1.65';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1543,6 +1543,16 @@
           var diffName = dup[i].level === 'spec' ? '　（名称不同）' : '';
           sHtml += '<div style="color:' + C_MUTE + ';margin-left:12px">'
             + escHtml(dc) + '　' + escHtml(dn) + '　' + escHtml(ds) + diffName + '</div>';
+        }
+      }
+      // 参数顺序不同但参数集合完全相同：疑似同一规格，插件侧只提示不阻断（看板侧需勾选确认）
+      var orderDup = ((r && r.duplicates) || []).filter(function (d) { return d && d.level === 'order'; });
+      if (orderDup.length) {
+        sHtml += '<div style="color:' + C_WARN + ';margin-top:6px">! 疑似相同规格（参数相同、仅书写顺序不同），请优先复用：</div>';
+        for (i = 0; i < orderDup.length && i < 5; i++) {
+          var oc = orderDup[i].fNumber || orderDup[i].fnumber || '';
+          var os = orderDup[i].fSpec || orderDup[i].spec || '';
+          sHtml += '<div style="color:' + C_MUTE + ';margin-left:12px">' + escHtml(oc) + '　' + escHtml(os) + '</div>';
         }
       }
       // 名称结构化建议：标准叫法 / 建议改为

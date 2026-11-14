@@ -857,13 +857,24 @@ function handleCheck(body) {
     } catch (e) { /* 参数提取失败不影响主流程 */ }
   }
 
-  // 4) 通过判定：有硬错误 → 不过；有 exact/sep 级重复 → 需人工确认后才放行
-  const hardDup = result.duplicates.some((x) => x.level === 'exact' || x.level === 'sep')
+  // 4) 通过判定
+  //    exact / sep → 硬重复，不可豁免（就是同一个规格）
+  //    order       → 参数完全相同、仅书写顺序不同，同样拦下；前端勾选「确认不同」后传 confirmOrder=true 放行
+  //    spec / fuzzy→ 只提示，不拦
+  const confirmOrder = body.confirmOrder === true
+  const hardDup = result.duplicates.some((x) =>
+    x.level === 'exact' || x.level === 'sep' || (x.level === 'order' && !confirmOrder)
+  )
   result.pass = result.errors.length === 0 && !hardDup
   result.blocking = result.errors.length
     ? { type: 'error', reason: result.errors[0] }
     : hardDup
-      ? { type: 'duplicate', reason: '同小类已存在相同/等价物料：' + (result.duplicates[0].fNumber || '') }
+      ? {
+        type: 'duplicate',
+        reason: '同小类已存在相同/等价物料：'
+          + ((result.duplicates[0] || {}).fNumber || '')
+          + '（' + ((result.duplicates[0] || {}).fSpec || '') + '）',
+      }
       : null
 
   result.elapsedMs = Date.now() - t0

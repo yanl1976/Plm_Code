@@ -1054,6 +1054,7 @@ async function loadStdWatch() {
       st.textContent = '共 ' + ((r && r.total) || 0) + ' 个标准'
         + (cs.high ? '，双源一致 ' + cs.high : '')
         + (r && r.outdated && r.outdated.length ? '，' + r.outdated.length + ' 个过期' : '')
+        + (cs.pending ? '，' + cs.pending + ' 个新版待生效' : '')
         + (cs.conflict ? '，' + cs.conflict + ' 个两源冲突' : '')
         + (cs.single ? '，' + cs.single + ' 个单源' : '')
         + (cs.none ? '，' + cs.none + ' 个未收录' : '')
@@ -1099,6 +1100,7 @@ function renderStdList() {
     // 双源交叉验证的置信度：两源一致才算高置信，冲突标黄待人工仲裁
     const CONF = {
       high: { cls: 'std-ok', text: '双源一致' },
+      pending: { cls: 'std-warn', text: '新版待生效' },
       conflict: { cls: 'std-warn', text: '两源冲突' },
       single: { cls: 'std-dim', text: '单源' },
       none: { cls: 'std-warn', text: '未收录' },
@@ -1106,7 +1108,9 @@ function renderStdList() {
     const cf = CONF[x.confidence] || { cls: 'std-dim', text: '未核查' }
     const srcTip = (x.sources && (x.sources.samr || x.sources.openstd))
       ? ['samr：' + (x.sources.samr ? x.sources.samr.version + ' ' + x.sources.samr.state : '无'),
-        'openstd：' + (x.sources.openstd ? x.sources.openstd.version + ' ' + x.sources.openstd.state : '无')].join('\n')
+        'openstd：' + (x.sources.openstd ? x.sources.openstd.version + ' ' + x.sources.openstd.state : '无'),
+        x.pendingVersion ? '新版 ' + x.pendingVersion + ' 将于 ' + (x.pendingDate || '') + ' 生效' : '']
+        .filter(Boolean).join('\n')
       : '尚未核查'
 
     h += '<tr class="' + rowCls + '">'

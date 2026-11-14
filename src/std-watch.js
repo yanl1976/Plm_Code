@@ -200,9 +200,26 @@ export function crossValidate(samr, openstd) {
     openstd: b ? { version: b.version, state: b.status, implDate: b.implDate } : null,
   }
   if (a && b) {
-    const sameState = normState(a.state) === normState(b.status)
+    const sa = normState(a.state)
+    const sb = normState(b.status)
     const sameVer = String(a.version) === String(b.version)
-    if (sameState && sameVer) return { confidence: 'high', sources, current: a }
+
+    // 新版已发布但尚未生效（如 samr 记 2008 现行、openstd 记 2026 即将实施）：
+    // 这不是冲突，是正常的新旧交替。当前生效版本取「现行」那条，并提示有新版本待生效。
+    if (sa !== sb && (sa === 'soon' || sb === 'soon')) {
+      const active = sa === 'active' ? a : (sb === 'active' ? b : null)
+      const soon = sa === 'soon' ? a : b
+      return {
+        confidence: 'pending',
+        sources,
+        current: active || a,
+        pendingVersion: soon.version,
+        pendingDate: soon.implDate,
+      }
+    }
+
+    if (sa === sb && sameVer) return { confidence: 'high', sources, current: a }
+    // 真正冲突：两源版本或状态不一致，且都不是「待生效」情形
     return { confidence: 'conflict', sources, current: a }
   }
   if (a || b) return { confidence: 'single', sources, current: a || b }
@@ -309,6 +326,9 @@ export async function runCheck(opt = {}) {
       item.error = ''
       item.confidence = cv.confidence
       item.sources = cv.sources
+      // 有新版待生效时记录，界面提示「将于 X 生效」
+      item.pendingVersion = cv.pendingVersion || ''
+      item.pendingDate = cv.pendingDate || ''
       if (cv.current) {
         item.latest = cv.current.version
         // 状态优先取 samr（覆盖全），没有则用 openstd
@@ -381,6 +401,7 @@ export function summary() {
     conflicts: stds.filter((x) => x.confidence === 'conflict').map((x) => x.base),
     confidenceStats: {
       high: stds.filter((x) => x.confidence === 'high').length,
+      pending: stds.filter((x) => x.confidence === 'pending').length,
       conflict: stds.filter((x) => x.confidence === 'conflict').length,
       single: stds.filter((x) => x.confidence === 'single').length,
       none: stds.filter((x) => x.confidence === 'none').length,

@@ -717,7 +717,8 @@ HoteamUI.DataService.Call('Hoteam.InforCenter.ERPService.GetStockSearchData', {
 | 置信度 | 条件 | 界面 |
 |---|---|---|
 | `high` | 两源版本与状态都一致 | 绿色「双源一致」 |
-| `conflict` | 存在分歧（版本不同或状态不同） | **黄色「两源冲突」→ 人工仲裁** |
+| `pending` | 一源「现行」、另一源「即将实施」（新品已发布未生效） | 黄色「新版待生效」，悬停显示生效日期 |
+| `conflict` | 真正的分歧（版本或状态不一致，且都不是待生效情形） | **黄色「两源冲突」→ 人工仲裁** |
 | `single` | 只有一个源查到 | 灰色「单源」 |
 | `none` | 两源都查不到 | 黄色「未收录」 |
 
@@ -726,11 +727,13 @@ HoteamUI.DataService.Call('Hoteam.InforCenter.ERPService.GetStockSearchData', {
 **2026-11-14 全量结果**
 
 ```
-136 个标准 → high 94 / conflict 1 / single 17 / none 24
+136 个标准 → high 96 / pending 1 / conflict 0 / single 15 / none 24
 单源时代「未查到」39 个，双源后降到 24 个
 ```
 
-已知冲突项：`GB/T 470`（samr 显示 2008 现行，openstd 显示 2026 即将实施）——典型的新版已发布、旧库未同步。
+唯一 pending 项：`GB/T 470`（现行 2008，2026 版于 2026-12-01 生效）——新版已发布但未生效，**不算冲突**。
+
+> 初版曾把这种情况误判为 `conflict`。判据修正为：一源「现行」+ 另一源「即将实施」时归 `pending`，当前生效版本取「现行」那条。
 
 > **解析注意**：samr 接口会把命中词包在 `<sacinfo>` 标签里（`<sacinfo>GB</sacinfo>/<sacinfo>T</sacinfo> …`），必须先剥标签再比对，否则永远匹配不上。
 

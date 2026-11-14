@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.85';
+  var PLUGIN_VERSION = '1.86';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1551,6 +1551,10 @@
     var specDupItems = [];         // 兜底判重：similar-models 里 similarity=1 的条目（不依赖 3100 是否已支持 spec 级）
     var lastCheckResult = null;    // 最近一次校验结果，供兜底判重后重绘
     var lastSpecSuggestion = '';   // 规格侧已提示过的目标写法，避免「建议改为 / 规范写法」重复
+    // 已提示过的规范写法（归一化后），供 loadSpecMeta 去重：
+    // 规则引擎 warnings 里的「规范写法：xxx」与 /api/plm/suggest 的 normalized 是同一个 suggestSpec 输出，
+    // 不去重就会出现两条一模一样的「规范写法」
+    var specSuggestedKeys = {};
 
     function setSaveEnabled(ok) {
       saveBtn.disabled = !ok;
@@ -1698,8 +1702,16 @@
       }
       // 规格结构化建议：规范写法
       lastSpecSuggestion = '';
+      specSuggestedKeys = {};
+      // ① 规则引擎 warnings 里的「规范写法：xxx」——先登记，供 loadSpecMeta 去重
+      for (i = 0; i < ws.length; i++) {
+        var nm2 = String(ws[i] || '').match(/^规范写法[：:]\s*(.+)$/);
+        if (nm2) specSuggestedKeys[normKey(nm2[1])] = 1;
+      }
+      // ② specFormat.fixed（空格/分隔符修正后的写法）
       if (r && r.specFormat && r.specFormat.fixed && r.specFormat.fixed !== specIn.value) {
         lastSpecSuggestion = r.specFormat.fixed;
+        specSuggestedKeys[normKey(r.specFormat.fixed)] = 1;
         sHtml += '<div style="color:' + C_WARN + '">建议改为：<a href="javascript:void(0)" class="plm-smart-apply-spec"'
           + ' style="color:' + th.accent + ';text-decoration:underline">' + escHtml(r.specFormat.fixed) + '</a></div>';
       }
@@ -1864,9 +1876,12 @@
       apiAsync('/api/plm/suggest', { field: 'spec', value: sp, sub: currentSub() }, function (r) {
         if (!dlg || !r) return;
         var html = '';
-        // 与校验结果里的「建议改为」去重：同一个目标只提示一次
+        // 与校验结果去重：同一个目标只提示一次
+        //   lastSpecSuggestion —— specFormat.fixed
+        //   specSuggestedKeys  —— warnings 里的「规范写法：xxx」（同一个 suggestSpec 输出）
         if (r.normalized && normKey(r.normalized) !== normKey(sp)
-          && normKey(r.normalized) !== normKey(lastSpecSuggestion)) {
+          && normKey(r.normalized) !== normKey(lastSpecSuggestion)
+          && !specSuggestedKeys[normKey(r.normalized)]) {
           html += '<div style="color:' + C_WARN + ';font-size:12px">规范写法：<a href="javascript:void(0)"'
             + ' class="plm-smart-apply-norm" style="color:' + th.accent + ';text-decoration:underline">'
             + escHtml(r.normalized) + '</a></div>';

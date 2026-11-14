@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.83';
+  var PLUGIN_VERSION = '1.84';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1344,9 +1344,11 @@
     // 标准写法提示块：放在「物料名称输入框」下方
     // 防漂移关键：从打开瞬间就占固定高度（min-height），内容异步填入后高度不再变化，
     // 所以下方的规格框、按钮位置全程不动；内容过高时在块内滚动。
+    // 折叠态固定约 3 行（标题/引用标准/示例）= 76px，加载前后高度一致，零漂移；
+    // 展开由用户点击触发，此时高度变化可接受，超过 340px 在块内滚动
     var guideBox = dlgEl('div', 'margin:2px 0 12px;padding:8px 10px;border-left:3px solid ' + th.accent
       + ';background:rgba(127,127,127,.07);border-radius:4px;font-size:12px;line-height:1.65;'
-      + 'min-height:186px;max-height:340px;overflow-y:auto;');
+      + 'min-height:76px;max-height:340px;overflow-y:auto;');
     guideBox.innerHTML = '<div style="opacity:.45">正在加载标准写法…</div>';
 
     var lastInfo = null;      // 最近一次校验结果，服务状态变化时用它重绘
@@ -1382,27 +1384,53 @@
         guideBox.innerHTML = '<div style="opacity:.45">该小类暂无标准写法（可在看板「命名规范 → 国标命名范式库」补充）</div>';
         return;
       }
-      var gHtml = '<div style="color:' + th.accent + ';font-weight:600;margin-bottom:4px;">标准写法 · '
+      var gf = g.fields || [];
+      var hasMore = !!String(g.specPattern || '').trim() || gf.length > 0;
+
+      // 折叠区：规格结构 + 字段说明
+      var moreHtml = '<div class="plm-guide-more" style="display:none;margin-top:3px;">'
+        + '<div style="font-family:monospace;opacity:.85;">' + escHtml(g.specPattern || '') + '</div>';
+      for (var gi = 0; gi < gf.length; gi++) {
+        moreHtml += '<div style="opacity:.78;">· <b>' + escHtml(gf[gi].key) + '</b>'
+          + (gf[gi].desc ? '：' + escHtml(gf[gi].desc) : '')
+          + (gf[gi].example ? '（如 ' + escHtml(gf[gi].example) + '）' : '') + '</div>';
+      }
+      moreHtml += '</div>';
+
+      guideBox.innerHTML =
+          // 标题行 + 展开/折叠文字按钮
+          '<div style="display:flex;align-items:baseline;gap:8px;">'
+        + '<div style="flex:1 1 auto;min-width:0;color:' + th.accent + ';font-weight:600;'
+        + 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">标准写法 · '
         + escHtml(g.subName || '') + '</div>'
+        + (hasMore
+          ? '<span class="plm-guide-toggle" style="flex:0 0 auto;cursor:pointer;font-size:11px;'
+            + 'color:' + th.accent + ';text-decoration:underline;">展开 ▾</span>'
+          : '')
+        + '</div>'
         // 引用标准：强制单行，过长省略，鼠标悬停看完整标准名称
         + (g.source
           ? '<div style="opacity:.8;margin-bottom:5px;white-space:nowrap;overflow:hidden;'
             + 'text-overflow:ellipsis;" title="' + attr('引用标准：' + g.source) + '">引用标准：'
             + escHtml(g.source) + '</div>'
           : '')
-        // 示例紧跟引用标准，字号比正文大一号并加粗，照着写即可
+        // 示例：字号大一号、加粗、绿底突出
         + '<div style="color:' + C_OK + ';font-family:monospace;font-size:13px;font-weight:600;'
-        + 'background:rgba(76,175,80,.10);border-radius:3px;padding:4px 7px;margin:5px 0 7px;'
+        + 'background:rgba(76,175,80,.10);border-radius:3px;padding:4px 7px;margin-top:5px;'
         + 'word-break:break-all;">示例：' + escHtml(g.example || '') + '</div>'
-        + '<div style="font-family:monospace;opacity:.85;">' + escHtml(g.specPattern || '') + '</div>';
-      var gf = g.fields || [];
-      for (var gi = 0; gi < gf.length; gi++) {
-        gHtml += '<div style="opacity:.78;">· <b>' + escHtml(gf[gi].key) + '</b>'
-          + (gf[gi].desc ? '：' + escHtml(gf[gi].desc) : '')
-          + (gf[gi].example ? '（如 ' + escHtml(gf[gi].example) + '）' : '') + '</div>';
+        + moreHtml;
+
+      // 展开/折叠：用户主动点击，高度变化可接受
+      var tg = guideBox.querySelector ? guideBox.querySelector('.plm-guide-toggle') : null;
+      var moreBox = guideBox.querySelector ? guideBox.querySelector('.plm-guide-more') : null;
+      if (tg && moreBox) {
+        tg.onclick = function (ev) {
+          if (ev && ev.stopPropagation) ev.stopPropagation();
+          var open = moreBox.style.display === 'none';
+          moreBox.style.display = open ? '' : 'none';
+          tg.textContent = open ? '折叠 ▴' : '展开 ▾';
+        };
       }
-      // 名称规则已剔除：内容与「标准写法 · 小类名」重复，对现场无指导价值
-      guideBox.innerHTML = gHtml;
     }
 
     body.appendChild(dlgEl('div', 'color:#666;margin-bottom:4px;', '物料名称'));

@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.91';
+  var PLUGIN_VERSION = '1.92';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -2129,26 +2129,6 @@
 
     function plmStockQuery(code, cb) { plmStockQueryAsync(code, cb); }
 
-    /**
-     * 库存查询失败/超时：在输入框内显示红标 + 「查询失败」
-     * 原来失败时什么都不显示，用户以为「没库存」，实际是 ERP 不可达
-     */
-    function showInvError(msg) {
-      if (!dlg) return;
-      invBadge.textContent = '—';
-      invBadge.style.background = '#d32f2f';
-      invBadge.style.color = '#fff';
-      invBadge.title = msg || '库存查询失败';
-      invSrc.textContent = '查询失败';
-      invSrc.style.opacity = '1';
-      invSrc.style.padding = '0 4px';
-      invSrc.style.borderRadius = '3px';
-      invSrc.style.background = 'rgba(211,47,47,.15)';
-      invSrc.style.color = '#d32f2f';
-      invSrc.title = '库存需经 PLM 接口访问 ERP；当前 ERP 不可达（服务关闭访问或网络不通）';
-      invWrap.style.display = 'inline-flex';
-    }
-
     /** 展示库存与来源标记；返回是否展示成功 */
     function showInv(r, src) {
       if (!dlg || !r || !r.total) return false;
@@ -2173,23 +2153,6 @@
       return true;
     }
 
-    /** 查询成功但库存为 0：显示 0，避免「什么都不显示」被误解为没查到 */
-    function showInvZero() {
-      if (!dlg) return;
-      invBadge.textContent = '0';
-      invBadge.style.background = '#ffc107';
-      invBadge.style.color = '#333';
-      invBadge.title = '当前无库存';
-      invSrc.textContent = 'PLM';
-      invSrc.style.opacity = '1';
-      invSrc.style.padding = '0 4px';
-      invSrc.style.borderRadius = '3px';
-      invSrc.style.background = 'rgba(76,175,80,.18)';
-      invSrc.style.color = '#2e7d32';
-      invSrc.title = '数据来自 PLM 库存查询服务，查询成功但数量为 0';
-      invWrap.style.display = 'inline-flex';
-    }
-
     /** 现有库存：只走 PLM 标准接口（Hoteam.InforCenter.ERPService.GetStockSearchData），不再回落 ERP 直连 */
     function loadInventory(sp) {
       invWrap.style.display = 'none';
@@ -2211,14 +2174,10 @@
       if (src === 'plm') {
         plmStockQuery(code, function (r) {
           if (!dlg) return;
-          if (r && r.ok) {
-            // 有库存 → 显示数量；库存为 0 也要给明确状态，不能什么都不显示
-            if (!showInv(r, 'plm')) showInvZero();
-            return;
-          }
-          // 失败/超时：必须显示，否则用户以为「没库存」
-          showInvError('库存查询失败（ERP 不可达或超时）');
-          log('PLM 库存查询未返回数据：' + code + '（已移除 ERP 直连兜底）');
+          if (r && r.ok) { showInv(r, 'plm'); return; }
+          // 失败时不占用输入框：标题栏 ERP 状态点已变红，
+          // 类似型号明细里也有「库存来源：PLM 查询失败」，两处提示已足够
+          log('PLM 库存查询未返回数据：' + code + '（详见标题栏 ERP 状态与类似型号明细）');
         });
         return;
       }

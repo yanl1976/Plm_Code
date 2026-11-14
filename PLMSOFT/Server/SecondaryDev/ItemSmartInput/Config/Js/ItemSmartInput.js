@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.80';
+  var PLUGIN_VERSION = '1.82';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1320,12 +1320,19 @@
       + 'box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:2147483001;'
       + 'font:13px/1.6 "Microsoft YaHei",Arial,sans-serif;color:' + th.fg + ';');
 
-    var head = dlgEl('div', 'padding:10px 16px;background:' + C_HEAD_BG + ';border-bottom:' + C_LINE + ';font-weight:bold;font-size:14px;');
-    head.textContent = 'PLM 物料录入助手　版本号：V ' + pluginVersion();
+    var head = dlgEl('div', 'padding:10px 16px;background:' + C_HEAD_BG + ';border-bottom:' + C_LINE + ';'
+      + 'font-weight:bold;font-size:14px;overflow:hidden;');
     head.className = 'plm-smart-dlg-title';
+    // 先写文本再 append 子元素：textContent 赋值会清空子节点，顺序不能反
+    head.textContent = 'PLM 物料录入助手　V' + pluginVersion();
     var xBtn = dlgEl('span', 'float:right;cursor:pointer;color:#999;font-weight:normal;font-size:18px;line-height:18px;', '×');
     xBtn.onclick = closeEditor;
     head.appendChild(xBtn);
+    // 服务状态：原内容区两行合并成标题栏右侧一个徽标，悬停看详情
+    var svcBadge = dlgEl('span', 'float:right;margin-right:10px;font-weight:normal;font-size:11px;line-height:18px;'
+      + 'padding:1px 8px;border-radius:9px;background:rgba(127,127,127,.16);color:' + C_MUTE + ';', '● 检测中');
+    svcBadge.className = 'plm-smart-svc-badge';
+    head.appendChild(svcBadge);
 
     var body = dlgEl('div', 'padding:14px 16px;');
 
@@ -1345,25 +1352,29 @@
     var lastInfo = null;      // 最近一次校验结果，服务状态变化时用它重绘
     function renderInfo(r) {
       lastInfo = r;
+      // HTML 属性值转义（title 里可能有引号）
+      var attr = function (s) { return escHtml(s == null ? '' : s).replace(/"/g, '&quot;') };
       var code = readEcode();
       var cat = (r && r.category)
         ? (r.category.bigName + ' / ' + r.category.midName + ' / ' + r.category.subName)
         : '';
 
-      // ---- 顶部信息条 ----
+      // ---- 信息条：只留编码与分类（服务状态已并入标题栏徽标） ----
       var mHtml = '<div>物料编码：<b>' + escHtml(code || '(未申请)') + '</b>'
         + (cat ? '　分类：' + escHtml(cat) : '') + '</div>';
-      var sOk = svc.ok;
-      var sColor = sOk === true ? C_OK : (sOk === false ? C_ERR : C_MUTE);
-      var sText = sOk === true ? '正常' : (sOk === false ? '不可用，联想/查重已跳过' : '检测中');
-      mHtml += '<div class="plm-smart-svc-state" style="font-size:12px;color:' + C_MUTE + '">'
-        + '● 物料库：<b style="color:' + C_OK + '">PLM</b>（物料信息、库存、查重均取自 PLM）</div>'
-        + '<div class="plm-smart-svc-state" style="font-size:12px;color:' + sColor + '">'
-        + '● 查重服务（' + escHtml(CFG.apiLabel) + '）：' + sText + '</div>';
       if (r && r.skipReason) {
         mHtml += '<div style="color:' + C_WARN + '">' + escHtml(r.skipReason) + '</div>';
       }
       metaBox.innerHTML = mHtml;
+
+      // ---- 标题栏状态徽标 ----
+      var sOk = svc.ok;
+      var sText = sOk === true ? 'PLM · 查重正常' : (sOk === false ? 'PLM · 查重不可用' : '检测中');
+      svcBadge.textContent = '● ' + sText;
+      svcBadge.style.color = sOk === true ? C_OK : (sOk === false ? C_ERR : C_MUTE);
+      svcBadge.title = '物料库：PLM（物料信息、库存、查重均取自 PLM）\n'
+        + '查重服务（' + CFG.apiLabel + '）：'
+        + (sOk === true ? '正常' : (sOk === false ? '不可用，联想/查重已跳过' : '检测中'));
 
       // ---- 标准写法提示块 ----
       var g = r && r.guide;
@@ -1373,9 +1384,11 @@
       }
       var gHtml = '<div style="color:' + th.accent + ';font-weight:600;margin-bottom:4px;">标准写法 · '
         + escHtml(g.subName || '') + '</div>'
-        // 引用标准（之前漏渲染，用户反馈「引用标准未出现」）
+        // 引用标准：强制单行，过长省略，鼠标悬停看完整标准名称
         + (g.source
-          ? '<div style="opacity:.8;margin-bottom:5px;word-break:break-all;">引用标准：' + escHtml(g.source) + '</div>'
+          ? '<div style="opacity:.8;margin-bottom:5px;white-space:nowrap;overflow:hidden;'
+            + 'text-overflow:ellipsis;" title="' + attr('引用标准：' + g.source) + '">引用标准：'
+            + escHtml(g.source) + '</div>'
           : '')
         // 示例紧跟引用标准，字号比正文大一号并加粗，照着写即可
         + '<div style="color:' + C_OK + ';font-family:monospace;font-size:13px;font-weight:600;'
@@ -1388,7 +1401,11 @@
           + (gf[gi].desc ? '：' + escHtml(gf[gi].desc) : '')
           + (gf[gi].example ? '（如 ' + escHtml(gf[gi].example) + '）' : '') + '</div>';
       }
-      gHtml += (g.nameRule ? '<div style="opacity:.7;margin-top:4px;">' + escHtml(g.nameRule) + '</div>' : '');
+      // 名称规则：同样强制单行，避免长句换行撑高提示块
+      gHtml += (g.nameRule
+        ? '<div style="opacity:.7;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"'
+          + ' title="' + attr(g.nameRule) + '">' + escHtml(g.nameRule) + '</div>'
+        : '');
       guideBox.innerHTML = gHtml;
     }
 

@@ -951,8 +951,10 @@ async function run() {
     if (b1) b1.onclick({ preventDefault() { }, stopPropagation() { } })
     await sleep(150)
     const h1 = htmlAll(p1.doc.body)
-    ok('服务正常时显示「治理服务…正常」', h1.indexOf('治理服务') >= 0 && h1.indexOf('正常') >= 0,
-      'has治理服务=' + (h1.indexOf('治理服务') >= 0))
+    // 服务状态已从内容区移到标题栏徽标（v1.82）
+    const badge1 = findByClass(p1, 'plm-smart-svc-badge')
+    const bTxt = String((badge1 && badge1.textContent) || '')
+    ok('服务正常时标题栏徽标显示「PLM · 查重正常」', bTxt.indexOf('查重正常') >= 0, 'got=' + bTxt)
 
     const p2 = newPage({ ctrls: baseCtrl(), ajaxHandler: () => null })
     p2.ctl['ECODE_Value'].__text = '10010100435'
@@ -1196,7 +1198,7 @@ async function run() {
 
     const title = findByClass(p, 'plm-smart-dlg-title')
     const txt = String((title && title.textContent) || '')
-    ok('标题含「版本号：V x.y」', /版本号：V \d+\.\d+/.test(txt), 'got=' + txt)
+    ok('标题含插件名与版本 V x.y', /PLM 物料录入助手/.test(txt) && /V\d+\.\d+/.test(txt), 'got=' + txt)
   }
 
   console.log('\n----------------------------------------')

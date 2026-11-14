@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.89';
+  var PLUGIN_VERSION = '1.90';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -2829,8 +2829,10 @@
       el.onblur = function () {
         if (timer) clearTimeout(timer);
         checkNow();
-        // 延后收起联想，保证点击候选能先触发
-        setTimeout(function () { if (specSug) specSug.style.display = 'none'; }, 180);
+        // 失焦不再关闭 specSug：
+        //   specSug 是常驻的「同型号系列」参考列表，不是输入下拉补全。
+        //   点「展开/折叠」、切到名称框等失焦动作，不应让清单消失（原来 180ms 后强制隐藏，导致此 bug）。
+        //   需要收起时由 loadSpecSuggest 重新计算（输入 <2 字）或点击候选行（填值后）负责。
       };
     }
     bindLive(nameIn);

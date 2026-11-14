@@ -33,6 +33,8 @@ import {
   finishUpload as plmSnapshotFinish,
   snapshotStatus as plmSnapshotStatus,
   resetUpload as plmSnapshotReset,
+  mergeWithErp as plmSnapshotMerge,
+  mergedStatus as plmSnapshotMergedStatus,
 } from './plm-snapshot.js'
 import { extractParams } from './struct-spec.js'
 import { env, envPort, logEnvSource } from './env.js'
@@ -1058,6 +1060,27 @@ const server = http.createServer(async (req, res) => {
       try {
         plmSnapshotReset()
         return send(res, 200, { ok: true })
+      } catch (e) {
+        return send(res, 500, { ok: false, error: String((e && e.message) || e) })
+      }
+    }
+
+    // 用 ERP 快照补齐 PLM 快照，并输出差异
+    if (p === '/api/plm/snapshot/merge' && req.method === 'POST') {
+      try {
+        const r = plmSnapshotMerge()
+        if (r.ok) {
+          try { await loadIndex({ force: true }) } catch (e) { /* 索引重建失败不影响落盘 */ }
+        }
+        return send(res, 200, r)
+      } catch (e) {
+        return send(res, 500, { ok: false, error: String((e && e.message) || e) })
+      }
+    }
+
+    if (p === '/api/plm/snapshot/merged' && req.method === 'GET') {
+      try {
+        return send(res, 200, { ok: true, ...plmSnapshotMergedStatus() })
       } catch (e) {
         return send(res, 500, { ok: false, error: String((e && e.message) || e) })
       }

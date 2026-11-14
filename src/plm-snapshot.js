@@ -220,6 +220,161 @@ export function finishUpload(body) {
   }
 }
 
+// ============ 与 ERP 快照合并 ============
+const ERP_NDJSON = path.join(DATA, 'materials.ndjson')
+const MERGED = path.join(DATA, 'materials-merged.ndjson')
+const DIFF = path.join(DATA, 'plm-erp-diff.json')
+
+function readNdjson(file) {
+  if (!fs.existsSync(file)) return []
+  const out = []
+  const txt = fs.readFileSync(file, 'utf8')
+  for (const line of txt.split('\n')) {
+    if (!line.trim()) continue
+    try { out.push(JSON.parse(line)) } catch (e) { /* 跳过坏行 */ }
+  }
+  return out
+}
+
+const normStr = (s) => String(s == null ? '' : s).replace(/\s+/g, '').toUpperCase()
+
+/**
+ * 用 ERP 快照补齐 PLM 快照，并输出差异。
+ *
+ * 合并规则（以编码为键）：
+ *   PLM 有 + ERP 有  → 用 PLM（数据更新），但记录规格/名称差异
+ *   PLM 有 + ERP 无  → 用 PLM（PLM 独有，通常极少）
+ *   PLM 无 + ERP 有  → 用 ERP 补齐（历史物料基线，标 SOURCE='ERP'）
+ *
+ * 输出：
+ *   data/materials-merged.ndjson   合并后的完整快照（字段对齐 ERP 格式，plm-index 可直接读）
+ *   data/plm-erp-diff.json         差异报告（erpOnly 只存前 500 条 + 总数）
+ */
+export function mergeWithErp() {
+  const plmRows = readSnapshot()
+  const erpRows = readNdjson(ERP_NDJSON)
+  if (!plmRows.length && !erpRows.length) {
+    return { ok: false, error: 'PLM 快照与 ERP 快照都不存在' }
+  }
+
+  const map = new Map()
+  // ① 先铺 ERP 基线
+  for (const e of erpRows) {
+    const code = String(e.FNUMBER || '').trim()
+    if (!code) continue
+    map.set(code, { ...e, SOURCE: 'ERP', SOURCE_NOTE: 'ERP 快照（历史基线）' })
+  }
+  const erpIndex = new Map(map)
+
+  // ② 用 PLM 覆盖 / 新增
+  const plmOnly = []
+  const specDiff = []
+  const nameDiff = []
+  let plmHit = 0
+  for (const p of plmRows) {
+    const code = String(p.ECODE || '').trim()
+    if (!code) continue
+    const rec = {
+      FNUMBER: code,
+      FNAME: String(p.ENAME || '').trim(),
+      FSPECIFICATION: String(p.GGXH || '').trim(),
+      F_ZXCV_ZYCS: String(p.ZYCS || '').trim(),
+      SUBPREFIX: code.length >= 6 ? code.slice(0, 6) : null,
+      FMATERIALID: p.EID || '',
+      FMASTERID: p.EUID || '',
+      FMODIFYDATE: p.UPDATETIME || null,
+      UNITNAME: '',
+      FMATERIALGROUP: '',
+      SOURCE: 'PLM',
+      SOURCE_NOTE: 'PLM 实时采集',
+    }
+    const old = erpIndex.get(code)
+    if (old) {
+      plmHit++
+      const a = normStr(old.FSPECIFICATION)
+      const b = normStr(rec.FSPECIFICATION)
+      if (a && b && a !== b && specDiff.length < 500) {
+        specDiff.push({ code, erp: old.FSPECIFICATION, plm: rec.FSPECIFICATION })
+      }
+      const na = normStr(old.FNAME)
+      const nb = normStr(rec.FNAME)
+      if (na && nb && na !== nb && nameDiff.length < 500) {
+        nameDiff.push({ code, erp: old.FNAME, plm: rec.FNAME })
+      }
+    } else if (plmOnly.length < 500) {
+      plmOnly.push({ code, name: rec.FNAME, spec: rec.FSPECIFICATION })
+    }
+    map.set(code, rec)
+  }
+
+  // ③ ERP 独有（PLM 没有的）
+  const erpOnly = []
+  let erpOnlyTotal = 0
+  for (const [code, v] of map) {
+    if (v.SOURCE !== 'ERP') continue
+    erpOnlyTotal++
+    if (erpOnly.length < 500) {
+      erpOnly.push({ code, name: v.FNAME || '', spec: v.FSPECIFICATION || '' })
+    }
+  }
+
+  // ④ 写文件
+  ensureDirs()
+  const merged = [...map.values()].sort((a, b) => String(a.FNUMBER).localeCompare(String(b.FNUMBER)))
+  fs.writeFileSync(MERGED, merged.map((x) => JSON.stringify(x)).join('\n') + (merged.length ? '\n' : ''), 'utf8')
+
+  const report = {
+    at: new Date().toISOString(),
+    counts: {
+      merged: merged.length,
+      plmSource: merged.filter((x) => x.SOURCE === 'PLM').length,
+      erpSource: merged.filter((x) => x.SOURCE === 'ERP').length,
+      plmRows: plmRows.length,
+      erpRows: erpRows.length,
+      plmHitErp: plmHit,
+      plmOnly: plmOnly.length,
+      erpOnly: erpOnlyTotal,
+      specDiff: specDiff.length,
+      nameDiff: nameDiff.length,
+    },
+    note: 'erpOnly/plmOnly/specDiff/nameDiff 均为前 500 条样本，完整数量见 counts',
+    plmOnly,
+    erpOnly,
+    specDiff,
+    nameDiff,
+  }
+  fs.writeFileSync(DIFF, JSON.stringify(report, null, 2) + '\n', 'utf8')
+
+  // 元数据补记合并结果
+  const m = loadMeta()
+  m.merge = {
+    at: report.at,
+    merged: merged.length,
+    plmSource: report.counts.plmSource,
+    erpSource: report.counts.erpSource,
+    erpOnly: erpOnlyTotal,
+    specDiff: specDiff.length,
+  }
+  saveMeta(m)
+
+  return { ok: true, ...report.counts, mergedFile: MERGED, diffFile: DIFF }
+}
+
+/** 合并快照是否存在 */
+export function mergedStatus() {
+  try {
+    const st = fs.statSync(MERGED)
+    let lines = 0
+    const txt = fs.readFileSync(MERGED, 'utf8')
+    for (const line of txt.split('\n')) if (line.trim()) lines++
+    let diff = null
+    try { diff = JSON.parse(fs.readFileSync(DIFF, 'utf8')) } catch (e) { diff = null }
+    return { exists: true, lines, size: st.size, mtime: st.mtimeMs, counts: diff && diff.counts }
+  } catch (e) {
+    return { exists: false, lines: 0, counts: null }
+  }
+}
+
 /** 供查重使用：读取快照为数组（按需调，不要在每请求都读） */
 export function readSnapshot() {
   if (!fs.existsSync(SNAPSHOT)) return []

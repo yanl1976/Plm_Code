@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.79';
+  var PLUGIN_VERSION = '1.80';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1315,7 +1315,7 @@
     var C_HEAD_BG = 'rgba(127,127,127,.10)';
 
     var mask = dlgEl('div', 'position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,.35);z-index:2147483000;');
-    var panel = dlgEl('div', 'position:fixed;left:50%;top:6%;transform:translateX(-50%);width:620px;max-width:94vw;'
+    var panel = dlgEl('div', 'position:fixed;left:50%;top:6%;transform:translateX(-50%);width:682px;max-width:94vw;'
       + 'max-height:86vh;overflow:auto;background:' + th.bg + ';border-radius:6px;'
       + 'box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:2147483001;'
       + 'font:13px/1.6 "Microsoft YaHei",Arial,sans-serif;color:' + th.fg + ';');
@@ -1329,53 +1329,67 @@
 
     var body = dlgEl('div', 'padding:14px 16px;');
 
-    // 分类/编码信息条：把看板里的「当前小类」信息搬进弹窗
-    var infoBox = dlgEl('div', 'background:' + C_INPUT_BG + ';border:' + C_LINE + ';border-radius:4px;'
+    // 顶部信息条：物料编码 + 分类 + 数据源/查重服务状态（固定内容，不会撑高）
+    var metaBox = dlgEl('div', 'background:' + C_INPUT_BG + ';border:' + C_LINE + ';border-radius:4px;'
       + 'padding:6px 10px;margin-bottom:12px;color:' + C_MUTE + ';font-size:12px;line-height:1.7;');
-    body.appendChild(infoBox);
+    body.appendChild(metaBox);
 
-    var lastInfo = null;      // 最近一次校验结果，服务状态变化时用它重绘信息条
+    // 标准写法提示块：放在「物料名称输入框」下方
+    // 防漂移关键：从打开瞬间就占固定高度（min-height），内容异步填入后高度不再变化，
+    // 所以下方的规格框、按钮位置全程不动；内容过高时在块内滚动。
+    var guideBox = dlgEl('div', 'margin:2px 0 12px;padding:8px 10px;border-left:3px solid ' + th.accent
+      + ';background:rgba(127,127,127,.07);border-radius:4px;font-size:12px;line-height:1.65;'
+      + 'min-height:186px;max-height:340px;overflow-y:auto;');
+    guideBox.innerHTML = '<div style="opacity:.45">正在加载标准写法…</div>';
+
+    var lastInfo = null;      // 最近一次校验结果，服务状态变化时用它重绘
     function renderInfo(r) {
       lastInfo = r;
       var code = readEcode();
       var cat = (r && r.category)
         ? (r.category.bigName + ' / ' + r.category.midName + ' / ' + r.category.subName)
         : '';
-      var html = '<div>物料编码：<b>' + escHtml(code || '(未申请)') + '</b>'
-        + (cat ? '　分类：' + escHtml(cat) : '') + '</div>';
 
-      // 数据源与查重服务状态：系统已全面切换 PLM，弹窗里明确标出
+      // ---- 顶部信息条 ----
+      var mHtml = '<div>物料编码：<b>' + escHtml(code || '(未申请)') + '</b>'
+        + (cat ? '　分类：' + escHtml(cat) : '') + '</div>';
       var sOk = svc.ok;
       var sColor = sOk === true ? C_OK : (sOk === false ? C_ERR : C_MUTE);
       var sText = sOk === true ? '正常' : (sOk === false ? '不可用，联想/查重已跳过' : '检测中');
-      html += '<div class="plm-smart-svc-state" style="font-size:12px;color:' + C_MUTE + '">'
+      mHtml += '<div class="plm-smart-svc-state" style="font-size:12px;color:' + C_MUTE + '">'
         + '● 物料库：<b style="color:' + C_OK + '">PLM</b>（物料信息、库存、查重均取自 PLM）</div>'
         + '<div class="plm-smart-svc-state" style="font-size:12px;color:' + sColor + '">'
         + '● 查重服务（' + escHtml(CFG.apiLabel) + '）：' + sText + '</div>';
-
       if (r && r.skipReason) {
-        html += '<div style="color:' + C_WARN + '">' + escHtml(r.skipReason) + '</div>';
+        mHtml += '<div style="color:' + C_WARN + '">' + escHtml(r.skipReason) + '</div>';
       }
+      metaBox.innerHTML = mHtml;
 
-      // 国标命名范式：只作参考，不影响保存
-      if (r && r.guide) {
-        var g = r.guide;
-        html += '<div style="margin-top:7px;padding:8px 10px;border-left:3px solid ' + th.accent
-          + ';background:rgba(127,127,127,.07);border-radius:4px;font-size:12px;line-height:1.65;">'
-          + '<div style="color:' + th.accent + ';font-weight:600;margin-bottom:3px;">标准写法 · '
-          + escHtml(g.subName || '') + '</div>'
-          + '<div style="font-family:monospace;">' + escHtml(g.specPattern || '') + '</div>';
-        var gf = g.fields || [];
-        for (var gi = 0; gi < gf.length; gi++) {
-          html += '<div style="opacity:.78;">· <b>' + escHtml(gf[gi].key) + '</b>'
-            + (gf[gi].desc ? '：' + escHtml(gf[gi].desc) : '')
-            + (gf[gi].example ? '（如 ' + escHtml(gf[gi].example) + '）' : '') + '</div>';
-        }
-        html += '<div style="color:' + C_OK + ';font-family:monospace;">示例：' + escHtml(g.example || '') + '</div>'
-          + (g.nameRule ? '<div style="opacity:.7;margin-top:2px;">' + escHtml(g.nameRule) + '</div>' : '')
-          + '</div>';
+      // ---- 标准写法提示块 ----
+      var g = r && r.guide;
+      if (!g) {
+        guideBox.innerHTML = '<div style="opacity:.45">该小类暂无标准写法（可在看板「命名规范 → 国标命名范式库」补充）</div>';
+        return;
       }
-      infoBox.innerHTML = html;
+      var gHtml = '<div style="color:' + th.accent + ';font-weight:600;margin-bottom:4px;">标准写法 · '
+        + escHtml(g.subName || '') + '</div>'
+        // 引用标准（之前漏渲染，用户反馈「引用标准未出现」）
+        + (g.source
+          ? '<div style="opacity:.8;margin-bottom:5px;word-break:break-all;">引用标准：' + escHtml(g.source) + '</div>'
+          : '')
+        // 示例紧跟引用标准，字号比正文大一号并加粗，照着写即可
+        + '<div style="color:' + C_OK + ';font-family:monospace;font-size:13px;font-weight:600;'
+        + 'background:rgba(76,175,80,.10);border-radius:3px;padding:4px 7px;margin:5px 0 7px;'
+        + 'word-break:break-all;">示例：' + escHtml(g.example || '') + '</div>'
+        + '<div style="font-family:monospace;opacity:.85;">' + escHtml(g.specPattern || '') + '</div>';
+      var gf = g.fields || [];
+      for (var gi = 0; gi < gf.length; gi++) {
+        gHtml += '<div style="opacity:.78;">· <b>' + escHtml(gf[gi].key) + '</b>'
+          + (gf[gi].desc ? '：' + escHtml(gf[gi].desc) : '')
+          + (gf[gi].example ? '（如 ' + escHtml(gf[gi].example) + '）' : '') + '</div>';
+      }
+      gHtml += (g.nameRule ? '<div style="opacity:.7;margin-top:4px;">' + escHtml(g.nameRule) + '</div>' : '');
+      guideBox.innerHTML = gHtml;
     }
 
     body.appendChild(dlgEl('div', 'color:#666;margin-bottom:4px;', '物料名称'));
@@ -1399,6 +1413,10 @@
     var nameTip = dlgEl('div', 'margin:4px 0 6px;min-height:16px;');
     nameTip.className = 'plm-smart-dlg-nametip';
     body.appendChild(nameTip);
+
+    // 标准写法提示：放在「物料名称输入框」下方，紧贴名称相关问题之后
+    body.appendChild(guideBox);
+
     // 名称联想（同 /api/plm/suggest field=name，与页面输入框同源）
     var nameSugBox = dlgEl('div', 'margin:0 0 8px;');
     body.appendChild(nameSugBox);

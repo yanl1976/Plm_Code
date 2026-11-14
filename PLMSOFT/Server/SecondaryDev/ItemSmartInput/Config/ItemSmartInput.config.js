@@ -108,5 +108,30 @@ window.ItemSmartInputConfig = {
 
     // 提示区总开关：'grouped'=按分组+配色显示（默认）；'plain'=恢复成原来的纯文字
     mode: 'grouped'
-  }
-};
+    },
+
+    // ---------- 阻断开关 ----------
+    // true = 拦截保存（默认）；false = 降级为黄色提示，允许保存
+    // 与 hints.mute 的分工：blocks 管「是否拦截」，mute 管「是否显示」
+    blocks: {
+    // 名称
+    nameEmpty: true,          // 物料名称不能为空
+    nameLen: true,            // 名称过短 / 过长
+    nameForbidChars: true,    // 名称含规格符号（* × 等）
+    nameForbidPattern: true,  // 名称含项目号 / 图号 / 产号
+    nameEqualsSpec: true,     // 名称与规格完全相同
+    nameFullWidth: true,      // 名称含全角字母/数字
+    subMismatch: true,        // 名称与所选小类不符（名称疑似别的小类）
+    // 规格
+    specEmpty: true,          // 型号规格不能为空
+    specLen: true,            // 型号规格过短 / 过长
+    specFullWidth: true,      // 规格含全角字符
+    specAlnum: true,          // 规格必须包含字母或数字
+    specForbidPattern: true,  // 规格含项目号 / 产号
+    specPlaceholder: true,    // 规格写「待定 / 见附件 / 同上」等占位
+    // 查重
+    dupExact: true,           // 归一化签名完全相同
+    dupSep: true,             // 仅分隔符/空格不同
+    dupOrder: true            // 参数相同、仅书写顺序不同
+    }
+    };

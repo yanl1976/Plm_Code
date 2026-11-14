@@ -24,6 +24,7 @@ import { cableSpecHints } from './cable-spec.js'
 import { summary as stdWatchSummary, runCheck as stdWatchRun, loadWatch as stdWatchLoad, saveWatch as stdWatchSave, isDue as stdWatchDue } from './std-watch.js'
 import { normalize, tokenize, jaccard, looseSignature, modelOf } from './spec.js'
 import { orderSignature } from './plm-index.js'
+import { applyBlocks, normalizeBlocks } from './block-gate.js'
 import { checkMaterial, fixSpecFormat, rules as materialRules, resolveNameFix, detectNameModel } from './material-rules.js'
 import * as nameSyn from './name-synonyms.js'
 import { snapshotStatus, invalidateSnapshotStatus, erpSubDocs, invalidateErpSub } from './snapshot.js'
@@ -1346,18 +1347,33 @@ const server = http.createServer(async (req, res) => {
 
     // 名称/规格书写规则校验（前端实时提示 + 保存前兜底）
     if (p === '/api/new-material/validate') {
+      // 支持 GET（兼容旧调用）与 POST（可带 blocks 开关）
+      let qbody = null
+      if (req.method === 'POST') {
+        try { qbody = await readBody(req) } catch (e) { qbody = null }
+      }
+      const qv = (k) => String((qbody && qbody[k]) || url.searchParams.get(k) || '')
       // 名称同样保留原文：首尾空格必须能被 fixNameFormat 看到，
       // 否则「名称首尾有空格」这条提示永远不会出现（内部规则自己会 trim 后再判断）
-      const rawName = url.searchParams.get('name') || ''
+      const rawName = qv('name')
       const m = {
         name: rawName,
         // 规格保留原文：首尾空格必须能被 checkSpec 看到，否则前端「会自动整理」的提醒永远不出现
-        spec: url.searchParams.get('spec') || '',
-        sub: (url.searchParams.get('sub') || '').trim(),
+        spec: qv('spec'),
+        sub: qv('sub').trim(),
       }
       // knownCount：该名称在本小类的存量出现次数，用于区分「已是在用的完整名称」与「还在打字」
       m.knownCount = nameCountInSub(m.sub, rawName.trim())
       const verdict = checkMaterial(m)
+      // 阻断开关：blocks.<key> === false 的 error 降级为 warning
+      let blocksRaw = (qbody && qbody.blocks) || null
+      if (!blocksRaw) {
+        try { blocksRaw = JSON.parse(url.searchParams.get('blocks') || 'null') } catch (e) { blocksRaw = null }
+      }
+      const blocks = normalizeBlocks(blocksRaw)
+      const gate = applyBlocks(verdict, blocks)
+      verdict.ok = (verdict.errors || []).length === 0
+      verdict.downgraded = gate.downgraded
       // 本小类常用名称（只作参考展示，不做模糊推荐：实测「子串+频次」自动推荐会误伤，
       // 例如 端子标记号→端子、动力电缆→电缆 都是不同物，故只呈现候选由人判断）
       if (m.sub) {

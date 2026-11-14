@@ -26,6 +26,7 @@ import { fileURLToPath } from 'url'
 import { loadIndex, indexStatus, queryDuplicates, suggestNames, suggestSpecs, categoryOf, tokensOf } from './plm-index.js'
 import { checkMaterial, suggestSpec } from './material-rules.js'
 import { cableSpecHints } from './cable-spec.js'
+import { applyBlocks, isHardDup, normalizeBlocks } from './block-gate.js'
 import { extractParams } from './struct-spec.js'
 import { env, envPort, logEnvSource } from './env.js'
 
@@ -857,14 +858,17 @@ function handleCheck(body) {
     } catch (e) { /* 参数提取失败不影响主流程 */ }
   }
 
-  // 4) 通过判定
-  //    exact / sep → 硬重复，不可豁免（就是同一个规格）
-  //    order       → 参数完全相同、仅书写顺序不同，同样拦下；前端勾选「确认不同」后传 confirmOrder=true 放行
+  // 4) 阻断开关：blocks.<key> === false 的 error 降级为 warning（不阻断保存）
+  const blocks = normalizeBlocks(body.blocks)
+  const gate = applyBlocks(result, blocks)
+  result.downgraded = gate.downgraded
+
+  // 5) 通过判定
+  //    exact / sep → 硬重复，可用 dupExact / dupSep 关闭
+  //    order       → 顺序不同，可用 dupOrder 关闭，或传 confirmOrder=true 单次放行
   //    spec / fuzzy→ 只提示，不拦
   const confirmOrder = body.confirmOrder === true
-  const hardDup = result.duplicates.some((x) =>
-    x.level === 'exact' || x.level === 'sep' || (x.level === 'order' && !confirmOrder)
-  )
+  const hardDup = isHardDup(result.duplicates, blocks, confirmOrder)
   result.pass = result.errors.length === 0 && !hardDup
   result.blocking = result.errors.length
     ? { type: 'error', reason: result.errors[0] }

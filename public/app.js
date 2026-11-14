@@ -2067,8 +2067,13 @@ function nmRuleCheck() {
   // 规格不 trim：交给后端识别首尾空格，前端才能提示「保存时会自动整理」
   const spec = ($('#nmSpec').value || '')
   if (!name && !spec.trim()) { el.innerHTML = ''; return }
-  api('/api/new-material/validate?name=' + encodeURIComponent(rawName)
-    + '&spec=' + encodeURIComponent(spec) + '&sub=' + encodeURIComponent(nm.cur.sub || ''))
+  // 改用 POST：可携带阻断开关（window.BLOCK_CONFIG 覆盖，默认全部阻断）
+  apiPost('/api/new-material/validate', {
+    name: rawName,
+    spec,
+    sub: nm.cur.sub || '',
+    blocks: JSON.stringify(window.BLOCK_CONFIG || {}),
+  })
     .then((r) => renderNmRule(r || {}))
     .catch(() => {
       // 请求失败时不能静默保留上一次的结果，否则看起来像「校验失效」

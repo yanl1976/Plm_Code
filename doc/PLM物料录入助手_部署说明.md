@@ -2,14 +2,14 @@
 
 > 版本 **v1.61** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
 > 插件文件：`ItemSmartInput.js` v1.66 — 158,135 字节 / 3,404 行 / UTF-8 无 BOM
-> SHA256：`31A8F6687EE710DE7C878323976652ACB34C04166E149E525C8952DA25E071A0`
+> SHA256：`D3B19624A0E971076D7EE5633B1B8E457DF4B6504690653DCA821CE85C5EAB54`
 > **后端本次有改动**：`src/plm-server.js` 新增 `columns[].specPart`（哪些列拼进规格）与 `sampleSpec`
 > **后端本次有改动**：`src/plm-index.js` 新增「仅规格相同」索引（12,174 字节），需部署并重启 3100（v1.52 起前端也做了兜底，后端没换也能拦住）
 > 配置文件：`ItemSmartInput.config.js` — 3,243 字节 / 51 行 / UTF-8 无 BOM
 > SHA256：`AB883C30C398DFD7712E46A116A579B8995E3B9CBAB259AE5BFF70079F9157D0`
 >
 > **版本演进（近期）**
-> - **v1.66（当前）**：**校验规则整合**——括号提示真正生效并与「规范写法」去重、乘号去重、名称补全角检查（阻断）、提示分组规则 13→15 条修正 10 处错配
+> - **v1.67（当前）**：**阻断开关**——16 项阻断可在 ItemSmartInput.config.js 的 locks 段关闭，关闭后降级为黄色提示；看板支持 window.BLOCK_CONFIG 覆盖\n> - v1.66：**校验规则整合**——括号提示真正生效并与「规范写法」去重、乘号去重、名称补全角检查（阻断）、提示分组规则 13→15 条修正 10 处错配
 > - v1.65：**order 级查重**——识别「参数相同、书写顺序不同」的重复规格（`IC65N 2P/C10A` ↔ `IC65N C10A/2P`）；看板侧阻断并需勾选确认，插件侧只提示
 > - v1.64：**国标命名范式库**上线——按小类给出国标规定的名称定义、规格结构、字段含义与示例，录入时信息区显示「标准写法」，只提示不阻断
 > - v1.63：提示**按分组整合**（名称/规格/查重分组标题只出现一次，本区标签不再重复）；「规范写法」**取消长度截断**（长规格也必须完整显示，否则型号不全）；tip 图标改为 `·` 降噪
@@ -786,6 +786,78 @@ IC65N 2P/C16A  →  IC65N|2P|C16    ← 电流不同，不命中
 > 归一化见 `src/config/dedup-rules.json`：小写、全角转半角、去空格、分隔符统一为 `/`——所以 `ITR326A` 与 `iTR326A` 视为相同。
 
 **前端兜底（v1.52）**：3100 未升级时响应里没有 `spec` 级，插件会用 `similar-models` 的 `similarity >= 0.999` 自行补一条 `spec` 记录，同样红字 + 禁用按钮。两条路任一命中即阻断，互不依赖。
+
+### 5.4.1 阻断开关（`blocks`）
+
+有些校验默认会**拦截保存**（error）。遇到「这条确实该放过」的情况，不必改代码，改配置即可。
+
+**配置位置**
+
+| 端 | 位置 |
+|---|---|
+| 插件 | `ItemSmartInput.config.js` 的 `blocks` 段 |
+| 看板 | 页面里加 `<script>window.BLOCK_CONFIG = { ... }</script>` |
+
+**16 个开关**
+
+| 组 | 开关 | 控制的提示 |
+|---|---|---|
+| 名称 | `nameEmpty` | 物料名称不能为空 |
+| | `nameLen` | 名称过短 / 过长 |
+| | `nameForbidChars` | 名称含规格符号（`*` `×` 等） |
+| | `nameForbidPattern` | 名称含项目号 / 图号 / 产号 |
+| | `nameEqualsSpec` | 名称与规格完全相同 |
+| | `nameFullWidth` | 名称含全角字母/数字 |
+| | `subMismatch` | 名称与所选小类不符 |
+| 规格 | `specEmpty` | 型号规格不能为空 |
+| | `specLen` | 规格过短 / 过长 |
+| | `specFullWidth` | 规格含全角字符 |
+| | `specAlnum` | 规格必须含字母或数字 |
+| | `specForbidPattern` | 规格含项目号 / 产号 |
+| | `specPlaceholder` | 规格写「待定 / 见附件 / 同上」 |
+| 查重 | `dupExact` | 归一化签名完全相同 |
+| | `dupSep` | 仅分隔符/空格不同 |
+| | `dupOrder` | 参数相同、仅书写顺序不同 |
+
+**语义**
+
+```
+blocks.xxx = true   → 拦截保存（默认）
+blocks.xxx = false  → 降级为黄色提示，允许保存
+```
+
+降级后的提示会带后缀 `（已关闭阻断）`；接口返回 `downgraded: N` 表示本次降级了几条。
+
+**与 `hints.mute` 的分工**
+
+| 配置 | 控制 |
+|---|---|
+| `blocks` | **是否拦截保存** |
+| `hints.mute` | **是否显示** |
+
+想「不拦截、也不提示」→ 两个都关。
+
+**示例**
+
+```js
+// 插件：允许全角名称、不再拦 order 级重复
+blocks: { nameFullWidth: false, dupOrder: false }
+```
+
+```html
+<!-- 看板 -->
+<script>window.BLOCK_CONFIG = { dupOrder: false }</script>
+```
+
+**接口**
+
+| 端口 | 接口 | blocks 传入方式 |
+|---|---|---|
+| 3100 | `POST /api/plm/check` | body 的 `blocks`（对象或 JSON 字符串） |
+| 3130 | `POST /api/new-material/validate` | body 的 `blocks`（JSON 字符串） |
+| 3130 | `GET /api/new-material/validate?blocks=<urlencoded json>` | 查询参数（兼容） |
+
+**建议**：不要一上来就关。`nameEmpty` / `specEmpty` / `nameEqualsSpec` / `dupExact` / `dupSep` 关掉会产生脏数据，只在确实被卡住时临时关某一项。
 
 ### 5.5 数据来源边界与待办（重要）
 

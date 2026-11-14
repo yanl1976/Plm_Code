@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.66';
+  var PLUGIN_VERSION = '1.67';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -146,6 +146,15 @@
       ],
       mute: [],
       mode: 'grouped'
+    },
+
+    // 阻断开关：true = 拦截保存（默认）；false = 降级为提示，允许保存
+    blocks: {
+      nameEmpty: true, nameLen: true, nameForbidChars: true, nameForbidPattern: true,
+      nameEqualsSpec: true, nameFullWidth: true, subMismatch: true,
+      specEmpty: true, specLen: true, specFullWidth: true, specAlnum: true,
+      specForbidPattern: true, specPlaceholder: true,
+      dupExact: true, dupSep: true, dupOrder: true
     }
   };
 
@@ -593,6 +602,11 @@
   function apiAsync(path, data, cb) {
     if (!CFG.enabled || !window.$ || !$.ajax) { if (cb) cb(null); return; }
     try {
+      // 校验请求统一带上阻断开关（配置集中在 ItemSmartInput.config.js 的 blocks 段）
+      // 用 JSON 字符串传：jQuery 默认发 x-www-form-urlencoded，嵌套对象会被拍平
+      if (path && path.indexOf('/api/plm/check') >= 0 && data && typeof data === 'object' && !data.blocks) {
+        data.blocks = JSON.stringify(CFG.blocks || {});
+      }
       $.ajax({
         url: apiUrl(path), type: 'POST', data: data, dataType: 'json',
         async: true, timeout: CFG.timeout,

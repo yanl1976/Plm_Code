@@ -567,6 +567,64 @@ HoteamUI.DataService.Call('Hoteam.InforCenter.ERPService.GetStockSearchData', {
 > 页签配置的 `PagePara` 只有 `{"ItemName":"StockSearchManagement"}`，ObjectID 是 `TabsCtrl_GetUrlPara` 从父页面参数 `para.ObjectID = para.SelectID` 整体继承的（见 `Platform/Js/Common/TabsCtrl.js` L68、`MenuCtrl.js` L724）。
 > `SearchStockData` 等批量方法未发布（404），当前只能**按单个对象**查询。
 
+### 4.9 数据源开关（`datasource.json`）
+
+控制 ERP / PLM 两套数据源的启用状态，**默认已全面切换 PLM**。
+
+**位置**：`src/config/datasource.json`（按 mtime 热更新，改完即时生效，**不用重启**）
+
+```json
+{
+  "erp": {
+    "enabled": false,
+    "fallback": { "inventory": "empty", "unit": "id", "stock": "id",
+                  "project": "skip", "onlineDedup": "skip", "fingerprint": "plm" }
+  },
+  "plm": {
+    "enabled": true,
+    "snapshot": "data/materials-merged.ndjson",
+    "fallbackSnapshot": "data/materials-plm.ndjson"
+  }
+}
+```
+
+**`erp.enabled=false` 时各功能的行为**
+
+| 功能 | 位置 | 降级方式 |
+|---|---|---|
+| 查重索引 | `plm-index.js` | 只读 PLM 合并快照，ERP 快照仅作文件回退 |
+| 快照合并补齐 | `plm-snapshot.js` | 不做 ERP 补齐，只把 PLM 数据转成索引格式 |
+| 库存查询（4 处） | `server.js` | 返回 `qty=null`，界面显示「—」 |
+| 单位 / 仓库名称 | `server.js` | 显示原 ID 数值 |
+| 项目号占用 | `server.js` | 留空，不查业务单据 |
+| 物料名称缓存 | `server.js` | 跳过（名称由 PLM 快照提供） |
+| 组织列表 `/api/orgs` | `server.js` | 返回空数组 |
+| 在线兜底查重 | `snapshot.js` | 直接返回空（本地索引已覆盖全部） |
+| 快照指纹 | `snapshot.js` | 不连库，改用 PLM 快照 mtime |
+| ERP 全量导出 | `extract.js` | 抛错并提示如何临时打开 |
+
+**应急回退到 ERP**
+
+把 `erp.enabled` 改回 `true` 即可，无需重启。适用于：
+- PLM 快照未生成、需要临时恢复查重
+- 需要重新导出一份 ERP 存量作为合并基线
+
+**状态查询**
+
+| 端口 | 接口 | 返回 |
+|---|---|---|
+| 3100 | `GET /api/plm/health` | 含 `datasource: { erp, plm, snapshot, fallback }` |
+| 3130 | `GET /api/datasource` | 同上 |
+
+**实测（2026-11-14）**
+
+```
+3100 health  → ready=true count=23036 源=materials-merged.ndjson  erp=false plm=true
+3130 snapshot → stale=false 文件=materials-merged.ndjson 条数=23059 年龄=0天
+3130 /api/orgs → 0 条（ERP 已关闭）
+查重         → pass=false dupLevel=order（正常拦截）
+```
+
 ### 5.0 环境与数据源约束（硬性，不得绕过）
 
 | 项 | 规定 |

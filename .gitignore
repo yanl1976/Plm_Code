@@ -34,3 +34,6 @@ doc/**/*.xls
 *.rar
 *.zip
 *.7z
+
+# 标准查新台账：运行时数据（每次核查都会改 checkedAt/lastRunAt），多机部署会冲突
+src/config/std-watch.json

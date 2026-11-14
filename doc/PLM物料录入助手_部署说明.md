@@ -766,7 +766,7 @@ HoteamUI.DataService.Call('Hoteam.InforCenter.ERPService.GetStockSearchData', {
 | 数据源 | 国家标准全文公开系统 `openstd.samr.gov.cn`（公开可访问，无需登录） |
 | 核查对象 | 从 `naming-guide.json` 的 `source` 字段自动提取（当前 **136 个**标准号） |
 | 判定规则 | 库里引用的年份 < 平台查到的现行年份 → 标记「过期」 |
-| 台账 | `src/config/std-watch.json`（记录最新版本、状态、实施日期、上次核查时间） |
+| 台账 | `src/config/std-watch.json`（记录最新版本、状态、实施日期、上次核查时间）<br>⚠️ **该文件是运行时数据，不纳入版本控制**（见下方说明） |
 | 周期 | 每月 / 每季度 / 每半年（默认季度） |
 | 自动执行 | 开启后，3130 每小时自检一次，到期就后台跑（`setInterval`，`unref` 不阻塞退出） |
 | 手动执行 | 「立即核查」（全量，2~5 分钟）/ 「查待核查」（只查到期或上次失败的） |
@@ -799,6 +799,37 @@ HoteamUI.DataService.Call('Hoteam.InforCenter.ERPService.GetStockSearchData', {
 | GET | `/api/std-watch` | 台账 + 待核查清单 + 配置 |
 | POST | `/api/std-watch/run` | 立即核查（body：`{force, codes[], delayMs}`） |
 | PUT | `/api/std-watch/config` | 改周期 / 自动开关 |
+
+**台账文件不纳入版本控制（2026-11-14 起）**
+
+`src/config/std-watch.json` 每次核查都会写入 `checkedAt` / `lastRunAt`，属于**运行时数据**。此前纳入 git 跟踪，导致多机部署时 `git pull` 报冲突：
+
+```
+error: Your local changes to the following files would be overwritten by merge:
+        src/config/std-watch.json
+```
+
+处理：
+
+```bash
+# 已加入 .gitignore，并从版本库移除（--cached 只移出索引，本地文件保留）
+git rm --cached src/config/std-watch.json
+```
+
+**新机器首次部署**：
+
+1. 文件不存在时 `loadWatch()` 自动返回空台账（`standards: {}`），不会报错
+2. `isDue()` 对空台账返回 `true`，**自动调度会立即触发首次全量核查**（约 4~5 分钟）
+3. 也可手动点「立即核查」
+
+**遇到冲突时**（本地台账已被核查更新）：
+
+```bash
+git checkout -- src/config/std-watch.json   # 丢弃本地，用远端版本
+git pull
+```
+
+> 不要用 `git stash`，恢复时仍会冲突。
 
 **双源交叉验证（v1.68 起）**
 

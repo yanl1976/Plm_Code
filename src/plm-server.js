@@ -453,6 +453,74 @@ function countFullWidth(v) {
  * 厂家表里型号常只是基础代号（如 3WT11N04），极数/电流/脱扣/分断都在别的列，
  * 只回填型号会丢掉这些信息。
  */
+/**
+ * 按命名范式的 specPattern 重新拼装规格（国标顺序 + 乘号统一）
+ *
+ * 背景：选型库的「型号」列是厂家样本原文（如「螺栓 GB/T 5782 M6×12-8.8-Zn·D」），
+ * 乘号用 ×、表面处理用间隔号，与 3100 的范式规则（乘号 *、Zn.D）不一致。
+ * 直接把原文回填会造成同一物料的两种写法，所以回填前必须按范式整合。
+ *
+ * @param {string} sub 小类编码
+ * @param {object} row 选型行（列名 → 值）
+ * @param {Array} cols 列定义
+ * @returns {string|null} 拼装成功返回规格；缺关键列或结果不合法时返回 null（调用方退回 suggestSpec）
+ */
+function composeSpecByGuide(sub, row, cols) {
+  const g = namingGuideOf(sub)
+  const pattern = String((g && g.specPattern) || '').trim()
+  if (!pattern || pattern.indexOf('{') < 0) return null
+
+  const cell = {}
+  for (const c of cols || []) {
+    const k = String((c && c.key) || '').trim()
+    if (!k) continue
+    const v = row[k]
+    cell[k] = String(v == null ? '' : v).trim()
+  }
+  const modelTxt = cell['型号'] || cell['规格型号'] || ''
+
+  // 字段取值：同名列优先 → 常见别名 → 从型号首词推导（产品名称）
+  const pick = (field) => {
+    if (cell[field]) return cell[field]
+    const alias = {
+      '产品名称': ['产品名称', '品名'],
+      '螺纹规格': ['螺纹规格', '规格', '螺纹'],
+      '公称长度': ['公称长度', '长度'],
+      '性能等级': ['性能等级', '等级'],
+      '标准号': ['标准号', '国标号', '执行标准'],
+      '表面处理': ['表面处理', '镀层', '镀锌'],
+    }[field] || []
+    for (const a of alias) if (cell[a]) return cell[a]
+    if (field === '产品名称') return modelTxt.split(/\s+/)[0] || ''
+    return ''
+  }
+
+  // 值规整：间隔号 → 点；表面处理去掉中文前缀（「白锌 Zn·D」→「Zn.D」）；乘号统一
+  const tidy = (field, v) => {
+    let s = String(v || '').replace(/·/g, '.').replace(/\s+/g, ' ').trim()
+    if (field === '表面处理') {
+      const m = s.match(/(Zn\.[A-Za-z]|Dacromet|Geomet|A2-\d0|A4-\d0)/i)
+      if (m) s = m[1]
+    }
+    if (field === '公称长度' || field === '螺纹规格') s = s.replace(/\s*[×xX]\s*/g, '*')
+    return s
+  }
+
+  let miss = false
+  const out = pattern.replace(/\{([^}]+)\}/g, (m0, f) => {
+    const key = String(f).trim()
+    const v = tidy(key, pick(key))
+    if (!v) { miss = true; return '' }
+    return v
+  })
+  if (miss) return null
+
+  const fixed = out.replace(/\s{2,}/g, ' ').trim()
+  // 基本合法性：不以分隔符结尾、不出现连续分隔符
+  if (!fixed || /-\s*$|--/.test(fixed)) return null
+  return fixed
+}
+
 function buildRowSpec(row, cols, modelCol) {
   const base = String((row[modelCol.key] == null ? '' : row[modelCol.key])).trim()
   const parts = []
@@ -562,13 +630,22 @@ function handleSelect(body) {
       if (!hit) continue
       matched++
       if (items.length >= limit * 3) continue       // 只限制返回条数，不中断统计
-      const model = modelCol
+      const rawModel = modelCol
         ? String(row[modelCol.key] == null ? '' : row[modelCol.key])
         : cols.map((c) => String(row[c.key] == null ? '' : row[c.key])).filter(Boolean).join(' ')
+
+      // 回填前按国标范式整合：优先 specPattern 拼装（顺序正确、乘号统一），
+      // 拼不出来才退回 suggestSpec 做机械规范化（至少把 × 修成 *）
+      const seriesSub = String(s.sub || sub || '').slice(0, 6)
+      const guided = composeSpecByGuide(seriesSub, row, cols)
+      const model = guided || suggestSpec(rawModel)
+
       items.push({
         series: s.id, brand: s.brand || '', name: s.name || '',
         model,                                   // 纯型号，表格首列显示
-        spec: modelCol ? buildRowSpec(row, cols, modelCol) : model,   // 完整规格（含附件）
+        // 完整规格：同 model（范式拼装已包含全部必需参数），不再追加附件等冗余列
+        spec: model,
+        guided: !!guided,                        // 是否按范式拼装（前端可标注）
         cells: row,
         poles: row['极数'] || '', current: row['额定电流'] || '',
         curve: row['脱扣曲线'] || '', breaking: row['分断能力'] || null,

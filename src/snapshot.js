@@ -13,6 +13,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { executeQuery } from './db.js'
 import { prefixSqlCondition } from './settings.js'
+import { erpEnabled, plmSnapshotFile } from './datasource.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const DATA_DIR = path.join(ROOT, 'data')
@@ -26,23 +27,36 @@ const SUB_TTL = 5 * 60 * 1000 // 单小类 ERP 结果缓存 5 分钟
 
 // ---- 本地快照信息（不连库） ----
 export function localSnapshot() {
-  const out = { fileExists: false, fileMtime: null, ageDays: null, extractedAt: null, total: null, erp: null }
+  const out = { fileExists: false, fileMtime: null, ageDays: null, extractedAt: null, total: null, erp: null, file: null }
+  // ERP 关闭后，快照年龄按 PLM 合并快照算；ERP 开启时仍看 materials.ndjson
+  const target = erpEnabled() ? NDJSON : plmSnapshotFile()
+  out.file = target
   try {
-    if (fs.existsSync(NDJSON)) {
-      const st = fs.statSync(NDJSON)
+    if (fs.existsSync(target)) {
+      const st = fs.statSync(target)
       out.fileExists = true
       out.fileMtime = new Date(st.mtimeMs).toISOString()
       out.ageDays = +((Date.now() - st.mtimeMs) / 86400000).toFixed(1)
+      // PLM 快照没有 snapshot-meta，按行数统计
+      if (!erpEnabled()) {
+        let n = 0
+        const txt = fs.readFileSync(target, 'utf8')
+        for (const line of txt.split('\n')) if (line.trim()) n++
+        out.total = n
+        out.extractedAt = out.fileMtime
+      }
     }
   } catch (e) { /* 忽略 */ }
-  try {
-    if (fs.existsSync(META)) {
-      const m = JSON.parse(fs.readFileSync(META, 'utf8'))
-      out.extractedAt = m.extractedAt || null
-      out.total = m.total != null ? m.total : null
-      out.erp = m.erp || null
-    }
-  } catch (e) { /* 元数据损坏则按无指纹处理 */ }
+  if (erpEnabled()) {
+    try {
+      if (fs.existsSync(META)) {
+        const m = JSON.parse(fs.readFileSync(META, 'utf8'))
+        out.extractedAt = m.extractedAt || null
+        out.total = m.total != null ? m.total : null
+        out.erp = m.erp || null
+      }
+    } catch (e) { /* 元数据损坏则按无指纹处理 */ }
+  }
   return out
 }
 
@@ -57,7 +71,9 @@ export function writeSnapshotMeta(meta) {
 }
 
 // ---- ERP 当前指纹（连库，轻量聚合） ----
+// ERP 关闭后不查库：指纹改由本地快照文件的 mtime/行数推断（见 snapshotStatus）
 export async function erpFingerprint(timeout = PING_TIMEOUT) {
+  if (!erpEnabled()) return null
   const prefixSql = prefixSqlCondition()
   const rows = await executeQuery(
     `SELECT COUNT_BIG(*) AS n, MAX(m.FMODIFYDATE) AS maxModify, MAX(m.FMATERIALID) AS maxId
@@ -93,7 +109,11 @@ export async function snapshotStatus({ force = false } = {}) {
   }
 
   const reasons = []
-  if (!local.fileExists) reasons.push('尚未提取物料数据（data/materials.ndjson 不存在）')
+  if (!local.fileExists) {
+    reasons.push(erpEnabled()
+      ? '尚未提取物料数据（data/materials.ndjson 不存在）'
+      : '尚未生成 PLM 快照（请在 PLM 页面执行 __plmSync.start()）')
+  }
   if (local.ageDays != null && local.ageDays > STALE_DAYS) reasons.push(`本地快照已 ${local.ageDays} 天未更新`)
   if (erp && local.erp) {
     if (local.erp.count != null && erp.count !== local.erp.count) {
@@ -126,6 +146,8 @@ export function invalidateSnapshotStatus() { statusCache = { at: 0, value: null 
 const subCache = new Map()
 
 export async function erpSubDocs(sub, timeout = 10000) {
+  // ERP 关闭后不做在线兜底：合并快照已覆盖全部物料，本地索引即为准
+  if (!erpEnabled()) return []
   const key = String(sub || '').trim()
   if (!/^[0-9A-Za-z]{4,8}$/.test(key)) return [] // 只接受合法小类编码，避免 LIKE 被注入/扫全表
   const hit = subCache.get(key)

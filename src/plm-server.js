@@ -27,6 +27,7 @@ import { loadIndex, indexStatus, queryDuplicates, suggestNames, suggestSpecs, ca
 import { checkMaterial, suggestSpec } from './material-rules.js'
 import { cableSpecHints } from './cable-spec.js'
 import { applyBlocks, isHardDup, normalizeBlocks } from './block-gate.js'
+import { datasourceSummary } from './datasource.js'
 import {
   getPlan as plmSnapshotPlan,
   uploadBatch as plmSnapshotUpload,
@@ -912,6 +913,8 @@ const server = http.createServer(async (req, res) => {
   try {
     if (p === '/api/plm/health') {
       const st = indexStatus()
+      // 数据源开关一并返回，便于确认是否已全切 PLM
+      try { st.datasource = datasourceSummary() } catch (e) { /* 忽略 */ }
       return send(res, 200, {
         ok: true,
         version: VERSION,

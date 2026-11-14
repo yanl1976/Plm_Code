@@ -21,6 +21,7 @@ import { getCategory, chooseAttrs, chooseTokens } from './classify.js'
 import { buildSignature, looseSignature, normalize, tokenize, jaccard, modelOf } from './spec.js'
 import { extractParams } from './struct-spec.js'
 import { findAllSuggestions } from './name-synonyms.js'
+import { plmSnapshotFile, erpEnabled } from './datasource.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const ERP_NDJSON = path.join(ROOT, 'data', 'materials.ndjson')
@@ -28,14 +29,21 @@ const MERGED_NDJSON = path.join(ROOT, 'data', 'materials-merged.ndjson')
 
 /**
  * 当前生效的数据源（每次加载时求值，合并快照生成后无需重启）
- *   优先 materials-merged.ndjson（PLM 为主 + ERP 补齐，每条带 SOURCE）
- *   回退 materials.ndjson（纯 ERP，未做 PLM 合并时）
+ *   1. PLM 合并快照（字段已对齐 ERP 格式）—— 默认
+ *   2. 合并快照不存在且允许 ERP → 回退 materials.ndjson
+ *   3. 都不行 → 返回 PLM 快照路径（加载时报错提示，不会静默用错格式）
  */
 function activeSource() {
+  const plmFile = plmSnapshotFile()
   try {
-    if (fs.statSync(MERGED_NDJSON).size > 0) return MERGED_NDJSON
-  } catch (e) { /* 合并快照不存在 */ }
-  return ERP_NDJSON
+    if (path.basename(plmFile) === 'materials-merged.ndjson' && fs.statSync(plmFile).size > 0) return plmFile
+  } catch (e) { /* 不存在 */ }
+  if (erpEnabled()) {
+    try {
+      if (fs.statSync(ERP_NDJSON).size > 0) return ERP_NDJSON
+    } catch (e) { /* 不存在 */ }
+  }
+  return plmFile
 }
 const FUZZY_THRESHOLD = 0.8
 

@@ -1,0 +1,23 @@
+{
+  "_note": "数据源开关（改完即时生效，无需重启）。erp.enabled=false 时，3100/3130 所有 ERP 数据库查询跳过或降级，系统全面使用 PLM 数据。",
+  "erp": {
+    "enabled": false,
+    "_enabled": "true = 允许直连 ERP 数据库；false = 全部跳过/降级（默认，已全切 PLM）",
+    "fallback": {
+      "_note": "ERP 关闭后，各功能的降级方式",
+      "inventory": "empty",
+      "unit": "id",
+      "stock": "id",
+      "project": "skip",
+      "onlineDedup": "skip",
+      "fingerprint": "plm"
+    }
+  },
+  "plm": {
+    "enabled": true,
+    "_enabled": "true = 使用 PLM 快照；false = 回退到 ERP 快照（应急用）",
+    "snapshot": "data/materials-merged.ndjson",
+    "fallbackSnapshot": "data/materials-plm.ndjson",
+    "_snapshot": "优先用合并快照（字段对齐 ERP 格式）；没有则用 PLM 原始快照"
+  }
+}

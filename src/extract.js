@@ -15,6 +15,7 @@ import { fileURLToPath, pathToFileURL } from 'url'
 import { executeQuery, getPoolConnection, sql } from './db.js'
 import { loadSettings, prefixSqlCondition, resolveOrgId } from './settings.js'
 import { erpFingerprint, writeSnapshotMeta } from './snapshot.js'
+import { erpEnabled } from './datasource.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const DATA_DIR = path.join(ROOT, 'data')
@@ -43,6 +44,11 @@ function emptyToNull(v) {
 }
 
 export async function runExtract({ reset = true, limit = 0 } = {}) {
+  // ERP 关闭后不再从 ERP 全量导出（数据源已切 PLM，由插件同步生成快照）
+  if (!erpEnabled()) {
+    throw new Error('ERP 数据源已关闭（src/config/datasource.json 的 erp.enabled=false）。'
+      + '如需导出 ERP 存量作为历史基线，请先临时把该开关改为 true。')
+  }
   fs.mkdirSync(DATA_DIR, { recursive: true })
   if (reset) { for (const f of [NDJSON, CSV, STATS]) if (fs.existsSync(f)) fs.unlinkSync(f) }
   const prefixFilter = loadSettings().materialPrefix

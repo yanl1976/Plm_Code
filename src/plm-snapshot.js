@@ -15,6 +15,7 @@
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { erpEnabled } from './datasource.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const DATA = path.join(ROOT, 'data')
@@ -288,7 +289,9 @@ const normStr = (s) => String(s == null ? '' : s).replace(/\s+/g, '').toUpperCas
 export function mergeWithErp(opt) {
   const o = opt || {}
   const plmRows = readSnapshot()
-  const erpRows = readNdjson(ERP_NDJSON)
+  // ERP 关闭时不做补齐：只把 PLM 数据转成 ERP 格式，生成合并快照供索引使用
+  const useErp = o.useErp !== false && erpEnabled()
+  const erpRows = useErp ? readNdjson(ERP_NDJSON) : []
   if (!plmRows.length && !erpRows.length) {
     return { ok: false, error: 'PLM 快照与 ERP 快照都不存在' }
   }

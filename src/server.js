@@ -25,6 +25,7 @@ import { summary as stdWatchSummary, runCheck as stdWatchRun, loadWatch as stdWa
 import { normalize, tokenize, jaccard, looseSignature, modelOf } from './spec.js'
 import { orderSignature } from './plm-index.js'
 import { applyBlocks, normalizeBlocks } from './block-gate.js'
+import { erpEnabled, datasourceSummary } from './datasource.js'
 import { checkMaterial, fixSpecFormat, rules as materialRules, resolveNameFix, detectNameModel } from './material-rules.js'
 import * as nameSyn from './name-synonyms.js'
 import { snapshotStatus, invalidateSnapshotStatus, erpSubDocs, invalidateErpSub } from './snapshot.js'
@@ -405,6 +406,8 @@ function subInfo(sub) {
 
 // 批量查询若干物料ID的即时库存汇总（数量/可用/锁库），用于规格联想与查重列表带出库存
 async function inventoryMapByMaterialIds(ids) {
+  // ERP 关闭时库存一律返回空（界面显示「—」），不查库
+  if (!erpEnabled()) return {}
   const uniq = [...new Set((ids || []).map(Number).filter((n) => Number.isInteger(n)))]
   if (!uniq.length) return {}
   const params = {}
@@ -427,6 +430,8 @@ async function inventoryMapByMaterialIds(ids) {
 
 // 按物料ID集合汇总即时库存（数量取 FBASEQTY；可用量动态计算 = 数量 - 锁库量）
 async function summarizeInventory(ids, code) {
+  // ERP 关闭时返回空库存（qty=null 表示「未知」，界面显示「—」而不是 0）
+  if (!erpEnabled()) return { qty: null, avbqty: null, lockqty: null, unitName: '', details: [], byStock: new Map() }
   const params = {}
   const ph = ids.map((id, i) => { params['id' + i] = Number(id); return '@id' + i }).join(',')
   const rows = await executeQuery(
@@ -603,6 +608,11 @@ async function refInventory(sub, spec, excludeCode) {
 
 // 补缓存：即时库存数量/锁库量（T_STK_INVENTORY 聚合）
 async function fillInvCache(ids, timeout = INV_QUERY_TIMEOUT) {
+  // ERP 关闭时：库存缓存填 null（未知），不查库
+  if (!erpEnabled()) {
+    for (const id of ids) invCachePut(id, 'inv', { qty: null, lockqty: null, projectNo: '' })
+    return
+  }
   const params = {}
   const ph = ids.map((id, i) => { params['id' + i] = Number(id); return '@id' + i }).join(',')
   // 项目号优先取库存行上的 FMTONO（金蝶里这是「跟踪号」，本账套实际存放项目号）；
@@ -664,6 +674,11 @@ async function fillInvCache(ids, timeout = INV_QUERY_TIMEOUT) {
 //   需 JOIN PJQF_T_XMDA 取 FNUMBER），取该物料最近一次发生的那笔。
 // 按 FNUMBER 归集，避免同一编码多个 FMATERIALID 副本漏数据。
 async function fillProjectCache(fns, timeout = INV_QUERY_TIMEOUT) {
+  // ERP 关闭时：项目号留空，不查业务单据
+  if (!erpEnabled()) {
+    for (const fn of [...new Set(fns.map(String))]) projCachePut(fn, { projectNo: '', lastDate: '' })
+    return
+  }
   const list = [...new Set(fns.map(String))]
   if (!list.length) return
   const params = {}
@@ -699,6 +714,8 @@ async function fillProjectCache(fns, timeout = INV_QUERY_TIMEOUT) {
 
 // 补缓存：物料名称（多语言表）
 async function fillNameCache(ids) {
+  // ERP 关闭时名称改由 PLM 快照提供，不再查多语言表
+  if (!erpEnabled()) return
   const params = {}
   const ph = ids.map((id, i) => { params['id' + i] = Number(id); return '@id' + i }).join(',')
   const rows = await executeQuery(
@@ -1008,7 +1025,14 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { ok: true, applied: n })
     }
 
+    if (p === '/api/datasource') {
+      // 数据源开关状态（看板可据此显示「已全切 PLM」提示）
+      return sendJson(res, 200, datasourceSummary())
+    }
+
     if (p === '/api/orgs') {
+      // ERP 关闭时不给组织列表（PLM 按小类管理，不依赖组织过滤）
+      if (!erpEnabled()) return sendJson(res, 200, [])
       const list = await executeQuery(`
         SELECT o.FORGID AS id, o.FNUMBER AS number, ol.FNAME AS name, COUNT(m.FMATERIALID) AS materialCount
         FROM T_ORG_ORGANIZATIONS o

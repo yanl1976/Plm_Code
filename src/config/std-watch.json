@@ -2,12 +2,12 @@
   "meta": {
     "period": "quarter",
     "autoCheck": true,
-    "lastRunAt": "2026-11-14T04:33:07.023Z",
+    "lastRunAt": "2026-11-14T08:49:40.163Z",
     "lastRunResult": {
-      "checked": 1,
+      "checked": 136,
       "outdated": 0,
       "failed": 0,
-      "at": "2026-11-14T04:33:07.023Z"
+      "at": "2026-11-14T08:49:40.163Z"
     }
   },
   "standards": {
@@ -18,7 +18,7 @@
         "110402"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:26:48.417Z",
+      "checkedAt": "2026-11-14T08:45:26.158Z",
       "error": "",
       "latest": "2005",
       "status": "废止",
@@ -32,7 +32,16 @@
           "implDate": "2006-03-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "single",
+      "sources": {
+        "samr": null,
+        "openstd": {
+          "version": "2005",
+          "state": "废止",
+          "implDate": "2006-03-01"
+        }
+      }
     },
     "GB 19147": {
       "base": "GB 19147",
@@ -41,7 +50,7 @@
         "110408"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:26:50.199Z",
+      "checkedAt": "2026-11-14T08:45:28.103Z",
       "error": "",
       "latest": "2016",
       "status": "现行",
@@ -51,31 +60,39 @@
       "history": [
         {
           "code": "GB 19147-2016",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2016-12-23"
-        },
-        {
-          "code": "GB 19147-2016",
-          "status": "现行",
-          "implDate": "2016-12-23"
-        },
-        {
-          "code": "GB 19147-2013",
-          "status": "废止",
-          "implDate": "2013-06-08"
         },
         {
           "code": "GB 19147 -2013",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2013-02-07"
         },
         {
+          "code": "GB 19147-2013",
+          "state": "废止",
+          "implDate": "2013-06-08"
+        },
+        {
           "code": "GB 19147-2009",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2010-01-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2016",
+          "state": "现行",
+          "implDate": "2016-12-23"
+        },
+        "openstd": {
+          "version": "2016",
+          "state": "现行",
+          "implDate": "2016-12-23"
+        }
+      }
     },
     "GB 3836.1": {
       "base": "GB 3836.1",
@@ -86,7 +103,7 @@
         "101902"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:26:51.964Z",
+      "checkedAt": "2026-11-14T08:45:29.904Z",
       "error": "",
       "latest": "2010",
       "status": "废止",
@@ -96,11 +113,24 @@
       "history": [
         {
           "code": "GB 3836.1-2010",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2011-08-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2010",
+          "state": "废止",
+          "implDate": "2011-08-01"
+        },
+        "openstd": {
+          "version": "2010",
+          "state": "废止",
+          "implDate": "2011-08-01"
+        }
+      }
     },
     "GB 4943.1": {
       "base": "GB 4943.1",
@@ -122,7 +152,7 @@
         "120403"
       ],
       "refCount": 12,
-      "checkedAt": "2026-11-14T04:26:53.770Z",
+      "checkedAt": "2026-11-14T08:45:31.564Z",
       "error": "",
       "latest": "2022",
       "status": "现行",
@@ -132,16 +162,29 @@
       "history": [
         {
           "code": "GB 4943.1-2022",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2023-08-01"
         },
         {
           "code": "GB 4943.1-2011",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2012-12-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2022",
+          "state": "现行",
+          "implDate": "2023-08-01"
+        },
+        "openstd": {
+          "version": "2022",
+          "state": "现行",
+          "implDate": "2023-08-01"
+        }
+      }
     },
     "GB 50348": {
       "base": "GB 50348",
@@ -151,10 +194,16 @@
         "120407"
       ],
       "refCount": 2,
-      "checkedAt": "2026-11-14T04:26:56.323Z",
+      "checkedAt": "2026-11-14T08:45:33.438Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB 7000.1": {
       "base": "GB 7000.1",
@@ -165,7 +214,7 @@
         "101807"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:26:58.164Z",
+      "checkedAt": "2026-11-14T08:45:35.164Z",
       "error": "",
       "latest": "2015",
       "status": "废止",
@@ -175,21 +224,34 @@
       "history": [
         {
           "code": "GB 7000.1-2015",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2017-01-01"
         },
         {
           "code": "GB 7000.1-2007",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2009-01-01"
         },
         {
           "code": "GB 7000.1-2002",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2003-08-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2015",
+          "state": "废止",
+          "implDate": "2017-01-01"
+        },
+        "openstd": {
+          "version": "2015",
+          "state": "废止",
+          "implDate": "2017-01-01"
+        }
+      }
     },
     "GB/T 10194": {
       "base": "GB/T 10194",
@@ -198,7 +260,7 @@
         "101304"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:26:59.935Z",
+      "checkedAt": "2026-11-14T08:45:37.081Z",
       "error": "",
       "latest": "1997",
       "status": "现行",
@@ -208,11 +270,24 @@
       "history": [
         {
           "code": "GB/T 10194-1997",
-          "status": "现行",
+          "state": "现行",
           "implDate": "1998-09-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "1997",
+          "state": "现行",
+          "implDate": "1998-09-01"
+        },
+        "openstd": {
+          "version": "1997",
+          "state": "现行",
+          "implDate": "1998-09-01"
+        }
+      }
     },
     "GB/T 1094.1": {
       "base": "GB/T 1094.1",
@@ -226,7 +301,7 @@
         "100704"
       ],
       "refCount": 4,
-      "checkedAt": "2026-11-14T04:27:02.124Z",
+      "checkedAt": "2026-11-14T08:45:38.994Z",
       "error": "",
       "latest": "2013",
       "status": "现行",
@@ -236,11 +311,24 @@
       "history": [
         {
           "code": "GB/T 1094.1-2013",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2014-12-14"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2013",
+          "state": "现行",
+          "implDate": "2014-12-14"
+        },
+        "openstd": {
+          "version": "2013",
+          "state": "现行",
+          "implDate": "2014-12-14"
+        }
+      }
     },
     "GB/T 1094.11": {
       "base": "GB/T 1094.11",
@@ -252,7 +340,7 @@
         "100702"
       ],
       "refCount": 2,
-      "checkedAt": "2026-11-14T04:27:04.271Z",
+      "checkedAt": "2026-11-14T08:45:40.943Z",
       "error": "",
       "latest": "2022",
       "status": "现行",
@@ -262,16 +350,29 @@
       "history": [
         {
           "code": "GB/T 1094.11-2022",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2022-10-01"
         },
         {
           "code": "GB/T 1094.11-2007",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2008-04-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2022",
+          "state": "现行",
+          "implDate": "2022-10-01"
+        },
+        "openstd": {
+          "version": "2022",
+          "state": "现行",
+          "implDate": "2022-10-01"
+        }
+      }
     },
     "GB/T 1094.6": {
       "base": "GB/T 1094.6",
@@ -283,7 +384,7 @@
         "100602"
       ],
       "refCount": 2,
-      "checkedAt": "2026-11-14T04:27:06.112Z",
+      "checkedAt": "2026-11-14T08:45:42.583Z",
       "error": "",
       "latest": "2011",
       "status": "现行",
@@ -293,11 +394,24 @@
       "history": [
         {
           "code": "GB/T 1094.6-2011",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2011-12-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2011",
+          "state": "现行",
+          "implDate": "2011-12-01"
+        },
+        "openstd": {
+          "version": "2011",
+          "state": "现行",
+          "implDate": "2011-12-01"
+        }
+      }
     },
     "GB/T 10963.1": {
       "base": "GB/T 10963.1",
@@ -308,7 +422,7 @@
         "100105"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:27:07.932Z",
+      "checkedAt": "2026-11-14T08:45:44.642Z",
       "error": "",
       "latest": "2020",
       "status": "现行",
@@ -318,16 +432,29 @@
       "history": [
         {
           "code": "GB/T 10963.1-2020",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2021-06-01"
         },
         {
           "code": "GB/T 10963.1-2005",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2006-08-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2020",
+          "state": "现行",
+          "implDate": "2021-06-01"
+        },
+        "openstd": {
+          "version": "2020",
+          "state": "现行",
+          "implDate": "2021-06-01"
+        }
+      }
     },
     "GB/T 11032": {
       "base": "GB/T 11032",
@@ -339,7 +466,7 @@
         "100404"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:27:09.744Z",
+      "checkedAt": "2026-11-14T08:45:46.614Z",
       "error": "",
       "latest": "2020",
       "status": "现行",
@@ -349,16 +476,29 @@
       "history": [
         {
           "code": "GB/T 11032-2020",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2021-07-01"
         },
         {
           "code": "GB/T 11032-2010",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2011-08-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2020",
+          "state": "现行",
+          "implDate": "2021-07-01"
+        },
+        "openstd": {
+          "version": "2020",
+          "state": "现行",
+          "implDate": "2021-07-01"
+        }
+      }
     },
     "GB/T 11614": {
       "base": "GB/T 11614",
@@ -367,10 +507,16 @@
         "110402"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:27:11.764Z",
+      "checkedAt": "2026-11-14T08:45:48.500Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB/T 117": {
       "base": "GB/T 117",
@@ -379,10 +525,30 @@
         "120108"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:27:13.733Z",
+      "checkedAt": "2026-11-14T08:45:50.656Z",
       "error": "",
-      "latest": "",
-      "status": "未查到"
+      "latest": "2000",
+      "status": "现行",
+      "confidence": "single",
+      "sources": {
+        "samr": {
+          "version": "2000",
+          "state": "现行",
+          "implDate": "2001-02-01"
+        },
+        "openstd": null
+      },
+      "name": "圆锥销",
+      "implDate": "2001-02-01",
+      "code": "GB/T 117-2000",
+      "history": [
+        {
+          "code": "GB/T 117-2000",
+          "state": "现行",
+          "implDate": "2001-02-01"
+        }
+      ],
+      "outdated": false
     },
     "GB/T 119.1": {
       "base": "GB/T 119.1",
@@ -391,7 +557,7 @@
         "120108"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:27:15.736Z",
+      "checkedAt": "2026-11-14T08:45:52.617Z",
       "error": "",
       "latest": "2000",
       "status": "现行",
@@ -401,11 +567,24 @@
       "history": [
         {
           "code": "GB/T 119.1-2000",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2001-02-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2000",
+          "state": "现行",
+          "implDate": "2001-02-01"
+        },
+        "openstd": {
+          "version": "2000",
+          "state": "现行",
+          "implDate": "2001-02-01"
+        }
+      }
     },
     "GB/T 11918.1": {
       "base": "GB/T 11918.1",
@@ -417,7 +596,7 @@
         "101605"
       ],
       "refCount": 2,
-      "checkedAt": "2026-11-14T04:27:17.523Z",
+      "checkedAt": "2026-11-14T08:45:54.532Z",
       "error": "",
       "latest": "2025",
       "status": "现行",
@@ -427,16 +606,29 @@
       "history": [
         {
           "code": "GB/T 11918.1-2025",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2026-05-01"
         },
         {
           "code": "GB/T 11918.1-2014",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2015-01-22"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2025",
+          "state": "现行",
+          "implDate": "2026-05-01"
+        },
+        "openstd": {
+          "version": "2025",
+          "state": "现行",
+          "implDate": "2026-05-01"
+        }
+      }
     },
     "GB/T 1226": {
       "base": "GB/T 1226",
@@ -448,7 +640,7 @@
         "100911"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:27:19.235Z",
+      "checkedAt": "2026-11-14T08:45:56.355Z",
       "error": "",
       "latest": "2017",
       "status": "现行",
@@ -458,16 +650,34 @@
       "history": [
         {
           "code": "GB/T 1226-2017",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2018-07-01"
         },
         {
           "code": "GB/T 1226-2010",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2010-12-01"
+        },
+        {
+          "code": "GB/T 1226-2001",
+          "state": "废止",
+          "implDate": "2002-03-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-07-01"
+        },
+        "openstd": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-07-01"
+        }
+      }
     },
     "GB/T 1236": {
       "base": "GB/T 1236",
@@ -476,7 +686,7 @@
         "101802"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:27:20.982Z",
+      "checkedAt": "2026-11-14T08:45:58.059Z",
       "error": "",
       "latest": "2017",
       "status": "现行",
@@ -486,11 +696,29 @@
       "history": [
         {
           "code": "GB/T 1236-2017",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2018-05-01"
+        },
+        {
+          "code": "GB/T 1236-2000",
+          "state": "废止",
+          "implDate": "2001-02-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-05-01"
+        },
+        "openstd": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-05-01"
+        }
+      }
     },
     "GB/T 1237": {
       "base": "GB/T 1237",
@@ -509,7 +737,7 @@
         "120111"
       ],
       "refCount": 9,
-      "checkedAt": "2026-11-14T04:27:22.951Z",
+      "checkedAt": "2026-11-14T08:45:59.894Z",
       "error": "",
       "latest": "2000",
       "status": "现行",
@@ -519,11 +747,24 @@
       "history": [
         {
           "code": "GB/T 1237-2000",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2001-02-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2000",
+          "state": "现行",
+          "implDate": "2001-02-01"
+        },
+        "openstd": {
+          "version": "2000",
+          "state": "现行",
+          "implDate": "2001-02-01"
+        }
+      }
     },
     "GB/T 12668": {
       "base": "GB/T 12668",
@@ -533,10 +774,16 @@
         "102006"
       ],
       "refCount": 2,
-      "checkedAt": "2026-11-14T04:27:24.671Z",
+      "checkedAt": "2026-11-14T08:46:01.743Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB/T 12668.2": {
       "base": "GB/T 12668.2",
@@ -547,7 +794,7 @@
         "101905"
       ],
       "refCount": 3,
-      "checkedAt": "2026-11-14T04:27:26.431Z",
+      "checkedAt": "2026-11-14T08:46:03.659Z",
       "error": "",
       "latest": "2002",
       "status": "现行",
@@ -557,16 +804,29 @@
       "history": [
         {
           "code": "GB/T 12668.2-2025",
-          "status": "即将实施",
+          "state": "即将实施",
           "implDate": "2027-01-01"
         },
         {
           "code": "GB/T 12668.2-2002",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2003-04-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2002",
+          "state": "现行",
+          "implDate": "2003-04-01"
+        },
+        "openstd": {
+          "version": "2002",
+          "state": "现行",
+          "implDate": "2003-04-01"
+        }
+      }
     },
     "GB/T 12706.1": {
       "base": "GB/T 12706.1",
@@ -577,26 +837,44 @@
         "110302"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:27:28.223Z",
+      "checkedAt": "2026-11-14T08:46:05.724Z",
       "error": "",
       "latest": "2020",
       "status": "现行",
-      "name": "额定电压1 kV(Um=1.2 kV)到35 kV(Um=40.5 kV)挤包绝缘电力电缆及附件 第1部分：额定电压1 kV(Um=1.2 kV)和3 kV(Um=3.6 kV)电缆",
+      "name": "额定电压1 kV（Um=1.2 kV）到35 kV（Um=40.5 kV）挤包绝缘电力电缆及附件 第1部分：额定电压1 kV（Um=1.2 kV）和3 kV（Um=3.6 kV）电缆",
       "implDate": "2020-10-01",
       "code": "GB/T 12706.1-2020",
       "history": [
         {
           "code": "GB/T 12706.1-2020",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2020-10-01"
         },
         {
           "code": "GB/T 12706.1-2008",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2009-11-01"
+        },
+        {
+          "code": "GB/T 12706.1-2002",
+          "state": "废止",
+          "implDate": "2003-04-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2020",
+          "state": "现行",
+          "implDate": "2020-10-01"
+        },
+        "openstd": {
+          "version": "2020",
+          "state": "现行",
+          "implDate": "2020-10-01"
+        }
+      }
     },
     "GB/T 1303": {
       "base": "GB/T 1303",
@@ -605,10 +883,16 @@
         "110403"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:27:30.098Z",
+      "checkedAt": "2026-11-14T08:46:07.528Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB/T 13539.1": {
       "base": "GB/T 13539.1",
@@ -621,7 +905,7 @@
         "100403"
       ],
       "refCount": 3,
-      "checkedAt": "2026-11-14T04:27:31.867Z",
+      "checkedAt": "2026-11-14T08:46:09.410Z",
       "error": "",
       "latest": "2015",
       "status": "现行",
@@ -631,11 +915,24 @@
       "history": [
         {
           "code": "GB/T 13539.1-2015",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2016-10-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2015",
+          "state": "现行",
+          "implDate": "2016-10-01"
+        },
+        "openstd": {
+          "version": "2015",
+          "state": "现行",
+          "implDate": "2016-10-01"
+        }
+      }
     },
     "GB/T 13818": {
       "base": "GB/T 13818",
@@ -644,7 +941,7 @@
         "110203"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:27:33.776Z",
+      "checkedAt": "2026-11-14T08:46:11.287Z",
       "error": "",
       "latest": "2024",
       "status": "现行",
@@ -654,21 +951,34 @@
       "history": [
         {
           "code": "GB/T 13818-2024",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2024-04-25"
         },
         {
           "code": "GB/T 13818-2009",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2009-12-01"
         },
         {
           "code": "GB/T 13818-1992",
-          "status": "废止",
+          "state": "废止",
           "implDate": "1993-10-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2024",
+          "state": "现行",
+          "implDate": "2024-04-25"
+        },
+        "openstd": {
+          "version": "2024",
+          "state": "现行",
+          "implDate": "2024-04-25"
+        }
+      }
     },
     "GB/T 13850": {
       "base": "GB/T 13850",
@@ -684,7 +994,7 @@
         "101205"
       ],
       "refCount": 5,
-      "checkedAt": "2026-11-14T04:27:35.572Z",
+      "checkedAt": "2026-11-14T08:46:13.151Z",
       "error": "",
       "latest": "2025",
       "status": "现行",
@@ -694,16 +1004,29 @@
       "history": [
         {
           "code": "GB/T 13850-2025",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2026-05-01"
         },
         {
           "code": "GB/T 13850-1998",
-          "status": "废止",
+          "state": "废止",
           "implDate": "1999-05-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2025",
+          "state": "现行",
+          "implDate": "2026-05-01"
+        },
+        "openstd": {
+          "version": "2025",
+          "state": "现行",
+          "implDate": "2026-05-01"
+        }
+      }
     },
     "GB/T 14048.1": {
       "base": "GB/T 14048.1",
@@ -715,7 +1038,7 @@
         "101603"
       ],
       "refCount": 2,
-      "checkedAt": "2026-11-14T04:27:37.960Z",
+      "checkedAt": "2026-11-14T08:46:14.999Z",
       "error": "",
       "latest": "2023",
       "status": "现行",
@@ -725,11 +1048,24 @@
       "history": [
         {
           "code": "GB/T 14048.1-2023",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2024-06-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2023",
+          "state": "现行",
+          "implDate": "2024-06-01"
+        },
+        "openstd": {
+          "version": "2023",
+          "state": "现行",
+          "implDate": "2024-06-01"
+        }
+      }
     },
     "GB/T 14048.2": {
       "base": "GB/T 14048.2",
@@ -743,7 +1079,7 @@
         "100104"
       ],
       "refCount": 4,
-      "checkedAt": "2026-11-14T04:33:07.023Z",
+      "checkedAt": "2026-11-14T08:46:16.843Z",
       "error": "",
       "latest": "2020",
       "status": "现行",
@@ -753,16 +1089,29 @@
       "history": [
         {
           "code": "GB/T 14048.2-2020",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2021-04-01"
         },
         {
           "code": "GB/T 14048.2-2008",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2009-06-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2020",
+          "state": "现行",
+          "implDate": "2021-04-01"
+        },
+        "openstd": {
+          "version": "2020",
+          "state": "现行",
+          "implDate": "2021-04-01"
+        }
+      }
     },
     "GB/T 14048.3": {
       "base": "GB/T 14048.3",
@@ -778,7 +1127,7 @@
         "100305"
       ],
       "refCount": 5,
-      "checkedAt": "2026-11-14T04:27:41.397Z",
+      "checkedAt": "2026-11-14T08:46:18.622Z",
       "error": "",
       "latest": "2025",
       "status": "现行",
@@ -788,21 +1137,34 @@
       "history": [
         {
           "code": "GB/T 14048.3-2025",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2026-05-01"
         },
         {
           "code": "GB/T 14048.3-2017",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2018-07-01"
         },
         {
           "code": "GB/T 14048.3-2008",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2009-06-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2025",
+          "state": "现行",
+          "implDate": "2026-05-01"
+        },
+        "openstd": {
+          "version": "2025",
+          "state": "现行",
+          "implDate": "2026-05-01"
+        }
+      }
     },
     "GB/T 14048.4": {
       "base": "GB/T 14048.4",
@@ -817,7 +1179,7 @@
         "101904"
       ],
       "refCount": 5,
-      "checkedAt": "2026-11-14T04:27:43.128Z",
+      "checkedAt": "2026-11-14T08:46:20.412Z",
       "error": "",
       "latest": "2020",
       "status": "现行",
@@ -827,16 +1189,29 @@
       "history": [
         {
           "code": "GB/T 14048.4-2020",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2021-04-01"
         },
         {
           "code": "GB/T 14048.4-2010",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2011-09-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2020",
+          "state": "现行",
+          "implDate": "2021-04-01"
+        },
+        "openstd": {
+          "version": "2020",
+          "state": "现行",
+          "implDate": "2021-04-01"
+        }
+      }
     },
     "GB/T 14048.5": {
       "base": "GB/T 14048.5",
@@ -861,7 +1236,7 @@
         "101103"
       ],
       "refCount": 15,
-      "checkedAt": "2026-11-14T04:27:44.892Z",
+      "checkedAt": "2026-11-14T08:46:22.165Z",
       "error": "",
       "latest": "2017",
       "status": "现行",
@@ -870,17 +1245,35 @@
       "code": "GB/T 14048.5-2017",
       "history": [
         {
+          "code": "GB/T 14048.5-2026",
+          "state": "即将实施",
+          "implDate": "2027-05-01"
+        },
+        {
           "code": "GB/T 14048.5-2017",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2018-05-01"
         },
         {
           "code": "GB/T 14048.5-2008",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2009-06-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-05-01"
+        },
+        "openstd": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-05-01"
+        }
+      }
     },
     "GB/T 14048.7": {
       "base": "GB/T 14048.7",
@@ -891,7 +1284,7 @@
         "101601"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:27:46.640Z",
+      "checkedAt": "2026-11-14T08:46:23.935Z",
       "error": "",
       "latest": "2016",
       "status": "现行",
@@ -901,11 +1294,29 @@
       "history": [
         {
           "code": "GB/T 14048.7-2016",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2016-09-01"
+        },
+        {
+          "code": "GB/T 14048.7-2006",
+          "state": "废止",
+          "implDate": "2007-04-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2016",
+          "state": "现行",
+          "implDate": "2016-09-01"
+        },
+        "openstd": {
+          "version": "2016",
+          "state": "现行",
+          "implDate": "2016-09-01"
+        }
+      }
     },
     "GB/T 14315": {
       "base": "GB/T 14315",
@@ -914,7 +1325,7 @@
         "120203"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:27:48.312Z",
+      "checkedAt": "2026-11-14T08:46:26.025Z",
       "error": "",
       "latest": "2008",
       "status": "现行",
@@ -924,11 +1335,29 @@
       "history": [
         {
           "code": "GB/T 14315-2008",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2009-10-01"
+        },
+        {
+          "code": "GB/T 14315-1993",
+          "state": "废止",
+          "implDate": "1993-12-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2008",
+          "state": "现行",
+          "implDate": "2009-10-01"
+        },
+        "openstd": {
+          "version": "2008",
+          "state": "现行",
+          "implDate": "2009-10-01"
+        }
+      }
     },
     "GB/T 14598": {
       "base": "GB/T 14598",
@@ -937,10 +1366,16 @@
         "100803"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:27:50.318Z",
+      "checkedAt": "2026-11-14T08:46:27.945Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB/T 15288": {
       "base": "GB/T 15288",
@@ -949,7 +1384,7 @@
         "101514"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:27:52.006Z",
+      "checkedAt": "2026-11-14T08:46:29.969Z",
       "error": "",
       "latest": "1994",
       "status": "现行",
@@ -959,11 +1394,24 @@
       "history": [
         {
           "code": "GB/T 15288-1994",
-          "status": "现行",
+          "state": "现行",
           "implDate": "1995-07-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "1994",
+          "state": "现行",
+          "implDate": "1995-07-01"
+        },
+        "openstd": {
+          "version": "1994",
+          "state": "现行",
+          "implDate": "1995-07-01"
+        }
+      }
     },
     "GB/T 15291": {
       "base": "GB/T 15291",
@@ -975,7 +1423,7 @@
         "101512"
       ],
       "refCount": 2,
-      "checkedAt": "2026-11-14T04:27:54.131Z",
+      "checkedAt": "2026-11-14T08:46:32.509Z",
       "error": "",
       "latest": "2015",
       "status": "现行",
@@ -985,11 +1433,29 @@
       "history": [
         {
           "code": "GB/T 15291-2015",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2017-01-01"
+        },
+        {
+          "code": "GB/T 15291-1994",
+          "state": "废止",
+          "implDate": "1995-10-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2015",
+          "state": "现行",
+          "implDate": "2017-01-01"
+        },
+        "openstd": {
+          "version": "2015",
+          "state": "现行",
+          "implDate": "2017-01-01"
+        }
+      }
     },
     "GB/T 15298": {
       "base": "GB/T 15298",
@@ -1000,7 +1466,7 @@
         "101308"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:27:55.869Z",
+      "checkedAt": "2026-11-14T08:46:35.011Z",
       "error": "",
       "latest": "1994",
       "status": "现行",
@@ -1010,11 +1476,24 @@
       "history": [
         {
           "code": "GB/T 15298-1994",
-          "status": "现行",
+          "state": "现行",
           "implDate": "1995-07-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "1994",
+          "state": "现行",
+          "implDate": "1995-07-01"
+        },
+        "openstd": {
+          "version": "1994",
+          "state": "现行",
+          "implDate": "1995-07-01"
+        }
+      }
     },
     "GB/T 15298.1": {
       "base": "GB/T 15298.1",
@@ -1025,10 +1504,30 @@
         "101308"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:27:57.627Z",
+      "checkedAt": "2026-11-14T08:46:37.177Z",
       "error": "",
-      "latest": "",
-      "status": "未查到"
+      "latest": "2026",
+      "status": "即将实施",
+      "confidence": "single",
+      "sources": {
+        "samr": {
+          "version": "2026",
+          "state": "即将实施",
+          "implDate": "2027-05-01"
+        },
+        "openstd": null
+      },
+      "name": "电子设备用电位器 第1部分：总规范",
+      "implDate": "2027-05-01",
+      "code": "GB/T 15298.1-2026",
+      "history": [
+        {
+          "code": "GB/T 15298.1-2026",
+          "state": "即将实施",
+          "implDate": "2027-05-01"
+        }
+      ],
+      "outdated": false
     },
     "GB/T 15969": {
       "base": "GB/T 15969",
@@ -1039,10 +1538,16 @@
         "102007"
       ],
       "refCount": 3,
-      "checkedAt": "2026-11-14T04:27:59.389Z",
+      "checkedAt": "2026-11-14T08:46:39.077Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB/T 16916.1": {
       "base": "GB/T 16916.1",
@@ -1053,21 +1558,34 @@
         "100106"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:01.179Z",
+      "checkedAt": "2026-11-14T08:46:40.937Z",
       "error": "",
       "latest": "2014",
       "status": "现行",
-      "name": "家用和类似用途的不带过电流保护的剩余电流动作断路器(RCCB) 第1部分: 一般规则",
+      "name": "家用和类似用途的不带过电流保护的剩余电流动作断路器（RCCB） 第1部分: 一般规则",
       "implDate": "2015-06-29",
       "code": "GB/T 16916.1-2014",
       "history": [
         {
           "code": "GB/T 16916.1-2014",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2015-06-29"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2014",
+          "state": "现行",
+          "implDate": "2015-06-29"
+        },
+        "openstd": {
+          "version": "2014",
+          "state": "现行",
+          "implDate": "2015-06-29"
+        }
+      }
     },
     "GB/T 16917.1": {
       "base": "GB/T 16917.1",
@@ -1078,21 +1596,34 @@
         "100106"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:03.241Z",
+      "checkedAt": "2026-11-14T08:46:42.710Z",
       "error": "",
       "latest": "2014",
       "status": "现行",
-      "name": "家用和类似用途的带过电流保护的剩余电流动作断路器(RCBO) 第1部分: 一般规则",
+      "name": "家用和类似用途的带过电流保护的剩余电流动作断路器（RCBO） 第1部分: 一般规则",
       "implDate": "2015-06-29",
       "code": "GB/T 16917.1-2014",
       "history": [
         {
           "code": "GB/T 16917.1-2014",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2015-06-29"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2014",
+          "state": "现行",
+          "implDate": "2015-06-29"
+        },
+        "openstd": {
+          "version": "2014",
+          "state": "现行",
+          "implDate": "2015-06-29"
+        }
+      }
     },
     "GB/T 17215.211": {
       "base": "GB/T 17215.211",
@@ -1103,7 +1634,7 @@
         "100907"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:05.047Z",
+      "checkedAt": "2026-11-14T08:46:44.547Z",
       "error": "",
       "latest": "2021",
       "status": "现行",
@@ -1113,16 +1644,29 @@
       "history": [
         {
           "code": "GB/T 17215.211-2021",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2021-11-01"
         },
         {
           "code": "GB/T 17215.211-2006",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2006-10-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2021",
+          "state": "现行",
+          "implDate": "2021-11-01"
+        },
+        "openstd": {
+          "version": "2021",
+          "state": "现行",
+          "implDate": "2021-11-01"
+        }
+      }
     },
     "GB/T 17215.321": {
       "base": "GB/T 17215.321",
@@ -1133,26 +1677,39 @@
         "100907"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:06.917Z",
+      "checkedAt": "2026-11-14T08:46:46.546Z",
       "error": "",
       "latest": "2021",
       "status": "现行",
-      "name": "电测量设备（交流） 特殊要求 第21部分：静止式有功电能表 (A级、B级、C级、D级和E级)",
+      "name": "电测量设备（交流） 特殊要求 第21部分：静止式有功电能表 （A级、B级、C级、D级和E级）",
       "implDate": "2021-11-01",
       "code": "GB/T 17215.321-2021",
       "history": [
         {
           "code": "GB/T 17215.321-2021",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2021-11-01"
         },
         {
           "code": "GB/T 17215.321-2008",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2009-01-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2021",
+          "state": "现行",
+          "implDate": "2021-11-01"
+        },
+        "openstd": {
+          "version": "2021",
+          "state": "现行",
+          "implDate": "2021-11-01"
+        }
+      }
     },
     "GB/T 1727": {
       "base": "GB/T 1727",
@@ -1161,7 +1718,7 @@
         "110407"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:08.848Z",
+      "checkedAt": "2026-11-14T08:46:48.671Z",
       "error": "",
       "latest": "2021",
       "status": "现行",
@@ -1171,11 +1728,29 @@
       "history": [
         {
           "code": "GB/T 1727-2021",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2022-03-01"
+        },
+        {
+          "code": "GB/T 1727-1992",
+          "state": "废止",
+          "implDate": "1993-10-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2021",
+          "state": "现行",
+          "implDate": "2022-03-01"
+        },
+        "openstd": {
+          "version": "2021",
+          "state": "现行",
+          "implDate": "2022-03-01"
+        }
+      }
     },
     "GB/T 17574": {
       "base": "GB/T 17574",
@@ -1184,7 +1759,7 @@
         "101511"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:10.796Z",
+      "checkedAt": "2026-11-14T08:46:50.741Z",
       "error": "",
       "latest": "1998",
       "status": "现行",
@@ -1194,11 +1769,24 @@
       "history": [
         {
           "code": "GB/T 17574-1998",
-          "status": "现行",
+          "state": "现行",
           "implDate": "1999-06-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "1998",
+          "state": "现行",
+          "implDate": "1999-06-01"
+        },
+        "openstd": {
+          "version": "1998",
+          "state": "现行",
+          "implDate": "1999-06-01"
+        }
+      }
     },
     "GB/T 17626": {
       "base": "GB/T 17626",
@@ -1207,10 +1795,16 @@
         "101515"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:12.798Z",
+      "checkedAt": "2026-11-14T08:46:52.423Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB/T 18015": {
       "base": "GB/T 18015",
@@ -1219,10 +1813,16 @@
         "110303"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:14.806Z",
+      "checkedAt": "2026-11-14T08:46:54.159Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB/T 18216": {
       "base": "GB/T 18216",
@@ -1231,10 +1831,16 @@
         "100908"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:16.907Z",
+      "checkedAt": "2026-11-14T08:46:55.850Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB/T 18268": {
       "base": "GB/T 18268",
@@ -1243,10 +1849,30 @@
         "101206"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:18.759Z",
+      "checkedAt": "2026-11-14T08:46:57.880Z",
       "error": "",
-      "latest": "",
-      "status": "未查到"
+      "latest": "2000",
+      "status": "废止",
+      "confidence": "single",
+      "sources": {
+        "samr": {
+          "version": "2000",
+          "state": "废止",
+          "implDate": "2001-08-01"
+        },
+        "openstd": null
+      },
+      "name": "测量、控制和实验室用的电设备 电磁兼容性要求",
+      "implDate": "2001-08-01",
+      "code": "GB/T 18268-2000",
+      "history": [
+        {
+          "code": "GB/T 18268-2000",
+          "state": "废止",
+          "implDate": "2001-08-01"
+        }
+      ],
+      "outdated": false
     },
     "GB/T 18487": {
       "base": "GB/T 18487",
@@ -1255,10 +1881,16 @@
         "101508"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:20.486Z",
+      "checkedAt": "2026-11-14T08:47:00.092Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB/T 18655": {
       "base": "GB/T 18655",
@@ -1267,7 +1899,7 @@
         "100909"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:22.409Z",
+      "checkedAt": "2026-11-14T08:47:01.921Z",
       "error": "",
       "latest": "2025",
       "status": "现行",
@@ -1277,21 +1909,34 @@
       "history": [
         {
           "code": "GB/T 18655-2025",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2025-02-28"
         },
         {
           "code": "GB/T 18655-2018",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2019-02-01"
         },
         {
           "code": "GB/T 18655-2010",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2011-06-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2025",
+          "state": "现行",
+          "implDate": "2025-02-28"
+        },
+        "openstd": {
+          "version": "2025",
+          "state": "现行",
+          "implDate": "2025-02-28"
+        }
+      }
     },
     "GB/T 18802.11": {
       "base": "GB/T 18802.11",
@@ -1302,21 +1947,34 @@
         "100405"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:24.165Z",
+      "checkedAt": "2026-11-14T08:47:03.787Z",
       "error": "",
       "latest": "2020",
       "status": "现行",
-      "name": "低压电涌保护器(SPD) 第11部分：低压电源系统的电涌保护器 性能要求和试验方法",
+      "name": "低压电涌保护器（SPD） 第11部分：低压电源系统的电涌保护器 性能要求和试验方法",
       "implDate": "2021-07-01",
       "code": "GB/T 18802.11-2020",
       "history": [
         {
           "code": "GB/T 18802.11-2020",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2021-07-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2020",
+          "state": "现行",
+          "implDate": "2021-07-01"
+        },
+        "openstd": {
+          "version": "2020",
+          "state": "现行",
+          "implDate": "2021-07-01"
+        }
+      }
     },
     "GB/T 19334": {
       "base": "GB/T 19334",
@@ -1325,7 +1983,7 @@
         "120205"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:25.893Z",
+      "checkedAt": "2026-11-14T08:47:05.566Z",
       "error": "",
       "latest": "2021",
       "status": "现行",
@@ -1335,16 +1993,29 @@
       "history": [
         {
           "code": "GB/T 19334-2021",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2022-05-01"
         },
         {
           "code": "GB/T 19334-2003",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2004-05-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2021",
+          "state": "现行",
+          "implDate": "2022-05-01"
+        },
+        "openstd": {
+          "version": "2021",
+          "state": "现行",
+          "implDate": "2022-05-01"
+        }
+      }
     },
     "GB/T 19638": {
       "base": "GB/T 19638",
@@ -1354,10 +2025,16 @@
         "101911"
       ],
       "refCount": 2,
-      "checkedAt": "2026-11-14T04:28:27.572Z",
+      "checkedAt": "2026-11-14T08:47:07.343Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB/T 1984": {
       "base": "GB/T 1984",
@@ -1369,7 +2046,7 @@
         "100108"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:29.304Z",
+      "checkedAt": "2026-11-14T08:47:09.345Z",
       "error": "",
       "latest": "2024",
       "status": "现行",
@@ -1379,16 +2056,29 @@
       "history": [
         {
           "code": "GB/T 1984-2024",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2025-04-01"
         },
         {
           "code": "GB/T 1984-2014",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2015-01-22"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2024",
+          "state": "现行",
+          "implDate": "2025-04-01"
+        },
+        "openstd": {
+          "version": "2024",
+          "state": "现行",
+          "implDate": "2025-04-01"
+        }
+      }
     },
     "GB/T 20041": {
       "base": "GB/T 20041",
@@ -1397,10 +2087,16 @@
         "110404"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:30.971Z",
+      "checkedAt": "2026-11-14T08:47:11.082Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB/T 2040": {
       "base": "GB/T 2040",
@@ -1412,7 +2108,7 @@
         "110201"
       ],
       "refCount": 2,
-      "checkedAt": "2026-11-14T04:28:33.076Z",
+      "checkedAt": "2026-11-14T08:47:13.059Z",
       "error": "",
       "latest": "2017",
       "status": "现行",
@@ -1422,11 +2118,34 @@
       "history": [
         {
           "code": "GB/T 2040-2017",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2017-12-01"
+        },
+        {
+          "code": "GB/T 2040-2008",
+          "state": "废止",
+          "implDate": "2008-12-01"
+        },
+        {
+          "code": "GB/T 2040-2002",
+          "state": "废止",
+          "implDate": "2003-03-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2017-12-01"
+        },
+        "openstd": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2017-12-01"
+        }
+      }
     },
     "GB/T 2059": {
       "base": "GB/T 2059",
@@ -1437,7 +2156,7 @@
         "110105"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:34.981Z",
+      "checkedAt": "2026-11-14T08:47:14.889Z",
       "error": "",
       "latest": "2017",
       "status": "现行",
@@ -1447,16 +2166,34 @@
       "history": [
         {
           "code": "GB/T 2059-2017",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2017-12-01"
         },
         {
           "code": "GB/T 2059-2008",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2008-12-01"
+        },
+        {
+          "code": "GB/T 2059-2000",
+          "state": "废止",
+          "implDate": "2000-11-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2017-12-01"
+        },
+        "openstd": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2017-12-01"
+        }
+      }
     },
     "GB/T 20840.1": {
       "base": "GB/T 20840.1",
@@ -1469,7 +2206,7 @@
         "100503"
       ],
       "refCount": 3,
-      "checkedAt": "2026-11-14T04:28:36.755Z",
+      "checkedAt": "2026-11-14T08:47:16.743Z",
       "error": "",
       "latest": "2010",
       "status": "现行",
@@ -1479,16 +2216,29 @@
       "history": [
         {
           "code": "GB/T 20840.1-2026",
-          "status": "即将实施",
+          "state": "即将实施",
           "implDate": "2027-02-01"
         },
         {
           "code": "GB/T 20840.1-2010",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2011-08-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2010",
+          "state": "现行",
+          "implDate": "2011-08-01"
+        },
+        "openstd": {
+          "version": "2010",
+          "state": "现行",
+          "implDate": "2011-08-01"
+        }
+      }
     },
     "GB/T 20840.2": {
       "base": "GB/T 20840.2",
@@ -1500,7 +2250,7 @@
         "100503"
       ],
       "refCount": 2,
-      "checkedAt": "2026-11-14T04:28:38.483Z",
+      "checkedAt": "2026-11-14T08:47:18.649Z",
       "error": "",
       "latest": "2014",
       "status": "现行",
@@ -1510,11 +2260,24 @@
       "history": [
         {
           "code": "GB/T 20840.2-2014",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2015-08-03"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2014",
+          "state": "现行",
+          "implDate": "2015-08-03"
+        },
+        "openstd": {
+          "version": "2014",
+          "state": "现行",
+          "implDate": "2015-08-03"
+        }
+      }
     },
     "GB/T 20840.3": {
       "base": "GB/T 20840.3",
@@ -1525,7 +2288,7 @@
         "100502"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:40.380Z",
+      "checkedAt": "2026-11-14T08:47:20.454Z",
       "error": "",
       "latest": "2013",
       "status": "现行",
@@ -1535,11 +2298,24 @@
       "history": [
         {
           "code": "GB/T 20840.3-2013",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2014-11-14"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2013",
+          "state": "现行",
+          "implDate": "2014-11-14"
+        },
+        "openstd": {
+          "version": "2013",
+          "state": "现行",
+          "implDate": "2014-11-14"
+        }
+      }
     },
     "GB/T 20878": {
       "base": "GB/T 20878",
@@ -1550,7 +2326,7 @@
         "110204"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:42.113Z",
+      "checkedAt": "2026-11-14T08:47:22.447Z",
       "error": "",
       "latest": "2024",
       "status": "现行",
@@ -1560,26 +2336,29 @@
       "history": [
         {
           "code": "GB/T 20878-2024",
-          "status": "现行",
-          "implDate": "2025-02-01"
-        },
-        {
-          "code": "GB/T 20878-2024",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2025-02-01"
         },
         {
           "code": "GB/T 20878-2007",
-          "status": "废止",
-          "implDate": "2007-10-01"
-        },
-        {
-          "code": "GB/T 20878-2007",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2007-10-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2024",
+          "state": "现行",
+          "implDate": "2025-02-01"
+        },
+        "openstd": {
+          "version": "2024",
+          "state": "现行",
+          "implDate": "2025-02-01"
+        }
+      }
     },
     "GB/T 2099.1": {
       "base": "GB/T 2099.1",
@@ -1591,7 +2370,7 @@
         "101605"
       ],
       "refCount": 2,
-      "checkedAt": "2026-11-14T04:28:44.146Z",
+      "checkedAt": "2026-11-14T08:47:24.350Z",
       "error": "",
       "latest": "2021",
       "status": "现行",
@@ -1601,16 +2380,29 @@
       "history": [
         {
           "code": "GB/T 2099.1-2021",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2022-11-01"
         },
         {
           "code": "GB/T 2099.1-2008",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2009-08-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2021",
+          "state": "现行",
+          "implDate": "2022-11-01"
+        },
+        "openstd": {
+          "version": "2021",
+          "state": "现行",
+          "implDate": "2022-11-01"
+        }
+      }
     },
     "GB/T 21671": {
       "base": "GB/T 21671",
@@ -1619,7 +2411,7 @@
         "101515"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:45.851Z",
+      "checkedAt": "2026-11-14T08:47:26.127Z",
       "error": "",
       "latest": "2018",
       "status": "现行",
@@ -1629,16 +2421,29 @@
       "history": [
         {
           "code": "GB/T 21671-2018",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2019-01-01"
         },
         {
           "code": "GB/T 21671-2008",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2008-09-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2018",
+          "state": "现行",
+          "implDate": "2019-01-01"
+        },
+        "openstd": {
+          "version": "2018",
+          "state": "现行",
+          "implDate": "2019-01-01"
+        }
+      }
     },
     "GB/T 22239": {
       "base": "GB/T 22239",
@@ -1647,7 +2452,7 @@
         "120401"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:47.725Z",
+      "checkedAt": "2026-11-14T08:47:28.456Z",
       "error": "",
       "latest": "2019",
       "status": "现行",
@@ -1657,16 +2462,29 @@
       "history": [
         {
           "code": "GB/T 22239-2019",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2019-12-01"
         },
         {
           "code": "GB/T 22239-2008",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2008-11-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2019",
+          "state": "现行",
+          "implDate": "2019-12-01"
+        },
+        "openstd": {
+          "version": "2019",
+          "state": "现行",
+          "implDate": "2019-12-01"
+        }
+      }
     },
     "GB/T 22344": {
       "base": "GB/T 22344",
@@ -1675,7 +2493,7 @@
         "110404"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:49.442Z",
+      "checkedAt": "2026-11-14T08:47:30.382Z",
       "error": "",
       "latest": "2018",
       "status": "现行",
@@ -1685,16 +2503,29 @@
       "history": [
         {
           "code": "GB/T 22344-2018",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2018-10-01"
         },
         {
           "code": "GB/T 22344-2008",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2009-02-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2018",
+          "state": "现行",
+          "implDate": "2018-10-01"
+        },
+        "openstd": {
+          "version": "2018",
+          "state": "现行",
+          "implDate": "2018-10-01"
+        }
+      }
     },
     "GB/T 2423": {
       "base": "GB/T 2423",
@@ -1703,10 +2534,16 @@
         "102002"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:51.163Z",
+      "checkedAt": "2026-11-14T08:47:32.199Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB/T 2693": {
       "base": "GB/T 2693",
@@ -1725,10 +2562,30 @@
         "101411"
       ],
       "refCount": 9,
-      "checkedAt": "2026-11-14T04:28:53.490Z",
+      "checkedAt": "2026-11-14T08:47:34.125Z",
       "error": "",
-      "latest": "",
-      "status": "未查到"
+      "latest": "2001",
+      "status": "废止",
+      "confidence": "single",
+      "sources": {
+        "samr": {
+          "version": "2001",
+          "state": "废止",
+          "implDate": "2002-05-01"
+        },
+        "openstd": null
+      },
+      "name": "电子设备用固定电容器 第1部分:总规范",
+      "implDate": "2002-05-01",
+      "code": "GB/T 2693-2001",
+      "history": [
+        {
+          "code": "GB/T 2693-2001",
+          "state": "废止",
+          "implDate": "2002-05-01"
+        }
+      ],
+      "outdated": false
     },
     "GB/T 30429": {
       "base": "GB/T 30429",
@@ -1740,7 +2597,7 @@
         "100914"
       ],
       "refCount": 2,
-      "checkedAt": "2026-11-14T04:28:55.224Z",
+      "checkedAt": "2026-11-14T08:47:35.997Z",
       "error": "",
       "latest": "2013",
       "status": "现行",
@@ -1750,11 +2607,24 @@
       "history": [
         {
           "code": "GB/T 30429-2013",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2014-08-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2013",
+          "state": "现行",
+          "implDate": "2014-08-01"
+        },
+        "openstd": {
+          "version": "2013",
+          "state": "现行",
+          "implDate": "2014-08-01"
+        }
+      }
     },
     "GB/T 3190": {
       "base": "GB/T 3190",
@@ -1763,10 +2633,40 @@
         "110202"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:57.089Z",
+      "checkedAt": "2026-11-14T08:47:38.321Z",
       "error": "",
-      "latest": "",
-      "status": "未查到"
+      "latest": "2020",
+      "status": "现行",
+      "confidence": "single",
+      "sources": {
+        "samr": {
+          "version": "2020",
+          "state": "现行",
+          "implDate": "2021-02-01"
+        },
+        "openstd": null
+      },
+      "name": "变形铝及铝合金化学成分",
+      "implDate": "2021-02-01",
+      "code": "GB/T 3190-2020",
+      "history": [
+        {
+          "code": "GB/T 3190-2020",
+          "state": "现行",
+          "implDate": "2021-02-01"
+        },
+        {
+          "code": "GB/T 3190-2008",
+          "state": "废止",
+          "implDate": "2008-12-01"
+        },
+        {
+          "code": "GB/T 3190-1996",
+          "state": "废止",
+          "implDate": "1997-01-01"
+        }
+      ],
+      "outdated": false
     },
     "GB/T 3274": {
       "base": "GB/T 3274",
@@ -1777,7 +2677,7 @@
         "110105"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:28:58.760Z",
+      "checkedAt": "2026-11-14T08:47:40.506Z",
       "error": "",
       "latest": "2017",
       "status": "现行",
@@ -1787,16 +2687,34 @@
       "history": [
         {
           "code": "GB/T 3274-2017",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2017-11-01"
         },
         {
-          "code": "GB/T 3274-2017",
-          "status": "现行",
-          "implDate": "2017-11-01"
+          "code": "GB/T 3274-2007",
+          "state": "废止",
+          "implDate": "2008-03-01"
+        },
+        {
+          "code": "GB/T 3274-1988",
+          "state": "废止",
+          "implDate": "1989-07-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2017-11-01"
+        },
+        "openstd": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2017-11-01"
+        }
+      }
     },
     "GB/T 3452": {
       "base": "GB/T 3452",
@@ -1805,10 +2723,16 @@
         "110406"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:29:00.597Z",
+      "checkedAt": "2026-11-14T08:47:42.301Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB/T 36972": {
       "base": "GB/T 36972",
@@ -1817,7 +2741,7 @@
         "101804"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:29:02.351Z",
+      "checkedAt": "2026-11-14T08:47:44.171Z",
       "error": "",
       "latest": "2026",
       "status": "现行",
@@ -1827,16 +2751,29 @@
       "history": [
         {
           "code": "GB/T 36972-2026",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2026-09-01"
         },
         {
           "code": "GB/T 36972-2018",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2019-07-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2026",
+          "state": "现行",
+          "implDate": "2026-09-01"
+        },
+        "openstd": {
+          "version": "2026",
+          "state": "现行",
+          "implDate": "2026-09-01"
+        }
+      }
     },
     "GB/T 3864": {
       "base": "GB/T 3864",
@@ -1845,7 +2782,7 @@
         "110401"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:29:04.136Z",
+      "checkedAt": "2026-11-14T08:47:46.117Z",
       "error": "",
       "latest": "2025",
       "status": "现行",
@@ -1855,11 +2792,34 @@
       "history": [
         {
           "code": "GB/T 3864-2025",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2026-02-01"
+        },
+        {
+          "code": "GB/T 3864-2008",
+          "state": "废止",
+          "implDate": "2008-11-01"
+        },
+        {
+          "code": "GB/T 3864-1996",
+          "state": "废止",
+          "implDate": "1997-05-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2025",
+          "state": "现行",
+          "implDate": "2026-02-01"
+        },
+        "openstd": {
+          "version": "2025",
+          "state": "现行",
+          "implDate": "2026-02-01"
+        }
+      }
     },
     "GB/T 3880": {
       "base": "GB/T 3880",
@@ -1868,10 +2828,30 @@
         "110202"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:29:05.827Z",
+      "checkedAt": "2026-11-14T08:47:48.172Z",
       "error": "",
-      "latest": "",
-      "status": "未查到"
+      "latest": "1997",
+      "status": "废止",
+      "confidence": "single",
+      "sources": {
+        "samr": {
+          "version": "1997",
+          "state": "废止",
+          "implDate": "1998-08-01"
+        },
+        "openstd": null
+      },
+      "name": "铝及铝合金轧制板材",
+      "implDate": "1998-08-01",
+      "code": "GB/T 3880-1997",
+      "history": [
+        {
+          "code": "GB/T 3880-1997",
+          "state": "废止",
+          "implDate": "1998-08-01"
+        }
+      ],
+      "outdated": false
     },
     "GB/T 4023": {
       "base": "GB/T 4023",
@@ -1885,10 +2865,35 @@
         "101513"
       ],
       "refCount": 4,
-      "checkedAt": "2026-11-14T04:29:07.764Z",
+      "checkedAt": "2026-11-14T08:47:50.144Z",
       "error": "",
-      "latest": "",
-      "status": "未查到"
+      "latest": "2015",
+      "status": "现行",
+      "confidence": "single",
+      "sources": {
+        "samr": {
+          "version": "2015",
+          "state": "现行",
+          "implDate": "2017-01-01"
+        },
+        "openstd": null
+      },
+      "name": "半导体器件 分立器件和集成电路 第2部分：整流二极管",
+      "implDate": "2017-01-01",
+      "code": "GB/T 4023-2015",
+      "history": [
+        {
+          "code": "GB/T 4023-2015",
+          "state": "现行",
+          "implDate": "2017-01-01"
+        },
+        {
+          "code": "GB/T 4023-1997",
+          "state": "废止",
+          "implDate": "1998-09-01"
+        }
+      ],
+      "outdated": false
     },
     "GB/T 4023.8": {
       "base": "GB/T 4023.8",
@@ -1899,10 +2904,30 @@
         "101503"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:29:09.537Z",
+      "checkedAt": "2026-11-14T08:47:52.043Z",
       "error": "",
-      "latest": "",
-      "status": "未查到"
+      "latest": "2026",
+      "status": "即将实施",
+      "confidence": "single",
+      "sources": {
+        "samr": {
+          "version": "2026",
+          "state": "即将实施",
+          "implDate": "2027-05-01"
+        },
+        "openstd": null
+      },
+      "name": "半导体分立器件 第8部分：场效应晶体管",
+      "implDate": "2027-05-01",
+      "code": "GB/T 4023.8-2026",
+      "history": [
+        {
+          "code": "GB/T 4023.8-2026",
+          "state": "即将实施",
+          "implDate": "2027-05-01"
+        }
+      ],
+      "outdated": false
     },
     "GB/T 4423": {
       "base": "GB/T 4423",
@@ -1911,10 +2936,40 @@
         "110103"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:29:11.318Z",
+      "checkedAt": "2026-11-14T08:47:53.918Z",
       "error": "",
-      "latest": "",
-      "status": "未查到"
+      "latest": "2020",
+      "status": "现行",
+      "confidence": "single",
+      "sources": {
+        "samr": {
+          "version": "2020",
+          "state": "现行",
+          "implDate": "2021-08-01"
+        },
+        "openstd": null
+      },
+      "name": "铜及铜合金拉制棒",
+      "implDate": "2021-08-01",
+      "code": "GB/T 4423-2020",
+      "history": [
+        {
+          "code": "GB/T 4423-2020",
+          "state": "现行",
+          "implDate": "2021-08-01"
+        },
+        {
+          "code": "GB/T 4423-2007",
+          "state": "废止",
+          "implDate": "2007-11-01"
+        },
+        {
+          "code": "GB/T 4423-1992",
+          "state": "废止",
+          "implDate": "1993-06-01"
+        }
+      ],
+      "outdated": false
     },
     "GB/T 4586": {
       "base": "GB/T 4586",
@@ -1927,10 +2982,30 @@
         "101513"
       ],
       "refCount": 3,
-      "checkedAt": "2026-11-14T04:29:13.006Z",
+      "checkedAt": "2026-11-14T08:47:55.709Z",
       "error": "",
-      "latest": "",
-      "status": "未查到"
+      "latest": "1994",
+      "status": "现行",
+      "confidence": "single",
+      "sources": {
+        "samr": {
+          "version": "1994",
+          "state": "现行",
+          "implDate": "1995-08-01"
+        },
+        "openstd": null
+      },
+      "name": "半导体器件 分立器件 第8部分:场效应晶体管",
+      "implDate": "1995-08-01",
+      "code": "GB/T 4586-1994",
+      "history": [
+        {
+          "code": "GB/T 4586-1994",
+          "state": "现行",
+          "implDate": "1995-08-01"
+        }
+      ],
+      "outdated": false
     },
     "GB/T 470": {
       "base": "GB/T 470",
@@ -1939,21 +3014,44 @@
         "110203"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:29:14.730Z",
+      "checkedAt": "2026-11-14T08:47:57.570Z",
       "error": "",
-      "latest": "2026",
-      "status": "即将实施",
+      "latest": "2008",
+      "status": "现行",
       "name": "锌锭",
-      "implDate": "2026-12-01",
-      "code": "GB/T 470-2026",
+      "implDate": "2008-12-01",
+      "code": "GB/T 470-2008",
       "history": [
         {
           "code": "GB/T 470-2026",
-          "status": "即将实施",
+          "state": "即将实施",
           "implDate": "2026-12-01"
+        },
+        {
+          "code": "GB/T 470-2008",
+          "state": "现行",
+          "implDate": "2008-12-01"
+        },
+        {
+          "code": "GB/T 470-1997",
+          "state": "废止",
+          "implDate": "1997-12-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "conflict",
+      "sources": {
+        "samr": {
+          "version": "2008",
+          "state": "现行",
+          "implDate": "2008-12-01"
+        },
+        "openstd": {
+          "version": "2026",
+          "state": "即将实施",
+          "implDate": "2026-12-01"
+        }
+      }
     },
     "GB/T 4937": {
       "base": "GB/T 4937",
@@ -1964,10 +3062,30 @@
         "101506"
       ],
       "refCount": 3,
-      "checkedAt": "2026-11-14T04:29:16.593Z",
+      "checkedAt": "2026-11-14T08:47:59.531Z",
       "error": "",
-      "latest": "",
-      "status": "未查到"
+      "latest": "1995",
+      "status": "废止",
+      "confidence": "single",
+      "sources": {
+        "samr": {
+          "version": "1995",
+          "state": "废止",
+          "implDate": "1996-08-01"
+        },
+        "openstd": null
+      },
+      "name": "半导体器件机械和气候试验方法",
+      "implDate": "1996-08-01",
+      "code": "GB/T 4937-1995",
+      "history": [
+        {
+          "code": "GB/T 4937-1995",
+          "state": "废止",
+          "implDate": "1996-08-01"
+        }
+      ],
+      "outdated": false
     },
     "GB/T 5013": {
       "base": "GB/T 5013",
@@ -1978,10 +3096,16 @@
         "110302"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:29:19.030Z",
+      "checkedAt": "2026-11-14T08:48:01.403Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB/T 5023": {
       "base": "GB/T 5023",
@@ -1995,10 +3119,16 @@
         "110302"
       ],
       "refCount": 4,
-      "checkedAt": "2026-11-14T04:29:21.136Z",
+      "checkedAt": "2026-11-14T08:48:03.576Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB/T 5095": {
       "base": "GB/T 5095",
@@ -2007,10 +3137,16 @@
         "101607"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:29:23.280Z",
+      "checkedAt": "2026-11-14T08:48:05.558Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB/T 5117": {
       "base": "GB/T 5117",
@@ -2019,7 +3155,7 @@
         "120204"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:29:24.927Z",
+      "checkedAt": "2026-11-14T08:48:07.342Z",
       "error": "",
       "latest": "2012",
       "status": "现行",
@@ -2029,11 +3165,29 @@
       "history": [
         {
           "code": "GB/T 5117-2012",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2013-03-01"
+        },
+        {
+          "code": "GB/T 5117-1995",
+          "state": "废止",
+          "implDate": "1996-05-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2012",
+          "state": "现行",
+          "implDate": "2013-03-01"
+        },
+        "openstd": {
+          "version": "2012",
+          "state": "现行",
+          "implDate": "2013-03-01"
+        }
+      }
     },
     "GB/T 5231": {
       "base": "GB/T 5231",
@@ -2045,7 +3199,7 @@
         "110201"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:29:26.633Z",
+      "checkedAt": "2026-11-14T08:48:09.126Z",
       "error": "",
       "latest": "2022",
       "status": "现行",
@@ -2055,21 +3209,34 @@
       "history": [
         {
           "code": "GB/T 5231-2022",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2022-10-01"
         },
         {
           "code": "GB/T 5231-2012",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2013-10-01"
         },
         {
           "code": "GB/T 5231-2001",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2001-12-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2022",
+          "state": "现行",
+          "implDate": "2022-10-01"
+        },
+        "openstd": {
+          "version": "2022",
+          "state": "现行",
+          "implDate": "2022-10-01"
+        }
+      }
     },
     "GB/T 5574": {
       "base": "GB/T 5574",
@@ -2078,7 +3245,7 @@
         "110406"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:29:28.319Z",
+      "checkedAt": "2026-11-14T08:48:10.867Z",
       "error": "",
       "latest": "2008",
       "status": "现行",
@@ -2088,11 +3255,29 @@
       "history": [
         {
           "code": "GB/T 5574-2008",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2008-10-01"
+        },
+        {
+          "code": "GB/T 5574-1994",
+          "state": "废止",
+          "implDate": "1995-10-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2008",
+          "state": "现行",
+          "implDate": "2008-10-01"
+        },
+        "openstd": {
+          "version": "2008",
+          "state": "现行",
+          "implDate": "2008-10-01"
+        }
+      }
     },
     "GB/T 5729": {
       "base": "GB/T 5729",
@@ -2108,7 +3293,7 @@
         "101909"
       ],
       "refCount": 6,
-      "checkedAt": "2026-11-14T04:29:30.061Z",
+      "checkedAt": "2026-11-14T08:48:12.690Z",
       "error": "",
       "latest": "2003",
       "status": "现行",
@@ -2118,11 +3303,24 @@
       "history": [
         {
           "code": "GB/T 5729-2003",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2004-08-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2003",
+          "state": "现行",
+          "implDate": "2004-08-01"
+        },
+        "openstd": {
+          "version": "2003",
+          "state": "现行",
+          "implDate": "2004-08-01"
+        }
+      }
     },
     "GB/T 5782": {
       "base": "GB/T 5782",
@@ -2133,7 +3331,7 @@
         "120102"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:29:31.764Z",
+      "checkedAt": "2026-11-14T08:48:14.514Z",
       "error": "",
       "latest": "2025",
       "status": "现行",
@@ -2143,16 +3341,34 @@
       "history": [
         {
           "code": "GB/T 5782-2025",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2026-02-01"
         },
         {
           "code": "GB/T 5782-2016",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2016-06-01"
+        },
+        {
+          "code": "GB/T 5782-2000",
+          "state": "废止",
+          "implDate": "2001-02-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2025",
+          "state": "现行",
+          "implDate": "2026-02-01"
+        },
+        "openstd": {
+          "version": "2025",
+          "state": "现行",
+          "implDate": "2026-02-01"
+        }
+      }
     },
     "GB/T 601": {
       "base": "GB/T 601",
@@ -2161,7 +3377,7 @@
         "110405"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:29:33.588Z",
+      "checkedAt": "2026-11-14T08:48:16.302Z",
       "error": "",
       "latest": "2016",
       "status": "现行",
@@ -2171,11 +3387,29 @@
       "history": [
         {
           "code": "GB/T 601-2016",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2017-05-01"
+        },
+        {
+          "code": "GB/T 601-2002",
+          "state": "废止",
+          "implDate": "2003-04-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2016",
+          "state": "现行",
+          "implDate": "2017-05-01"
+        },
+        "openstd": {
+          "version": "2016",
+          "state": "现行",
+          "implDate": "2017-05-01"
+        }
+      }
     },
     "GB/T 6170": {
       "base": "GB/T 6170",
@@ -2185,7 +3419,7 @@
         "120104"
       ],
       "refCount": 2,
-      "checkedAt": "2026-11-14T04:29:35.993Z",
+      "checkedAt": "2026-11-14T08:48:18.061Z",
       "error": "",
       "latest": "2015",
       "status": "现行",
@@ -2195,11 +3429,29 @@
       "history": [
         {
           "code": "GB/T 6170-2015",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2016-04-01"
+        },
+        {
+          "code": "GB/T 6170-2000",
+          "state": "废止",
+          "implDate": "2001-02-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2015",
+          "state": "现行",
+          "implDate": "2016-04-01"
+        },
+        "openstd": {
+          "version": "2015",
+          "state": "现行",
+          "implDate": "2016-04-01"
+        }
+      }
     },
     "GB/T 6346.1": {
       "base": "GB/T 6346.1",
@@ -2220,21 +3472,24 @@
         "101411"
       ],
       "refCount": 11,
-      "checkedAt": "2026-11-14T04:29:37.928Z",
+      "checkedAt": "2026-11-14T08:48:19.942Z",
       "error": "",
       "latest": "2024",
       "status": "现行",
       "name": "电子设备用固定电容器 第1部分：总规范",
       "implDate": "2024-03-15",
       "code": "GB/T 6346.1-2024",
-      "history": [
-        {
-          "code": "GB/T 6346.1-2024",
-          "status": "现行",
+      "history": [],
+      "outdated": false,
+      "confidence": "single",
+      "sources": {
+        "samr": null,
+        "openstd": {
+          "version": "2024",
+          "state": "现行",
           "implDate": "2024-03-15"
         }
-      ],
-      "outdated": false
+      }
     },
     "GB/T 6663": {
       "base": "GB/T 6663",
@@ -2243,10 +3498,30 @@
         "101305"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:29:39.836Z",
+      "checkedAt": "2026-11-14T08:48:21.819Z",
       "error": "",
-      "latest": "",
-      "status": "未查到"
+      "latest": "1986",
+      "status": "废止",
+      "confidence": "single",
+      "sources": {
+        "samr": {
+          "version": "1986",
+          "state": "废止",
+          "implDate": "1987-08-01"
+        },
+        "openstd": null
+      },
+      "name": "直热式负温度系数热敏电阻器总规范 （可供认证用）",
+      "implDate": "1987-08-01",
+      "code": "GB/T 6663-1986",
+      "history": [
+        {
+          "code": "GB/T 6663-1986",
+          "state": "废止",
+          "implDate": "1987-08-01"
+        }
+      ],
+      "outdated": false
     },
     "GB/T 70.1": {
       "base": "GB/T 70.1",
@@ -2257,7 +3532,7 @@
         "120102"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:29:41.716Z",
+      "checkedAt": "2026-11-14T08:48:23.825Z",
       "error": "",
       "latest": "2008",
       "status": "现行",
@@ -2267,11 +3542,29 @@
       "history": [
         {
           "code": "GB/T 70.1-2008",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2009-02-01"
+        },
+        {
+          "code": "GB/T 70.1-2000",
+          "state": "废止",
+          "implDate": "2001-02-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2008",
+          "state": "现行",
+          "implDate": "2009-02-01"
+        },
+        "openstd": {
+          "version": "2008",
+          "state": "现行",
+          "implDate": "2009-02-01"
+        }
+      }
     },
     "GB/T 7000.1": {
       "base": "GB/T 7000.1",
@@ -2282,7 +3575,7 @@
         "101807"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:29:43.633Z",
+      "checkedAt": "2026-11-14T08:48:25.542Z",
       "error": "",
       "latest": "2023",
       "status": "现行",
@@ -2292,11 +3585,24 @@
       "history": [
         {
           "code": "GB/T 7000.1-2023",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2026-01-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2023",
+          "state": "现行",
+          "implDate": "2026-01-01"
+        },
+        "openstd": {
+          "version": "2023",
+          "state": "现行",
+          "implDate": "2026-01-01"
+        }
+      }
     },
     "GB/T 702": {
       "base": "GB/T 702",
@@ -2305,7 +3611,7 @@
         "110103"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:29:45.449Z",
+      "checkedAt": "2026-11-14T08:48:27.702Z",
       "error": "",
       "latest": "2026",
       "status": "现行",
@@ -2315,21 +3621,44 @@
       "history": [
         {
           "code": "GB/T 702-2026",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2026-11-01"
         },
         {
           "code": "GB/T 702-2017",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2018-06-01"
         },
         {
-          "code": "GB/T 702-2017",
-          "status": "废止",
-          "implDate": "2018-06-01"
+          "code": "GB/T 702-2008",
+          "state": "废止",
+          "implDate": "2009-04-01"
+        },
+        {
+          "code": "GB/T 702-2004",
+          "state": "废止",
+          "implDate": "2004-07-01"
+        },
+        {
+          "code": "GB/T 702-1986",
+          "state": "废止",
+          "implDate": "1987-05-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2026",
+          "state": "现行",
+          "implDate": "2026-11-01"
+        },
+        "openstd": {
+          "version": "2026",
+          "state": "现行",
+          "implDate": "2026-11-01"
+        }
+      }
     },
     "GB/T 706": {
       "base": "GB/T 706",
@@ -2340,7 +3669,7 @@
         "110104"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:29:47.254Z",
+      "checkedAt": "2026-11-14T08:48:29.387Z",
       "error": "",
       "latest": "2016",
       "status": "现行",
@@ -2350,21 +3679,39 @@
       "history": [
         {
           "code": "GB/T 706-2026",
-          "status": "即将实施",
+          "state": "即将实施",
           "implDate": "2026-12-01"
         },
         {
           "code": "GB/T 706-2016",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2017-09-01"
         },
         {
-          "code": "GB/T 706-2016",
-          "status": "现行",
-          "implDate": "2017-09-01"
+          "code": "GB/T 706-2008",
+          "state": "废止",
+          "implDate": "2009-04-01"
+        },
+        {
+          "code": "GB/T 706-1988",
+          "state": "废止",
+          "implDate": "1989-07-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2016",
+          "state": "现行",
+          "implDate": "2017-09-01"
+        },
+        "openstd": {
+          "version": "2016",
+          "state": "现行",
+          "implDate": "2017-09-01"
+        }
+      }
     },
     "GB/T 708": {
       "base": "GB/T 708",
@@ -2373,7 +3720,7 @@
         "110101"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:29:49.064Z",
+      "checkedAt": "2026-11-14T08:48:31.208Z",
       "error": "",
       "latest": "2019",
       "status": "现行",
@@ -2383,31 +3730,39 @@
       "history": [
         {
           "code": "GB/T 708-2026",
-          "status": "即将实施",
+          "state": "即将实施",
           "implDate": "2026-12-01"
         },
         {
           "code": "GB/T 708-2019",
-          "status": "现行",
-          "implDate": "2020-02-01"
-        },
-        {
-          "code": "GB/T 708-2019",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2020-02-01"
         },
         {
           "code": "GB/T 708-2006",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2007-02-01"
         },
         {
           "code": "GB/T 708-1988",
-          "status": "废止",
+          "state": "废止",
           "implDate": "1989-07-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2019",
+          "state": "现行",
+          "implDate": "2020-02-01"
+        },
+        "openstd": {
+          "version": "2019",
+          "state": "现行",
+          "implDate": "2020-02-01"
+        }
+      }
     },
     "GB/T 7113": {
       "base": "GB/T 7113",
@@ -2419,10 +3774,30 @@
         "101706"
       ],
       "refCount": 2,
-      "checkedAt": "2026-11-14T04:29:50.747Z",
+      "checkedAt": "2026-11-14T08:48:33.059Z",
       "error": "",
-      "latest": "",
-      "status": "未查到"
+      "latest": "2003",
+      "status": "废止",
+      "confidence": "single",
+      "sources": {
+        "samr": {
+          "version": "2003",
+          "state": "废止",
+          "implDate": "2004-02-01"
+        },
+        "openstd": null
+      },
+      "name": "绝缘软管 定义和一般要求",
+      "implDate": "2004-02-01",
+      "code": "GB/T 7113-2003",
+      "history": [
+        {
+          "code": "GB/T 7113-2003",
+          "state": "废止",
+          "implDate": "2004-02-01"
+        }
+      ],
+      "outdated": false
     },
     "GB/T 7113.1": {
       "base": "GB/T 7113.1",
@@ -2435,7 +3810,7 @@
         "110403"
       ],
       "refCount": 3,
-      "checkedAt": "2026-11-14T04:29:52.625Z",
+      "checkedAt": "2026-11-14T08:48:34.700Z",
       "error": "",
       "latest": "2014",
       "status": "现行",
@@ -2445,11 +3820,24 @@
       "history": [
         {
           "code": "GB/T 7113.1-2014",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2015-02-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2014",
+          "state": "现行",
+          "implDate": "2015-02-01"
+        },
+        "openstd": {
+          "version": "2014",
+          "state": "现行",
+          "implDate": "2015-02-01"
+        }
+      }
     },
     "GB/T 7251": {
       "base": "GB/T 7251",
@@ -2465,10 +3853,16 @@
         "120306"
       ],
       "refCount": 8,
-      "checkedAt": "2026-11-14T04:29:54.350Z",
+      "checkedAt": "2026-11-14T08:48:36.553Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB/T 7251.1": {
       "base": "GB/T 7251.1",
@@ -2479,7 +3873,7 @@
         "120207"
       ],
       "refCount": 3,
-      "checkedAt": "2026-11-14T04:29:56.210Z",
+      "checkedAt": "2026-11-14T08:48:38.659Z",
       "error": "",
       "latest": "2023",
       "status": "现行",
@@ -2489,16 +3883,29 @@
       "history": [
         {
           "code": "GB/T 7251.1-2023",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2024-03-01"
         },
         {
           "code": "GB/T 7251.1-2013",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2015-01-13"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2023",
+          "state": "现行",
+          "implDate": "2024-03-01"
+        },
+        "openstd": {
+          "version": "2023",
+          "state": "现行",
+          "implDate": "2024-03-01"
+        }
+      }
     },
     "GB/T 7251.3": {
       "base": "GB/T 7251.3",
@@ -2511,7 +3918,7 @@
         "101907"
       ],
       "refCount": 2,
-      "checkedAt": "2026-11-14T04:29:58.055Z",
+      "checkedAt": "2026-11-14T08:48:40.353Z",
       "error": "",
       "latest": "2017",
       "status": "现行",
@@ -2521,21 +3928,34 @@
       "history": [
         {
           "code": "GB/T 7251.3-2026",
-          "status": "即将实施",
+          "state": "即将实施",
           "implDate": "2027-04-01"
         },
         {
           "code": "GB/T 7251.3-2017",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2018-05-01"
         },
         {
           "code": "GB/T 7251.3-2006",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2007-03-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-05-01"
+        },
+        "openstd": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-05-01"
+        }
+      }
     },
     "GB/T 7423": {
       "base": "GB/T 7423",
@@ -2544,10 +3964,16 @@
         "101801"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:29:59.752Z",
+      "checkedAt": "2026-11-14T08:48:42.076Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB/T 755": {
       "base": "GB/T 755",
@@ -2559,7 +3985,7 @@
         "101810"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:01.803Z",
+      "checkedAt": "2026-11-14T08:48:43.717Z",
       "error": "",
       "latest": "2025",
       "status": "现行",
@@ -2569,21 +3995,34 @@
       "history": [
         {
           "code": "GB/T 755-2025",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2026-02-01"
         },
         {
           "code": "GB/T 755-2019",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2020-07-01"
         },
         {
           "code": "GB/T 755-2008",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2009-06-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2025",
+          "state": "现行",
+          "implDate": "2026-02-01"
+        },
+        "openstd": {
+          "version": "2025",
+          "state": "现行",
+          "implDate": "2026-02-01"
+        }
+      }
     },
     "GB/T 7666": {
       "base": "GB/T 7666",
@@ -2593,7 +4032,7 @@
         "100510"
       ],
       "refCount": 2,
-      "checkedAt": "2026-11-14T04:30:04.062Z",
+      "checkedAt": "2026-11-14T08:48:45.559Z",
       "error": "",
       "latest": "2005",
       "status": "现行",
@@ -2603,21 +4042,34 @@
       "history": [
         {
           "code": "GB/T 7666-2026",
-          "status": "即将实施",
+          "state": "即将实施",
           "implDate": "2026-12-01"
         },
         {
           "code": "GB/T 7666-2005",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2006-02-01"
         },
         {
           "code": "GB/T 7666-1987",
-          "status": "废止",
+          "state": "废止",
           "implDate": "1988-01-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2005",
+          "state": "现行",
+          "implDate": "2006-02-01"
+        },
+        "openstd": {
+          "version": "2005",
+          "state": "现行",
+          "implDate": "2006-02-01"
+        }
+      }
     },
     "GB/T 7676": {
       "base": "GB/T 7676",
@@ -2626,10 +4078,16 @@
         "102007"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:06.003Z",
+      "checkedAt": "2026-11-14T08:48:47.344Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB/T 7676.1": {
       "base": "GB/T 7676.1",
@@ -2644,7 +4102,7 @@
         "100910"
       ],
       "refCount": 5,
-      "checkedAt": "2026-11-14T04:30:07.865Z",
+      "checkedAt": "2026-11-14T08:48:49.130Z",
       "error": "",
       "latest": "2017",
       "status": "现行",
@@ -2654,16 +4112,29 @@
       "history": [
         {
           "code": "GB/T 7676.1-2017",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2018-04-01"
         },
         {
           "code": "GB/T 7676.1-1998",
-          "status": "废止",
+          "state": "废止",
           "implDate": "1999-05-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-04-01"
+        },
+        "openstd": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-04-01"
+        }
+      }
     },
     "GB/T 7676.2": {
       "base": "GB/T 7676.2",
@@ -2675,7 +4146,7 @@
         "100902"
       ],
       "refCount": 2,
-      "checkedAt": "2026-11-14T04:30:09.593Z",
+      "checkedAt": "2026-11-14T08:48:50.996Z",
       "error": "",
       "latest": "2017",
       "status": "现行",
@@ -2685,16 +4156,29 @@
       "history": [
         {
           "code": "GB/T 7676.2-2017",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2018-04-01"
         },
         {
           "code": "GB/T 7676.2-1998",
-          "status": "废止",
+          "state": "废止",
           "implDate": "1999-05-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-04-01"
+        },
+        "openstd": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-04-01"
+        }
+      }
     },
     "GB/T 7676.3": {
       "base": "GB/T 7676.3",
@@ -2705,7 +4189,7 @@
         "100903"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:11.600Z",
+      "checkedAt": "2026-11-14T08:48:52.836Z",
       "error": "",
       "latest": "2017",
       "status": "现行",
@@ -2715,16 +4199,29 @@
       "history": [
         {
           "code": "GB/T 7676.3-2017",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2018-04-01"
         },
         {
           "code": "GB/T 7676.3-1998",
-          "status": "废止",
+          "state": "废止",
           "implDate": "1999-05-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-04-01"
+        },
+        "openstd": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-04-01"
+        }
+      }
     },
     "GB/T 7676.4": {
       "base": "GB/T 7676.4",
@@ -2735,7 +4232,7 @@
         "100904"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:13.979Z",
+      "checkedAt": "2026-11-14T08:48:54.879Z",
       "error": "",
       "latest": "2017",
       "status": "现行",
@@ -2745,16 +4242,29 @@
       "history": [
         {
           "code": "GB/T 7676.4-2017",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2018-04-01"
         },
         {
           "code": "GB/T 7676.4-1998",
-          "status": "废止",
+          "state": "废止",
           "implDate": "1999-05-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-04-01"
+        },
+        "openstd": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-04-01"
+        }
+      }
     },
     "GB/T 7676.5": {
       "base": "GB/T 7676.5",
@@ -2766,7 +4276,7 @@
         "100906"
       ],
       "refCount": 2,
-      "checkedAt": "2026-11-14T04:30:16.265Z",
+      "checkedAt": "2026-11-14T08:48:56.672Z",
       "error": "",
       "latest": "2017",
       "status": "现行",
@@ -2776,16 +4286,29 @@
       "history": [
         {
           "code": "GB/T 7676.5-2017",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2018-04-01"
         },
         {
           "code": "GB/T 7676.5-1998",
-          "status": "废止",
+          "state": "废止",
           "implDate": "1999-05-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-04-01"
+        },
+        "openstd": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-04-01"
+        }
+      }
     },
     "GB/T 7725": {
       "base": "GB/T 7725",
@@ -2797,7 +4320,7 @@
         "120406"
       ],
       "refCount": 2,
-      "checkedAt": "2026-11-14T04:30:18.371Z",
+      "checkedAt": "2026-11-14T08:48:58.392Z",
       "error": "",
       "latest": "2022",
       "status": "现行",
@@ -2807,16 +4330,34 @@
       "history": [
         {
           "code": "GB/T 7725-2022",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2023-05-01"
         },
         {
           "code": "GB/T 7725-2004",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2005-03-01"
+        },
+        {
+          "code": "GB/T 7725-1996",
+          "state": "废止",
+          "implDate": "1997-01-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2022",
+          "state": "现行",
+          "implDate": "2023-05-01"
+        },
+        "openstd": {
+          "version": "2022",
+          "state": "现行",
+          "implDate": "2023-05-01"
+        }
+      }
     },
     "GB/T 8110": {
       "base": "GB/T 8110",
@@ -2825,7 +4366,7 @@
         "120204"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:20.271Z",
+      "checkedAt": "2026-11-14T08:49:00.138Z",
       "error": "",
       "latest": "2020",
       "status": "现行",
@@ -2835,16 +4376,34 @@
       "history": [
         {
           "code": "GB/T 8110-2020",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2021-06-01"
         },
         {
           "code": "GB/T 8110-2008",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2009-01-01"
+        },
+        {
+          "code": "GB/T 8110-1995",
+          "state": "废止",
+          "implDate": "1996-05-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2020",
+          "state": "现行",
+          "implDate": "2021-06-01"
+        },
+        "openstd": {
+          "version": "2020",
+          "state": "现行",
+          "implDate": "2021-06-01"
+        }
+      }
     },
     "GB/T 8163": {
       "base": "GB/T 8163",
@@ -2856,7 +4415,7 @@
         "110102"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:22.023Z",
+      "checkedAt": "2026-11-14T08:49:01.833Z",
       "error": "",
       "latest": "2018",
       "status": "现行",
@@ -2866,21 +4425,34 @@
       "history": [
         {
           "code": "GB/T 8163-2018",
-          "status": "现行",
-          "implDate": "2019-02-01"
-        },
-        {
-          "code": "GB/T 8163-2018",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2019-02-01"
         },
         {
           "code": "GB/T 8163-2008",
-          "status": "废止",
+          "state": "废止",
           "implDate": "2009-04-01"
+        },
+        {
+          "code": "GB/T 8163-1999",
+          "state": "废止",
+          "implDate": "2000-08-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2018",
+          "state": "现行",
+          "implDate": "2019-02-01"
+        },
+        "openstd": {
+          "version": "2018",
+          "state": "现行",
+          "implDate": "2019-02-01"
+        }
+      }
     },
     "GB/T 8287": {
       "base": "GB/T 8287",
@@ -2889,10 +4461,16 @@
         "101704"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:23.777Z",
+      "checkedAt": "2026-11-14T08:49:03.654Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB/T 8287.1": {
       "base": "GB/T 8287.1",
@@ -2903,7 +4481,7 @@
         "101703"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:26.358Z",
+      "checkedAt": "2026-11-14T08:49:05.683Z",
       "error": "",
       "latest": "2008",
       "status": "现行",
@@ -2913,11 +4491,24 @@
       "history": [
         {
           "code": "GB/T 8287.1-2008",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2009-04-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2008",
+          "state": "现行",
+          "implDate": "2009-04-01"
+        },
+        "openstd": {
+          "version": "2008",
+          "state": "现行",
+          "implDate": "2009-04-01"
+        }
+      }
     },
     "GB/T 8287.2": {
       "base": "GB/T 8287.2",
@@ -2928,7 +4519,7 @@
         "101703"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:28.125Z",
+      "checkedAt": "2026-11-14T08:49:07.571Z",
       "error": "",
       "latest": "2008",
       "status": "现行",
@@ -2938,11 +4529,29 @@
       "history": [
         {
           "code": "GB/T 8287.2-2008",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2009-04-01"
+        },
+        {
+          "code": "GB/T 8287.2-1999",
+          "state": "废止",
+          "implDate": "1999-10-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2008",
+          "state": "现行",
+          "implDate": "2009-04-01"
+        },
+        "openstd": {
+          "version": "2008",
+          "state": "现行",
+          "implDate": "2009-04-01"
+        }
+      }
     },
     "GB/T 845": {
       "base": "GB/T 845",
@@ -2951,7 +4560,7 @@
         "120110"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:29.930Z",
+      "checkedAt": "2026-11-14T08:49:09.246Z",
       "error": "",
       "latest": "2017",
       "status": "现行",
@@ -2961,16 +4570,29 @@
       "history": [
         {
           "code": "GB/T 845-2017",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2018-02-01"
         },
         {
           "code": "GB/T 845-1985",
-          "status": "废止",
+          "state": "废止",
           "implDate": "1986-06-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-02-01"
+        },
+        "openstd": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-02-01"
+        }
+      }
     },
     "GB/T 846": {
       "base": "GB/T 846",
@@ -2979,7 +4601,7 @@
         "120110"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:31.734Z",
+      "checkedAt": "2026-11-14T08:49:10.930Z",
       "error": "",
       "latest": "2017",
       "status": "现行",
@@ -2989,16 +4611,29 @@
       "history": [
         {
           "code": "GB/T 846-2017",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2018-02-01"
         },
         {
           "code": "GB/T 846-1985",
-          "status": "废止",
+          "state": "废止",
           "implDate": "1986-06-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-02-01"
+        },
+        "openstd": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-02-01"
+        }
+      }
     },
     "GB/T 848": {
       "base": "GB/T 848",
@@ -3007,7 +4642,7 @@
         "120105"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:33.713Z",
+      "checkedAt": "2026-11-14T08:49:12.554Z",
       "error": "",
       "latest": "2002",
       "status": "现行",
@@ -3017,11 +4652,24 @@
       "history": [
         {
           "code": "GB/T 848-2002",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2003-06-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2002",
+          "state": "现行",
+          "implDate": "2003-06-01"
+        },
+        "openstd": {
+          "version": "2002",
+          "state": "现行",
+          "implDate": "2003-06-01"
+        }
+      }
     },
     "GB/T 859": {
       "base": "GB/T 859",
@@ -3030,7 +4678,7 @@
         "120106"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:35.661Z",
+      "checkedAt": "2026-11-14T08:49:14.353Z",
       "error": "",
       "latest": "2025",
       "status": "现行",
@@ -3040,11 +4688,29 @@
       "history": [
         {
           "code": "GB/T 859-2025",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2026-02-01"
+        },
+        {
+          "code": "GB/T 859-1987",
+          "state": "废止",
+          "implDate": "1988-02-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2025",
+          "state": "现行",
+          "implDate": "2026-02-01"
+        },
+        "openstd": {
+          "version": "2025",
+          "state": "现行",
+          "implDate": "2026-02-01"
+        }
+      }
     },
     "GB/T 867": {
       "base": "GB/T 867",
@@ -3053,7 +4719,7 @@
         "120109"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:37.413Z",
+      "checkedAt": "2026-11-14T08:49:16.099Z",
       "error": "",
       "latest": "1986",
       "status": "现行",
@@ -3063,11 +4729,24 @@
       "history": [
         {
           "code": "GB/T 867-1986",
-          "status": "现行",
+          "state": "现行",
           "implDate": "1987-06-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "1986",
+          "state": "现行",
+          "implDate": "1987-06-01"
+        },
+        "openstd": {
+          "version": "1986",
+          "state": "现行",
+          "implDate": "1987-06-01"
+        }
+      }
     },
     "GB/T 869": {
       "base": "GB/T 869",
@@ -3076,7 +4755,7 @@
         "120109"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:39.133Z",
+      "checkedAt": "2026-11-14T08:49:17.917Z",
       "error": "",
       "latest": "1986",
       "status": "现行",
@@ -3086,11 +4765,24 @@
       "history": [
         {
           "code": "GB/T 869-1986",
-          "status": "现行",
+          "state": "现行",
           "implDate": "1987-06-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "1986",
+          "state": "现行",
+          "implDate": "1987-06-01"
+        },
+        "openstd": {
+          "version": "1986",
+          "state": "现行",
+          "implDate": "1987-06-01"
+        }
+      }
     },
     "GB/T 893": {
       "base": "GB/T 893",
@@ -3099,7 +4791,7 @@
         "120111"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:40.885Z",
+      "checkedAt": "2026-11-14T08:49:20.005Z",
       "error": "",
       "latest": "2017",
       "status": "现行",
@@ -3109,11 +4801,24 @@
       "history": [
         {
           "code": "GB/T 893-2017",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2018-02-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-02-01"
+        },
+        "openstd": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-02-01"
+        }
+      }
     },
     "GB/T 894": {
       "base": "GB/T 894",
@@ -3122,7 +4827,7 @@
         "120111"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:42.759Z",
+      "checkedAt": "2026-11-14T08:49:21.692Z",
       "error": "",
       "latest": "2017",
       "status": "现行",
@@ -3132,11 +4837,24 @@
       "history": [
         {
           "code": "GB/T 894-2017",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2018-02-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-02-01"
+        },
+        "openstd": {
+          "version": "2017",
+          "state": "现行",
+          "implDate": "2018-02-01"
+        }
+      }
     },
     "GB/T 901": {
       "base": "GB/T 901",
@@ -3146,7 +4864,7 @@
         "120104"
       ],
       "refCount": 2,
-      "checkedAt": "2026-11-14T04:30:44.483Z",
+      "checkedAt": "2026-11-14T08:49:23.395Z",
       "error": "",
       "latest": "1988",
       "status": "现行",
@@ -3156,11 +4874,24 @@
       "history": [
         {
           "code": "GB/T 901-1988",
-          "status": "现行",
+          "state": "现行",
           "implDate": "1989-01-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "1988",
+          "state": "现行",
+          "implDate": "1989-01-01"
+        },
+        "openstd": {
+          "version": "1988",
+          "state": "现行",
+          "implDate": "1989-01-01"
+        }
+      }
     },
     "GB/T 93": {
       "base": "GB/T 93",
@@ -3169,7 +4900,7 @@
         "120106"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:46.290Z",
+      "checkedAt": "2026-11-14T08:49:25.232Z",
       "error": "",
       "latest": "2025",
       "status": "现行",
@@ -3179,11 +4910,29 @@
       "history": [
         {
           "code": "GB/T 93-2025",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2026-02-01"
+        },
+        {
+          "code": "GB/T 93-1987",
+          "state": "废止",
+          "implDate": "1988-02-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2025",
+          "state": "现行",
+          "implDate": "2026-02-01"
+        },
+        "openstd": {
+          "version": "2025",
+          "state": "现行",
+          "implDate": "2026-02-01"
+        }
+      }
     },
     "GB/T 9330": {
       "base": "GB/T 9330",
@@ -3194,7 +4943,7 @@
         "110302"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:48.071Z",
+      "checkedAt": "2026-11-14T08:49:26.957Z",
       "error": "",
       "latest": "2020",
       "status": "现行",
@@ -3204,11 +4953,24 @@
       "history": [
         {
           "code": "GB/T 9330-2020",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2020-10-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2020",
+          "state": "现行",
+          "implDate": "2020-10-01"
+        },
+        "openstd": {
+          "version": "2020",
+          "state": "现行",
+          "implDate": "2020-10-01"
+        }
+      }
     },
     "GB/T 9331": {
       "base": "GB/T 9331",
@@ -3219,7 +4981,7 @@
         "110302"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:49.801Z",
+      "checkedAt": "2026-11-14T08:49:28.654Z",
       "error": "",
       "latest": "2008",
       "status": "现行",
@@ -3228,12 +4990,30 @@
       "code": "GB/T 9331-2008",
       "history": [
         {
+          "code": "GB/T 9331-2026",
+          "state": "即将实施",
+          "implDate": "2027-05-01"
+        },
+        {
           "code": "GB/T 9331-2008",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2009-04-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2008",
+          "state": "现行",
+          "implDate": "2009-04-01"
+        },
+        "openstd": {
+          "version": "2008",
+          "state": "现行",
+          "implDate": "2009-04-01"
+        }
+      }
     },
     "GB/T 9546.1": {
       "base": "GB/T 9546.1",
@@ -3247,10 +5027,30 @@
         "101307"
       ],
       "refCount": 4,
-      "checkedAt": "2026-11-14T04:30:51.498Z",
+      "checkedAt": "2026-11-14T08:49:30.721Z",
       "error": "",
-      "latest": "",
-      "status": "未查到"
+      "latest": "2026",
+      "status": "即将实施",
+      "confidence": "single",
+      "sources": {
+        "samr": {
+          "version": "2026",
+          "state": "即将实施",
+          "implDate": "2027-05-01"
+        },
+        "openstd": null
+      },
+      "name": "电子设备用固定电阻器 第1部分：总规范",
+      "implDate": "2027-05-01",
+      "code": "GB/T 9546.1-2026",
+      "history": [
+        {
+          "code": "GB/T 9546.1-2026",
+          "state": "即将实施",
+          "implDate": "2027-05-01"
+        }
+      ],
+      "outdated": false
     },
     "GB/T 9634": {
       "base": "GB/T 9634",
@@ -3259,10 +5059,16 @@
         "101803"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:53.291Z",
+      "checkedAt": "2026-11-14T08:49:32.658Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "GB/T 97.1": {
       "base": "GB/T 97.1",
@@ -3271,7 +5077,7 @@
         "120105"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:30:55.154Z",
+      "checkedAt": "2026-11-14T08:49:34.360Z",
       "error": "",
       "latest": "2002",
       "status": "现行",
@@ -3281,11 +5087,24 @@
       "history": [
         {
           "code": "GB/T 97.1-2002",
-          "status": "现行",
+          "state": "现行",
           "implDate": "2003-06-01"
         }
       ],
-      "outdated": false
+      "outdated": false,
+      "confidence": "high",
+      "sources": {
+        "samr": {
+          "version": "2002",
+          "state": "现行",
+          "implDate": "2003-06-01"
+        },
+        "openstd": {
+          "version": "2002",
+          "state": "现行",
+          "implDate": "2003-06-01"
+        }
+      }
     },
     "GB/T 9813": {
       "base": "GB/T 9813",
@@ -3296,10 +5115,30 @@
         "120403"
       ],
       "refCount": 3,
-      "checkedAt": "2026-11-14T04:30:56.996Z",
+      "checkedAt": "2026-11-14T08:49:36.133Z",
       "error": "",
-      "latest": "",
-      "status": "未查到"
+      "latest": "2000",
+      "status": "废止",
+      "confidence": "single",
+      "sources": {
+        "samr": {
+          "version": "2000",
+          "state": "废止",
+          "implDate": "2001-08-01"
+        },
+        "openstd": null
+      },
+      "name": "微型计算机通用规范",
+      "implDate": "2001-08-01",
+      "code": "GB/T 9813-2000",
+      "history": [
+        {
+          "code": "GB/T 9813-2000",
+          "state": "废止",
+          "implDate": "2001-08-01"
+        }
+      ],
+      "outdated": false
     },
     "JB/T 3837": {
       "base": "JB/T 3837",
@@ -3311,10 +5150,16 @@
         "100702"
       ],
       "refCount": 2,
-      "checkedAt": "2026-11-14T04:30:58.943Z",
+      "checkedAt": "2026-11-14T08:49:37.783Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     },
     "JB/T 9286": {
       "base": "JB/T 9286",
@@ -3323,10 +5168,16 @@
         "100504"
       ],
       "refCount": 1,
-      "checkedAt": "2026-11-14T04:31:00.877Z",
+      "checkedAt": "2026-11-14T08:49:40.163Z",
       "error": "",
       "latest": "",
-      "status": "未查到"
+      "status": "未查到",
+      "confidence": "none",
+      "sources": {
+        "samr": null,
+        "openstd": null
+      },
+      "outdated": false
     }
   }
 }

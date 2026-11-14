@@ -22,6 +22,7 @@ const WEB = 'http://127.0.0.1:3130'
 
 let pass = 0
 const fails = []
+const noRef = []   // A 级但未填条款号的条目（不算失败，汇总提示）
 
 function ok(name, cond, detail) {
   if (cond) pass++
@@ -56,6 +57,10 @@ for (const code of codes) {
 
   ok(tag + ' subName 非空', !!String(g.subName || '').trim())
   ok(tag + ' source 非空', !!String(g.source || '').trim())
+  // 置信度：A=有国标可追溯 / B=无国标按行业惯例 / C=推定需复核
+  ok(tag + ' confidence 合法（A/B/C）', ['A', 'B', 'C'].indexOf(g.confidence) >= 0, String(g.confidence))
+  // A 级应尽量补条款号；无条款号不报错，但会统计出来
+  if (g.confidence === 'A' && !String(g.sourceRef || '').trim()) noRef.push(code)
 
   // 标准必须带年份（如 GB/T 14048.2-2020），且不得引用已废止版本。
   // 例外：明确标注「无对应国标」的条目（兜底小类/行业惯例类），必须写明依据来源
@@ -136,6 +141,12 @@ console.log('\n覆盖：' + covered + ' / ' + total + '（' + (covered / total *
 
 console.log('\n' + '='.repeat(50))
 console.log('通过 ' + pass + ' 项，失败 ' + fails.length + ' 项')
+// A 级但未填条款号：不算失败，但提示补齐（条款号是「可追溯」的关键）
+if (noRef.length) {
+  console.log('\nA 级待补条款号：' + noRef.length + ' 条（不影响通过，建议补齐）')
+  noRef.slice(0, 8).forEach((c) => console.log('  · ' + c))
+  if (noRef.length > 8) console.log('  …还有 ' + (noRef.length - 8) + ' 条')
+}
 if (fails.length) {
   console.log('\n失败明细：')
   fails.forEach((f) => console.log('  ✗ ' + f))

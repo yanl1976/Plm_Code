@@ -120,6 +120,95 @@ export async function queryStandard(base, timeoutMs = 15000) {
   }
 }
 
+/**
+ * 第二数据源：全国标准信息公共服务平台（官方登记库，返回 JSON）
+ * 覆盖比 openstd 全（含已废止、即将实施），字段直接带 STATE，不用解析 HTML
+ */
+export async function queryStdSamr(base, timeoutMs = 15000) {
+  const url = 'https://std.samr.gov.cn/gb/search/gbQueryPage?searchText=' + encodeURIComponent(base)
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+  try {
+    const r = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PlmStdWatch/1.0)' },
+      signal: ctrl.signal,
+    })
+    if (!r.ok) throw new Error('HTTP ' + r.status)
+    const j = await r.json()
+    // 接口会把命中词包在 <sacinfo> 里（<sacinfo>GB</sacinfo>/<sacinfo>T</sacinfo> …），必须先剥标签
+    const clean = (s) => String(s == null ? '' : s).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
+    const rows = (Array.isArray(j.rows) ? j.rows : []).map((x) => ({
+      code: clean(x.C_STD_CODE),
+      name: clean(x.C_C_NAME),
+      state: clean(x.STATE),
+      actDate: clean(x.ACT_DATE),
+    }))
+    const norm = (s) => String(s).replace(/\s+/g, '').toUpperCase()
+    const target = norm(base)
+    const hit = rows.filter((x) => {
+      const m = x.code.match(/^(.*?)-\d{4}$/)
+      return m && norm(m[1]) === target
+    })
+    if (!hit.length) return { base, found: false, current: null, history: [] }
+
+    const verOf = (x) => {
+      const m = x.code.match(/-(\d{4})$/)
+      return m ? Number(m[1]) : 0
+    }
+    hit.sort((x, y) => verOf(y) - verOf(x))
+    const cur = hit.find((x) => /现行/.test(x.state))
+      || hit.find((x) => /即将实施/.test(x.state))
+      || hit[0]
+    return {
+      base,
+      found: true,
+      current: {
+        version: (cur.code.match(/-(\d{4})$/) || [])[1] || '',
+        code: cur.code,
+        name: cur.name,
+        state: cur.state,
+        implDate: cur.actDate,
+      },
+      history: hit.map((x) => ({ code: x.code, state: x.state, implDate: x.actDate })),
+    }
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+/** 状态归一：两源措辞不完全一致，先统一再比 */
+function normState(s) {
+  const t = String(s || '')
+  if (/即将实施|尚未实施/.test(t)) return 'soon'
+  if (/现行|有效/.test(t)) return 'active'
+  if (/废止|作废|失效/.test(t)) return 'abolished'
+  return t ? 'other' : 'unknown'
+}
+
+/**
+ * 双源交叉验证
+ *   high     两源版本与状态都一致
+ *   conflict 存在分歧（版本不同或状态不同）→ 界面标黄，人工仲裁
+ *   single   只有一个源查到
+ *   none     两源都查不到
+ */
+export function crossValidate(samr, openstd) {
+  const a = samr && samr.found ? samr.current : null
+  const b = openstd && openstd.found ? openstd.current : null
+  const sources = {
+    samr: a ? { version: a.version, state: a.state, implDate: a.implDate } : null,
+    openstd: b ? { version: b.version, state: b.status, implDate: b.implDate } : null,
+  }
+  if (a && b) {
+    const sameState = normState(a.state) === normState(b.status)
+    const sameVer = String(a.version) === String(b.version)
+    if (sameState && sameVer) return { confidence: 'high', sources, current: a }
+    return { confidence: 'conflict', sources, current: a }
+  }
+  if (a || b) return { confidence: 'single', sources, current: a || b }
+  return { confidence: 'none', sources, current: null }
+}
+
 export function loadWatch() {
   try { return JSON.parse(fs.readFileSync(WATCH, 'utf8')) } catch (e) {
     return { meta: { period: 'quarter', autoCheck: true, lastRunAt: null }, standards: {} }
@@ -208,25 +297,36 @@ export async function runCheck(opt = {}) {
       try { opt.onProgress({ i, total: list.length, base }) } catch (e) { }
     }
     try {
-      const r = await queryWithRetry(base)
+      // 双源并行：samr（官方登记库，JSON）为主，openstd（全文公开系统）为辅
+      // 两源结论不一致时标 conflict，界面标黄由人工仲裁，不自动下结论
+      const [samr, openstd] = await Promise.all([
+        queryStdSamr(base).catch(() => null),
+        queryWithRetry(base).catch(() => null),
+      ])
+      const cv = crossValidate(samr, openstd)
       const item = watch.standards[base] || { base }
       item.checkedAt = new Date().toISOString()
       item.error = ''
-      if (r.found && r.current) {
-        item.latest = r.current.version
-        item.status = r.current.status
-        item.name = r.current.name
-        item.implDate = r.current.implDate
-        item.code = r.current.code
-        item.history = r.history.slice(0, 8)
+      item.confidence = cv.confidence
+      item.sources = cv.sources
+      if (cv.current) {
+        item.latest = cv.current.version
+        // 状态优先取 samr（覆盖全），没有则用 openstd
+        item.status = (samr && samr.found) ? samr.current.state : (openstd && openstd.current.status) || ''
+        item.name = cv.current.name || ''
+        item.implDate = cv.current.implDate || ''
+        item.code = cv.current.code || ''
+        item.history = ((samr && samr.history) || (openstd && openstd.history) || []).slice(0, 8)
         // 库里引用的版本 < 最新版本 → 标记过期
         const refMax = Math.max(...(item.refVers || []).map((v) => Number(v)).filter((n) => n > 0), 0)
-        item.outdated = !!(refMax && Number(r.current.version) > refMax)
+        item.outdated = !!(refMax && Number(cv.current.version) > refMax)
         if (item.outdated) result.outdated++
       } else {
         item.latest = ''
         item.status = '未查到'
+        item.outdated = false
       }
+      if (cv.confidence === 'conflict') result.conflicts = (result.conflicts || 0) + 1
       watch.standards[base] = item
       result.checked++
       result.items.push({ base, ok: true, ...item })
@@ -277,6 +377,14 @@ export function summary() {
     due: due.map((x) => x.base),
     outdated: stds.filter((x) => x.outdated).map((x) => x.base),
     failed: stds.filter((x) => x.error).map((x) => x.base),
+    // 双源结论不一致：界面标黄，需人工仲裁（不自动判过期）
+    conflicts: stds.filter((x) => x.confidence === 'conflict').map((x) => x.base),
+    confidenceStats: {
+      high: stds.filter((x) => x.confidence === 'high').length,
+      conflict: stds.filter((x) => x.confidence === 'conflict').length,
+      single: stds.filter((x) => x.confidence === 'single').length,
+      none: stds.filter((x) => x.confidence === 'none').length,
+    },
     standards: withSubs.sort((a, b) => String(a.base).localeCompare(String(b.base))),
   }
 }

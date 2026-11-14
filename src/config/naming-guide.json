@@ -5,7 +5,7 @@
     "usage": "录入名称/规格时，若该小类有范式则显示「标准写法 + 示例」；用户可完全忽略。",
     "note": "系统内乘号统一用 *（国标排版用 ×）；单位统一 mm²；电压用斜杠式（450/750V、0.6/1kV）。",
     "version": "3.4",
-    "updatedAt": "2026-11-14T05:22:39.095Z",
+    "updatedAt": "2026-11-14T08:50:22.632Z",
     "lastBatch": "2026-11-14 第 21 批（120307~120408，最后一批）：新增 9 个（120307、120401、120402、120403、120404、120405、120406、120407、120408）；全库 209 个小类覆盖完成",
     "batchLog": [
       {
@@ -179,7 +179,8 @@
       }
     ],
     "standardPolicy": "所有 source 必须引用现行有效标准，格式为「标准号-年份《标准名称》」；已废止版本不得引用。版本以全国标准信息公共服务平台（std.samr.gov.cn）核实为准。",
-    "lastAudit": "2026-11-14 「其它」类兜底小类：不合并不重命名，nameRule 写明所属中类与可归入的具体小类"
+    "lastAudit": "2026-11-14 「其它」类兜底小类：不合并不重命名，nameRule 写明所属中类与可归入的具体小类",
+    "confidencePolicy": "A=有国标可追溯 / B=无国标按行业惯例 / C=推定需复核"
   },
   "subs": {
     "100101": {
@@ -226,7 +227,9 @@
           "desc": "Ue",
           "example": "400V"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100102": {
       "subName": "抽出式框架断路器",
@@ -271,7 +274,9 @@
           "desc": "Ue",
           "example": "400V"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100103": {
       "subName": "固定式塑壳断路器",
@@ -317,7 +322,9 @@
           "desc": "Ue",
           "example": "400V"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100104": {
       "subName": "抽出式塑壳断路器",
@@ -362,7 +369,9 @@
           "desc": "Ue",
           "example": "400V"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100105": {
       "subName": "微型断路器",
@@ -404,7 +413,9 @@
         }
       ],
       "example": "NB8-40J 3P C16 6kA 230/400V",
-      "avoid": "3P C16 断路器（名称重复、缺分断与电压）"
+      "avoid": "3P C16 断路器（名称重复、缺分断与电压）",
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100106": {
       "subName": "漏电断路器",
@@ -451,7 +462,9 @@
           "desc": "Ue",
           "example": "400V"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100107": {
       "subName": "断路器附件",
@@ -486,7 +499,9 @@
           "desc": "触头写 2NO+2NC；脱扣器写线圈电压",
           "example": "2NO+2NC"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100108": {
       "subName": "高压真空断路器",
@@ -522,7 +537,9 @@
           "desc": "Isc：20/25/31.5/40kA",
           "example": "31.5kA"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100201": {
       "subName": "交流接触器",
@@ -562,7 +579,9 @@
           "desc": "控制线圈额定电压",
           "example": "220V"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100202": {
       "subName": "直流接触器",
@@ -602,7 +621,9 @@
           "desc": "控制线圈额定电压（直流）",
           "example": "220V"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100203": {
       "subName": "交流接触器线圈",
@@ -637,7 +658,9 @@
           "desc": "50Hz / 50/60Hz",
           "example": "50Hz"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100204": {
       "subName": "接触器附件",
@@ -672,7 +695,9 @@
           "desc": "触头写 2NO+2NC；延时头写 0.1~3s",
           "example": "2NO+2NC"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100301": {
       "subName": "刀熔开关",
@@ -712,7 +737,9 @@
           "desc": "配套熔断体的尺寸与电流",
           "example": "NH1 200A"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100302": {
       "subName": "熔断器开关",
@@ -747,7 +774,9 @@
           "desc": "AC-21 通断阻性 / AC-22 混阻感 / AC-23 通断电动机",
           "example": "AC-23"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100303": {
       "subName": "单投刀开关",
@@ -787,7 +816,9 @@
           "desc": "是否带灭弧罩、单投/双投、板前/板后接线",
           "example": "带灭弧罩"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100304": {
       "subName": "双投刀开关",
@@ -827,7 +858,9 @@
           "desc": "是否带灭弧罩、单投/双投、板前/板后接线",
           "example": "带灭弧罩"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100305": {
       "subName": "低压负荷开关",
@@ -867,7 +900,9 @@
           "desc": "是否带灭弧罩、单投/双投、板前/板后接线",
           "example": "带灭弧罩"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100401": {
       "subName": "熔断器",
@@ -912,7 +947,9 @@
           "desc": "gG 全范围通用 / aM 电动机保护",
           "example": "gG"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100402": {
       "subName": "熔座",
@@ -947,7 +984,9 @@
           "desc": "1P / 3P",
           "example": "3P"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100403": {
       "subName": "熔芯",
@@ -993,7 +1032,9 @@
           "desc": "gG 全范围通用 / aM 电动机保护",
           "example": "gG"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100404": {
       "subName": "避雷器",
@@ -1028,7 +1069,9 @@
           "desc": "Uc，允许长期施加的工频电压",
           "example": "13.6kV"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100405": {
       "subName": "浪涌保护器",
@@ -1069,7 +1112,9 @@
           "desc": "Up",
           "example": "1.5kV"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100406": {
       "subName": "交直流转换器",
@@ -1104,7 +1149,9 @@
           "desc": "额定输出电流",
           "example": "14.6A"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "100407": {
       "subName": "适配器",
@@ -1144,7 +1191,9 @@
           "desc": "输出插头规格",
           "example": "DC5.5*2.5"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "100408": {
       "subName": "其它",
@@ -1169,7 +1218,9 @@
           "desc": "按实物填写最关键的一项或几项参数",
           "example": "—"
         }
-      ]
+      ],
+      "confidence": "C",
+      "sourceRef": ""
     },
     "100501": {
       "subName": "电流互感器",
@@ -1204,7 +1255,9 @@
           "desc": "二次负荷，单位 VA",
           "example": "5VA"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100502": {
       "subName": "电压互感器",
@@ -1239,7 +1292,9 @@
           "desc": "单位 VA",
           "example": "30VA"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100503": {
       "subName": "零序电流互感器",
@@ -1274,7 +1329,9 @@
           "desc": "通常 5P10 / 10P10",
           "example": "5P10"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100504": {
       "subName": "分流器",
@@ -1308,7 +1365,9 @@
           "desc": "0.5 级 / 0.2 级",
           "example": "0.5级"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "100505": {
       "subName": "霍尔元件",
@@ -1343,7 +1402,9 @@
           "desc": "DC 供电",
           "example": "24V"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "100506": {
       "subName": "热电偶",
@@ -1383,7 +1444,9 @@
           "desc": "插入深度 L",
           "example": "300"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100507": {
       "subName": "电流传感器",
@@ -1417,7 +1480,9 @@
           "desc": "DC 供电",
           "example": "24V"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "100508": {
       "subName": "电压传感器",
@@ -1451,7 +1516,9 @@
           "desc": "DC 供电",
           "example": "24V"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "100509": {
       "subName": "压力传感器",
@@ -1491,7 +1558,9 @@
           "desc": "过程连接螺纹",
           "example": "G1/4"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "100510": {
       "subName": "温湿度传感器",
@@ -1536,7 +1605,9 @@
           "desc": "DC 供电",
           "example": "24V"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "100601": {
       "subName": "三相电抗器",
@@ -1571,7 +1642,9 @@
           "desc": "串联电抗器电抗百分比",
           "example": "6%"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100602": {
       "subName": "单相电抗器",
@@ -1605,7 +1678,9 @@
           "desc": "电抗百分比",
           "example": "7%"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100701": {
       "subName": "三相变压器",
@@ -1641,7 +1716,9 @@
           "desc": "Dyn11 / Yyn0 等",
           "example": "Dyn11"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100702": {
       "subName": "单相变压器",
@@ -1671,7 +1748,9 @@
           "desc": "一次/二次电压",
           "example": "380/220V"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100703": {
       "subName": "脉冲变压器",
@@ -1706,7 +1785,9 @@
           "desc": "单位 A",
           "example": "5"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "100704": {
       "subName": "其他变压器",
@@ -1736,7 +1817,9 @@
           "desc": "一次/二次电压",
           "example": "380/220V"
         }
-      ]
+      ],
+      "confidence": "C",
+      "sourceRef": ""
     },
     "100801": {
       "subName": "时间继电器",
@@ -1771,7 +1854,9 @@
           "desc": "控制线圈额定电压",
           "example": "220V"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100802": {
       "subName": "中间继电器",
@@ -1801,7 +1886,9 @@
           "desc": "DC24V / AC220V 等",
           "example": "24V"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100803": {
       "subName": "保护继电器",
@@ -1836,7 +1923,9 @@
           "desc": "辅助电源",
           "example": "220V"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "100804": {
       "subName": "继电器座",
@@ -1866,7 +1955,9 @@
           "desc": "配套的继电器型号",
           "example": "JQX-13F"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100805": {
       "subName": "热继电器",
@@ -1896,7 +1987,9 @@
           "desc": "配套接触器型号",
           "example": "CJX2-1210"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100901": {
       "subName": "电压表",
@@ -1931,7 +2024,9 @@
           "desc": "指针式 / 数显式",
           "example": "指针式"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100902": {
       "subName": "电流表",
@@ -1966,7 +2061,9 @@
           "desc": "指针式 / 数显式",
           "example": "指针式"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100903": {
       "subName": "功率表",
@@ -2001,7 +2098,9 @@
           "desc": "直接接入 / 经互感器接入",
           "example": "经互感器接入"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100904": {
       "subName": "频率表",
@@ -2036,7 +2135,9 @@
           "desc": "0.5 / 1.0 / 1.5 级",
           "example": "1.5"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100905": {
       "subName": "功率因数表",
@@ -2071,7 +2172,9 @@
           "desc": "直接接入 / 经互感器接入",
           "example": "经互感器接入"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100906": {
       "subName": "同期表",
@@ -2101,7 +2204,9 @@
           "desc": "按表计等级",
           "example": "2.5"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100907": {
       "subName": "电度表",
@@ -2147,7 +2252,9 @@
           "desc": "直接接入 / 经互感器接入",
           "example": "经互感器接入"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100908": {
       "subName": "绝缘检测表",
@@ -2183,7 +2290,9 @@
           "desc": "按表计等级",
           "example": "10"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "100909": {
       "subName": "编码器",
@@ -2219,7 +2328,9 @@
           "desc": "DC 供电",
           "example": "24V"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "100910": {
       "subName": "多功能仪表",
@@ -2255,7 +2366,9 @@
           "desc": "RS485/Modbus、无通讯",
           "example": "RS485"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100911": {
       "subName": "压力表",
@@ -2295,7 +2408,9 @@
           "desc": "M20*1.5 等",
           "example": "M20*1.5"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "100912": {
       "subName": "随机仪器",
@@ -2324,7 +2439,9 @@
           "desc": "最关键的一项参数",
           "example": "—"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "100913": {
       "subName": "仿真器",
@@ -2354,7 +2471,9 @@
           "desc": "USB / JTAG / SWD",
           "example": "USB+SWD"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "100914": {
       "subName": "测温仪",
@@ -2389,7 +2508,9 @@
           "desc": "红外非接触 / 接触式",
           "example": "红外非接触"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101001": {
       "subName": "按钮",
@@ -2430,7 +2551,9 @@
           "desc": "自复位 / 自锁",
           "example": "自复位"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101002": {
       "subName": "带灯按钮",
@@ -2470,7 +2593,9 @@
           "desc": "1NO / 1NC / 1NO+1NC",
           "example": "1NO+1NC"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101003": {
       "subName": "转换开关",
@@ -2505,7 +2630,9 @@
           "desc": "面板开孔直径",
           "example": "22"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101004": {
       "subName": "特殊开关",
@@ -2535,7 +2662,9 @@
           "desc": "最关键的一项参数",
           "example": "—"
         }
-      ]
+      ],
+      "confidence": "C",
+      "sourceRef": ""
     },
     "101005": {
       "subName": "钮子开关",
@@ -2570,7 +2699,9 @@
           "desc": "触点额定电流",
           "example": "6A"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101006": {
       "subName": "微动开关",
@@ -2605,7 +2736,9 @@
           "desc": "动作所需力",
           "example": "2.5"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101007": {
       "subName": "温度开关",
@@ -2640,7 +2773,9 @@
           "desc": "触点容量",
           "example": "10A"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101008": {
       "subName": "行程开关",
@@ -2675,7 +2810,9 @@
           "desc": "触点容量",
           "example": "5A"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101009": {
       "subName": "磁开关",
@@ -2710,7 +2847,9 @@
           "desc": "触点容量",
           "example": "0.5"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101010": {
       "subName": "附件",
@@ -2740,7 +2879,9 @@
           "desc": "配套的按钮/开关系列",
           "example": "XB2"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101101": {
       "subName": "指示灯",
@@ -2776,7 +2917,9 @@
           "desc": "AC/DC 电压",
           "example": "24V"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101102": {
       "subName": "电子牌",
@@ -2811,7 +2954,9 @@
           "desc": "供电方式或电压",
           "example": "24V"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101103": {
       "subName": "报警器件",
@@ -2847,7 +2992,9 @@
           "desc": "声音强度，单位 dB",
           "example": "95"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101201": {
       "subName": "电压变送器",
@@ -2887,7 +3034,9 @@
           "desc": "0.2 / 0.5 级",
           "example": "0.5"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101202": {
       "subName": "电流变送器",
@@ -2927,7 +3076,9 @@
           "desc": "0.2 / 0.5 级",
           "example": "0.5"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101203": {
       "subName": "综合变送器",
@@ -2967,7 +3118,9 @@
           "desc": "0.2 / 0.5 级",
           "example": "0.5"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101204": {
       "subName": "功率变送器",
@@ -3007,7 +3160,9 @@
           "desc": "0.2 / 0.5 级",
           "example": "0.5"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101205": {
       "subName": "频率变送器",
@@ -3041,7 +3196,9 @@
           "desc": "辅助电源",
           "example": "24V"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101206": {
       "subName": "隔离器",
@@ -3081,7 +3238,9 @@
           "desc": "辅助电源",
           "example": "24V"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101301": {
       "subName": "普通电阻",
@@ -3117,7 +3276,9 @@
           "desc": "±1% / ±5% / ±10%",
           "example": "±5"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101302": {
       "subName": "精密电阻",
@@ -3157,7 +3318,9 @@
           "desc": "TCR，单位 ppm/℃",
           "example": "25"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101303": {
       "subName": "可调电阻",
@@ -3187,7 +3350,9 @@
           "desc": "单位 W",
           "example": "100"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101304": {
       "subName": "压敏电阻",
@@ -3222,7 +3387,9 @@
           "desc": "允许长期施加的交流电压",
           "example": "300"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101305": {
       "subName": "热敏电阻",
@@ -3257,7 +3424,9 @@
           "desc": "阻值精度",
           "example": "5"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101306": {
       "subName": "管型电阻",
@@ -3287,7 +3456,9 @@
           "desc": "单位 W",
           "example": "100"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101307": {
       "subName": "铝壳电阻",
@@ -3322,7 +3493,9 @@
           "desc": "带散热片 / 带支架",
           "example": "带散热片"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101308": {
       "subName": "电位器",
@@ -3357,7 +3530,9 @@
           "desc": "单圈 / 多圈（10 圈等）",
           "example": "10"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101401": {
       "subName": "铝电解电容（CD）",
@@ -3397,7 +3572,9 @@
           "desc": "直径×高 mm",
           "example": "10*20mm"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101402": {
       "subName": "聚酯膜电容（CL）",
@@ -3432,7 +3609,9 @@
           "desc": "±5% / ±10% / ±20%",
           "example": "10"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101403": {
       "subName": "聚丙烯膜电容（CBB）",
@@ -3467,7 +3646,9 @@
           "desc": "±5% / ±10%",
           "example": "5"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101404": {
       "subName": "钽电解电容（CA、CQ）",
@@ -3507,7 +3688,9 @@
           "desc": "贴片 / 轴向引线 / 径向引线",
           "example": "贴片"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101405": {
       "subName": "金属化纸介电容（CJ）",
@@ -3542,7 +3725,9 @@
           "desc": "±5% / ±10% / ±20%",
           "example": "10"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101406": {
       "subName": "复合介质电容（CH、CZ）",
@@ -3577,7 +3762,9 @@
           "desc": "±5% / ±10% / ±20%",
           "example": "10"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101407": {
       "subName": "瓷片电容（CT）",
@@ -3618,7 +3805,9 @@
           "desc": "0805 / 0603 / 直插",
           "example": "0805"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101408": {
       "subName": "突波吸收电容",
@@ -3654,7 +3843,9 @@
           "desc": "X1 / X2（跨线）/ Y1 / Y2（跨地）",
           "example": "X2"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101409": {
       "subName": "RS库号电容",
@@ -3689,7 +3880,9 @@
           "desc": "RS 供应商编号",
           "example": "123-4567"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101410": {
       "subName": "其它类型电容",
@@ -3724,7 +3917,9 @@
           "desc": "是什么介质（云母/漆膜等）",
           "example": "—"
         }
-      ]
+      ],
+      "confidence": "C",
+      "sourceRef": ""
     },
     "101411": {
       "subName": "薄膜电容",
@@ -3759,7 +3954,9 @@
           "desc": "PET 聚酯 / PP 聚丙烯 / PPS",
           "example": "PP"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101501": {
       "subName": "二极管",
@@ -3795,7 +3992,9 @@
           "desc": "反向重复峰值电压 VRRM",
           "example": "1000"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101502": {
       "subName": "三极管",
@@ -3836,7 +4035,9 @@
           "desc": "集电极耗散功率",
           "example": "0.625"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101503": {
       "subName": "场效应管",
@@ -3877,7 +4078,9 @@
           "desc": "Rds(on)，越小损耗越低",
           "example": "44"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101504": {
       "subName": "晶闸管",
@@ -3913,7 +4116,9 @@
           "desc": "VDRM/VRRM",
           "example": "1200"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101505": {
       "subName": "电子管",
@@ -3948,7 +4153,9 @@
           "desc": "单位 mA",
           "example": "7.5"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101506": {
       "subName": "其他器件",
@@ -3977,7 +4184,9 @@
           "desc": "最关键的一项参数",
           "example": "—"
         }
-      ]
+      ],
+      "confidence": "C",
+      "sourceRef": ""
     },
     "101507": {
       "subName": "整流器",
@@ -4012,7 +4221,9 @@
           "desc": "输出电流",
           "example": "35"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101508": {
       "subName": "充电机",
@@ -4047,7 +4258,9 @@
           "desc": "输出功率",
           "example": "1200"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101509": {
       "subName": "电源模块",
@@ -4087,7 +4300,9 @@
           "desc": "额定功率",
           "example": "350"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101510": {
       "subName": "电源",
@@ -4128,7 +4343,9 @@
           "desc": "额定电流",
           "example": "14.6"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101511": {
       "subName": "集成电路",
@@ -4164,7 +4381,9 @@
           "desc": "最关键的一项（通道数/位数/耐压）",
           "example": "双通道"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101512": {
       "subName": "电力模块",
@@ -4204,7 +4423,9 @@
           "desc": "EconoDUAL / 62mm / 标准",
           "example": "62mm"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101513": {
       "subName": "IGBT",
@@ -4239,7 +4460,9 @@
           "desc": "TO-247 / TO-220 / TO-3P",
           "example": "TO-247"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101514": {
       "subName": "滤波器",
@@ -4275,7 +4498,9 @@
           "desc": "通流能力",
           "example": "16"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101515": {
       "subName": "交换机",
@@ -4315,7 +4540,9 @@
           "desc": "DC 或 AC 供电",
           "example": "24"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101516": {
       "subName": "RS产品",
@@ -4345,7 +4572,9 @@
           "desc": "RS 供应商编号",
           "example": "123-4567"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101601": {
       "subName": "端子",
@@ -4386,7 +4615,9 @@
           "desc": "可接导线截面",
           "example": "2.5"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101602": {
       "subName": "一次插件",
@@ -4421,7 +4652,9 @@
           "desc": "插接芯数",
           "example": "3"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101603": {
       "subName": "二次插件",
@@ -4456,7 +4689,9 @@
           "desc": "插接芯数",
           "example": "32"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101604": {
       "subName": "插头",
@@ -4496,7 +4731,9 @@
           "desc": "IP44 / IP67",
           "example": "IP67"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101605": {
       "subName": "插座",
@@ -4536,7 +4773,9 @@
           "desc": "明装 / 暗装 / 导轨",
           "example": "明装"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101606": {
       "subName": "彩色排线",
@@ -4571,7 +4810,9 @@
           "desc": "相邻导体中心距",
           "example": "1.27"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101607": {
       "subName": "接插件",
@@ -4612,7 +4853,9 @@
           "desc": "工作电压",
           "example": "250"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101701": {
       "subName": "母线框",
@@ -4642,7 +4885,9 @@
           "desc": "穿引极数",
           "example": "4"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101702": {
       "subName": "母线夹",
@@ -4672,7 +4917,9 @@
           "desc": "同时夹持极数",
           "example": "3"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101703": {
       "subName": "高压绝缘子",
@@ -4707,7 +4954,9 @@
           "desc": "机械弯曲负荷",
           "example": "4"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101704": {
       "subName": "低压绝缘子",
@@ -4742,7 +4991,9 @@
           "desc": "总高",
           "example": "40"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101705": {
       "subName": "绝缘套管",
@@ -4777,7 +5028,9 @@
           "desc": "长期耐温",
           "example": "200"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101706": {
       "subName": "热缩管",
@@ -4817,7 +5070,9 @@
           "desc": "击穿电压",
           "example": "1"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101801": {
       "subName": "散热器/加热器",
@@ -4853,7 +5108,9 @@
           "desc": "长×宽×高 mm",
           "example": "100*80*40mm"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101802": {
       "subName": "风机",
@@ -4894,7 +5151,9 @@
           "desc": "单位 W",
           "example": "20"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101803": {
       "subName": "磁环",
@@ -4934,7 +5193,9 @@
           "desc": "μi，如 5000",
           "example": "5000"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101804": {
       "subName": "电池",
@@ -4970,7 +5231,9 @@
           "desc": "单位 Ah",
           "example": "100"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101805": {
       "subName": "元器件附件",
@@ -4999,7 +5262,9 @@
           "desc": "配套的器件型号或系列",
           "example": "XB2"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101806": {
       "subName": "电工器件",
@@ -5029,7 +5294,9 @@
           "desc": "最关键的一项参数",
           "example": "—"
         }
-      ]
+      ],
+      "confidence": "C",
+      "sourceRef": ""
     },
     "101807": {
       "subName": "照明器具",
@@ -5070,7 +5337,9 @@
           "desc": "IP65 / IP66",
           "example": "IP65"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101808": {
       "subName": "其它器件",
@@ -5098,7 +5367,9 @@
           "desc": "最关键的一至两项参数",
           "example": "—"
         }
-      ]
+      ],
+      "confidence": "C",
+      "sourceRef": ""
     },
     "101809": {
       "subName": "电源线",
@@ -5132,7 +5403,9 @@
           "desc": "成品长度",
           "example": "2"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101810": {
       "subName": "电机",
@@ -5173,7 +5446,9 @@
           "desc": "B3 卧式 / B5 立式 / B35",
           "example": "B3"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101901": {
       "subName": "变频柜",
@@ -5213,7 +5488,9 @@
           "desc": "本地 / 远程 / PLC 联动",
           "example": "PLC联动"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101902": {
       "subName": "防爆箱",
@@ -5248,7 +5525,9 @@
           "desc": "铸铝 / 不锈钢 / 碳钢",
           "example": "铸铝"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101903": {
       "subName": "变频器",
@@ -5289,7 +5568,9 @@
           "desc": "V/F / 矢量 / 直接转矩",
           "example": "直接转矩"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101904": {
       "subName": "软启动器",
@@ -5329,7 +5610,9 @@
           "desc": "内置旁路 / 外置旁路",
           "example": "内置旁路"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101905": {
       "subName": "制动单元",
@@ -5364,7 +5647,9 @@
           "desc": "DC 母线电压",
           "example": "540"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101906": {
       "subName": "配电箱",
@@ -5404,7 +5689,9 @@
           "desc": "明装 / 暗装 / 挂墙",
           "example": "暗装"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101907": {
       "subName": "控制柜",
@@ -5439,7 +5726,9 @@
           "desc": "PLC / 继电器 / 手动",
           "example": "PLC"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101908": {
       "subName": "调速器",
@@ -5474,7 +5763,9 @@
           "desc": "单位 V",
           "example": "380"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101909": {
       "subName": "电阻箱",
@@ -5509,7 +5800,9 @@
           "desc": "IP20 / IP54",
           "example": "IP54"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101910": {
       "subName": "空调",
@@ -5550,7 +5843,9 @@
           "desc": "一级 / 二级 / 三级",
           "example": "一级"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "101911": {
       "subName": "电池箱",
@@ -5585,7 +5880,9 @@
           "desc": "冷轧钢 / 不锈钢",
           "example": "冷轧钢"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "101912": {
       "subName": "其它",
@@ -5614,7 +5911,9 @@
           "desc": "最关键的一至两项参数",
           "example": "—"
         }
-      ]
+      ],
+      "confidence": "C",
+      "sourceRef": ""
     },
     "101913": {
       "subName": "安防设备",
@@ -5650,7 +5949,9 @@
           "desc": "DC 供电",
           "example": "12"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "102001": {
       "subName": "PC类",
@@ -5690,7 +5991,9 @@
           "desc": "机架式 / 桌面式 / 嵌入式",
           "example": "机架式"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "102002": {
       "subName": "工控机",
@@ -5730,7 +6033,9 @@
           "desc": "PCIe/PCI 槽位数量",
           "example": "2"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "102003": {
       "subName": "电器控制系统",
@@ -5765,7 +6070,9 @@
           "desc": "手动 / 自动 / 远程",
           "example": "自动"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "102004": {
       "subName": "电子控制器",
@@ -5800,7 +6107,9 @@
           "desc": "DC 供电",
           "example": "24"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "102005": {
       "subName": "触摸屏",
@@ -5836,7 +6145,9 @@
           "desc": "RS485 / 以太网 / Profibus",
           "example": "以太网"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "102006": {
       "subName": "驱动类",
@@ -5872,7 +6183,9 @@
           "desc": "单位 V",
           "example": "380"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "102007": {
       "subName": "调节器",
@@ -5907,7 +6220,9 @@
           "desc": "4-20mA / 继电器",
           "example": "4-20mA"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "110101": {
       "subName": "板材",
@@ -5943,7 +6258,9 @@
           "desc": "单位 mm",
           "example": "1000"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "110102": {
       "subName": "管材",
@@ -5974,7 +6291,9 @@
           "desc": "单位 mm",
           "example": "4"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "110103": {
       "subName": "棒材",
@@ -6005,7 +6324,9 @@
           "desc": "单位 mm",
           "example": "1000"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "110104": {
       "subName": "型材",
@@ -6041,7 +6362,9 @@
           "desc": "单位 mm",
           "example": "6000"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "110105": {
       "subName": "带材",
@@ -6071,7 +6394,9 @@
           "desc": "单位 mm",
           "example": "200"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "110201": {
       "subName": "铜及其合金",
@@ -6103,7 +6428,9 @@
           "desc": "板/排写 厚*宽；棒写 Φ直径；管写 Φ外径×壁厚",
           "example": "80*10mm"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "110202": {
       "subName": "铝及其合金",
@@ -6134,7 +6461,9 @@
           "desc": "板/排写 厚*宽；棒写 Φ直径",
           "example": "60*8mm"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "110203": {
       "subName": "锌及其合金",
@@ -6165,7 +6494,9 @@
           "desc": "厚度×宽度 或 Φ直径",
           "example": "3*200mm"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "110204": {
       "subName": "其他金属及合金",
@@ -6196,7 +6527,9 @@
           "desc": "厚*宽 或 Φ直径",
           "example": "2*1000mm"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "110301": {
       "subName": "电线",
@@ -6230,7 +6563,9 @@
           "desc": "红 / 黄 / 绿 / 蓝 / 黄绿双色 / 黑",
           "example": "红色"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "110302": {
       "subName": "电缆",
@@ -6268,7 +6603,9 @@
           "desc": "统一 mm²",
           "example": "mm²"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "110303": {
       "subName": "通讯线",
@@ -6304,7 +6641,9 @@
           "desc": "非屏蔽(UTP) / 屏蔽(STP) / 双屏蔽",
           "example": "屏蔽"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "110401": {
       "subName": "气体",
@@ -6335,7 +6674,9 @@
           "desc": "40L 钢瓶 / 杜瓦罐 / 管道",
           "example": "40L钢瓶"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "110402": {
       "subName": "玻璃",
@@ -6370,7 +6711,9 @@
           "desc": "单位 mm",
           "example": "500"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "110403": {
       "subName": "电工材料",
@@ -6411,7 +6754,9 @@
           "desc": "单位 mm",
           "example": "2000"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "110404": {
       "subName": "辅料（走线槽/扎带/吸盘等）",
@@ -6442,7 +6787,9 @@
           "desc": "每根长度或每包数量",
           "example": "2m"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "110405": {
       "subName": "化工试剂",
@@ -6473,7 +6820,9 @@
           "desc": "单位 mL 或 kg",
           "example": "500mL"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "110406": {
       "subName": "橡胶制品",
@@ -6509,7 +6858,9 @@
           "desc": "邵氏硬度，如 70A",
           "example": "70A"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "110407": {
       "subName": "油漆",
@@ -6540,7 +6891,9 @@
           "desc": "单位 kg 或 L",
           "example": "20kg"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "110408": {
       "subName": "柴油",
@@ -6565,7 +6918,9 @@
           "desc": "升数或桶数",
           "example": "200L"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "120102": {
       "subName": "螺钉",
@@ -6610,7 +6965,9 @@
           "desc": "Zn.D 镀锌钝化 / Zn.C 镀锌铬化 / Dacromet / B 发黑 / O 涂油",
           "example": "Zn.D"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "120103": {
       "subName": "螺杆",
@@ -6651,7 +7008,9 @@
           "desc": "8.8 / 10.9 / A2-70",
           "example": "8.8"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "120104": {
       "subName": "螺母",
@@ -6687,7 +7046,9 @@
           "desc": "8 级 / 10 级 / A2-70",
           "example": "8"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "120105": {
       "subName": "平垫",
@@ -6728,7 +7089,9 @@
           "desc": "Zn.D 镀锌钝化 / 不锈钢不标",
           "example": "Zn.D"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "120106": {
       "subName": "弹垫",
@@ -6764,7 +7127,9 @@
           "desc": "Zn.D 镀锌钝化 / 发黑",
           "example": "Zn.D"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "120108": {
       "subName": "销",
@@ -6805,7 +7170,9 @@
           "desc": "45# / 304",
           "example": "45#"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "120109": {
       "subName": "铆钉",
@@ -6846,7 +7213,9 @@
           "desc": "304 / 铝 / 碳钢",
           "example": "304"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "120110": {
       "subName": "自攻螺钉",
@@ -6886,7 +7255,9 @@
           "desc": "Zn.D 镀锌 / 不锈钢不标",
           "example": "Zn.D"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "120111": {
       "subName": "挡圈",
@@ -6922,7 +7293,9 @@
           "desc": "65Mn / 304",
           "example": "65Mn"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "120201": {
       "subName": "空柜（箱、台、屏）体",
@@ -6968,7 +7341,9 @@
           "desc": "IP30 / IP54 / IP65",
           "example": "IP54"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "120202": {
       "subName": "五金（锁/铰链/弹簧等）",
@@ -7000,7 +7375,9 @@
           "desc": "锌合金 / 不锈钢 / 碳钢",
           "example": "锌合金"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "120203": {
       "subName": "端头",
@@ -7037,7 +7414,9 @@
           "desc": "叉型/圆形需写，管型不写",
           "example": "M4"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "120204": {
       "subName": "焊接材料",
@@ -7068,7 +7447,9 @@
           "desc": "单位 mm",
           "example": "3.2"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "120205": {
       "subName": "安装附件（导轨等）",
@@ -7099,7 +7480,9 @@
           "desc": "冷轧钢 / 铝 / 不锈钢",
           "example": "冷轧钢"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "120206": {
       "subName": "标准箱体",
@@ -7145,7 +7528,9 @@
           "desc": "IP30 / IP54 / IP65",
           "example": "IP54"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "120207": {
       "subName": "非标柜体",
@@ -7185,7 +7570,9 @@
           "desc": "非标图纸编号（必须写）",
           "example": "KT-2024-015"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "120208": {
       "subName": "随机工具",
@@ -7216,7 +7603,9 @@
           "desc": "配套的柜体或设备型号",
           "example": "KZG-01"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "120301": {
       "subName": "1/2单元抽屉",
@@ -7252,7 +7641,9 @@
           "desc": "适配的开关柜型号",
           "example": "GCK"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "120302": {
       "subName": "一单元抽屉",
@@ -7287,7 +7678,9 @@
           "desc": "适配柜型（GCK/GCS/MNS）",
           "example": "GCS"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "120303": {
       "subName": "二单元抽屉",
@@ -7321,7 +7714,9 @@
           "desc": "适配柜型",
           "example": "MNS"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "120304": {
       "subName": "三单元抽屉",
@@ -7355,7 +7750,9 @@
           "desc": "适配柜型",
           "example": "GCS"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "120305": {
       "subName": "四单元抽屉",
@@ -7389,7 +7786,9 @@
           "desc": "适配柜型",
           "example": "MNS"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "120306": {
       "subName": "抽屉附件",
@@ -7420,7 +7819,9 @@
           "desc": "机构写操作方式；插件写芯数",
           "example": "手动操作"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "120307": {
       "subName": "其它",
@@ -7449,7 +7850,9 @@
           "desc": "最关键的一至两项参数",
           "example": "—"
         }
-      ]
+      ],
+      "confidence": "C",
+      "sourceRef": ""
     },
     "120401": {
       "subName": "系统软件",
@@ -7480,7 +7883,9 @@
           "desc": "标准版 / 专业版 / 5用户 / 1站点",
           "example": "标准版"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "120402": {
       "subName": "服务费",
@@ -7511,7 +7916,9 @@
           "desc": "服务范围，如 4 次巡检",
           "example": "含4次巡检"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "120403": {
       "subName": "计算机",
@@ -7552,7 +7959,9 @@
           "desc": "尺寸（含显示器时写）",
           "example": "23.8寸"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "120404": {
       "subName": "设备",
@@ -7582,7 +7991,9 @@
           "desc": "最关键的一项参数",
           "example": "—"
         }
-      ]
+      ],
+      "confidence": "C",
+      "sourceRef": ""
     },
     "120405": {
       "subName": "其它",
@@ -7613,7 +8024,9 @@
           "desc": "最关键的一至两项参数",
           "example": "—"
         }
-      ]
+      ],
+      "confidence": "C",
+      "sourceRef": ""
     },
     "120406": {
       "subName": "空调",
@@ -7653,7 +8066,9 @@
           "desc": "一级 / 二级 / 三级",
           "example": "一级"
         }
-      ]
+      ],
+      "confidence": "A",
+      "sourceRef": ""
     },
     "120407": {
       "subName": "安防设备",
@@ -7689,7 +8104,9 @@
           "desc": "DC 或 PoE",
           "example": "12"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     },
     "120408": {
       "subName": "计算机配件",
@@ -7725,7 +8142,9 @@
           "desc": "适配的机型或接口",
           "example": "M.2接口"
         }
-      ]
+      ],
+      "confidence": "B",
+      "sourceRef": ""
     }
   }
 }

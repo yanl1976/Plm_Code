@@ -1402,6 +1402,9 @@ const server = http.createServer(async (req, res) => {
         avoid: g.avoid || '',
         fieldCount: (g.fields || []).length,
         hasStd: !/^无对应国标/.test(g.source || ''),
+        // 置信度：A=有国标可追溯 / B=无国标按行业惯例 / C=推定需复核
+        confidence: g.confidence || '',
+        sourceRef: g.sourceRef || '',
       }))
       if (kw) {
         items = items.filter((x) => (x.sub + ' ' + x.subName + ' ' + x.source + ' ' + x.specPattern + ' ' + x.example).toLowerCase().indexOf(kw) >= 0)
@@ -1435,6 +1438,12 @@ const server = http.createServer(async (req, res) => {
         fields,
         example: String(b.example || cur.example || '').trim(),
         avoid: String(b.avoid || cur.avoid || '').trim(),
+        // 置信度：A=有国标可追溯 / B=无国标按行业惯例 / C=推定需复核
+        confidence: ['A', 'B', 'C'].indexOf(String(b.confidence || cur.confidence || '')) >= 0
+          ? String(b.confidence || cur.confidence)
+          : 'B',
+        // 条款号（A 级建议填，如「第 5.3.2 条」）
+        sourceRef: String(b.sourceRef || cur.sourceRef || '').trim(),
       }
       if (!g.subName || !g.source || !g.specPattern || !g.example) {
         return sendJson(res, 400, { ok: false, error: '小类名 / 依据 / 规格结构 / 示例 均不能为空' })
@@ -1460,17 +1469,18 @@ const server = http.createServer(async (req, res) => {
 
     if (p === '/api/naming-guide/export' && req.method === 'GET') {
       const j = readConfigJson('naming-guide.json') || { subs: {} }
-      const aoa = [['小类号', '小类名', '依据', '名称规则', '常见错叫', '规格结构', '示例', '避免', '字段(JSON)']]
+      const aoa = [['小类号', '小类名', '依据', '置信度', '条款依据', '名称规则', '常见错叫', '规格结构', '示例', '避免', '字段(JSON)']]
       Object.keys(j.subs || {}).sort().forEach((sub) => {
         const g = j.subs[sub]
         aoa.push([
-          sub, g.subName || '', g.source || '', g.nameRule || '',
+          sub, g.subName || '', g.source || '', g.confidence || '', g.sourceRef || '',
+          g.nameRule || '',
           (g.nameAliases || []).join('、'), g.specPattern || '', g.example || '', g.avoid || '',
           JSON.stringify(g.fields || []),
         ])
       })
       const ws = XLSX.utils.aoa_to_sheet(aoa)
-      ws['!cols'] = [{ wch: 10 }, { wch: 20 }, { wch: 40 }, { wch: 40 }, { wch: 20 }, { wch: 44 }, { wch: 40 }, { wch: 30 }, { wch: 60 }]
+      ws['!cols'] = [{ wch: 10 }, { wch: 20 }, { wch: 40 }, { wch: 8 }, { wch: 18 }, { wch: 40 }, { wch: 20 }, { wch: 44 }, { wch: 40 }, { wch: 30 }, { wch: 60 }]
       const wb = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(wb, ws, '命名范式')
       const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
@@ -1506,7 +1516,9 @@ const server = http.createServer(async (req, res) => {
         const head = (aoa[hr] || []).map((x) => String(x || '').trim())
         const iSub = head.findIndex((x) => /小类号/.test(x))
         const iName = head.findIndex((x) => /小类名/.test(x))
-        const iSrc = head.findIndex((x) => /依据/.test(x))
+        const iSrc = head.findIndex((x) => /依据/.test(x) && !/条款/.test(x))
+        const iConf = head.findIndex((x) => /置信度/.test(x))
+        const iRef = head.findIndex((x) => /条款/.test(x))
         const iRule = head.findIndex((x) => /名称规则/.test(x) && !/依据/.test(x))
         const iAlias = head.findIndex((x) => /错叫|别名/.test(x))
         const iPat = head.findIndex((x) => /规格结构|规格范式/.test(x))
@@ -1529,6 +1541,10 @@ const server = http.createServer(async (req, res) => {
           const g = {
             subName: iName >= 0 ? String(row[iName] || '').trim() : '',
             source: iSrc >= 0 ? String(row[iSrc] || '').trim() : '',
+            confidence: iConf >= 0 && /^[ABC]$/i.test(String(row[iConf] || '').trim())
+              ? String(row[iConf]).trim().toUpperCase()
+              : 'B',
+            sourceRef: iRef >= 0 ? String(row[iRef] || '').trim() : '',
             nameRule: iRule >= 0 ? String(row[iRule] || '').trim() : '',
             nameAliases: iAlias >= 0
               ? String(row[iAlias] || '').split(/[、,，\/]/).map((x) => x.trim()).filter(Boolean)

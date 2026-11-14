@@ -622,6 +622,18 @@ HoteamUI.DataService.Call('Hoteam.InforCenter.ERPService.GetStockSearchData', {
 
 > 审计时「标准名重复」只在**同一中类内**才算问题；跨中类同名是正常设计。
 
+**置信度分级（A/B/C，v1.68 起）**
+
+每条范式带 `confidence` 与 `sourceRef` 两个字段：
+
+| 级别 | 含义 | 当前数量 |
+|---|---|---|
+| **A** | 有对应国标，参数定义与规格结构可追溯到该标准 | **101** |
+| **B** | 无产品国标，按行业惯例（多家厂商样本一致） | **97** |
+| **C** | 无明确依据，按经验推定，需人工复核后才能依赖 | **11** |
+
+`sourceRef` 记条款号（如「第 5.3.2 条」），是「A 级可追溯」的关键凭证。当前 101 条 A 级均**待补条款号**——`npm run test:guide` 会汇总提示但不判失败。
+
 **管理界面**：看板 → 系统设置 → 「国标命名范式库」
 
 | 操作 | 说明 |
@@ -692,6 +704,35 @@ HoteamUI.DataService.Call('Hoteam.InforCenter.ERPService.GetStockSearchData', {
 | GET | `/api/std-watch` | 台账 + 待核查清单 + 配置 |
 | POST | `/api/std-watch/run` | 立即核查（body：`{force, codes[], delayMs}`） |
 | PUT | `/api/std-watch/config` | 改周期 / 自动开关 |
+
+**双源交叉验证（v1.68 起）**
+
+| 源 | 地址 | 返回 | 覆盖 |
+|---|---|---|---|
+| 主源 | `std.samr.gov.cn`（全国标准信息公共服务平台） | **纯 JSON** | 全部（含已废止、即将实施） |
+| 辅源 | `openstd.samr.gov.cn`（国家标准全文公开系统） | HTML 表格 | 局部（收录有全文的） |
+
+**判定规则**
+
+| 置信度 | 条件 | 界面 |
+|---|---|---|
+| `high` | 两源版本与状态都一致 | 绿色「双源一致」 |
+| `conflict` | 存在分歧（版本不同或状态不同） | **黄色「两源冲突」→ 人工仲裁** |
+| `single` | 只有一个源查到 | 灰色「单源」 |
+| `none` | 两源都查不到 | 黄色「未收录」 |
+
+冲突时**不自动判过期**，只标黄并保留两源原文（鼠标悬停可见 `samr：… / openstd：…`），由人判断。
+
+**2026-11-14 全量结果**
+
+```
+136 个标准 → high 94 / conflict 1 / single 17 / none 24
+单源时代「未查到」39 个，双源后降到 24 个
+```
+
+已知冲突项：`GB/T 470`（samr 显示 2008 现行，openstd 显示 2026 即将实施）——典型的新版已发布、旧库未同步。
+
+> **解析注意**：samr 接口会把命中词包在 `<sacinfo>` 标签里（`<sacinfo>GB</sacinfo>/<sacinfo>T</sacinfo> …`），必须先剥标签再比对，否则永远匹配不上。
 
 **已知限制**
 

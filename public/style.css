@@ -599,3 +599,11 @@ tr.saving { opacity:.45; }
 .nm-hit-order{color:var(--amber)}
 .nm-dup-confirm{display:flex;align-items:flex-start;gap:6px;margin:8px 0 2px;padding:7px 9px;background:rgba(255,170,0,.08);border-left:3px solid var(--amber);border-radius:4px;font-size:12px;line-height:1.6;color:var(--text);cursor:pointer}
 .nm-dup-confirm input{margin-top:2px}
+.std-dim{color:var(--muted);font-size:11px}
+
+/* 范式置信度分级 */
+.ng-grade{font-size:10px;padding:0 4px;border-radius:3px;border:1px solid currentColor;white-space:nowrap}
+.g-A{color:var(--green)}
+.g-B{color:var(--amber)}
+.g-C{color:var(--red);opacity:.85}
+.g-none{color:var(--muted)}

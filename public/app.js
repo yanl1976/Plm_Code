@@ -826,18 +826,28 @@ function renderGuideList() {
     return
   }
   let h = '<table class="ng-table"><thead><tr>'
-    + '<th style="width:82px">小类号</th>'
-    + '<th style="width:176px">小类名</th>'
+    + '<th style="width:78px">小类号</th>'
+    + '<th style="width:150px">小类名</th>'
+    + '<th style="width:74px">置信度</th>'
+    + '<th style="width:150px">条款依据</th>'
     + '<th>依据</th>'
-    + '<th style="width:320px">规格结构</th>'
-    + '<th style="width:260px">示例</th>'
-    + '<th style="width:52px">字段</th>'
-    + '<th style="width:112px">操作</th>'
+    + '<th style="width:280px">规格结构</th>'
+    + '<th style="width:230px">示例</th>'
+    + '<th style="width:50px">字段</th>'
+    + '<th style="width:104px">操作</th>'
     + '</tr></thead><tbody>'
+  const GRADE = {
+    A: { cls: 'g-A', text: 'A 国标' },
+    B: { cls: 'g-B', text: 'B 惯例' },
+    C: { cls: 'g-C', text: 'C 推定' },
+  }
   for (const it of ngItems) {
+    const gd = GRADE[it.confidence] || { cls: 'g-none', text: '—' }
     h += '<tr>'
       + '<td class="mono">' + it.sub + '</td>'
       + '<td class="ng-nowrap">' + escapeHtml(it.subName) + (it.hasStd ? '' : ' <span class="ng-nostd">无国标</span>') + '</td>'
+      + '<td><span class="ng-grade ' + gd.cls + '">' + gd.text + '</span></td>'
+      + '<td class="mono ng-clip" title="' + escapeHtml(it.sourceRef || '待补条款号') + '">' + escapeHtml(it.sourceRef || '—') + '</td>'
       + '<td title="' + escapeHtml(it.source) + '">' + escapeHtml(it.source) + '</td>'
       + '<td class="mono ng-clip" title="' + escapeHtml(it.specPattern) + '">' + escapeHtml(it.specPattern) + '</td>'
       + '<td class="mono ng-clip" title="' + escapeHtml(it.example) + '">' + escapeHtml(it.example) + '</td>'
@@ -873,6 +883,8 @@ async function openGuideEdit(sub) {
     + '<label>小类号 *</label><input id="ngSub" class="mono" value="' + escapeHtml(g.sub) + '" placeholder="6 位数字"' + (sub ? ' readonly' : '') + ' />'
     + '<label>小类名 *</label><input id="ngSubName" value="' + escapeHtml(g.subName || '') + '" />'
     + '<label>依据 *</label><input id="ngSource" value="' + escapeHtml(g.source || '') + '" placeholder="GB/T xxx-YYYY《…》 或 无对应国标（按行业惯例：…）" />'
+    + '<label>置信度</label><select id="ngConf"><option value="A">A · 有国标可追溯</option><option value="B">B · 无国标按行业惯例</option><option value="C">C · 推定，需复核</option></select>'
+    + '<label>条款依据</label><input id="ngRef" class="mono" value="' + escapeHtml(g.sourceRef || '') + '" placeholder="如 第 5.3.2 条（A 级建议填）" />'
     + '<label>名称规则</label><input id="ngRule" value="' + escapeHtml(g.nameRule || '') + '" />'
     + '<label>常见错叫</label><input id="ngAlias" value="' + escapeHtml((g.nameAliases || []).join('、')) + '" placeholder="顿号分隔" />'
     + '<label>规格结构 *</label><input id="ngPat" class="mono" value="' + escapeHtml(g.specPattern || '') + '" />'
@@ -888,6 +900,7 @@ async function openGuideEdit(sub) {
     + '<button class="primary" id="ngSave">保存</button></div>'
   $('#modalBody').innerHTML = html
   $('#modal').classList.remove('hidden')
+  if ($('#ngConf')) $('#ngConf').value = g.confidence || 'B'
 
   const bindDel = () => {
     document.querySelectorAll('#ngFields .ng-fdel').forEach((b) => { b.onclick = () => b.closest('tr').remove() })
@@ -922,6 +935,8 @@ async function saveGuide(isEdit) {
     specPattern: $('#ngPat').value.trim(),
     example: $('#ngEg').value.trim(),
     avoid: $('#ngAvoid').value.trim(),
+    confidence: $('#ngConf') ? $('#ngConf').value : '',
+    sourceRef: $('#ngRef') ? $('#ngRef').value.trim() : '',
     fields,
   }
   if (!/^\d{6}$/.test(body.sub)) {
@@ -1035,9 +1050,13 @@ async function loadStdWatch() {
     if ($('#stdAuto') && r && r.meta) $('#stdAuto').checked = r.meta.autoCheck !== false
     const st = $('#stdStats')
     if (st) {
+      const cs = (r && r.confidenceStats) || {}
       st.textContent = '共 ' + ((r && r.total) || 0) + ' 个标准'
+        + (cs.high ? '，双源一致 ' + cs.high : '')
         + (r && r.outdated && r.outdated.length ? '，' + r.outdated.length + ' 个过期' : '')
-        + (r && r.dueCount ? '，' + r.dueCount + ' 个待核查' : '')
+        + (cs.conflict ? '，' + cs.conflict + ' 个两源冲突' : '')
+        + (cs.single ? '，' + cs.single + ' 个单源' : '')
+        + (cs.none ? '，' + cs.none + ' 个未收录' : '')
         + (r && r.meta && r.meta.lastRunAt ? ' · 上次 ' + String(r.meta.lastRunAt).slice(0, 10) : '')
     }
     renderStdList()
@@ -1055,14 +1074,15 @@ function renderStdList() {
     return
   }
   let h = '<table class="ng-table"><thead><tr>'
-    + '<th style="width:168px">标准号</th>'
-    + '<th style="width:92px">现行版本</th>'
-    + '<th style="width:88px">状态</th>'
-    + '<th style="width:106px">实施日期</th>'
-    + '<th style="width:106px">上次核查</th>'
-    + '<th style="width:56px">引用</th>'
+    + '<th style="width:160px">标准号</th>'
+    + '<th style="width:84px">现行版本</th>'
+    + '<th style="width:84px">状态</th>'
+    + '<th style="width:96px">置信度</th>'
+    + '<th style="width:100px">实施日期</th>'
+    + '<th style="width:100px">上次核查</th>'
+    + '<th style="width:52px">引用</th>'
     + '<th>标准名称</th>'
-    + '<th style="width:280px">被引用小类（名称）</th>'
+    + '<th style="width:260px">被引用小类（名称）</th>'
     + '</tr></thead><tbody>'
   for (const x of stdItems) {
     let badge = ''
@@ -1076,11 +1096,25 @@ function renderStdList() {
     // 被引用小类：小类号 + 名称，逗号分隔；过长时省略号 + 悬停看全文
     const subList = x.subNames || []
     const subText = subList.map((s) => s.sub + ' ' + (s.name || '')).join('、')
+    // 双源交叉验证的置信度：两源一致才算高置信，冲突标黄待人工仲裁
+    const CONF = {
+      high: { cls: 'std-ok', text: '双源一致' },
+      conflict: { cls: 'std-warn', text: '两源冲突' },
+      single: { cls: 'std-dim', text: '单源' },
+      none: { cls: 'std-warn', text: '未收录' },
+    }
+    const cf = CONF[x.confidence] || { cls: 'std-dim', text: '未核查' }
+    const srcTip = (x.sources && (x.sources.samr || x.sources.openstd))
+      ? ['samr：' + (x.sources.samr ? x.sources.samr.version + ' ' + x.sources.samr.state : '无'),
+        'openstd：' + (x.sources.openstd ? x.sources.openstd.version + ' ' + x.sources.openstd.state : '无')].join('\n')
+      : '尚未核查'
+
     h += '<tr class="' + rowCls + '">'
       + '<td class="mono">' + escapeHtml(x.base)
       + (x.outdated ? ' <span class="std-bad">→ ' + escapeHtml(x.latest || '') + '</span>' : '') + '</td>'
       + '<td class="mono">' + escapeHtml(x.latest || '—') + '</td>'
       + '<td>' + badge + '</td>'
+      + '<td><span class="' + cf.cls + '" title="' + escapeHtml(srcTip) + '">' + cf.text + '</span></td>'
       + '<td class="mono">' + escapeHtml(x.implDate || '—') + '</td>'
       + '<td class="mono">' + escapeHtml(x.checkedAt ? String(x.checkedAt).slice(0, 10) : '—') + '</td>'
       + '<td style="text-align:center">' + (x.refCount || 0) + '</td>'

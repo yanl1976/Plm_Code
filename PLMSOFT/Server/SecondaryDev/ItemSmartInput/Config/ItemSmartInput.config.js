@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 物料录入助手 —— 配置文件（服务地址 + 功能开关）
  *
  * 生效方式：本文件由 ItemSmartInput.fileref 注册，**先于** ItemSmartInput.js 加载。
@@ -47,5 +47,51 @@ window.ItemSmartInputConfig = {
   // ---------- 联想与探测 ----------
   suggestDebounce: 300,       // 输入防抖(ms)
   minLen: 2,                  // 触发联想的最少字符数
-  domWatchDelay: 2500         // DOM 兜底接管延时(ms)，给正常 OnCreate 留出时间
+  domWatchDelay: 2500,        // DOM 兜底接管延时(ms)，给正常 OnCreate 留出时间
+
+  // ---------- 提示分类与配色 ----------
+  // 名称 / 规格 / 查重 / 库存 / 环境 各类提醒统一在这里管：分组标签、严重程度配色、屏蔽开关。
+  // 每条提示前会显示 [分组] 标签 + 严重程度图标，颜色按 level 决定。
+  hints: {
+    // 严重程度 → 图标与颜色。color 留空用插件内置（error 红 / warn 黄 / tip 蓝 / info 灰 / ok 绿）
+    levels: {
+      error: { icon: '✕', label: '必须修改' },
+      warn: { icon: '!', label: '建议修改' },
+      tip: { icon: '·', label: '建议采用' },
+      info: { icon: 'i', label: '参考' },
+      ok: { icon: '✓', label: '通过' }
+    },
+
+    // 分组标签：显示在每条提示最前面（如 [名称] [规格]）
+    groups: {
+      name: '名称',
+      spec: '规格',
+      dup: '查重',
+      stock: '库存',
+      env: '环境'
+    },
+
+    // 关键词 → 分组 / 级别（从上往下匹配，第一条命中即生效，顺序不要随意调）
+    rules: [
+      { re: '^名称.{0,8}(不能为空|过长|过短|禁用词|只能)', group: 'name', level: 'error' },
+      { re: '^名称', group: 'name', level: 'warn' },
+      { re: '完全相同规格|同小类已有完全相同', group: 'dup', level: 'error' },
+      { re: '相似型号|类似型号|一物多号', group: 'dup', level: 'info' },
+      { re: '未收录', group: 'spec', level: 'tip' },
+      { re: '额定电压建议|乘号|括号请使用|多余空格|连续空格', group: 'spec', level: 'warn' },
+      { re: '^规范写法', group: 'spec', level: 'tip' },
+      { re: '不能为空|过长|过短|半角字符|必须包含|占位内容', group: 'spec', level: 'error' },
+      { re: '建议采用|标准写法|同义词', group: 'name', level: 'tip' },
+      { re: '小类不符|含型号|型号请写进规格', group: 'name', level: 'warn' },
+      { re: '库存', group: 'stock', level: 'info' },
+      { re: '服务|超时|不可用|网络', group: 'env', level: 'warn' },
+      { re: '名称', group: 'name', level: 'warn' }
+    ],
+
+    // 不想看到的提示：写关键词片段即可（如 ['括号', '乘号']），命中即隐藏
+    mute: [],
+
+    // 提示区总开关：'grouped'=按分组+配色显示（默认）；'plain'=恢复成原来的纯文字
+    mode: 'grouped'
+  }
 };

@@ -463,6 +463,31 @@ function buildRowSpec(row, cols, modelCol) {
   return cols.map((c) => String(row[c.key] == null ? '' : row[c.key]).trim()).filter(Boolean).join(' ')
 }
 
+// 命名范式（国标命名与规格写法）：按 mtime 缓存，改文件即生效
+let namingGuideCache = null
+let namingGuideMtime = 0
+
+function loadNamingGuide() {
+  const f = path.join(ROOT, 'src', 'config', 'naming-guide.json')
+  try {
+    const st = fs.statSync(f)
+    if (namingGuideCache && namingGuideMtime === st.mtimeMs) return namingGuideCache
+    namingGuideCache = JSON.parse(fs.readFileSync(f, 'utf8'))
+    namingGuideMtime = st.mtimeMs
+    return namingGuideCache
+  } catch (e) {
+    return { subs: {} }
+  }
+}
+
+/** 取某小类的国标命名范式（无则 null） */
+function namingGuideOf(sub) {
+  const s = String(sub || '').trim().slice(0, 6)
+  if (!s) return null
+  const g = loadNamingGuide()
+  return (g.subs || {})[s] || null
+}
+
 /** 同小类 + 同系列代号只保留一份：Excel 导入的表格优先于手写规则库 */
 function dedupeSelectionSeries(list) {
   const ordered = list.slice().sort(function (a, b) {
@@ -790,6 +815,10 @@ function handleCheck(body) {
       const hints = cableSpecHints(spec, sub)
       if (hints.length) result.warnings.push(...hints)
     } catch (e) { /* 提示失败不影响主校验 */ }
+    // 国标命名范式：随校验结果一起返回，插件直接展示，不用再发一次请求
+    try {
+      result.guide = namingGuideOf(sub)
+    } catch (e) { result.guide = null }
     result.rulesVersion = r.rulesVersion || ''
     result.suggestion.name = r.suggestion?.name || ''
     result.suggestion.spec = r.suggestion?.spec || ''

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * PLM 物料新增「名称/规格型号」智能录入助手（二开，纯前端，零改动原页面）  v1.54
  *
  * 生效原理：
@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.61';
+  var PLUGIN_VERSION = '1.64';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -102,7 +102,36 @@
     ctlEcode: 'ECODE_Value',
     // 步骤2「设计属性」表单页（PSEITEMCISFORM-CREATE）里的控件
     ctlFlsxhb: 'FLSXHB_Value',
-    ctlItemType: 'ITEMTYPE_Value'
+    ctlItemType: 'ITEMTYPE_Value',
+
+    // 提示分类与配色（外部配置文件可部分覆盖：levels/groups 浅合并，rules/mute 整体替换）
+    hints: {
+      levels: {
+        error: { icon: '✕', label: '必须修改' },
+        warn: { icon: '!', label: '建议修改' },
+        tip: { icon: '·', label: '建议采用' },
+        info: { icon: 'i', label: '参考' },
+        ok: { icon: '✓', label: '通过' }
+      },
+      groups: { name: '名称', spec: '规格', dup: '查重', stock: '库存', env: '环境' },
+      rules: [
+        { re: '^名称.{0,8}(不能为空|过长|过短|禁用词|只能)', group: 'name', level: 'error' },
+        { re: '^名称', group: 'name', level: 'warn' },
+        { re: '完全相同规格|同小类已有完全相同', group: 'dup', level: 'error' },
+        { re: '相似型号|类似型号|一物多号', group: 'dup', level: 'info' },
+        { re: '未收录', group: 'spec', level: 'tip' },
+        { re: '额定电压建议|乘号|括号请使用|多余空格|连续空格', group: 'spec', level: 'warn' },
+        { re: '^规范写法', group: 'spec', level: 'tip' },
+        { re: '不能为空|过长|过短|半角字符|必须包含|占位内容', group: 'spec', level: 'error' },
+        { re: '建议采用|标准写法|同义词', group: 'name', level: 'tip' },
+        { re: '小类不符|含型号|型号请写进规格', group: 'name', level: 'warn' },
+        { re: '库存', group: 'stock', level: 'info' },
+        { re: '服务|超时|不可用|网络', group: 'env', level: 'warn' },
+        { re: '名称', group: 'name', level: 'warn' }
+      ],
+      mute: [],
+      mode: 'grouped'
+    }
   };
 
   // 允许被外部配置文件（ItemSmartInput.config.js）覆盖的键。
@@ -125,6 +154,16 @@
     for (var i = 0; i < CFG_OVERRIDABLE.length; i++) {
       var k = CFG_OVERRIDABLE[i];
       if (c[k] !== undefined && c[k] !== null) { CFG[k] = c[k]; EXT_KEYS.push(k); }
+    }
+    // hints 支持部分覆盖：levels/groups 合并，rules/mute/mode 整体替换
+    if (c.hints && typeof c.hints === 'object') {
+      var h = c.hints;
+      if (h.levels) { for (var lk in h.levels) { if (h.levels[lk]) CFG.hints.levels[lk] = h.levels[lk]; } }
+      if (h.groups) { for (var gk in h.groups) { if (h.groups[gk]) CFG.hints.groups[gk] = h.groups[gk]; } }
+      if (h.rules) CFG.hints.rules = h.rules;
+      if (h.mute) CFG.hints.mute = h.mute;
+      if (h.mode) CFG.hints.mode = h.mode;
+      EXT_KEYS.push('hints');
     }
   })();
 
@@ -1137,7 +1176,7 @@
   // ======================= 编辑弹窗（名称/规格校验 + 回填） =======================
   var dlg = null;
 
-  /** 归一化用于比较：去空白 + 大写（避免“看起来一样却判为不同”） */
+  /** 归一化用于比较：去空白 + 大写（避免"看起来一样却判为不同"） */
   function normKey(s) {
     return String(s == null ? '' : s).replace(/\s+/g, '').toUpperCase();
   }
@@ -1274,6 +1313,25 @@
       if (r && r.skipReason) {
         html += '<div style="color:' + C_WARN + '">' + escHtml(r.skipReason) + '</div>';
       }
+
+      // 国标命名范式：只作参考，不影响保存
+      if (r && r.guide) {
+        var g = r.guide;
+        html += '<div style="margin-top:7px;padding:8px 10px;border-left:3px solid ' + th.accent
+          + ';background:rgba(127,127,127,.07);border-radius:4px;font-size:12px;line-height:1.65;">'
+          + '<div style="color:' + th.accent + ';font-weight:600;margin-bottom:3px;">标准写法 · '
+          + escHtml(g.subName || '') + '</div>'
+          + '<div style="font-family:monospace;">' + escHtml(g.specPattern || '') + '</div>';
+        var gf = g.fields || [];
+        for (var gi = 0; gi < gf.length; gi++) {
+          html += '<div style="opacity:.78;">· <b>' + escHtml(gf[gi].key) + '</b>'
+            + (gf[gi].desc ? '：' + escHtml(gf[gi].desc) : '')
+            + (gf[gi].example ? '（如 ' + escHtml(gf[gi].example) + '）' : '') + '</div>';
+        }
+        html += '<div style="color:' + C_OK + ';font-family:monospace;">示例：' + escHtml(g.example || '') + '</div>'
+          + (g.nameRule ? '<div style="opacity:.7;margin-top:2px;">' + escHtml(g.nameRule) + '</div>' : '')
+          + '</div>';
+      }
       infoBox.innerHTML = html;
     }
 
@@ -1372,12 +1430,54 @@
     }
 
     // 名称类提示：含「名称/品名」，或「小类/分类」+「不匹配/不符/选错/更像」
-    // 注意：「该小类的关键参数一个都没识别到」是规格侧提示，不能因为含“小类”就归到名称
+    // 注意：「该小类的关键参数一个都没识别到」是规格侧提示，不能因为含"小类"就归到名称
     function isNameMsg(s) {
       var t = String(s || '');
       if (/名称|品名/.test(t)) return true;
       if (/小类|分类/.test(t) && /不匹配|不符|选错|更像/.test(t)) return true;
       return false;
+    }
+
+    // ---- 提示分类：按 CFG.hints.rules 匹配分组与级别 ----
+    function hintTag(text) {
+      var H = CFG.hints || {};
+      var s = String(text || '');
+      var mute = H.mute || [];
+      for (var m = 0; m < mute.length; m++) {
+        if (mute[m] && s.indexOf(mute[m]) >= 0) return null;      // 被屏蔽
+      }
+      var rules = H.rules || [];
+      for (var i = 0; i < rules.length; i++) {
+        try {
+          if (new RegExp(rules[i].re).test(s)) {
+            return { group: rules[i].group || 'spec', level: rules[i].level || 'warn' };
+          }
+        } catch (e) { /* 正则写错跳过 */ }
+      }
+      return { group: 'spec', level: 'warn' };
+    }
+
+    // 渲染一条提示：左侧 [分组] 小标签 + 级别图标 + 文本，颜色按级别
+    // hideTagFor：该分区的标签不显示（提示已经在对应输入框下方，标签是重复信息）
+    function hintHtml(text, forceLevel, hideTagFor) {
+      if (String(CFG.hints && CFG.hints.mode || '') === 'plain') return null;   // 交给旧渲染
+      var t = hintTag(text);
+      if (!t) return '';                                        // 已屏蔽
+      var H = CFG.hints || {};
+      var lv = forceLevel || t.level;
+      var col = lv === 'error' ? C_ERR
+        : lv === 'ok' ? C_OK
+          : lv === 'info' ? C_MUTE : C_WARN;
+      var meta = (H.levels && H.levels[lv]) || {};
+      var tag = (H.groups && H.groups[t.group]) || '';
+      var showTag = tag && t.group !== hideTagFor;
+      var icon = meta.icon || '';
+      return '<div style="color:' + col + ';display:flex;gap:6px;align-items:flex-start;line-height:1.6;">'
+        + (showTag ? '<span style="flex:0 0 auto;opacity:.8;font-size:11px;border:1px solid currentColor;'
+          + 'border-radius:3px;padding:0 4px;line-height:15px;margin-top:1px;">' + escHtml(tag) + '</span>' : '')
+        + (icon ? '<span style="flex:0 0 auto;opacity:.85;">' + escHtml(icon) + '</span>' : '')
+        + '<span style="flex:1 1 auto;">' + escHtml(text) + '</span>'
+        + '</div>';
     }
 
     function renderTips(r) {
@@ -1413,14 +1513,22 @@
         errors.push('存在完全相同规格 ' + dup.length + ' 条，请优先复用已有编码，或确认确为新物料');
       }
 
-      for (i = 0; i < errors.length; i++) {
-        var el = '<div style="color:' + C_ERR + '">✕ ' + escHtml(errors[i]) + '</div>';
-        if (isNameMsg(errors[i])) nHtml += el; else sHtml += el;
+      var useGrouped = !!(CFG.hints && CFG.hints.mode === 'grouped');
+      // 提示已经在名称/规格各自的输入框下方，本分区标签不再重复显示；
+      // 跨区的（如查重、库存）才带 [查重] [库存] 标签
+      function pushTip(text, forceLevel) {
+        var tg = useGrouped ? hintTag(text) : null;
+        if (useGrouped && !tg) return;                       // 被 mute 屏蔽
+        var toName = tg ? tg.group === 'name' : isNameMsg(text);
+        var html = useGrouped
+          ? hintHtml(text, forceLevel, toName ? 'name' : 'spec')
+          : '<div style="color:' + (forceLevel === 'error' ? C_ERR : C_WARN) + '">'
+            + (forceLevel === 'error' ? '✕ ' : '! ') + escHtml(text) + '</div>';
+        if (!html) return;
+        if (toName) nHtml += html; else sHtml += html;
       }
-      for (i = 0; i < ws.length; i++) {
-        var wl = '<div style="color:' + C_WARN + '">! ' + escHtml(ws[i]) + '</div>';
-        if (isNameMsg(ws[i])) nHtml += wl; else sHtml += wl;
-      }
+      for (i = 0; i < errors.length; i++) pushTip(errors[i], 'error');
+      for (i = 0; i < ws.length; i++) pushTip(ws[i]);
       if (!nHtml && !sHtml) {
         sHtml = '<div style="color:' + C_OK + '">✓ 名称与规格符合录入规则</div>';
       }

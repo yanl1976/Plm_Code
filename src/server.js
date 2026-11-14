@@ -1345,6 +1345,17 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, verdict)
     }
 
+    // 命名范式：按小类返回国标规定的名称定义与规格书写格式（仅提示，不参与校验）
+    if (p === '/api/naming-guide') {
+      const sub = (url.searchParams.get('sub') || '').trim().slice(0, 6)
+      let guide = null
+      try {
+        const j = readConfigJson('naming-guide.json') || {}
+        guide = sub ? ((j.subs || {})[sub] || null) : null
+      } catch (e) { guide = null }
+      return sendJson(res, 200, { ok: true, sub, guide })
+    }
+
     // 名称即时建议：纯内存匹配、毫秒级，供名称输入框边打字边弹提示（不做规格校验，避免拖慢）
     // 三层优先级：① 存量物料名称自动联想 → ② 同义词统一叫法提示 → ③ 小类标准名兜底。
     // 依据：存量名称才是本库真实在用的写法，命中即可直接沿用；小类名仅在前两层都无候选时兜底，

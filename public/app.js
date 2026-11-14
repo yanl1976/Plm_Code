@@ -1,4 +1,4 @@
-const api = (p) => fetch(p).then((r) => r.json())
+﻿const api = (p) => fetch(p).then((r) => r.json())
 const $ = (s) => document.querySelector(s)
 const fmt = (n) => (n == null ? '-' : n.toLocaleString('zh-CN'))
 
@@ -1569,7 +1569,8 @@ function onNmSubPicked() {
   else hideNmNameTip()
   refreshNmCode()
   checkSelectAvailable()      // 该小类没有选型库时，按钮置灰
-}
+  loadNamingGuide(s ? s.sub : '')   // 显示该小类的国标写法参考
+  }
 
 async function refreshNmCode() {
   if (!nm.cur.sub) { $('#nmCode').textContent = '-'; return }
@@ -1688,31 +1689,108 @@ function nmRuleCheck() {
     })
 }
 
+// ---- 提示分类与配色（与插件 ItemSmartInput.config.js 的 hints 结构保持一致）----
+const HINT_CFG = Object.assign({
+  levels: {
+    error: { icon: '✕' }, warn: { icon: '!' }, tip: { icon: '·' },
+    info: { icon: 'i' }, ok: { icon: '✓' },
+  },
+  groups: { name: '名称', spec: '规格', dup: '查重', stock: '库存', env: '环境' },
+  rules: [
+    { re: '^名称.{0,8}(不能为空|过长|过短|禁用词|只能)', group: 'name', level: 'error' },
+    { re: '^名称', group: 'name', level: 'warn' },
+    { re: '完全相同规格|同小类已有完全相同', group: 'dup', level: 'error' },
+    { re: '相似型号|类似型号|一物多号', group: 'dup', level: 'info' },
+    { re: '未收录', group: 'spec', level: 'tip' },
+    { re: '额定电压建议|乘号|括号请使用|多余空格|连续空格', group: 'spec', level: 'warn' },
+    { re: '^规范写法', group: 'spec', level: 'tip' },
+    { re: '不能为空|过长|过短|半角字符|必须包含|占位内容', group: 'spec', level: 'error' },
+    { re: '建议采用|标准写法|同义词', group: 'name', level: 'tip' },
+    { re: '小类不符|含型号|型号请写进规格', group: 'name', level: 'warn' },
+    { re: '库存', group: 'stock', level: 'info' },
+    { re: '服务|超时|不可用|网络', group: 'env', level: 'warn' },
+    { re: '名称', group: 'name', level: 'warn' },
+  ],
+  mute: [],
+  mode: 'grouped',
+}, window.HINT_CONFIG || {})
+
+const HINT_COLOR = {
+  error: 'var(--red)', warn: 'var(--amber)', tip: 'var(--accent)',
+  info: 'var(--muted)', ok: 'var(--green)',
+}
+
+function hintTag(text) {
+  const s = String(text || '')
+  for (const m of (HINT_CFG.mute || [])) if (m && s.indexOf(m) >= 0) return null
+  for (const r of (HINT_CFG.rules || [])) {
+    try { if (new RegExp(r.re).test(s)) return { group: r.group || 'spec', level: r.level || 'warn' } } catch (e) { }
+  }
+  return { group: 'spec', level: 'warn' }
+}
+
+/** 一条提示：[分组] 标签 + 级别图标 + 文本；被 mute 时返回空串 */
+function hintHtml(text, forceLevel) {
+  const t = hintTag(text)
+  if (!t) return ''
+  const lv = forceLevel || t.level
+  const meta = (HINT_CFG.levels || {})[lv] || {}
+  const tag = (HINT_CFG.groups || {})[t.group] || ''
+  return '<div class="nm-hint" style="color:' + (HINT_COLOR[lv] || 'var(--amber)') + '">'
+    + (tag ? '<span class="nm-hint-tag">' + tag + '</span>' : '')
+    + (meta.icon ? '<span class="nm-hint-icon">' + meta.icon + '</span>' : '')
+    + '<span class="nm-hint-text">' + escapeHtml(text) + '</span>'
+    + '</div>'
+}
+
 function renderNmRule(r) {
   const el = $('#nmRuleCheck')
   if (!el) return
   const errs = r.errors || [], warns = r.warnings || []
-  const specLen = ($('#nmSpec').value || '').length
-  // 规格很长时（选型回填的完整参数串），"规范写法"会把整串再重复一遍，直接不显示
-  const fmt = specLen > 120 ? null : r.specFormat
-  // 空格类问题合并成一条「会自动整理成什么」，比逐条列「有空格」更有用；
-  // 其余警告（乘号、括号、规范写法…）照常展示。
+  const fmt = r.specFormat
+  // 空格类问题合并成一条「会自动整理成什么」，比逐条列「有空格」更有用。
+  // 注意：规格再长也不能省略「规范写法」，否则用户看不到完整型号。
   const otherWarns = warns.filter((w) => {
-    // 只合并「规格」的空格提示（下面会用「保存时会自动整理」替代）；
-    // 名称的空格必须单独显示，否则看起来像没做检查
     if (/空格/.test(w) && !/名称/.test(w)) return false
-    if (/^规范写法：/.test(w) && specLen > 120) return false
     if (fmt && fmt.fixed && w === '规范写法：' + fmt.fixed) return false  // 与整理结果重复
     return true
   })
-  let html = errs.map((e) => `<div class="nm-rule-err">✕ ${escapeHtml(e)}</div>`).join('')
-  if (fmt && fmt.fixed) {
-    html += '<div class="nm-rule-warn">! 保存时会自动整理规格空格（'
-      + escapeHtml(fmt.reasons.join('、')) + '）→ ' + escapeHtml(fmt.fixed) + '</div>'
+
+  // 按分组整合：名称 / 规格 / 查重 / 库存 / 环境，每组一个标题，组内逐条列
+  const buckets = {}
+  const pushHint = (text, forceLevel) => {
+    const t = hintTag(text)
+    if (!t) return                       // 被 mute
+    if (!buckets[t.group]) buckets[t.group] = []
+    buckets[t.group].push({ text, level: forceLevel || t.level })
   }
-  html += otherWarns.map((w) => `<div class="nm-rule-warn">! ${escapeHtml(w)}</div>`).join('')
-  if (!html) html = '<div class="nm-ok">✓ 名称与规格符合录入规则</div>'
-  // 同义词建议与常用名称联想都在名称输入框的浮层里，这里只管规则错误
+  errs.forEach((e) => pushHint(e, 'error'))
+  if (fmt && fmt.fixed) {
+    pushHint('保存时会自动整理规格空格（' + fmt.reasons.join('、') + '）→ ' + fmt.fixed, 'warn')
+  }
+  otherWarns.forEach((w) => pushHint(w))
+
+  const ORDER = ['name', 'spec', 'dup', 'stock', 'env']
+  let html = ''
+  for (const g of ORDER) {
+    const list = buckets[g]
+    if (!list || !list.length) continue
+    html += '<div class="nm-hint-group"><div class="nm-hint-group-title">'
+      + escapeHtml((HINT_CFG.groups || {})[g] || g) + '</div>'
+    for (const it of list) {
+      const meta = (HINT_CFG.levels || {})[it.level] || {}
+      html += '<div class="nm-hint" style="color:' + (HINT_COLOR[it.level] || 'var(--amber)') + '">'
+        + '<span class="nm-hint-icon">' + (meta.icon || '') + '</span>'
+        + '<span class="nm-hint-text">' + escapeHtml(it.text) + '</span>'
+        + '</div>'
+    }
+    html += '</div>'
+  }
+  if (!html) {
+    html = '<div class="nm-hint" style="color:var(--green)">'
+      + '<span class="nm-hint-icon">✓</span>'
+      + '<span class="nm-hint-text">名称与规格符合录入规则</span></div>'
+  }
   el.innerHTML = html
 }
 
@@ -1909,6 +1987,38 @@ async function renderNmInv() {
 function selectBase() {
   return window.SELECT_API_BASE
     || (location.protocol + '//' + (location.hostname || '127.0.0.1') + ':3100')
+}
+
+// ---- 命名范式：按小类显示国标规定的名称与规格写法（只提示，不校验）----
+let nmGuide = null
+
+function renderGuideTip() {
+  const el = $('#nmGuideTip')
+  if (!el) return
+  const g = nmGuide
+  if (!g) { el.innerHTML = ''; el.classList.remove('show'); return }
+  const rows = (g.fields || []).map((f) =>
+    '<span class="nm-guide-field"><b>' + escapeHtml(f.key) + '</b>'
+    + (f.desc ? ' — ' + escapeHtml(f.desc) : '')
+    + (f.example ? '（如 ' + escapeHtml(f.example) + '）' : '') + '</span>').join('')
+  el.innerHTML = '<div class="nm-guide-head">标准写法 · ' + escapeHtml(g.subName || '')
+    + (g.source ? '<span class="nm-guide-src">' + escapeHtml(g.source.split('《')[0]) + '</span>' : '') + '</div>'
+    + '<div class="nm-guide-pattern">' + escapeHtml(g.specPattern || '') + '</div>'
+    + (rows ? '<div class="nm-guide-fields">' + rows + '</div>' : '')
+    + '<div class="nm-guide-eg">示例：' + escapeHtml(g.example || '') + '</div>'
+    + (g.nameRule ? '<div class="nm-guide-name">名称：' + escapeHtml(g.nameRule) + '</div>' : '')
+  el.classList.add('show')
+}
+
+async function loadNamingGuide(sub) {
+  nmGuide = null
+  renderGuideTip()
+  if (!sub) return
+  try {
+    const r = await api('/api/naming-guide?sub=' + encodeURIComponent(sub))
+    nmGuide = (r && r.guide) || null
+  } catch (e) { nmGuide = null }
+  renderGuideTip()
 }
 
 // 选型按钮可用性：当前小类下有「启用」的选型库才可点

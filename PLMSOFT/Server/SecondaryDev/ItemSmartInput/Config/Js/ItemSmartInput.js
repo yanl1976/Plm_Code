@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.90';
+  var PLUGIN_VERSION = '1.91';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -60,6 +60,7 @@
     enabled: true,               // 总开关：false 时完全静默
     timeout: 1500,               // 单次请求超时(ms)，超时即降级放行
   plmQueryTimeout: 180000,     // PLM 对象查询超时(ms)，默认 3 分钟；大基数小类（如端子 1000+ 条）需要更长
+  stockTimeout: 8000,          // 库存查询超时(ms)：ERP 关闭访问时 AsyncCall 可能永不回调，必须有超时兜底
   // 自动同步物料快照：工作时间每 N 小时一次（页面常驻时生效，关页面即停）
   autoSync: {
     enabled: true,
@@ -173,7 +174,7 @@
   // 用白名单而不是全量合并：写错键名不会悄悄改掉别的行为。
   var CFG_OVERRIDABLE = [
     'version', 'apiBase', 'apiPort', 'apiLabel', 'inventoryBase', 'inventorySource', 'enabled', 'showCheckButton', 'lockFields',
-  'plmQueryTimeout', 'autoSync',
+  'plmQueryTimeout', 'stockTimeout', 'autoSync',
     'checkButtonText', 'checkButtonHost', 'checkButtonPlace',
     'checkButtonOffsetX', 'checkButtonOffsetY',
     'restrictItemType', 'itemTypeAllowText', 'itemTypeAllowValues',
@@ -1326,6 +1327,27 @@
     svcBadge.className = 'plm-smart-svc-badge';
     head.appendChild(svcBadge);
 
+    // ERP 状态点：库存是「插件 → PLM 接口 → ERP」，所以库存能否查到取决于 ERP 是否可达
+    var erpBadge = dlgEl('span', 'float:right;margin-right:8px;font-weight:normal;font-size:11px;line-height:18px;'
+      + 'padding:1px 8px;border-radius:9px;background:rgba(127,127,127,.16);color:' + C_MUTE + ';', '● ERP · 检测中');
+    erpBadge.className = 'plm-smart-erp-badge';
+    erpBadge.title = '库存数据经 PLM 接口访问 ERP；这里显示 ERP 是否可达';
+    head.appendChild(erpBadge);
+
+    /**
+     * 更新 ERP 状态点
+     * @param {boolean} ok true=可查（绿点）；false=不可达（红点）
+     */
+    function setErpState(ok) {
+      if (!erpBadge) return;
+      erpBadge.textContent = '● ERP · ' + (ok ? '在线' : '离线');
+      erpBadge.style.color = ok ? C_OK : C_ERR;
+      erpBadge.style.background = ok ? 'rgba(76,175,80,.16)' : 'rgba(211,47,47,.16)';
+      erpBadge.title = ok
+        ? '库存数据经 PLM 接口访问 ERP，当前可正常查询'
+        : '库存数据经 PLM 接口访问 ERP，当前不可达（ERP 服务关闭访问或网络不通）';
+    }
+
     var body = dlgEl('div', 'padding:14px 16px;');
 
     // 顶部信息条：物料编码 + 分类 + 数据源/查重服务状态（固定内容，不会撑高）
@@ -2032,15 +2054,30 @@
     function plmStockQueryAsync(code, cb) {
       var root = window.HoteamUI;
       var ds = root && root.DataService;
-      if (!ds || !code) { cb(null); return; }
-      if (typeof ds.AsyncCall !== 'function') { cb(plmStockQuerySync(code)); return; }
+
+      // 超时兜底：ERP 关闭访问时，AsyncCall 的 callback / errorCallback 都可能永不触发，
+      // 没有超时会让批量查询卡在「查询中 N/M」不动、明细「数量」列一直是 …。
+      var done = false;
+      var timer = null;
+      function finishOnce(r) {
+        if (done) return;
+        done = true;
+        if (timer) { clearTimeout(timer); timer = null; }
+        // 库存经 PLM 接口访问 ERP，成败即 ERP 可达性 → 更新标题栏状态点
+        try { setErpState(!!(r && r.ok)); } catch (e) { }
+        try { cb(r); } catch (e) { }
+      }
+      timer = setTimeout(function () { finishOnce(null); }, Number(CFG.stockTimeout) || 8000);
+
+      if (!ds || !code) { finishOnce(null); return; }
+      if (typeof ds.AsyncCall !== 'function') { finishOnce(plmStockQuerySync(code)); return; }
 
       // 命中 EID 缓存时直接查库存，省掉一次对象查询
       var eidHit = eidCached(code);
       if (eidHit) { queryStock(eidHit); return; }
 
       function queryStock(eid) {
-        if (!eid) { cb(null); return; }
+        if (!eid) { finishOnce(null); return; }
         try {
           ds.AsyncCall({
             serviceuri: 'Hoteam.InforCenter.ERPService.GetStockSearchData',
@@ -2054,12 +2091,12 @@
               }
             },
             callback: function (ret) {
-              try { cb(parseStockGrid(ret)); } catch (e) { cb(null); }
+              try { finishOnce(parseStockGrid(ret)); } catch (e) { finishOnce(null); }
             },
-            errorCallback: function () { cb(null); },
+            errorCallback: function () { finishOnce(null); },
             showErrorMessage: false
           });
-        } catch (e) { cb(null); }
+        } catch (e) { finishOnce(null); }
       }
 
       try {
@@ -2084,13 +2121,33 @@
             eidStore(code, eid);
             queryStock(eid);
           },
-          errorCallback: function () { cb(null); },
+          errorCallback: function () { finishOnce(null); },
           showErrorMessage: false
         });
-      } catch (e) { cb(null); }
+      } catch (e) { finishOnce(null); }
     }
 
     function plmStockQuery(code, cb) { plmStockQueryAsync(code, cb); }
+
+    /**
+     * 库存查询失败/超时：在输入框内显示红标 + 「查询失败」
+     * 原来失败时什么都不显示，用户以为「没库存」，实际是 ERP 不可达
+     */
+    function showInvError(msg) {
+      if (!dlg) return;
+      invBadge.textContent = '—';
+      invBadge.style.background = '#d32f2f';
+      invBadge.style.color = '#fff';
+      invBadge.title = msg || '库存查询失败';
+      invSrc.textContent = '查询失败';
+      invSrc.style.opacity = '1';
+      invSrc.style.padding = '0 4px';
+      invSrc.style.borderRadius = '3px';
+      invSrc.style.background = 'rgba(211,47,47,.15)';
+      invSrc.style.color = '#d32f2f';
+      invSrc.title = '库存需经 PLM 接口访问 ERP；当前 ERP 不可达（服务关闭访问或网络不通）';
+      invWrap.style.display = 'inline-flex';
+    }
 
     /** 展示库存与来源标记；返回是否展示成功 */
     function showInv(r, src) {
@@ -2098,6 +2155,9 @@
       var n = Number(r.total.qty || 0);
       if (!n) return false;
       invBadge.textContent = String(n);
+      // 从「查询失败」红标恢复为正常的黄标
+      invBadge.style.background = '#ffc107';
+      invBadge.style.color = '#333';
       // 库存只来自 PLM 标准接口，来源标识固定为 PLM
       invSrc.textContent = 'PLM';
       invSrc.style.opacity = '1';
@@ -2111,6 +2171,23 @@
       }).join('\n');
       invWrap.style.display = 'inline-flex';
       return true;
+    }
+
+    /** 查询成功但库存为 0：显示 0，避免「什么都不显示」被误解为没查到 */
+    function showInvZero() {
+      if (!dlg) return;
+      invBadge.textContent = '0';
+      invBadge.style.background = '#ffc107';
+      invBadge.style.color = '#333';
+      invBadge.title = '当前无库存';
+      invSrc.textContent = 'PLM';
+      invSrc.style.opacity = '1';
+      invSrc.style.padding = '0 4px';
+      invSrc.style.borderRadius = '3px';
+      invSrc.style.background = 'rgba(76,175,80,.18)';
+      invSrc.style.color = '#2e7d32';
+      invSrc.title = '数据来自 PLM 库存查询服务，查询成功但数量为 0';
+      invWrap.style.display = 'inline-flex';
     }
 
     /** 现有库存：只走 PLM 标准接口（Hoteam.InforCenter.ERPService.GetStockSearchData），不再回落 ERP 直连 */
@@ -2134,7 +2211,13 @@
       if (src === 'plm') {
         plmStockQuery(code, function (r) {
           if (!dlg) return;
-          if (r && r.ok) { showInv(r, 'plm'); return; }
+          if (r && r.ok) {
+            // 有库存 → 显示数量；库存为 0 也要给明确状态，不能什么都不显示
+            if (!showInv(r, 'plm')) showInvZero();
+            return;
+          }
+          // 失败/超时：必须显示，否则用户以为「没库存」
+          showInvError('库存查询失败（ERP 不可达或超时）');
           log('PLM 库存查询未返回数据：' + code + '（已移除 ERP 直连兜底）');
         });
         return;

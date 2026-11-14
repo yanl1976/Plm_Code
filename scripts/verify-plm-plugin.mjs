@@ -841,7 +841,8 @@ async function run() {
 
     const badge = findByClass(p, 'plm-smart-inv-badge')
     const srcTag = findByClass(p, 'plm-smart-inv-src')
-    ok('PLM 无数据时不显示库存', !badge || badge.textContent === '0', 'got=' + (badge && badge.textContent))
+    // v1.91 起：查不到库存不再静默，改为红标「—」+「查询失败」
+    ok('PLM 无数据时显示查询失败标记', !!badge && badge.textContent === '—', 'got=' + (badge && badge.textContent))
     ok('不再触发 ERP 直连', calls.length === 0, 'calls=' + calls.length)
     ok('来源标记不为 ERP', !srcTag || srcTag.textContent !== 'ERP', 'got=' + (srcTag && srcTag.textContent))
   }

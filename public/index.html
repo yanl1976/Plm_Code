@@ -28,6 +28,7 @@
     <button class="tab" data-tab="dedup">一物多号查重</button>
     <button class="tab" data-tab="classify">分类树</button>
     <button class="tab" data-tab="cleanup">存量清洗</button>
+    <button class="tab" data-tab="rules">命名规范</button>
     <button class="tab" data-tab="settings">系统设置</button>
     <button class="tab" data-tab="feature">特征参数录入</button>
     <button class="tab" data-tab="newmat">新增物料</button>
@@ -149,36 +150,50 @@
         <span id="settingsMsg" class="muted"></span>
       </div>
 
-      <div class="settings-card" style="margin-top:18px">
-        <h3>名称同义词字典 <span class="syn-tip">只提示不阻断保存 · 改这里即时生效，列表可直接编辑</span></h3>
-        <div class="syn-bar">
-          <input id="synAlias" placeholder="非标准叫法" autocomplete="off" />
-          <span class="syn-arrow">→</span>
-          <input id="synStd" placeholder="标准名称" autocomplete="off" />
-          <select id="synSub"><option value="">全局</option></select>
-          <button id="btnAddSyn" class="primary">添加</button>
-          <button id="btnExportSyn" class="ghost" title="导出为 Excel，便于线下批量编辑">导出</button>
-          <button id="btnImportSyn" class="ghost" title="从 Excel 批量导入（合并模式）">导入</button>
-          <input type="file" id="synFile" accept=".xlsx,.xls,.csv" style="display:none" />
-          <input id="synSearch" placeholder="搜索叫法 / 标准名" autocomplete="off" />
-          <span id="synStats" class="syn-stats"></span>
-        </div>
-        <div id="synMsg" class="syn-msg"></div>
-        <div id="synList" class="syn-list"></div>
+    </section>
+
+    <!-- 命名规范：名称同义词字典 + 国标命名范式库 -->
+    <section class="panel" id="tab-rules">
+      <div class="sub-tabs">
+        <button class="sub-tab active" data-subtab="syn">名称同义词字典</button>
+        <button class="sub-tab" data-subtab="guide">国标命名范式库</button>
+        <span id="rulesSummary" class="sub-tabs-sum"></span>
       </div>
 
-      <div class="settings-card" style="margin-top:18px">
-        <h3>国标命名范式库 <span class="syn-tip">按小类给出国标名称与规格写法 · 录入时提示 · 改这里即时生效</span></h3>
-        <div class="syn-bar">
-          <input id="ngSearch" placeholder="搜索小类号 / 名称 / 规格结构" autocomplete="off" />
-          <button id="btnAddNg" class="primary">新增</button>
-          <button id="btnExportNg" class="ghost" title="导出为 Excel，便于线下批量编辑">导出</button>
-          <button id="btnImportNg" class="ghost" title="从 Excel 批量导入（按小类号覆盖）">导入</button>
-          <input type="file" id="ngFile" accept=".xlsx,.xls,.csv" style="display:none" />
-          <span id="ngStats" class="syn-stats"></span>
+      <div class="sub-panel active" id="sub-syn">
+        <div class="settings-card">
+          <h3>名称同义词字典 <span class="syn-tip">只提示不阻断保存 · 列表可直接编辑</span></h3>
+          <div class="syn-bar">
+            <input id="synAlias" placeholder="非标准叫法" autocomplete="off" />
+            <span class="syn-arrow">→</span>
+            <input id="synStd" placeholder="标准名称" autocomplete="off" />
+            <select id="synSub"><option value="">全局</option></select>
+            <button id="btnAddSyn" class="primary">添加</button>
+            <button id="btnExportSyn" class="ghost" title="导出为 Excel，便于线下批量编辑">导出</button>
+            <button id="btnImportSyn" class="ghost" title="从 Excel 批量导入（合并模式）">导入</button>
+            <input type="file" id="synFile" accept=".xlsx,.xls,.csv" style="display:none" />
+            <input id="synSearch" placeholder="搜索叫法 / 标准名" autocomplete="off" />
+            <span id="synStats" class="syn-stats"></span>
+          </div>
+          <div id="synMsg" class="syn-msg"></div>
+          <div id="synList" class="syn-list"></div>
         </div>
-        <div id="ngMsg" class="syn-msg"></div>
-        <div id="ngList" class="ng-list"></div>
+      </div>
+
+      <div class="sub-panel" id="sub-guide">
+        <div class="settings-card">
+          <h3>国标命名范式库 <span class="syn-tip">按小类给出国标名称与规格写法 · 录入时提示</span></h3>
+          <div class="syn-bar">
+            <input id="ngSearch" placeholder="搜索小类号 / 名称 / 规格结构" autocomplete="off" />
+            <button id="btnAddNg" class="primary">新增</button>
+            <button id="btnExportNg" class="ghost" title="导出为 Excel，便于线下批量编辑">导出</button>
+            <button id="btnImportNg" class="ghost" title="从 Excel 批量导入（按小类号覆盖）">导入</button>
+            <input type="file" id="ngFile" accept=".xlsx,.xls,.csv" style="display:none" />
+            <span id="ngStats" class="syn-stats"></span>
+          </div>
+          <div id="ngMsg" class="syn-msg"></div>
+          <div id="ngList" class="ng-list"></div>
+        </div>
       </div>
     </section>
     <!-- 特征参数录入（新增菜单，不动其它页） -->

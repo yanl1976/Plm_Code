@@ -16,7 +16,8 @@ document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () 
   if (t.dataset.tab === 'dedup') loadDedup(1)
   if (t.dataset.tab === 'classify') loadTree()
   if (t.dataset.tab === 'cleanup') loadCleanup()
-  if (t.dataset.tab === 'settings') loadSettings()
+  if (t.dataset.tab === 'rules') loadRules()
+if (t.dataset.tab === 'settings') loadSettings()
   if (t.dataset.tab === 'feature') loadFeature()
   if (t.dataset.tab === 'newmat') loadNewMat()
   if (t.dataset.tab === 'selection') loadSelectionAdmin()
@@ -575,8 +576,6 @@ async function loadSettings() {
   curOrg = s.screenOrg || ''
   renderChips()
   await loadOrgs()
-  loadSynonyms()
-  loadGuideList()
 }
 
 // ---------- 名称同义词字典维护（真源 src/config/name-synonyms.json；列表可直接编辑） ----------
@@ -1006,6 +1005,46 @@ $('#ngSearch') && $('#ngSearch').addEventListener('input', () => {
     ngKw = ($('#ngSearch').value || '').trim()
     loadGuideList()
   }, 300)
+})
+
+// ================= 命名规范页（两个子标签：同义词 / 命名范式） =================
+const rulesLoaded = { syn: false, guide: false }
+
+function switchSubTab(name) {
+  document.querySelectorAll('.sub-tab').forEach((b) => {
+    b.classList.toggle('active', b.dataset.subtab === name)
+  })
+  document.querySelectorAll('.sub-panel').forEach((p) => {
+    p.classList.toggle('active', p.id === 'sub-' + name)
+  })
+  if (name === 'syn' && !rulesLoaded.syn) { rulesLoaded.syn = true; loadSynonyms() }
+  if (name === 'guide' && !rulesLoaded.guide) { rulesLoaded.guide = true; loadGuideList() }
+}
+
+async function loadRules() {
+  const cur = document.querySelector('.sub-tab.active')
+  const name = cur ? cur.dataset.subtab : 'syn'
+  if (name === 'guide') { rulesLoaded.guide = true; await loadGuideList() }
+  else { rulesLoaded.syn = true; await loadSynonyms() }
+  updateRulesSummary()
+}
+
+async function updateRulesSummary() {
+  const el = $('#rulesSummary')
+  if (!el) return
+  try {
+    const [s, g] = await Promise.all([
+      api('/api/name-synonyms').catch(() => null),
+      api('/api/naming-guide/list').catch(() => null),
+    ])
+    const sc = (s && s.stats && s.stats.total) || (s && s.items ? s.items.length : 0)
+    const gc = (g && g.total) || 0
+    el.textContent = '同义词 ' + sc + ' 条 · 命名范式 ' + gc + ' 个小类'
+  } catch (e) { /* 统计失败不影响使用 */ }
+}
+
+document.querySelectorAll('.sub-tab').forEach((b) => {
+  b.onclick = () => switchSubTab(b.dataset.subtab)
 })
 
 // ---------- 启动 ----------

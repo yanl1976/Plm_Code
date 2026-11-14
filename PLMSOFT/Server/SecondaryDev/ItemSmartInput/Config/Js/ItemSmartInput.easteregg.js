@@ -39,10 +39,10 @@
   var KEY_COUNT = 'plmSmartEggCount'
   var KEY_LAST = 'plmSmartEggLastAt'
   var TAU = Math.PI * 2
-  // 主色调（HSL 色相）：红 / 橙红 / 金 / 绿 / 青 / 紫
-  // 每次爆炸只取一个主色（+小幅色相抖动），真实烟花一次爆炸通常是同一种颜色，
-  // 每颗粒子全随机反而像彩色纸屑。
-  var HUES = [0, 14, 42, 122, 198, 291]
+  // 主色调（HSL 色相），按「对比度」排序：
+  // 前三个是红 / 绿 / 蓝（三原色，低档位只有 3 色时也最鲜艳），
+  // 后面依次补金 / 紫 / 青，色相尽量拉开，避免一片相近的暖色。
+  var HUES = [0, 120, 210, 45, 290, 180]
 
   function cfg() {
     var c = (window.ItemSmartInputConfig && window.ItemSmartInputConfig.easterEgg) || {}
@@ -98,7 +98,7 @@
       radius: Math.min(1.1 + s * 0.13, 3),                              // 粒子半径
       // 时长要覆盖：升空(约 0.3s) + 主爆 + 二次爆(约 0.4s) + 余烬飘落
       duration: Math.min(4200 + s * 320, 8200),
-      colors: Math.min(3 + Math.floor(s * 0.8), HUES.length),           // 参与的颜色数
+      colors: Math.min(4 + Math.floor(s * 0.5), HUES.length),           // 可用颜色数（基础 4 色）
       trailAt: 0,                                                       // 全等级都开拖尾
       textAt: 1000,                                                     // 累计超过这个数就显示次数
     }
@@ -160,7 +160,7 @@
           vy: Math.sin(ang) * sp - 0.4,
           r: 0.6 + Math.random() * 0.9,
           hue: hue + (Math.random() * 20 - 10),
-          light: 58 + Math.random() * 16,
+          light: 50 + Math.random() * 12,
           life: 1,
           decay: 0.0025 + Math.random() * 0.003,   // 活得很久，慢慢飘落
           trail: false,
@@ -170,36 +170,48 @@
       }
     }
 
+    /** 从可用色里随机挑 2~3 个，让同一次爆炸本身就是多彩的 */
+    function pickHues() {
+      var want = Math.min(huePool.length, 2 + Math.floor(Math.random() * 2))
+      var out = []
+      for (var i = 0; i < want; i++) out.push(huePool[(Math.random() * huePool.length) | 0])
+      return out
+    }
+
     /**
      * 一次爆炸 = 主爆 + 二次小爆 + 余烬
-     * 真实烟花的三层：一次炸开的主体、外围的碎花、飘落的余烬
+     * 三层结构 + 多色混合：同一次爆炸里带 2~3 种鲜明颜色，而不是单色一片
+     * @param {number[]} [huesIn] 指定色系（二次爆继承主爆颜色）；不传则随机挑
      */
-    function burst(cx, cy, n, hueIn) {
-      var hue = (hueIn == null) ? huePool[(Math.random() * huePool.length) | 0] : hueIn
-      var span = 12 + Math.random() * 14
-      rings.push({ x: cx, y: cy, r: 3, hue: hue, life: 1 })
-      flashes.push({ x: cx, y: cy, hue: hue, life: 1 })
+    function burst(cx, cy, n, huesIn) {
+      var hues = (huesIn && huesIn.length) ? huesIn : pickHues()
+      var mainHue = hues[0]
+      rings.push({ x: cx, y: cy, r: 3, hue: mainHue, life: 1 })
+      flashes.push({ x: cx, y: cy, hue: mainHue, life: 1 })
 
       for (var i = 0; i < n; i++) {
         var ang = Math.random() * TAU
         var t = Math.random()
         var sp = 2.4 + t * t * (st.spread + 2)   // t² 让快慢分层更明显
+        var h = hues[(Math.random() * hues.length) | 0]
         parts.push({
           x: cx, y: cy,
           vx: Math.cos(ang) * sp,
           vy: Math.sin(ang) * sp - 1.8,
           r: 0.9 + Math.random() * st.radius,
-          hue: hue + (Math.random() * span * 2 - span),
-          light: 60 + Math.random() * 20,
+          hue: h + (Math.random() * 14 - 7),          // 小幅抖动，保持颜色纯净
+          // HSL 的 lightness 越低越「浓」：80% 是粉彩色（近白），50~60% 才是饱和纯色。
+          // 白热阶段（life>0.88）另用纯白，不靠提高亮度来表现。
+          light: 47 + Math.random() * 15,
           life: 1,
           decay: 0.005 + Math.random() * 0.015,
           trail: Math.random() < 0.45,
           px: cx, py: cy,
         })
       }
-      addEmbers(cx, cy, Math.max(6, Math.round(n * 0.12)), hue)
+      addEmbers(cx, cy, Math.max(6, Math.round(n * 0.12)), mainHue)
 
-      // 二次小爆：主爆外围补几朵，形成「簇」
+      // 二次小爆：主爆外围补几朵，形成「簇」，颜色沿用主爆的色系
       for (var k = 0; k < st.petals; k++) {
         (function (idx) {
           timers.push(window.setTimeout(function () {
@@ -208,7 +220,7 @@
             var px2 = cx + Math.cos(pa) * pd
             var py2 = cy + Math.sin(pa) * pd * 0.7
             var pn = Math.max(8, Math.round(n * 0.22))
-            rings.push({ x: px2, y: py2, r: 2, hue: hue, life: 0.8 })
+            rings.push({ x: px2, y: py2, r: 2, hue: hues[idx % hues.length], life: 0.8 })
             for (var m = 0; m < pn; m++) {
               var a2 = Math.random() * TAU
               var sp2 = 1.2 + Math.random() * (st.spread * 0.55)
@@ -217,8 +229,8 @@
                 vx: Math.cos(a2) * sp2,
                 vy: Math.sin(a2) * sp2 - 1,
                 r: 0.7 + Math.random() * st.radius * 0.7,
-                hue: hue + (Math.random() * 18 - 9),
-                light: 62 + Math.random() * 18,
+                hue: hues[(Math.random() * hues.length) | 0] + (Math.random() * 14 - 7),
+                light: 48 + Math.random() * 14,
                 life: 1,
                 decay: 0.008 + Math.random() * 0.014,
                 trail: Math.random() < 0.3,
@@ -284,7 +296,8 @@
         var kr = rk.t / rk.dur
         if (kr >= 1) {
           rockets.splice(ri, 1)
-          burst(rk.tx, rk.ty, rk.n, rk.hue)
+          // 不传 hues：由 burst 自己挑 2~3 个主色，同一次爆炸也多彩
+          burst(rk.tx, rk.ty, rk.n)
           continue
         }
         rk.x = rk.sx + (rk.tx - rk.sx) * kr
@@ -325,7 +338,7 @@
         g.life -= 0.045
         if (g.life <= 0) { rings.splice(j, 1); continue }
         ctx.globalAlpha = g.life * 0.28
-        ctx.strokeStyle = 'hsl(' + (g.hue | 0) + ',100%,68%)'
+        ctx.strokeStyle = 'hsl(' + (g.hue | 0) + ',100%,58%)'
         ctx.lineWidth = 1.6 * g.life + 0.4
         ctx.beginPath()
         ctx.arc(g.x, g.y, g.r, 0, TAU)

@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.80';
+  var PLUGIN_VERSION = '1.81';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1329,18 +1329,18 @@
 
     var body = dlgEl('div', 'padding:14px 16px;');
 
-    // 顶部信息条：物料编码 + 分类 + 数据源/查重服务状态（固定内容，不会撑高）
+    // 标准写法提示条：紧贴标题栏下方（内容区第一行），只显示 3 行
+    // 简化后固定高度，异步加载不会撑高，下方输入框全程不漂移；细节放 title 悬停可见
+    var guideBox = dlgEl('div', 'margin:0 0 8px;padding:6px 10px;border-left:3px solid ' + th.accent
+      + ';background:rgba(127,127,127,.07);border-radius:4px;font-size:12px;line-height:1.7;'
+      + 'min-height:70px;');
+    guideBox.innerHTML = '<div style="opacity:.45">正在加载标准写法…</div>';
+    body.appendChild(guideBox);
+
+    // 信息条：物料编码 + 分类 + 数据源/查重服务状态
     var metaBox = dlgEl('div', 'background:' + C_INPUT_BG + ';border:' + C_LINE + ';border-radius:4px;'
       + 'padding:6px 10px;margin-bottom:12px;color:' + C_MUTE + ';font-size:12px;line-height:1.7;');
     body.appendChild(metaBox);
-
-    // 标准写法提示块：放在「物料名称输入框」下方
-    // 防漂移关键：从打开瞬间就占固定高度（min-height），内容异步填入后高度不再变化，
-    // 所以下方的规格框、按钮位置全程不动；内容过高时在块内滚动。
-    var guideBox = dlgEl('div', 'margin:2px 0 12px;padding:8px 10px;border-left:3px solid ' + th.accent
-      + ';background:rgba(127,127,127,.07);border-radius:4px;font-size:12px;line-height:1.65;'
-      + 'min-height:186px;max-height:340px;overflow-y:auto;');
-    guideBox.innerHTML = '<div style="opacity:.45">正在加载标准写法…</div>';
 
     var lastInfo = null;      // 最近一次校验结果，服务状态变化时用它重绘
     function renderInfo(r) {
@@ -1365,31 +1365,38 @@
       }
       metaBox.innerHTML = mHtml;
 
-      // ---- 标准写法提示块 ----
+      // ---- 标准写法提示条：固定 3 行，每行单行省略，细节悬停看 title ----
       var g = r && r.guide;
       if (!g) {
-        guideBox.innerHTML = '<div style="opacity:.45">该小类暂无标准写法（可在看板「命名规范 → 国标命名范式库」补充）</div>';
+        guideBox.innerHTML = '<div style="opacity:.45">该小类暂无标准写法</div>';
+        guideBox.title = '可在看板「命名规范 → 国标命名范式库」补充';
         return;
       }
-      var gHtml = '<div style="color:' + th.accent + ';font-weight:600;margin-bottom:4px;">标准写法 · '
-        + escHtml(g.subName || '') + '</div>'
-        // 引用标准（之前漏渲染，用户反馈「引用标准未出现」）
+      function attr(s) { return escHtml(s == null ? '' : s).replace(/"/g, '&quot;') }
+      var oneLine = 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+      var gHtml = '<div style="color:' + th.accent + ';font-weight:600;' + oneLine
+        + '" title="' + attr(g.subName) + '">标准写法 · ' + escHtml(g.subName || '') + '</div>'
+        // 引用标准：单行显示，不换行；完整内容悬停可见
         + (g.source
-          ? '<div style="opacity:.8;margin-bottom:5px;word-break:break-all;">引用标准：' + escHtml(g.source) + '</div>'
+          ? '<div style="opacity:.8;' + oneLine + '" title="' + attr(g.source) + '">引用标准：'
+            + escHtml(g.source) + '</div>'
           : '')
-        // 示例紧跟引用标准，字号比正文大一号并加粗，照着写即可
+        // 示例：字号大一号、加粗，同样单行
         + '<div style="color:' + C_OK + ';font-family:monospace;font-size:13px;font-weight:600;'
-        + 'background:rgba(76,175,80,.10);border-radius:3px;padding:4px 7px;margin:5px 0 7px;'
-        + 'word-break:break-all;">示例：' + escHtml(g.example || '') + '</div>'
-        + '<div style="font-family:monospace;opacity:.85;">' + escHtml(g.specPattern || '') + '</div>';
+        + oneLine + '" title="' + attr(g.example) + '">示例：' + escHtml(g.example || '') + '</div>';
+      guideBox.innerHTML = gHtml;
+
+      // 字段说明 / 规格结构 / 名称规则 / 避免写法：不再占版面，统一塞进悬停提示
+      var tip = ['规格结构：' + (g.specPattern || '')];
       var gf = g.fields || [];
       for (var gi = 0; gi < gf.length; gi++) {
-        gHtml += '<div style="opacity:.78;">· <b>' + escHtml(gf[gi].key) + '</b>'
-          + (gf[gi].desc ? '：' + escHtml(gf[gi].desc) : '')
-          + (gf[gi].example ? '（如 ' + escHtml(gf[gi].example) + '）' : '') + '</div>';
+        tip.push('· ' + (gf[gi].key || '')
+          + (gf[gi].desc ? '：' + gf[gi].desc : '')
+          + (gf[gi].example ? '（如 ' + gf[gi].example + '）' : ''));
       }
-      gHtml += (g.nameRule ? '<div style="opacity:.7;margin-top:4px;">' + escHtml(g.nameRule) + '</div>' : '');
-      guideBox.innerHTML = gHtml;
+      if (g.nameRule) tip.push('名称规则：' + g.nameRule);
+      if (g.avoid) tip.push('避免：' + g.avoid);
+      guideBox.title = tip.join('\n');
     }
 
     body.appendChild(dlgEl('div', 'color:#666;margin-bottom:4px;', '物料名称'));
@@ -1414,8 +1421,7 @@
     nameTip.className = 'plm-smart-dlg-nametip';
     body.appendChild(nameTip);
 
-    // 标准写法提示：放在「物料名称输入框」下方，紧贴名称相关问题之后
-    body.appendChild(guideBox);
+    // 标准写法提示条已在标题栏下方 append，这里不再重复插入
 
     // 名称联想（同 /api/plm/suggest field=name，与页面输入框同源）
     var nameSugBox = dlgEl('div', 'margin:0 0 8px;');

@@ -1,12 +1,17 @@
 # PLM 物料新增「名称/规格型号」智能录入助手 — 部署说明
 
 > 版本 **v1.61** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
-> 插件文件：`ItemSmartInput.js` v1.66 — 158,135 字节 / 3,404 行 / UTF-8 无 BOM
+> 插件文件：`ItemSmartInput.js` **v1.68** — 159,183 字节 / 3,420 行 / UTF-8 无 BOM
 > SHA256：`D7B5A2FB798AC8BC4F247EB76FB0C70971136C7E84E40B58C8CD3C0B5DA03D11`
 > **后端本次有改动**：`src/plm-server.js` 新增 `columns[].specPart`（哪些列拼进规格）与 `sampleSpec`
 > **后端本次有改动**：`src/plm-index.js` 新增「仅规格相同」索引（12,174 字节），需部署并重启 3100（v1.52 起前端也做了兜底，后端没换也能拦住）
+>
 > 配置文件：`ItemSmartInput.config.js` — 8,634 字节 / 147 行 / UTF-8 无 BOM
 > SHA256：`970D0EA5E182D93006354263F998B266B298A636A9C7833FAC9BCA5211336916`
+>
+> **相关文档**
+> - `doc/国标命名范式库_建设计划.md` —— 21 批建设记录与验收标准
+> - `doc/待办清单.md` —— **未完成事项**（P0 数据质量 / P1 功能 / P2 跟踪 / P3 部署验证），开工前先看这个
 >
 > **版本演进（近期）**
 > - **v1.68（当前）**：**阻断开关补充说明**——`blocks` 段注释写明「不建议关闭的 5 项」及原因（nameEmpty / specEmpty / nameEqualsSpec / dupExact / dupSep）

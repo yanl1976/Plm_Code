@@ -19,6 +19,10 @@ window.ItemSmartInputConfig = {
   allowDirectErp: true,        // PLM 查不到时回落直连 ERP（排查期默认开；PLM 稳定后改 false）
   inventoryBase: 'http://192.168.20.31:3130', // 治理看板地址：弹窗里显示「现有库存」；留空则不显示
   timeout: 1500,                          // 单次请求超时(ms)，超时降级放行
+  plmQueryTimeout: 180000,                // PLM 对象查询超时(ms)，默认 3 分钟
+                                          // 实测：581 行要 11 秒、1080 行要 19.5 秒；
+                                          // 个别小类会卡住超过 60 秒，故放宽到 3 分钟。
+                                          // 若某小类持续超时，可单独 __plmSync.retry(['小类号']) 补跑
 
   // ---------- 总开关 ----------
   enabled: true,              // false = 插件完全静默（最快的止血手段），并自动解除字段锁定

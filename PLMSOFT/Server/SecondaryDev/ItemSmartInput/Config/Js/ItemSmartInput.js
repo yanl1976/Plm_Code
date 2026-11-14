@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.75';
+  var PLUGIN_VERSION = '1.76';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -59,6 +59,7 @@
 
     enabled: true,               // 总开关：false 时完全静默
     timeout: 1500,               // 单次请求超时(ms)，超时即降级放行
+  plmQueryTimeout: 180000,     // PLM 对象查询超时(ms)，默认 3 分钟；大基数小类（如端子 1000+ 条）需要更长
     suggestDebounce: 300,        // 输入防抖(ms)
     minLen: 2,                   // 触发联想的最少字符数
     autoFillZycs: false,         // 旧逻辑：用结构化建议回填 ZYCS（现由 fillSpecToParams 统一处理，默认关闭）
@@ -164,6 +165,7 @@
   // 用白名单而不是全量合并：写错键名不会悄悄改掉别的行为。
   var CFG_OVERRIDABLE = [
     'version', 'apiBase', 'apiPort', 'apiLabel', 'inventoryBase', 'inventorySource', 'allowDirectErp', 'enabled', 'showCheckButton', 'lockFields',
+  'plmQueryTimeout',
     'checkButtonText', 'checkButtonHost', 'checkButtonPlace',
     'checkButtonOffsetX', 'checkButtonOffsetY',
     'restrictItemType', 'itemTypeAllowText', 'itemTypeAllowValues',
@@ -3433,7 +3435,9 @@
     var SVC_FILTER = 'InforCenter.Common.ObjectService.CommonGetObjectDataByFilter'
     var SVC_STOCK = 'Hoteam.InforCenter.ERPService.GetStockSearchData'
     var KEY_FIELDS = ['ECODE', 'ENAME', 'GGXH', 'ZYCS', 'UNIT', 'STATEID', 'WORKFLOWSTATE', 'EID', 'EUID', 'UPDATETIME', 'EVERSION']
-    var TIMEOUT = 60000   // 实测 1080 行要 19.5 秒；统一提到 60 秒，避免大基数小类被误判超时
+    // 超时从配置读（ItemSmartInput.config.js 的 plmQueryTimeout），默认 3 分钟
+    // 依据：实测 1080 行要 19.5 秒，但个别小类会卡住超过 60 秒，需要放宽并允许现场调整
+    var TIMEOUT = Number(CFG.plmQueryTimeout) || 180000
 
     function stamp() {
       var d = new Date()

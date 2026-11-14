@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.92';
+  var PLUGIN_VERSION = '1.93';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -2915,6 +2915,10 @@
       // 回填成功不再显示绿色提示，保持界面干净；只有什么都没填时才给一句说明
       setCheckTip(applied.length ? '' : '未回填（内容为空）', applied.length ? 'ok' : 'bad');
       log('弹窗回填完成：' + (applied.join('、') || '无'));
+      // 彩蛋计数：仅统计真正回填成功的次数（来自独立文件 ItemSmartInput.easteregg.js）
+      if (applied.length) {
+        try { if (window.__plmEgg && window.__plmEgg.tick) window.__plmEgg.tick() } catch (e) { }
+      }
     };
 
     // 按要求：只有右上角 ×（和「取消」）能关闭，点遮罩不关闭

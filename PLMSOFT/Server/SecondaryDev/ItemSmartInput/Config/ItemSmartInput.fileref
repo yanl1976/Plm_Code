@@ -12,6 +12,9 @@
   -->
   <JSFile FileName ="~/SecondaryDev/ItemSmartInput/Config/ItemSmartInput.config.js" group="InforCenter"/>
   <JSFile FileName ="~/SecondaryDev/ItemSmartInput/Config/Js/ItemSmartInput.js" group="InforCenter"/>
+  <!-- 彩蛋模块：只在保存并回填成功后计数，达到阶梯放礼花；删掉本行即可整体移除 -->
+  <JSFile FileName ="~/SecondaryDev/ItemSmartInput/Config/Js/ItemSmartInput.easteregg.js" group="InforCenter"/>
   <JSFile FileName ="~/SecondaryDev/ItemSmartInput/Config/ItemSmartInput.config.js" group="TSDC"/>
   <JSFile FileName ="~/SecondaryDev/ItemSmartInput/Config/Js/ItemSmartInput.js" group="TSDC"/>
+  <JSFile FileName ="~/SecondaryDev/ItemSmartInput/Config/Js/ItemSmartInput.easteregg.js" group="TSDC"/>
 </root>

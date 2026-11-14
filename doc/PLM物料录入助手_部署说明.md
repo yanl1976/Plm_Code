@@ -5,7 +5,7 @@
 > SHA256：`D7B5A2FB798AC8BC4F247EB76FB0C70971136C7E84E40B58C8CD3C0B5DA03D11`
 > **后端本次有改动**：`src/plm-server.js` 新增 `columns[].specPart`（哪些列拼进规格）与 `sampleSpec`
 > **后端本次有改动**：`src/plm-index.js` 新增「仅规格相同」索引（12,174 字节），需部署并重启 3100（v1.52 起前端也做了兜底，后端没换也能拦住）
-> 配置文件：`ItemSmartInput.config.js` — 3,243 字节 / 51 行 / UTF-8 无 BOM
+> 配置文件：`ItemSmartInput.config.js` — 8,634 字节 / 147 行 / UTF-8 无 BOM
 > SHA256：`970D0EA5E182D93006354263F998B266B298A636A9C7833FAC9BCA5211336916`
 >
 > **版本演进（近期）**

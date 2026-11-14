@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.67';
+  var PLUGIN_VERSION = '1.68';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -149,6 +149,8 @@
     },
 
     // 阻断开关：true = 拦截保存（默认）；false = 降级为提示，允许保存
+    // ⚠ 不建议关闭的 5 项：nameEmpty / specEmpty / nameEqualsSpec / dupExact / dupSep
+    //    （关掉会产生脏数据：空名称、空规格、名称写型号、同一物料重复）
     blocks: {
       nameEmpty: true, nameLen: true, nameForbidChars: true, nameForbidPattern: true,
       nameEqualsSpec: true, nameFullWidth: true, subMismatch: true,

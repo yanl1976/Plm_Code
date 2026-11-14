@@ -2,14 +2,15 @@
 
 > 版本 **v1.61** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
 > 插件文件：`ItemSmartInput.js` v1.66 — 158,135 字节 / 3,404 行 / UTF-8 无 BOM
-> SHA256：`D3B19624A0E971076D7EE5633B1B8E457DF4B6504690653DCA821CE85C5EAB54`
+> SHA256：`D7B5A2FB798AC8BC4F247EB76FB0C70971136C7E84E40B58C8CD3C0B5DA03D11`
 > **后端本次有改动**：`src/plm-server.js` 新增 `columns[].specPart`（哪些列拼进规格）与 `sampleSpec`
 > **后端本次有改动**：`src/plm-index.js` 新增「仅规格相同」索引（12,174 字节），需部署并重启 3100（v1.52 起前端也做了兜底，后端没换也能拦住）
 > 配置文件：`ItemSmartInput.config.js` — 3,243 字节 / 51 行 / UTF-8 无 BOM
-> SHA256：`AB883C30C398DFD7712E46A116A579B8995E3B9CBAB259AE5BFF70079F9157D0`
+> SHA256：`970D0EA5E182D93006354263F998B266B298A636A9C7833FAC9BCA5211336916`
 >
 > **版本演进（近期）**
-> - **v1.67（当前）**：**阻断开关**——16 项阻断可在 `ItemSmartInput.config.js` 的 `blocks` 段关闭，关闭后降级为黄色提示、允许保存；看板支持 `window.BLOCK_CONFIG` 覆盖
+> - **v1.68（当前）**：**阻断开关补充说明**——`blocks` 段注释写明「不建议关闭的 5 项」及原因（nameEmpty / specEmpty / nameEqualsSpec / dupExact / dupSep）
+> - **v1.67**：**阻断开关**——16 项阻断可在 `ItemSmartInput.config.js` 的 `blocks` 段关闭，关闭后降级为黄色提示、允许保存；看板支持 `window.BLOCK_CONFIG` 覆盖
 > - v1.66：**校验规则整合**——括号提示真正生效并与「规范写法」去重、乘号去重、名称补全角检查（阻断）、提示分组规则 13→15 条修正 10 处错配
 > - v1.65：**order 级查重**——识别「参数相同、书写顺序不同」的重复规格（`IC65N 2P/C10A` ↔ `IC65N C10A/2P`）；看板侧阻断并需勾选确认，插件侧只提示
 > - v1.64：**国标命名范式库**上线——按小类给出国标规定的名称定义、规格结构、字段含义与示例，录入时信息区显示「标准写法」，只提示不阻断

@@ -1066,9 +1066,10 @@ const server = http.createServer(async (req, res) => {
     }
 
     // 用 ERP 快照补齐 PLM 快照，并输出差异
+    // ?csv=1 时额外导出 PLM 独有清单（仅验证期使用，平时不必导）
     if (p === '/api/plm/snapshot/merge' && req.method === 'POST') {
       try {
-        const r = plmSnapshotMerge()
+        const r = plmSnapshotMerge({ exportCsv: url.searchParams.get('csv') === '1' })
         if (r.ok) {
           try { await loadIndex({ force: true }) } catch (e) { /* 索引重建失败不影响落盘 */ }
         }

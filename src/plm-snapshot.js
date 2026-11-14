@@ -279,10 +279,14 @@ const normStr = (s) => String(s == null ? '' : s).replace(/\s+/g, '').toUpperCas
  *   PLM 无 + ERP 有  → 用 ERP 补齐（历史物料基线，标 SOURCE='ERP'）
  *
  * 输出：
- *   data/materials-merged.ndjson   合并后的完整快照（字段对齐 ERP 格式，plm-index 可直接读）
- *   data/plm-erp-diff.json         差异报告（erpOnly 只存前 500 条 + 总数）
+ *   data/materials-merged.ndjson   合并后的完整快照（字段对齐 ERP 格式，plm-index 可直接读）—— 必备
+ *   data/plm-erp-diff.json         差异报告（erpOnly 只存前 500 条 + 总数）—— 必备
+ *   data/plm-only.csv              PLM 独有清单 —— 仅验证期按需导出（opt.exportCsv）
+ *
+ * @param {{exportCsv?: boolean}} opt exportCsv=true 时才写 CSV（后期无需，省 IO）
  */
-export function mergeWithErp() {
+export function mergeWithErp(opt) {
+  const o = opt || {}
   const plmRows = readSnapshot()
   const erpRows = readNdjson(ERP_NDJSON)
   if (!plmRows.length && !erpRows.length) {
@@ -385,10 +389,14 @@ export function mergeWithErp() {
   }
   fs.writeFileSync(DIFF, JSON.stringify(report, null, 2) + '\n', 'utf8')
 
-  // PLM 独有清单单独出 CSV（Excel 可直接打开核对，带 BOM 防中文乱码）
-  try {
-    fs.writeFileSync(PLM_ONLY_CSV, '\uFEFF' + toCsv(plmOnly), 'utf8')
-  } catch (e) { /* 导出失败不影响主流程 */ }
+  // PLM 独有清单 CSV：仅验证期按需导出（带 BOM，Excel 直开不乱码）
+  let csvFile = null
+  if (o.exportCsv) {
+    try {
+      fs.writeFileSync(PLM_ONLY_CSV, '\uFEFF' + toCsv(plmOnly), 'utf8')
+      csvFile = PLM_ONLY_CSV
+    } catch (e) { /* 导出失败不影响主流程 */ }
+  }
 
   // 元数据补记合并结果
   const m = loadMeta()
@@ -402,7 +410,7 @@ export function mergeWithErp() {
   }
   saveMeta(m)
 
-  return { ok: true, ...report.counts, mergedFile: MERGED, diffFile: DIFF }
+  return { ok: true, ...report.counts, mergedFile: MERGED, diffFile: DIFF, csvFile }
 }
 
 /** 合并快照是否存在 */

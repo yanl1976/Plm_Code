@@ -25,8 +25,8 @@ window.ItemSmartInputConfig = {
   easterEgg: {
     enabled: true,          // false = 完全关闭（也可在 Console 用 __plmEgg.off() 临时关）
     every: 100,             // 每 N 次回填触发一次；觉得频繁可改 200 / 500
-    milestones: [500, 1000, 1500, 2000, 3000, 5000],   // 里程碑：达到时礼花升级并额外放一次
-    durationMs: 3600,       // 单次礼花持续时间(ms)
+    milestones: [500, 1000, 1500, 2000, 3000, 5000],   // 里程碑：达到时额外放一次（礼花强度本身不依赖它）
+    durationMs: 3600,       // 单次礼花「最短」时长(ms)；强度随累计次数自动延长，最长 7 秒
   },
 
   stockTimeout: 8000,                     // 库存查询超时(ms)

@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.93';
+  var PLUGIN_VERSION = '1.94';
   function pluginVersion() {
     try {
       var c = extCfg();

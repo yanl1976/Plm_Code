@@ -59,14 +59,42 @@
   function log() {
     var a = [].slice.call(arguments)
     a.unshift('[彩蛋]')
-    if (window.console && console.log) console.log.apply(console, a)
+    if (window.console && window.console.log) window.console.log.apply(window.console, a)
   }
 
-  /** 累计次数 → 礼花级别（0=基础，等级越高越热闹） */
+  /** 累计次数 → 礼花级别（0=基础，等级越高越热闹；只用于里程碑判定与文字） */
   function levelOf(n, milestones) {
     var lv = 0
     for (var i = 0; i < milestones.length; i++) if (n >= milestones[i]) lv = i + 1
     return lv
+  }
+
+  /**
+   * 强度：随累计次数「持续递增」，不封顶（对数增长，越到后期每次提升仍可见）
+   *
+   *   100      1→2 波 × 约 42 粒子
+   *   500      3 波 × 约 61
+   *   1,000    3 波 × 约 72
+   *   1,500    4 波 × 约 78
+   *   5,000    6 波 × 约 98
+   *   20,000   8 波 × 约 122
+   *   100,000  9 波 × 约 150
+   *
+   * 只设性能硬上限（10 波 / 每波 200），避免浏览器卡死；其余维度继续增长。
+   */
+  function strengthOf(total) {
+    var n = Math.max(0, Number(total) || 0)
+    var s = Math.log2(1 + n / 100)        // 次数 → 强度刻度：100→1，1500→4，5000→5.67，100k→9.97
+    return {
+      waves: Math.min(Math.max(1, Math.round(1 + s * 0.85)), 10),      // 波数 1~10
+      perWave: Math.min(Math.max(40, Math.round(30 + s * 12)), 200),   // 每波粒子 40~200
+      spread: Math.min(4 + s * 0.4, 10),                               // 爆炸初速
+      radius: Math.min(1 + s * 0.12, 2.8),                             // 粒子半径
+      duration: Math.min(3200 + s * 300, 7000),                        // 动画时长
+      colors: Math.min(3 + Math.floor(s * 0.8), PALETTE.length),       // 参与的颜色数
+      trailAt: 300,                                                    // 累计超过这个数就开拖尾
+      textAt: 1000,                                                    // 累计超过这个数就显示次数
+    }
   }
 
   /**
@@ -95,23 +123,32 @@
     if (!ctx) { try { document.body.removeChild(cv) } catch (e) { } return }
     ctx.scale(dpr, dpr)
 
-    var lv = Math.max(0, Math.min(5, Number(level) || 0))
-    var waves = Math.min(1 + lv, 5)
-    var perWave = Math.min(40 + lv * 20, 120)
-    var useTrail = lv >= 1
+    // 强度按累计次数持续递增（不封顶），level 只用于调试时手动指定
+    var st = strengthOf(total == null ? readCount() : total)
+    if (level != null && level > 0) {
+      // 手动 test(level) 时按级别放大，便于预览
+      st.waves = Math.min(1 + Number(level), 10)
+      st.perWave = Math.min(40 + Number(level) * 20, 200)
+    }
+    // 配置里的 durationMs 作为「最短时长」，强度提升时自动延长
+    st.duration = Math.max(st.duration, c.durationMs)
+    var waves = st.waves
+    var perWave = st.perWave
+    var useTrail = (total == null ? readCount() : total) >= st.trailAt
+    var palette = PALETTE.slice(0, st.colors)
     var parts = []
     var timers = []
 
     function burst(cx, cy, n) {
       for (var i = 0; i < n; i++) {
         var ang = Math.random() * Math.PI * 2
-        var sp = 2 + Math.random() * (4 + lv)
+        var sp = 2 + Math.random() * st.spread
         parts.push({
           x: cx, y: cy,
           vx: Math.cos(ang) * sp,
           vy: Math.sin(ang) * sp - 1.6,
-          r: 1 + Math.random() * 2,
-          color: PALETTE[(Math.random() * PALETTE.length) | 0],
+          r: 0.8 + Math.random() * st.radius,
+          color: palette[(Math.random() * palette.length) | 0],
           life: 1,
           decay: 0.008 + Math.random() * 0.012,
         })
@@ -140,7 +177,7 @@
 
     function frame() {
       var elapsed = Date.now() - t0
-      if (elapsed > c.durationMs) { cleanup(); return }
+      if (elapsed > st.duration) { cleanup(); return }
 
       // 拖尾：只擦除 canvas 自身像素，不会遮挡页面
       if (useTrail) {
@@ -170,8 +207,9 @@
       ctx.globalAlpha = 1
 
       // 累计 1000 次以上，屏幕中上部显示一行字（带阴影，深浅背景都看得清）
-      if (lv >= 2 && total >= 1000) {
-        var alpha = Math.min(1, Math.max(0, 1 - elapsed / c.durationMs) * 2)
+      var shown = (total == null ? readCount() : total)
+      if (shown >= st.textAt) {
+        var alpha = Math.min(1, Math.max(0, 1 - elapsed / st.duration) * 2)
         ctx.save()
         ctx.globalAlpha = alpha
         ctx.textAlign = 'center'
@@ -187,7 +225,8 @@
     }
 
     raf = window.requestAnimationFrame(frame)
-    log('礼花 Lv.' + lv + '（第 ' + total + ' 次）')
+    log('礼花：' + waves + ' 波 × ' + perWave + ' 粒子（第 '
+      + (total == null ? readCount() : total) + ' 次）')
   }
 
   var lastAt = 0
@@ -201,7 +240,9 @@
     writeCount(n)
     var isMilestone = c.milestones.indexOf(n) >= 0
     if (n % c.every === 0 || isMilestone) {
-      launch(levelOf(n, c.milestones), n)
+      // 第一个参数传 0：强度完全由累计次数决定（strengthOf），不被里程碑级别覆盖，
+      // 否则 500 次之后每一档都会被 floor 到同一个「级别"值，视觉上不再增长
+      launch(0, n)
       try { window.localStorage.setItem(KEY_LAST, String(Date.now())) } catch (e) { }
     }
   }

@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.74';
+  var PLUGIN_VERSION = '1.75';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -3433,7 +3433,7 @@
     var SVC_FILTER = 'InforCenter.Common.ObjectService.CommonGetObjectDataByFilter'
     var SVC_STOCK = 'Hoteam.InforCenter.ERPService.GetStockSearchData'
     var KEY_FIELDS = ['ECODE', 'ENAME', 'GGXH', 'ZYCS', 'UNIT', 'STATEID', 'WORKFLOWSTATE', 'EID', 'EUID', 'UPDATETIME', 'EVERSION']
-    var TIMEOUT = 30000   // 实测 245 条要 6.5 秒，10 秒太紧；大范围查询会超时，改按小类分批
+    var TIMEOUT = 60000   // 实测 1080 行要 19.5 秒；统一提到 60 秒，避免大基数小类被误判超时
 
     function stamp() {
       var d = new Date()
@@ -3840,6 +3840,18 @@
       if (console && console.log) console.log.apply(console, a)
     }
 
+    // 失败清单持久化：刷新页面后仍能 __plmSync.retry() 补跑
+    var FAIL_KEY = 'plmSyncFailedSubs'
+    function saveFailedSubs(list) {
+      try { window.localStorage.setItem(FAIL_KEY, JSON.stringify(list || [])) } catch (e) { /* 隐私模式忽略 */ }
+    }
+    function loadFailedSubs() {
+      try {
+        var s = window.localStorage.getItem(FAIL_KEY)
+        return s ? (JSON.parse(s) || []) : []
+      } catch (e) { return [] }
+    }
+
     function postJson(url, body, cb) {
       try {
         if (window.$ && $.ajax) {
@@ -3876,8 +3888,16 @@
     function syncStatus() {
       var s = syncState
       var pct = s.total ? Math.round(s.done / s.total * 100) : 0
+      var pending = loadFailedSubs()
       syncLog('进度 ' + s.done + '/' + s.total + '（' + pct + '%）  上报 ' + s.rows + ' 条  失败 ' + s.failed)
-      return { running: s.running, mode: s.mode, total: s.total, done: s.done, rows: s.rows, failed: s.failed, errors: s.errors }
+      if (pending.length) {
+        syncLog('待补跑 ' + pending.length + ' 个小类：' + pending.join(', '))
+        syncLog('补跑命令：__plmSync.retry()')
+      }
+      return {
+        running: s.running, mode: s.mode, total: s.total, done: s.done,
+        rows: s.rows, failed: s.failed, errors: s.errors, pendingRetry: pending,
+      }
     }
 
     /**
@@ -3928,6 +3948,7 @@
             callPlm("ECODE LIKE '" + sub + "%'", function (e2, rows) {
               if (e2) {
                 syncState.failedSubs.push(sub)
+                saveFailedSubs(syncState.failedSubs)
                 syncLog('  补跑 ' + sub + ' 仍失败：' + (e2.message || e2.step))
                 return step()
               }
@@ -3996,6 +4017,7 @@
             if (e2) {
               syncState.failed++
               syncState.failedSubs.push(sub)
+              saveFailedSubs(syncState.failedSubs)
               syncState.errors.push(sub + '：' + (e2.message || e2.step))
               return next()
             }
@@ -4040,13 +4062,16 @@
      */
     function syncRetry(subs) {
       if (syncState.running) { warn('同步进行中，先等它结束'); return }
-      var list = (subs && subs.length) ? subs.slice() : (syncState.failedSubs || []).slice()
+      // 来源优先级：显式传入 > 本次内存 > localStorage（页面刷新后仍能补跑）
+      var list = (subs && subs.length) ? subs.slice()
+        : ((syncState.failedSubs && syncState.failedSubs.length) ? syncState.failedSubs.slice() : loadFailedSubs())
       if (!list.length) {
         warn('没有待补跑的小类。可指定：__plmSync.retry([\'100201\',\'100301\'])')
         return
       }
       syncState.running = true
       syncState.failedSubs = []
+      saveFailedSubs([])
       var ok = 0, i = 0, rowsTotal = 0, t0 = nowMs()
       syncLog('补跑 ' + list.length + ' 个小类：' + list.join(', '))
 
@@ -4069,6 +4094,7 @@
         callPlm("ECODE LIKE '" + sub + "%'", function (e2, rows) {
           if (e2) {
             syncState.failedSubs.push(sub)
+            saveFailedSubs(syncState.failedSubs)
             syncLog('  ' + sub + ' 仍失败：' + (e2.message || e2.step))
             return step()
           }
@@ -4101,6 +4127,14 @@
       start: syncStart,
       status: syncStatus,
       retry: syncRetry,
+      failed: function () {
+        var list = loadFailedSubs()
+        if (!list.length) { syncLog('没有待补跑的小类 ✅'); return [] }
+        syncLog('待补跑 ' + list.length + ' 个：' + list.join(', '))
+        syncLog('执行 __plmSync.retry() 开始补跑（不加时间限制，按小类全查）')
+        return list
+      },
+      clearFailed: function () { saveFailedSubs([]); syncLog('已清空待补跑清单') },
       stop: function () { syncState.running = false; warn('已请求停止（当前批次结束后生效）') },
     }
 

@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.88';
+  var PLUGIN_VERSION = '1.89';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1434,11 +1434,14 @@
     nameIn.value = readText(state.ename);
     nameRow.appendChild(nameIn);
 
-    var selBtn = dlgEl('button', 'flex:0 0 auto;border:1px solid rgba(127,127,127,.45);background:transparent;'
-      + 'color:inherit;border-radius:4px;padding:5px 12px;cursor:pointer;font-size:12px;', '选型助手');
+    // 与规格行的「类似型号」同宽，保证两行输入框右边界对齐
+    var selWrap = dlgEl('div', 'display:flex;align-items:center;flex:0 0 112px;');
+    var selBtn = dlgEl('button', 'width:100%;box-sizing:border-box;border:1px solid rgba(127,127,127,.45);'
+      + 'background:transparent;color:inherit;border-radius:4px;padding:4px 0;cursor:pointer;font-size:12px;', '选型助手');
     selBtn.className = 'plm-smart-sel-btn';
     selBtn.onclick = function () { openSelectModal(); };
-    nameRow.appendChild(selBtn);
+    selWrap.appendChild(selBtn);
+    nameRow.appendChild(selWrap);
     body.appendChild(nameRow);
 
     // 选型助手按钮状态约束：
@@ -1473,34 +1476,48 @@
     // 名称联想（同 /api/plm/suggest field=name，与页面输入框同源）
     var nameSugBox = dlgEl('div', 'margin:0 0 6px;');
 
-    // 规格：左标签 + 右输入框 + 右侧库存/类似型号，与名称行同样紧凑
+    // 规格：左标签 + 右输入框 + 右侧按钮；库存徽标放进输入框内部，保证两行输入框右边界对齐
     var specRow = dlgEl('div', 'display:flex;align-items:center;gap:8px;margin-bottom:4px;');
     specRow.appendChild(dlgEl('span', 'flex:0 0 auto;width:64px;color:#666;font-size:13px;', '规格型号'));
-    var specIn = dlgEl('input', 'flex:1 1 auto;min-width:0;box-sizing:border-box;padding:6px 8px;border:' + C_LINE + ';'
+    var specWrap = dlgEl('div', 'flex:1 1 auto;min-width:0;position:relative;display:flex;align-items:center;');
+    var specIn = dlgEl('input', 'width:100%;box-sizing:border-box;padding:6px 8px;padding-right:96px;border:' + C_LINE + ';'
       + 'border-radius:3px;font-size:13px;background:' + C_INPUT_BG + ';color:inherit;');
     specIn.className = 'plm-smart-dlg-spec';
     specIn.value = readRaw(state.ggxh);
-    specRow.appendChild(specIn);
+    specWrap.appendChild(specIn);
 
-    // 规格框右侧：现有库存徽标 + 类似型号按钮
-    var quickRow = dlgEl('div', 'display:flex;align-items:center;gap:10px;font-size:12px;flex:0 0 auto;');
-    var invWrap = dlgEl('span', 'display:none;align-items:center;gap:6px;');
-    invWrap.appendChild(dlgEl('span', 'opacity:.75;', '现有库存'));
-    var invBadge = dlgEl('span', 'background:#ffc107;color:#333;border-radius:4px;padding:0 6px;'
-      + 'font-weight:bold;min-width:16px;text-align:center;', '0');
+    // 库存徽标：绝对定位在输入框内部右侧，不占按钮行宽度
+    var invWrap = dlgEl('span', 'position:absolute;right:8px;top:50%;transform:translateY(-50%);'
+      + 'display:none;align-items:center;gap:4px;font-size:11px;pointer-events:none;');
+    var invBadge = dlgEl('span', 'background:#ffc107;color:#333;border-radius:4px;padding:0 5px;'
+      + 'font-weight:bold;min-width:14px;text-align:center;', '0');
     invBadge.className = 'plm-smart-inv-badge';
     invWrap.appendChild(invBadge);
     // 数据来源标记：库存一律来自 PLM 标准接口（已移除 ERP 直连）
-    var invSrc = dlgEl('span', 'opacity:.55;font-size:11px;', '');
+    var invSrc = dlgEl('span', 'opacity:.55;', '');
     invSrc.className = 'plm-smart-inv-src';
     invWrap.appendChild(invSrc);
-    quickRow.appendChild(invWrap);
+    specWrap.appendChild(invWrap);
+    specRow.appendChild(specWrap);
 
-    var simBtn = dlgEl('button', 'display:none;border:1px solid rgba(127,127,127,.45);background:transparent;'
-      + 'color:inherit;border-radius:4px;padding:2px 12px;cursor:pointer;font-size:12px;', '类似型号');
+    // 按钮区固定宽度：与名称行的「选型助手」等宽，两行输入框右边界才能对齐
+    var quickRow = dlgEl('div', 'display:flex;align-items:center;flex:0 0 112px;font-size:12px;');
+    var simBtn = dlgEl('button', 'width:100%;box-sizing:border-box;border:1px solid rgba(127,127,127,.45);'
+      + 'background:transparent;color:inherit;border-radius:4px;padding:2px 0;cursor:pointer;font-size:12px;', '类似型号');
     simBtn.className = 'plm-smart-sim-btn';
     simBtn.onclick = function () { openSimilarModal(); };
     quickRow.appendChild(simBtn);
+
+    // 类似型号按钮：常显，无数据时置灰不可点（不再隐藏，避免与选型助手宽度跳动）
+    function setSimBtn(n) {
+      var ok = n > 0;
+      simBtn.disabled = !ok;
+      simBtn.style.opacity = ok ? '1' : '.45';
+      simBtn.style.cursor = ok ? 'pointer' : 'not-allowed';
+      simBtn.textContent = ok ? ('类似型号（' + n + '）') : '类似型号';
+      simBtn.title = ok ? ('同小类共 ' + n + ' 条，按接近程度排序') : '暂无相似型号';
+    }
+    setSimBtn(0);
     specRow.appendChild(quickRow);
     body.appendChild(specRow);
 
@@ -1515,12 +1532,13 @@
     var specMeta = dlgEl('div', 'margin:2px 0 4px;');
 
     // ===== 提示区：全部放在两个输入框下方，格式与展开/折叠逻辑保持不变 =====
-    // 顺序：名称提示 → 规格提示 → 规范写法 → 标准写法块 → 名称联想 → 同型号系列
+    // 顺序：名称提示 → 名称建议采用 → 规格提示 → 规范写法 → 标准写法块 → 同型号系列
+    // 「建议采用 xxx（小类标准名）」在 nameSugBox 首行，因此紧随 nameTip，确保它是提示区的第一行
     body.appendChild(nameTip);      // 名称：问题 / 标准叫法 / 建议改为
+    body.appendChild(nameSugBox);   // 名称建议采用 + 联想候选（首行即「建议采用」）
     body.appendChild(specTip);      // 规格：问题 / 建议改为 / 查重明细
     body.appendChild(specMeta);     // 规格元信息（规范写法）
     body.appendChild(guideBox);     // 标准写法（3 行 + 展开 ▾ 折叠 ▴）
-    body.appendChild(nameSugBox);   // 名称联想候选
     body.appendChild(specSug);      // 同型号系列联想
 
     var foot = dlgEl('div', 'padding:10px 16px;border-top:' + C_LINE + ';text-align:right;background:' + C_HEAD_BG + ';');
@@ -1888,7 +1906,7 @@
       topSimilarCode = '';
       lastInvKey = '';
       specDupItems = [];
-      simBtn.style.display = 'none';
+      setSimBtn(0);        // 重置为不可点（按钮常显）
       if (!sp) return;
       var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
       if (!base) return;
@@ -1906,9 +1924,7 @@
         specDupItems = (r.items || []).filter(function (x) {
           return Number(x.similarity || 0) >= 0.999;
         });
-        simBtn.textContent = '类似型号（' + r.items.length + '）';
-        simBtn.title = '同小类共 ' + r.items.length + ' 条，按接近程度排序';
-        simBtn.style.display = 'inline-block';
+        setSimBtn(r.items.length);
         loadInventory(specIn.value);   // 拿到编码后刷新一次库存
         if (specDupItems.length && lastCheckResult) {
           try { renderTips(lastCheckResult); } catch (e) { }   // 重新渲染红字 + 禁用按钮
@@ -2708,7 +2724,7 @@
         nameTip.innerHTML = ''; specTip.innerHTML = '';
         nameSugBox.innerHTML = ''; specMeta.innerHTML = '';
         invWrap.style.display = 'none';
-        simBtn.style.display = 'none';
+        setSimBtn(0);
         lastSimilar = null;
         errors = []; setSaveEnabled(true); return;
       }

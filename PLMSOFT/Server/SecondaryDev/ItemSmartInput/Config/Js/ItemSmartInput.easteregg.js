@@ -109,7 +109,7 @@
    * @param {number} level 级别 0~5
    * @param {number} total 当前累计次数（达到 1000 起显示在屏幕上）
    */
-  function launch(level, total) {
+  function launch(level, total, forceSuper) {
     var c = cfg()
     if (!c.enabled) return
     if (!document.body) return
@@ -242,6 +242,29 @@
       }
     }
 
+    var superUntil = 0      // 超级大礼花的文字展示截止时间
+
+    /**
+     * 超级大礼花：金色系、三朵同时、比常规大一倍，屏幕中上方炸开
+     * 由 launch 里按概率随机触发，不占用正常波次
+     */
+    function superBurst() {
+      var cx = W / 2
+      var cy = H * 0.3
+      var golds = [45, 38, 52]          // 金 / 橙金 / 亮金
+      var s0 = st.spread
+      var r0 = st.radius
+      st.spread = s0 * 1.55             // 临时放大：飞得更远、粒子更大
+      st.radius = r0 * 1.45
+      burst(cx, cy, Math.round(perWave * 2.4), golds)
+      burst(cx - W * 0.21, cy + H * 0.07, Math.round(perWave * 0.9), golds)
+      burst(cx + W * 0.21, cy + H * 0.07, Math.round(perWave * 0.9), golds)
+      st.spread = s0
+      st.radius = r0
+      superUntil = Date.now() + 2800
+      log('超级大礼花！')
+    }
+
     /** 升空：从屏幕底部射一条光点，到点后再炸开 */
     function rocket(cx, cy, n, hue) {
       rockets.push({
@@ -264,6 +287,12 @@
           rocket(cx, cy, perWave, hue)
         }, idx * 190))
       })(w)
+    }
+
+    // 随机超级大礼花：约 12% 概率，在礼花中段来一发金色大场面
+    // forceSuper 为真时（__plmEgg.super() 手动触发）必定出现，且更快炸开
+    if (forceSuper || Math.random() < 0.12) {
+      timers.push(window.setTimeout(superBurst, forceSuper ? 380 : Math.round(st.duration * 0.4)))
     }
 
     var t0 = Date.now()
@@ -399,20 +428,42 @@
       }
       ctx.globalAlpha = 1
 
-      // 累计 1000 次以上，屏幕中上部显示一行字（带阴影，深浅背景都看得清）
+      // 次数文字分级显示：
+      //   < 500       不显示（礼花本身就是庆祝）
+      //   500~999     屏幕上部小字「第 N 次」
+      //   ≥ 1000      屏幕正中大字 + 淡入放大「已累计 N 次录入」
+      //   超级大礼花   正中额外一行金色标题
       var shown = (total == null ? readCount() : total)
-      if (shown >= st.textAt) {
-        var alpha = Math.min(1, Math.max(0, 1 - elapsed / st.duration) * 2)
-        ctx.save()
-        ctx.globalAlpha = alpha
-        ctx.textAlign = 'center'
-        ctx.font = 'bold 26px "Microsoft YaHei",Arial,sans-serif'
-        ctx.shadowColor = 'rgba(0,0,0,.55)'
-        ctx.shadowBlur = 8
+      var fade = Math.min(1, Math.max(0, 1 - elapsed / st.duration) * 2)
+      var appear = Math.min(1, elapsed / 420)
+      ctx.save()
+      ctx.textAlign = 'center'
+      ctx.shadowColor = 'rgba(0,0,0,.6)'
+      if (shown >= 1000) {
+        var sc = 0.86 + 0.14 * appear
+        ctx.globalAlpha = fade
+        ctx.font = 'bold ' + Math.round(36 * sc) + 'px "Microsoft YaHei",Arial,sans-serif'
+        ctx.shadowBlur = 16
         ctx.fillStyle = '#ffffff'
-        ctx.fillText('已累计 ' + total + ' 次录入', W / 2, H * 0.16)
-        ctx.restore()
+        ctx.fillText('已累计 ' + shown + ' 次录入', W / 2, H * 0.5)
+      } else if (shown >= 500) {
+        ctx.globalAlpha = fade * 0.9
+        ctx.font = 'bold 22px "Microsoft YaHei",Arial,sans-serif'
+        ctx.shadowBlur = 8
+        ctx.fillStyle = 'rgba(255,255,255,.95)'
+        ctx.fillText('第 ' + shown + ' 次', W / 2, H * 0.16)
       }
+      // 超级大礼花的金色标题（在自己 2.8 秒窗口内）
+      if (superUntil && Date.now() < superUntil) {
+        var k2 = Math.min(1, (superUntil - Date.now()) / 600)
+        ctx.globalAlpha = k2
+        ctx.font = 'bold 30px "Microsoft YaHei",Arial,sans-serif'
+        ctx.shadowBlur = 18
+        ctx.shadowColor = 'rgba(180,120,0,.85)'
+        ctx.fillStyle = '#ffe082'
+        ctx.fillText('★ 超级大礼花 ★', W / 2, H * 0.5 + 52)
+      }
+      ctx.restore()
 
       raf = window.requestAnimationFrame(frame)
     }
@@ -457,6 +508,8 @@
      * 演示页和现场调参用：__plmEgg.preview(1500) 就能看到 1500 次的样子
      */
     preview: function (total) { launch(0, Math.max(0, Number(total) || 0)) },
+    /** 强制放一发超级大礼花（金色三连），用于演示或手动庆祝 */
+    super: function () { launch(0, readCount(), true) },
     reset: function () { writeCount(0); log('计数已清零') },
     off: function () {
       try {

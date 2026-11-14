@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.82';
+  var PLUGIN_VERSION = '1.83';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1401,11 +1401,7 @@
           + (gf[gi].desc ? '：' + escHtml(gf[gi].desc) : '')
           + (gf[gi].example ? '（如 ' + escHtml(gf[gi].example) + '）' : '') + '</div>';
       }
-      // 名称规则：同样强制单行，避免长句换行撑高提示块
-      gHtml += (g.nameRule
-        ? '<div style="opacity:.7;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"'
-          + ' title="' + attr(g.nameRule) + '">' + escHtml(g.nameRule) + '</div>'
-        : '');
+      // 名称规则已剔除：内容与「标准写法 · 小类名」重复，对现场无指导价值
       guideBox.innerHTML = gHtml;
     }
 
@@ -1431,8 +1427,8 @@
     nameTip.className = 'plm-smart-dlg-nametip';
     body.appendChild(nameTip);
 
-    // 标准写法提示：放在「物料名称输入框」下方，紧贴名称相关问题之后
-    body.appendChild(guideBox);
+    // 标准写法提示块已下移到「规格型号」下方（见下方 append），
+    // 这样名称框、规格框都在它上方，异步加载不会推动任何输入框
 
     // 名称联想（同 /api/plm/suggest field=name，与页面输入框同源）
     var nameSugBox = dlgEl('div', 'margin:0 0 8px;');
@@ -1469,6 +1465,10 @@
     quickRow.appendChild(simBtn);
     specRow.appendChild(quickRow);
     body.appendChild(specRow);
+
+    // 标准写法提示块：放在「规格型号」下方，并预留固定高度（min-height:186px）
+    // 名称框与规格框都在它上方，异步加载只影响下方内容，两个输入框全程不漂移
+    body.appendChild(guideBox);
 
     // 规格输入下方的「同型号系列」近似联想（看板同款，数据来自 3130）
     var specSug = dlgEl('div', 'display:none;margin-top:4px;border:' + C_LINE + ';border-radius:4px;'

@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.71';
+  var PLUGIN_VERSION = '1.72';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -3510,8 +3510,14 @@
       return []
     }
 
-    /** 调 PLM 服务；cb(errInfo, rows, meta)；orderBy 用于分页时保证有序 */
-    function callPlm(filterString, cb, orderBy) {
+    /**
+     * 调 PLM 服务；cb(errInfo, rows, meta)
+     * @param {string} filterString 过滤条件
+     * @param {function} cb 回调
+     * @param {string} orderBy OrderbyString
+     * @param {object|null} pager PLM 原生分页 { CurrentPager, RowNumber }，放在 para 层（同 GetStockSearchData）
+     */
+    function callPlm(filterString, cb, orderBy, pager) {
       var env = envCheck()
       if (!env.DataService || (!env.AsyncCall && !env.Call)) {
         cb({ step: 'env', message: '数据服务不可用' }, [], null)
@@ -3524,6 +3530,16 @@
             PSEITEM: { FilterInfo: [], FilterString: filterString, OrderbyString: orderBy || '' },
           }),
         },
+      }
+      // PLM 原生分页：与 GetStockSearchData 一致，Pager 放在 para 层
+      if (pager && pager.RowNumber) {
+        para.para.Pager = {
+          CurrentPager: pager.CurrentPager || 1,
+          RowNumber: pager.RowNumber,
+          SortOrder: 'asc',
+          SortName: orderBy || '',
+          Records: 0,
+        }
       }
       var t0 = nowMs()
       var done = false, timer = null
@@ -3593,6 +3609,7 @@
       log('  __plmProbe.page({after,limit})  游标分页探测（阶段 2 前置）')
       log('  __plmProbe.pageTest()    分页能力对照测试')
       log('  __plmProbe.scan({subs,concurrency})  按小类扫描，测批量拉取耗时')
+      log('  __plmProbe.pagerTest()   测 PLM 原生分页（Pager 参数）是否可用')
       log('提示：Console 里按 "[PLM探测]" 过滤本工具输出')
       envCheck()
     }
@@ -3764,9 +3781,56 @@
       for (var i = 0; i < concurrency; i++) next()
     }
 
+    /**
+     * PLM 原生分页测试：Pager 放在 para 层（同 GetStockSearchData 的写法）
+     * 用 100102（159 行，2.6 秒）作样本，比 100103（1080 行，19.5 秒）快
+     * 用法：__plmProbe.pagerTest()
+     */
+    function pagerTest() {
+      var sub = '100102'
+      var fs = "ECODE LIKE '" + sub + "%' AND STATEID = 'Using'"
+      log('=== PLM 原生分页测试（小类 ' + sub + '，约 159 行）===')
+
+      log('① 不带 Pager（基线）')
+      var t0 = nowMs()
+      callPlm(fs, function (e1, rows1) {
+        if (e1) { err('① 失败', e1); return }
+        log('① 返回 ' + rows1.length + ' 行  ' + Math.round(nowMs() - t0) + 'ms')
+
+        log('② Pager { CurrentPager: 1, RowNumber: 100 }')
+        var t1 = nowMs()
+        callPlm(fs, function (e2, rows2) {
+          if (e2) { err('② 失败', e2); return }
+          log('② 返回 ' + rows2.length + ' 行  ' + Math.round(nowMs() - t1) + 'ms')
+
+          log('③ Pager { CurrentPager: 2, RowNumber: 100 }')
+          var t2 = nowMs()
+          callPlm(fs, function (e3, rows3) {
+            if (e3) { err('③ 失败', e3); return }
+            log('③ 返回 ' + rows3.length + ' 行  ' + Math.round(nowMs() - t2) + 'ms')
+
+            var p1 = rows2[0] && rows2[0].ECODE
+            var p2 = rows3[0] && rows3[0].ECODE
+            log('第 1 页首条 ECODE=' + p1 + '　第 2 页首条 ECODE=' + p2)
+
+            if (rows2.length === 100 && rows3.length > 0 && rows3.length < 100 && p1 !== p2) {
+              log('✅ 分页有效：Page1=100 条，Page2=' + rows3.length + ' 条，数据不同')
+              log('   全量 15141 条按 RowNumber=500 需要 ' + Math.ceil(15141 / 500) + ' 次请求')
+            } else if (rows2.length === 100 && p1 === p2) {
+              err('❌ Pager 被忽略：两页首条相同（' + p1 + '），接口不认 Pager')
+            } else if (rows2.length > 100) {
+              err('❌ Pager 无效：要求 100 条却返回 ' + rows2.length + ' 条')
+            } else {
+              warn('⚠ 结果不明确，请把上方数字发我判断')
+            }
+          }, 'ECODE', { CurrentPager: 2, RowNumber: 100 })
+        }, 'ECODE', { CurrentPager: 1, RowNumber: 100 })
+      }, 'ECODE')
+    }
+
     window.__plmProbe = {
       help: help, one: one, raw: raw, state: state, fields: fields, timing: timing,
-      page: page, pageTest: pageTest, scan: scan,
+      page: page, pageTest: pageTest, scan: scan, pagerTest: pagerTest,
       env: envCheck, service: { filter: SVC_FILTER, stock: SVC_STOCK },
     }
     log('探测工具已挂载：__plmProbe.help() 查看用法')

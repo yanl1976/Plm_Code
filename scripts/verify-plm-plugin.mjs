@@ -813,15 +813,16 @@ async function run() {
     ok('来源标记为 PLM', !!srcTag && srcTag.textContent === 'PLM', 'got=' + (srcTag && srcTag.textContent))
   }
 
-  // S28 PLM 无数据 → 直连兜底，并在界面标出来源
+  // S28 PLM 无数据 → 不再回落 ERP 直连（v1.79 起移除该链路）
   {
-    console.log('[S28] PLM 无数据 → 直连兜底（来源 ERP）')
+    console.log('[S28] PLM 无数据 → 不回落 ERP')
+    const calls = []
     const p = newPage({
       ctrls: baseCtrl(),
       ajaxHandler: router({
         '/health': HEALTH_OK,
         '/check': CHECK_CLEAN,
-        'direct=1': { found: true, source: 'erp', total: { qty: 7, avbqty: 7 }, warehouses: [] },
+        'direct=1': (u) => { calls.push(u); return { found: true, source: 'erp', total: { qty: 7, avbqty: 7 }, warehouses: [] } },
       }),
       globalCfg: { inventoryBase: 'http://127.0.0.1:3130' },
       dataService: (uri) => String(uri).indexOf('CommonGetObjectDataByFilter') >= 0
@@ -839,8 +840,9 @@ async function run() {
 
     const badge = findByClass(p, 'plm-smart-inv-badge')
     const srcTag = findByClass(p, 'plm-smart-inv-src')
-    ok('直连兜底后显示数量', !!badge && badge.textContent === '7', 'got=' + (badge && badge.textContent))
-    ok('来源标记为 ERP', !!srcTag && srcTag.textContent === 'ERP', 'got=' + (srcTag && srcTag.textContent))
+    ok('PLM 无数据时不显示库存', !badge || badge.textContent === '0', 'got=' + (badge && badge.textContent))
+    ok('不再触发 ERP 直连', calls.length === 0, 'calls=' + calls.length)
+    ok('来源标记不为 ERP', !srcTag || srcTag.textContent !== 'ERP', 'got=' + (srcTag && srcTag.textContent))
   }
 
   // S29 PLM 查询成功但库存为 0：不显示徽标，也不触发直连降级

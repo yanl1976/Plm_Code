@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.78';
+  var PLUGIN_VERSION = '1.79';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -97,8 +97,8 @@
     checkButtonPlace: 'left',    // 'left'=名称标签左侧（默认）；'float'=输入框右侧；'fixed'=窗口右下角；'after'=插进布局
     apiLabel: '数据治理服务器',   // 提示文案里代替具体地址显示的名字
     inventorySource: 'plm',      // 'plm'=直接用 PLM 的 ERPService（与 BOM 库存查询同源）；'dashboard'=走 inventoryBase
-    allowDirectErp: true,        // PLM 查不到时是否回落到直连 ERP（排查期默认开；PLM 稳定后改 false）
-    inventoryBase: '',           // 仅 inventorySource='dashboard' 或直连兜底时使用，如 http://192.168.20.31:3130
+    // allowDirectErp 已移除：全面切换 PLM，不再回落 ERP 直连
+    inventoryBase: '',           // 治理看板地址（规格联想/同义词建议走这里更快），如 http://192.168.20.31:3130
     // 按钮只对下列「类型(ITEMTYPE)」生效，其余类型置灰不可用
     restrictItemType: true,
     itemTypeAllowText: ['电气元件', '原材料', '外购标准件'],
@@ -172,7 +172,7 @@
   // 允许被外部配置文件（ItemSmartInput.config.js）覆盖的键。
   // 用白名单而不是全量合并：写错键名不会悄悄改掉别的行为。
   var CFG_OVERRIDABLE = [
-    'version', 'apiBase', 'apiPort', 'apiLabel', 'inventoryBase', 'inventorySource', 'allowDirectErp', 'enabled', 'showCheckButton', 'lockFields',
+    'version', 'apiBase', 'apiPort', 'apiLabel', 'inventoryBase', 'inventorySource', 'enabled', 'showCheckButton', 'lockFields',
   'plmQueryTimeout', 'autoSync',
     'checkButtonText', 'checkButtonHost', 'checkButtonPlace',
     'checkButtonOffsetX', 'checkButtonOffsetY',
@@ -1321,7 +1321,7 @@
       + 'font:13px/1.6 "Microsoft YaHei",Arial,sans-serif;color:' + th.fg + ';');
 
     var head = dlgEl('div', 'padding:10px 16px;background:' + C_HEAD_BG + ';border-bottom:' + C_LINE + ';font-weight:bold;font-size:14px;');
-    head.textContent = '智能数据治理平台　版本号：V ' + pluginVersion();
+    head.textContent = 'PLM 物料录入助手　版本号：V ' + pluginVersion();
     head.className = 'plm-smart-dlg-title';
     var xBtn = dlgEl('span', 'float:right;cursor:pointer;color:#999;font-weight:normal;font-size:18px;line-height:18px;', '×');
     xBtn.onclick = closeEditor;
@@ -1344,12 +1344,14 @@
       var html = '<div>物料编码：<b>' + escHtml(code || '(未申请)') + '</b>'
         + (cat ? '　分类：' + escHtml(cat) : '') + '</div>';
 
-      // 治理服务（3100）状态：一眼看出联想/查重是否可用
+      // 数据源与查重服务状态：系统已全面切换 PLM，弹窗里明确标出
       var sOk = svc.ok;
       var sColor = sOk === true ? C_OK : (sOk === false ? C_ERR : C_MUTE);
       var sText = sOk === true ? '正常' : (sOk === false ? '不可用，联想/查重已跳过' : '检测中');
-      html += '<div class="plm-smart-svc-state" style="font-size:12px;color:' + sColor + '">'
-        + '● 治理服务（' + escHtml(CFG.apiLabel) + '）：' + sText + '</div>';
+      html += '<div class="plm-smart-svc-state" style="font-size:12px;color:' + C_MUTE + '">'
+        + '● 物料库：<b style="color:' + C_OK + '">PLM</b>（物料信息、库存、查重均取自 PLM）</div>'
+        + '<div class="plm-smart-svc-state" style="font-size:12px;color:' + sColor + '">'
+        + '● 查重服务（' + escHtml(CFG.apiLabel) + '）：' + sText + '</div>';
 
       if (r && r.skipReason) {
         html += '<div style="color:' + C_WARN + '">' + escHtml(r.skipReason) + '</div>';
@@ -1419,7 +1421,7 @@
       + 'font-weight:bold;min-width:16px;text-align:center;', '0');
     invBadge.className = 'plm-smart-inv-badge';
     invWrap.appendChild(invBadge);
-    // 数据来源标记：PLM / ERP（排查用，一眼看出走的是哪条链路）
+    // 数据来源标记：库存一律来自 PLM 标准接口（已移除 ERP 直连）
     var invSrc = dlgEl('span', 'opacity:.55;font-size:11px;', '');
     invSrc.className = 'plm-smart-inv-src';
     invWrap.appendChild(invSrc);
@@ -1991,16 +1993,14 @@
       var n = Number(r.total.qty || 0);
       if (!n) return false;
       invBadge.textContent = String(n);
-      invSrc.textContent = src === 'erp' ? 'ERP' : 'PLM';
-      // 来源做成有色小标签，避免灰字太淡看不出来
+      // 库存只来自 PLM 标准接口，来源标识固定为 PLM
+      invSrc.textContent = 'PLM';
       invSrc.style.opacity = '1';
       invSrc.style.padding = '0 4px';
       invSrc.style.borderRadius = '3px';
-      invSrc.style.background = src === 'erp' ? 'rgba(255,152,0,.18)' : 'rgba(76,175,80,.18)';
-      invSrc.style.color = src === 'erp' ? '#e8890c' : '#2e7d32';
-      invSrc.title = src === 'erp'
-        ? '数据来自直连 ERP（排查期保留，可在配置中关闭 allowDirectErp）'
-        : '数据来自 PLM 库存查询服务（与 BOM「库存查询」同源）';
+      invSrc.style.background = 'rgba(76,175,80,.18)';
+      invSrc.style.color = '#2e7d32';
+      invSrc.title = '数据来自 PLM 库存查询服务（Hoteam.InforCenter.ERPService.GetStockSearchData，与 BOM「库存查询」同源）';
       invBadge.title = (r.warehouses || []).slice(0, 8).map(function (w) {
         return (w.stockName || '未知仓库') + '：' + w.qty + (w.projectNo ? '（' + w.projectNo + '）' : '');
       }).join('\n');
@@ -2008,17 +2008,15 @@
       return true;
     }
 
-    /** 现有库存：默认走 PLM 的 ERPService；PLM 拿不到且开关打开时回落直连 ERP */
+    /** 现有库存：只走 PLM 标准接口（Hoteam.InforCenter.ERPService.GetStockSearchData），不再回落 ERP 直连 */
     function loadInventory(sp) {
       invWrap.style.display = 'none';
       invBadge.textContent = '0';
       invSrc.textContent = '';
       var src = CFG.inventorySource || 'plm';
-      var allowErp = CFG.allowDirectErp !== false;
       try {
         var ec3 = extCfg();
         if (ec3 && ec3.inventorySource) src = String(ec3.inventorySource);
-        if (ec3 && ec3.allowDirectErp != null) allowErp = !!ec3.allowDirectErp;
       } catch (e) { }
 
       // 优先查「最相似物料」的库存：新建物料还没建档，自身编码在 PLM 里查不到对象
@@ -2027,36 +2025,25 @@
       var invKey = code + '|' + src;
       if (invKey === lastInvKey) return;   // 同一编码同一来源不重复查
       lastInvKey = invKey;
-      var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
-
-      // 直连兜底（默认开启）：走看板 3130 的直连查询，响应里带 source=erp
-      function tryDirect() {
-        if (!allowErp || !base || !code) return;
-        var u = base + '/api/new-material/inventory?direct=1&code=' + encodeURIComponent(code);
-        apiAbsolute(u, function (r) {
-          if (!dlg || !r || !r.found) return;
-          showInv(r, 'erp');
-        });
-      }
 
       if (src === 'plm') {
-        if (!code) return;
         plmStockQuery(code, function (r) {
           if (!dlg) return;
-          // 查询成功（哪怕库存为 0）就不降级；只有查不到/异常才回落直连
           if (r && r.ok) { showInv(r, 'plm'); return; }
-          tryDirect();
+          log('PLM 库存查询未返回数据：' + code + '（已移除 ERP 直连兜底）');
         });
         return;
       }
 
+      // 'dashboard' 模式：走治理服务（其内部同样受 ERP 开关约束，关闭时不返回库存）
+      var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
       if (!base) return;
       var url = base + '/api/new-material/inventory?code=' + encodeURIComponent(code)
         + '&sub=' + encodeURIComponent(currentSub())
         + '&spec=' + encodeURIComponent(sp || '');
       apiAbsolute(url, function (r) {
         if (!dlg || !r) return;
-        showInv(r, r.source === 'erp' ? 'erp' : 'plm');
+        showInv(r, 'plm');
       });
     }
 

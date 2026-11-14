@@ -16,7 +16,8 @@ window.ItemSmartInputConfig = {
   apiPort: 3100,                          // 仅 apiBase='auto' 时生效
   apiLabel: '数据治理服务器',              // 提示文案里代替 IP 显示的名字
   inventorySource: 'plm',      // 'plm'=直接调 PLM 的 ERPService（与 BOM 库存查询同源）；'dashboard'=走 inventoryBase
-  allowDirectErp: true,        // PLM 查不到时回落直连 ERP（排查期默认开；PLM 稳定后改 false）
+  // allowDirectErp 已移除（2026-11-14）：系统全面切换 PLM，不再回落 ERP 直连
+  // 原用途：PLM 查不到时走看板 3130 直连 ERP 库。现已由 PLM 快照 + PLM 标准接口完全覆盖。
   inventoryBase: 'http://192.168.20.31:3130', // 治理看板地址：弹窗里显示「现有库存」；留空则不显示
   timeout: 1500,                          // 单次请求超时(ms)，超时降级放行
   plmQueryTimeout: 180000,                // PLM 对象查询超时(ms)，默认 3 分钟

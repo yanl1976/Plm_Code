@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.70';
+  var PLUGIN_VERSION = '1.71';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -3433,7 +3433,7 @@
     var SVC_FILTER = 'InforCenter.Common.ObjectService.CommonGetObjectDataByFilter'
     var SVC_STOCK = 'Hoteam.InforCenter.ERPService.GetStockSearchData'
     var KEY_FIELDS = ['ECODE', 'ENAME', 'GGXH', 'ZYCS', 'UNIT', 'STATEID', 'WORKFLOWSTATE', 'EID', 'EUID', 'UPDATETIME', 'EVERSION']
-    var TIMEOUT = 10000
+    var TIMEOUT = 30000   // 实测 245 条要 6.5 秒，10 秒太紧；大范围查询会超时，改按小类分批
 
     function stamp() {
       var d = new Date()
@@ -3592,6 +3592,7 @@
       log('  __plmProbe.timing([codes])  批量测耗时')
       log('  __plmProbe.page({after,limit})  游标分页探测（阶段 2 前置）')
       log('  __plmProbe.pageTest()    分页能力对照测试')
+      log('  __plmProbe.scan({subs,concurrency})  按小类扫描，测批量拉取耗时')
       log('提示：Console 里按 "[PLM探测]" 过滤本工具输出')
       envCheck()
     }
@@ -3705,16 +3706,67 @@
       callPlm("ECODE LIKE '100101%' AND STATEID = 'Using'", function (e1, rows1, m1) {
         if (e1) return
         log('① 不传 limit，ECODE LIKE 100101% → 返回 ' + rows1.length + ' 行，耗时 ' + (m1 && m1.cost) + 'ms')
-        log('② 接下来试游标分页（limit 500）')
+        log('② 接下来试「同小类 + 游标」，limit 200')
         setTimeout(function () {
-          page({ after: '10010100000', limit: 500 })
-        }, 500)
+          page({ prefix: ['100101'], after: '10010100000', limit: 200 })
+        }, 800)
       }, 'ECODE')
+    }
+
+    /**
+     * 按小类扫描：避开「10%/11%/12%」这类全表条件（实测必超时）
+     * 用法：__plmProbe.scan({ subs: ['100101','100102','100103'], concurrency: 2 })
+     */
+    function scan(opts) {
+      var o = opts || {}
+      var subs = o.subs || []
+      var concurrency = Math.max(1, Math.min(5, o.concurrency || 2))
+      if (!subs.length) {
+        err('请传小类数组，如 __plmProbe.scan({ subs: [\'100101\',\'100102\'], concurrency: 2 })')
+        return
+      }
+      log('=== 按小类扫描：' + subs.length + ' 个小类，并发 ' + concurrency + ' ===')
+      var t0 = nowMs()
+      var idx = 0, done = 0, failed = 0, totalRows = 0
+      var results = []
+
+      function next() {
+        if (idx >= subs.length) return
+        var sub = subs[idx++]
+        var st = nowMs()
+        callPlm("ECODE LIKE '" + sub + "%' AND STATEID = 'Using'", function (e, rows) {
+          var cost = Math.round(nowMs() - st)
+          done++
+          if (e) {
+            failed++
+            warn('[' + done + '/' + subs.length + '] ' + sub + ' 失败：' + (e.message || e.step) + '  ' + cost + 'ms')
+          } else {
+            totalRows += rows.length
+            results.push({ sub: sub, n: rows.length, cost: cost })
+            log('[' + done + '/' + subs.length + '] ' + sub + ' 返回 ' + rows.length + ' 行  ' + cost + 'ms')
+          }
+          if (done === subs.length) {
+            var all = Math.round(nowMs() - t0)
+            log('=== 完成：' + subs.length + ' 个小类，共 ' + totalRows + ' 行，失败 ' + failed + '，总耗时 ' + all + 'ms ===')
+            var avg = Math.round(all / subs.length)
+            log('平均 ' + avg + 'ms/小类 → 209 个小类串行约 ' + Math.round(avg * 209 / 1000) + ' 秒')
+            if (results.length) {
+              var maxOne = results.slice().sort(function (a, b) { return b.cost - a.cost })[0]
+              log('最慢：' + maxOne.sub + ' ' + maxOne.n + ' 行 ' + maxOne.cost + 'ms')
+            }
+            window.__plmScanResult = results
+            log('明细已存 window.__plmScanResult，可执行 copy(__plmScanResult) 复制')
+            return
+          }
+          next()
+        }, 'ECODE')
+      }
+      for (var i = 0; i < concurrency; i++) next()
     }
 
     window.__plmProbe = {
       help: help, one: one, raw: raw, state: state, fields: fields, timing: timing,
-      page: page, pageTest: pageTest,
+      page: page, pageTest: pageTest, scan: scan,
       env: envCheck, service: { filter: SVC_FILTER, stock: SVC_STOCK },
     }
     log('探测工具已挂载：__plmProbe.help() 查看用法')

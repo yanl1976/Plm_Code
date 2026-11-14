@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.95';
+  var PLUGIN_VERSION = '1.96';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -4367,6 +4367,40 @@
     log('快照同步工具已挂载：__plmSync.plan() / start() / status() / retry([subs]) / auto')
     // 启用自动同步（工作时间每 N 小时，页面常驻时生效）
     try { autoStart() } catch (e) { err('自动同步启动失败：' + (e && e.message)) }
+
+    // ===== 彩蛋模块动态注入 =====
+    // 不走 fileref 注册：平台 JSFile 加载器遇到 404 会中断后续脚本，
+    // 彩蛋是附加功能，绝不能因为它的文件缺失影响平台自身脚本的加载。
+    // 做法：从已加载的 ItemSmartInput.js 的 src 推导同目录路径，异步注入；失败静默。
+    (function injectEasterEgg() {
+      try {
+        var tags = document.getElementsByTagName('script')
+        var selfSrc = ''
+        for (var i = 0; i < tags.length; i++) {
+          var src = String(tags[i].src || '')
+          if (/\/ItemSmartInput\.js(\?|$)/.test(src)) { selfSrc = src; break }
+        }
+        if (!selfSrc) {
+          // 兜底：若平台用 XHR+eval 方式加载（页面上没有对应 script 标签），
+          // 按 fileref 里登记的约定路径推断（~/SecondaryDev/... → 站点根下）
+          selfSrc = '/SecondaryDev/ItemSmartInput/Config/Js/ItemSmartInput.js'
+        }
+        // 与主插件同目录，只替换文件名
+        var eggSrc = selfSrc.replace(/ItemSmartInput\.js(\?[^#]*)?$/, 'ItemSmartInput.easteregg.js')
+        if (!eggSrc || eggSrc === selfSrc) return
+        // 已注入过就不重复
+        for (var k = 0; k < tags.length; k++) {
+          if (String(tags[k].src || '').indexOf('ItemSmartInput.easteregg.js') >= 0) return
+        }
+        var el = document.createElement('script')
+        el.src = eggSrc
+        el.async = true
+        el.onload = function () { log('彩蛋模块已注入：__plmEgg.status() 可查看累计次数') }
+        el.onerror = function () { log('彩蛋模块未找到（' + eggSrc + '），不影响录入与查重') }
+        var host = document.head || document.getElementsByTagName('head')[0] || document.body
+        if (host) host.appendChild(el)
+      } catch (e) { /* 彩蛋是附加功能，任何异常都静默 */ }
+    })()
     log('探测工具已挂载：__plmProbe.help() 查看用法')
   })();
 })(window, window.jQuery);

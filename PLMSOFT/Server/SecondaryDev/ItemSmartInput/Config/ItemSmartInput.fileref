@@ -12,9 +12,11 @@
   -->
   <JSFile FileName ="~/SecondaryDev/ItemSmartInput/Config/ItemSmartInput.config.js" group="InforCenter"/>
   <JSFile FileName ="~/SecondaryDev/ItemSmartInput/Config/Js/ItemSmartInput.js" group="InforCenter"/>
-  <!-- 彩蛋模块：只在保存并回填成功后计数，达到阶梯放礼花；删掉本行即可整体移除 -->
-  <JSFile FileName ="~/SecondaryDev/ItemSmartInput/Config/Js/ItemSmartInput.easteregg.js" group="InforCenter"/>
   <JSFile FileName ="~/SecondaryDev/ItemSmartInput/Config/ItemSmartInput.config.js" group="TSDC"/>
   <JSFile FileName ="~/SecondaryDev/ItemSmartInput/Config/Js/ItemSmartInput.js" group="TSDC"/>
-  <JSFile FileName ="~/SecondaryDev/ItemSmartInput/Config/Js/ItemSmartInput.easteregg.js" group="TSDC"/>
+  <!--
+    彩蛋模块 ItemSmartInput.easteregg.js 故意不在本文件注册：
+    平台脚本加载遇到 404 会中断后续注册项，彩蛋是附加功能，不能因为文件缺失影响平台脚本。
+    改由 ItemSmartInput.js 运行时按自身路径动态注入（失败静默，录入与查重不受影响）。
+  -->
 </root>

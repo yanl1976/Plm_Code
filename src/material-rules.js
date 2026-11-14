@@ -210,7 +210,8 @@ export function checkSpec(raw, sub) {
   const mult = (R.multiplyChars || []).filter((c) => new RegExp('\\d\\s*' + esc(c) + '\\s*(?=\\d)').test(s))
   if (mult.length) warnings.push(R.multiplyMsg || '乘号统一用 *')
   // 规格里允许中文括号（附件描述常用），由 bracketToHalf 控制是否提示
-  if (R.bracketToHalf && /[（）]/.test(s)) warnings.push('括号请使用半角 ()')
+  const cnBracket = /[（）]/.test(s)
+  if (R.bracketToHalf && cnBracket) warnings.push('括号请使用半角 ()')
   // 空格：首尾只能从原文看出来（s 已 trim），中间连续空格/非常规空白沿用原提示
   if (fmt && fmt.reasons.includes('首尾有空格')) {
     warnings.push('规格首尾有多余空格，建议去除')
@@ -219,7 +220,17 @@ export function checkSpec(raw, sub) {
               fmt.reasons.includes('含制表符或全角空格'))) {
     warnings.push('规格里有连续空格，请用单个空格分隔参数')
   }
-  if (sug && sug !== s) warnings.push('规范写法：' + sug)
+  // 规范写法去重：单项问题已有专门提示时，不再重复整串
+  //   ① 只差「中文括号→半角」→ 由「括号请使用半角」说明
+  //   ② 只差「乘号 x/× → *」→ 由「乘号统一用 *」说明
+  // 多种问题并存时仍输出规范写法，用户能看到完整答案
+  const onlyBracketDiff = cnBracket && sug !== s
+    && sug === s.replace(/（/g, '(').replace(/）/g, ')')
+  const multFix = (x) => String(x)
+    .replace(/(\d)\s*[×xX]\s*(?=\d)/g, '$1*')
+    .replace(/[×✕✖]/g, '*')
+  const onlyMultDiff = mult.length > 0 && sug !== s && sug === multFix(s)
+  if (sug && sug !== s && !onlyBracketDiff && !onlyMultDiff) warnings.push('规范写法：' + sug)
 
   // 该小类关键参数至少命中 N 个，否则无法与相似物料区分
   if (sub) {
@@ -400,6 +411,11 @@ export function checkName(raw, spec, sub, opts = {}) {
   }
   if (s.length < (R.minLen || 2)) errors.push(`名称过短（至少 ${R.minLen || 2} 个字）`)
   if (s.length > (R.maxLen || 24)) errors.push(`名称过长（最多 ${R.maxLen || 24} 个字），细节请写进规格`)
+  // 全角字母/数字：名称以中文为主，全角多由输入法误切产生，存库后按半角检索不到
+  // 复用规格的 halfWidthOnly 开关，保持两端同口径；hasFullWidth 不含汉字与中文括号，不会误伤
+  if (rules().spec.halfWidthOnly && hasFullWidth(s)) {
+    errors.push('名称不能包含全角字母/数字（会导致同物不同码，按半角 ABC 搜不到这条）')
+  }
 
   for (const p of R.forbidPatterns || []) {
     if (new RegExp(p.re).test(s)) errors.push(p.msg)

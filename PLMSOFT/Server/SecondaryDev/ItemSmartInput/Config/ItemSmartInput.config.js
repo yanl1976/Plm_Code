@@ -73,18 +73,33 @@ window.ItemSmartInputConfig = {
 
     // 关键词 → 分组 / 级别（从上往下匹配，第一条命中即生效，顺序不要随意调）
     rules: [
-      { re: '^名称.{0,8}(不能为空|过长|过短|禁用词|只能)', group: 'name', level: 'error' },
+      // ① 名称类 error（必须在 ^名称 warn 之前）
+      { re: '^(物料)?名称.{0,10}(不能为空|过长|过短|不能包含|与规格不能完全相同|禁用词|只能)|^名称疑似', group: 'name', level: 'error' },
+      // ② 名称类 warn 兜底
       { re: '^名称', group: 'name', level: 'warn' },
+      // ③ 名称类专项：材质 / 品牌
+      { re: '材质/表面处理|品牌请写入', group: 'name', level: 'warn' },
+      // ④ 查重 error
       { re: '完全相同规格|同小类已有完全相同', group: 'dup', level: 'error' },
+      // ⑤ 查重 warn / info
+      { re: '疑似相同规格|高度相似|顺序不同', group: 'dup', level: 'warn' },
       { re: '相似型号|类似型号|一物多号', group: 'dup', level: 'info' },
-      { re: '未收录', group: 'spec', level: 'tip' },
-      { re: '额定电压建议|乘号|括号请使用|多余空格|连续空格', group: 'spec', level: 'warn' },
-      { re: '^规范写法', group: 'spec', level: 'tip' },
-      { re: '不能为空|过长|过短|半角字符|必须包含|占位内容', group: 'spec', level: 'error' },
-      { re: '建议采用|标准写法|同义词', group: 'name', level: 'tip' },
-      { re: '小类不符|含型号|型号请写进规格', group: 'name', level: 'warn' },
+      // ⑥ 环境（须在「库存」之前，否则「库存未核对」会被判成库存类）
+      { re: '服务不可用|不可用|超时|网络异常|未核对', group: 'env', level: 'warn' },
+      // ⑦ 库存
       { re: '库存', group: 'stock', level: 'info' },
-      { re: '服务|超时|不可用|网络', group: 'env', level: 'warn' },
+      // ⑧ 规格 tip
+      { re: '未收录', group: 'spec', level: 'tip' },
+      { re: '^规范写法', group: 'spec', level: 'tip' },
+      // ⑨ 规格 warn
+      { re: '额定电压建议|乘号|括号请使用|多余空格|连续空格', group: 'spec', level: 'warn' },
+      // ⑩ 规格 error（补「项目号」）
+      { re: '不能为空|过长|过短|半角字符|必须包含|占位内容|项目号', group: 'spec', level: 'error' },
+      // ⑪ 名称 tip
+      { re: '建议采用|标准写法|同义词', group: 'name', level: 'tip' },
+      // ⑫ 名称 warn（小类不符等）
+      { re: '小类不符|含型号|型号请写进规格', group: 'name', level: 'warn' },
+      // ⑬ 兜底
       { re: '名称', group: 'name', level: 'warn' }
     ],
 

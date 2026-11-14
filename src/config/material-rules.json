@@ -207,7 +207,7 @@
       "X"
     ],
     "multiplyMsg": "乘号统一用 *（如 6*80、3*25+1*16），不要用 × / x",
-    "bracketToHalf": false,
+    "bracketToHalf": true,
     "forbidPatterns": [
       {
         "re": "[Ss]20\\d{5}",
@@ -258,8 +258,6 @@
       "m㎡": "mm²",
       "mm^": "mm²"
     },
-    "spaceBeforeUnit": false,
-    "paramOrderHint": "型号 → 额定电压 → 极数 → 额定电流 → 附件/后缀",
     "requireParamHit": 1,
     "requireParamMsg": "该小类的关键参数一个都没识别到（{tokens}），请按“参数+数值”补全，否则无法与相似物料区分"
   },

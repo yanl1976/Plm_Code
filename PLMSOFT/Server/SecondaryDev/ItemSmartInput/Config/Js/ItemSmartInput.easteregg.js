@@ -38,7 +38,11 @@
   }
   var KEY_COUNT = 'plmSmartEggCount'
   var KEY_LAST = 'plmSmartEggLastAt'
-  var PALETTE = ['#ff5c5c', '#ffb400', '#4caf50', '#29b6f6', '#ab47bc', '#ff8a65', '#ffd54f']
+  var TAU = Math.PI * 2
+  // 主色调（HSL 色相）：红 / 橙红 / 金 / 绿 / 青 / 紫
+  // 每次爆炸只取一个主色（+小幅色相抖动），真实烟花一次爆炸通常是同一种颜色，
+  // 每颗粒子全随机反而像彩色纸屑。
+  var HUES = [0, 14, 42, 122, 198, 291]
 
   function cfg() {
     var c = (window.ItemSmartInputConfig && window.ItemSmartInputConfig.easterEgg) || {}
@@ -91,7 +95,7 @@
       spread: Math.min(4 + s * 0.4, 10),                               // 爆炸初速
       radius: Math.min(1 + s * 0.12, 2.8),                             // 粒子半径
       duration: Math.min(3200 + s * 300, 7000),                        // 动画时长
-      colors: Math.min(3 + Math.floor(s * 0.8), PALETTE.length),       // 参与的颜色数
+      colors: Math.min(3 + Math.floor(s * 0.8), HUES.length),          // 参与的颜色数
       trailAt: 300,                                                    // 累计超过这个数就开拖尾
       textAt: 1000,                                                    // 累计超过这个数就显示次数
     }
@@ -135,22 +139,38 @@
     var waves = st.waves
     var perWave = st.perWave
     var useTrail = (total == null ? readCount() : total) >= st.trailAt
-    var palette = PALETTE.slice(0, st.colors)
+    var huePool = HUES.slice(0, Math.max(3, Math.min(st.colors, HUES.length)))
     var parts = []
+    var rings = []      // 爆炸瞬间的冲击波光环
     var timers = []
 
+    /**
+     * 一次爆炸
+     * 真实烟花的三个特征：
+     *   ① 一次爆炸通常是同一种颜色（这里取主色 + 小幅色相抖动，而不是全随机）
+     *   ② 有速度层次：多数中速，少数飞得远
+     *   ③ 寿命差异大：有的很快熄灭，有的拖得很久
+     */
     function burst(cx, cy, n) {
+      var hue = huePool[(Math.random() * huePool.length) | 0]
+      var span = 14 + Math.random() * 16
+      // 冲击波：一圈快速扩散的细环
+      rings.push({ x: cx, y: cy, r: 3, hue: hue, life: 1 })
       for (var i = 0; i < n; i++) {
         var ang = Math.random() * Math.PI * 2
-        var sp = 2 + Math.random() * st.spread
+        var t = Math.random()
+        var sp = 2 + t * t * (st.spread + 2)     // t² 让快慢分层更明显
         parts.push({
           x: cx, y: cy,
           vx: Math.cos(ang) * sp,
           vy: Math.sin(ang) * sp - 1.6,
           r: 0.8 + Math.random() * st.radius,
-          color: palette[(Math.random() * palette.length) | 0],
+          hue: hue + (Math.random() * span * 2 - span),
+          light: 58 + Math.random() * 22,
           life: 1,
-          decay: 0.008 + Math.random() * 0.012,
+          decay: 0.006 + Math.random() * 0.016,
+          trail: Math.random() < 0.35,
+          px: cx, py: cy,
         })
       }
     }
@@ -189,19 +209,59 @@
         ctx.clearRect(0, 0, W, H)
       }
 
+      // 冲击波光环：快速扩散并淡出
+      for (var j = rings.length - 1; j >= 0; j--) {
+        var g = rings[j]
+        g.r += 5 + g.r * 0.18
+        g.life -= 0.045
+        if (g.life <= 0) { rings.splice(j, 1); continue }
+        ctx.globalAlpha = g.life * 0.28
+        ctx.strokeStyle = 'hsl(' + (g.hue | 0) + ',100%,68%)'
+        ctx.lineWidth = 1.6 * g.life + 0.4
+        ctx.beginPath()
+        ctx.arc(g.x, g.y, g.r, 0, TAU)
+        ctx.stroke()
+      }
+
       for (var i = parts.length - 1; i >= 0; i--) {
         var p = parts[i]
-        p.vy += 0.09          // 重力
-        p.vx *= 0.99          // 空气阻力
-        p.vy *= 0.99
+        p.px = p.x
+        p.py = p.y
+        p.vy += 0.085                        // 重力
+        p.vx *= 0.985                        // 空气阻力（下坠的弧线更自然）
+        p.vy *= 0.985
         p.x += p.vx
         p.y += p.vy
         p.life -= p.decay
-        if (p.life <= 0) { parts.splice(i, 1); continue }
-        ctx.globalAlpha = Math.max(0, p.life)
-        ctx.fillStyle = p.color
+        if (p.life <= 0 || p.y > H + 40) { parts.splice(i, 1); continue }
+
+        var a = p.life
+        var r = p.r * (0.25 + 0.75 * a)      // 燃烧中越来越小
+        var col = 'hsl(' + (p.hue | 0) + ',100%,' + (p.light | 0) + '%)'
+
+        // 火星拖尾：一条渐隐短线
+        if (p.trail) {
+          ctx.globalAlpha = a * 0.45
+          ctx.strokeStyle = col
+          ctx.lineWidth = Math.max(0.6, r * 0.8)
+          ctx.beginPath()
+          ctx.moveTo(p.px, p.py)
+          ctx.lineTo(p.x, p.y)
+          ctx.stroke()
+        }
+
+        // 外圈光晕：大而淡，制造发光感
+        ctx.globalAlpha = a * 0.2
+        ctx.fillStyle = col
         ctx.beginPath()
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
+        ctx.arc(p.x, p.y, r * 3, 0, TAU)
+        ctx.fill()
+
+        // 核心：刚炸开的一瞬是白热，之后转为本身颜色
+        ctx.globalAlpha = Math.min(1, a * 1.2)
+        ctx.fillStyle = a > 0.88 ? '#ffffff' : col
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, r, 0, TAU)
         ctx.fill()
       }
       ctx.globalAlpha = 1

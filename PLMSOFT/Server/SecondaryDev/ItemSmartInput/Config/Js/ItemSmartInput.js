@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.73';
+  var PLUGIN_VERSION = '1.74';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -3831,7 +3831,7 @@
     // ===== 阶段 2：物料快照同步（查 PLM → 上报 3100）=====
     var syncState = {
       running: false, mode: '', total: 0, done: 0, failed: 0,
-      rows: 0, batchNo: 0, buf: [], errors: [], startedAt: 0,
+      rows: 0, batchNo: 0, errors: [], startedAt: 0, lastTicks: 0, failedSubs: [],
     }
 
     function syncLog() {
@@ -3899,17 +3899,70 @@
         syncState = {
           running: true, mode: o.force ? 'full' : (plan.mode || 'full'),
           total: plan.subs.length, done: 0, failed: 0,
-          rows: 0, batchNo: 0, errors: [], startedAt: t0, lastTicks: afterTicks,
+          rows: 0, batchNo: 0, errors: [], startedAt: t0,
+          lastTicks: afterTicks, failedSubs: [],
         }
         syncLog('开始：' + syncState.mode + ' 模式，' + plan.subs.length + ' 个小类，并发 ' + concurrency
           + '，起点 ticks=' + afterTicks)
         if (!afterTicks) syncLog('（全量模式：不加时间条件，扫描全部）')
 
-        var idx = 0, finished = false
+        var idx = 0, finished = false, retried = false
+
+        /** 补跑失败的小类（串行 + 单次重试，不再叠加并发压力） */
+        function retryFailed(cb) {
+          var list = (syncState.failedSubs || []).slice()
+          if (!list.length) { cb(); return }
+          retried = true
+          syncState.failedSubs = []
+          var ok = 0, i = 0
+          syncLog('开始补跑 ' + list.length + ' 个失败小类：' + list.join(', '))
+          function step() {
+            if (i >= list.length) {
+              syncState.failed = syncState.failedSubs.length
+              syncLog('补跑结束：成功 ' + ok + ' 个，仍失败 ' + syncState.failedSubs.length + ' 个'
+                + (syncState.failedSubs.length ? '（' + syncState.failedSubs.join(',') + '）' : ''))
+              cb()
+              return
+            }
+            var sub = list[i++]
+            callPlm("ECODE LIKE '" + sub + "%'", function (e2, rows) {
+              if (e2) {
+                syncState.failedSubs.push(sub)
+                syncLog('  补跑 ' + sub + ' 仍失败：' + (e2.message || e2.step))
+                return step()
+              }
+              ok++
+              if (!rows.length) return step()
+              var items = []
+              for (var k = 0; k < rows.length; k++) {
+                var r2 = rows[k]
+                items.push({
+                  ECODE: r2.ECODE, ENAME: r2.ENAME, GGXH: r2.GGXH, ZYCS: r2.ZYCS,
+                  UNIT: r2.UNIT, STATEID: r2.STATEID, EID: r2.EID, EUID: r2.EUID,
+                  UPDATETIME: r2.UPDATETIME, ITEMTYPE: r2.ITEMTYPE,
+                })
+              }
+              syncState.batchNo++
+              postJson(apiUrl('/api/plm/snapshot/upload'), { batch: syncState.batchNo, items: items, mode: syncState.mode }, function (e3, r3) {
+                if (!e3) syncState.rows += (r3 && r3.received) || 0
+                syncLog('  补跑 ' + sub + ' 成功：' + rows.length + ' 条')
+                step()
+              })
+            }, 'ECODE')
+          }
+          step()
+        }
 
         function finishAll() {
           if (finished) return
           finished = true
+          // 先补跑失败的（只补一次，避免死循环）
+          if (!retried && (syncState.failedSubs || []).length) {
+            return retryFailed(function () {
+              finished = false
+              finishAll()
+            })
+          }
           syncState.running = false
           var elapsed = Math.round(nowMs() - t0)
           postJson(apiUrl('/api/plm/snapshot/done'), {
@@ -3921,7 +3974,9 @@
             syncLog('  模式 ' + syncState.mode + '，小类 ' + syncState.total + '，失败查询 ' + syncState.failed)
             syncLog('  上报 ' + syncState.rows + ' 条，耗时 ' + Math.round(elapsed / 1000) + ' 秒')
             if (r2 && r2.ok) syncLog('  快照已更新：共 ' + r2.count + ' 条，lastTicks=' + r2.lastTicks)
-            if (syncState.errors.length) warn('失败明细：', syncState.errors.slice(0, 5))
+            if (syncState.failedSubs && syncState.failedSubs.length) {
+              warn('仍失败的小类：' + syncState.failedSubs.join(',') + '（可执行 __plmSync.retry() 再试）')
+            }
           })
         }
 
@@ -3940,6 +3995,7 @@
             syncState.done++
             if (e2) {
               syncState.failed++
+              syncState.failedSubs.push(sub)
               syncState.errors.push(sub + '：' + (e2.message || e2.step))
               return next()
             }
@@ -3978,10 +4034,73 @@
       })
     }
 
+    /**
+     * 独立补跑：只重跑指定小类（或上次失败的），结果按增量合并进现有快照
+     * 用法：__plmSync.retry(['100201']) 或 __plmSync.retry()
+     */
+    function syncRetry(subs) {
+      if (syncState.running) { warn('同步进行中，先等它结束'); return }
+      var list = (subs && subs.length) ? subs.slice() : (syncState.failedSubs || []).slice()
+      if (!list.length) {
+        warn('没有待补跑的小类。可指定：__plmSync.retry([\'100201\',\'100301\'])')
+        return
+      }
+      syncState.running = true
+      syncState.failedSubs = []
+      var ok = 0, i = 0, rowsTotal = 0, t0 = nowMs()
+      syncLog('补跑 ' + list.length + ' 个小类：' + list.join(', '))
+
+      function step() {
+        if (i >= list.length) {
+          syncState.running = false
+          syncLog('补跑完成：成功 ' + ok + ' 个，仍失败 ' + (list.length - ok) + ' 个，补入 ' + rowsTotal + ' 条'
+            + '，耗时 ' + Math.round((nowMs() - t0) / 1000) + ' 秒')
+          // 关键：用 incremental 合并，不能重建（否则会丢掉已同步的全量数据）
+          postJson(apiUrl('/api/plm/snapshot/done'), {
+            mode: 'incremental', client: 'PLM页面-补跑', elapsedMs: Math.round(nowMs() - t0),
+            batches: syncState.batchNo, lastTicks: syncState.lastTicks || 0,
+          }, function (e, r) {
+            if (e) { err('合并失败：' + (e.msg || e.status)); return }
+            if (r && r.ok) syncLog('快照已合并：共 ' + r.count + ' 条')
+          })
+          return
+        }
+        var sub = list[i++]
+        callPlm("ECODE LIKE '" + sub + "%'", function (e2, rows) {
+          if (e2) {
+            syncState.failedSubs.push(sub)
+            syncLog('  ' + sub + ' 仍失败：' + (e2.message || e2.step))
+            return step()
+          }
+          ok++
+          if (!rows.length) { syncLog('  ' + sub + ' 返回 0 条'); return step() }
+          var items = []
+          for (var k = 0; k < rows.length; k++) {
+            var r2 = rows[k]
+            items.push({
+              ECODE: r2.ECODE, ENAME: r2.ENAME, GGXH: r2.GGXH, ZYCS: r2.ZYCS,
+              UNIT: r2.UNIT, STATEID: r2.STATEID, EID: r2.EID, EUID: r2.EUID,
+              UPDATETIME: r2.UPDATETIME, ITEMTYPE: r2.ITEMTYPE,
+            })
+            var tk = Number(r2.UPDATETIME || 0)
+            if (tk > (syncState.lastTicks || 0)) syncState.lastTicks = tk
+          }
+          syncState.batchNo++
+          postJson(apiUrl('/api/plm/snapshot/upload'), { batch: syncState.batchNo, items: items, mode: 'incremental' }, function (e3, r3) {
+            if (e3) syncLog('  ' + sub + ' 上报失败：' + (e3.msg || e3.status))
+            else rowsTotal += (r3 && r3.received) || 0
+            step()
+          })
+        }, 'ECODE')
+      }
+      step()
+    }
+
     window.__plmSync = {
       plan: function () { syncPlan(function (e, r) { if (e) { err(e); return } log('计划', r) }) },
       start: syncStart,
       status: syncStatus,
+      retry: syncRetry,
       stop: function () { syncState.running = false; warn('已请求停止（当前批次结束后生效）') },
     }
 
@@ -3990,7 +4109,7 @@
       page: page, pageTest: pageTest, scan: scan, pagerTest: pagerTest,
       env: envCheck, service: { filter: SVC_FILTER, stock: SVC_STOCK },
     }
-    log('快照同步工具已挂载：__plmSync.plan() / __plmSync.start() / __plmSync.status()')
+    log('快照同步工具已挂载：__plmSync.plan() / start() / status() / retry([subs])')
     log('探测工具已挂载：__plmProbe.help() 查看用法')
   })();
 })(window, window.jQuery);

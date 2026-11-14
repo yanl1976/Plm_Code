@@ -24,6 +24,16 @@ window.ItemSmartInputConfig = {
                                           // 个别小类会卡住超过 60 秒，故放宽到 3 分钟。
                                           // 若某小类持续超时，可单独 __plmSync.retry(['小类号']) 补跑
 
+  // ---------- 自动同步物料快照 ----------
+  // 页面常驻时生效（关掉 PLM 页面即停止）；首次检查在页面加载 30 秒后
+  autoSync: {
+    enabled: true,        // false = 完全不自动同步，只能手动 __plmSync.start()
+    hours: 2,             // 间隔小时数（工作时间段内）
+    workStart: 8,         // 工作时间起（含），24 小时制
+    workEnd: 18,          // 工作时间止（不含），18 表示到 17:59
+    checkMinutes: 30,     // 每多少分钟检查一次是否已到间隔（不是同步频率）
+  },
+
   // ---------- 总开关 ----------
   enabled: true,              // false = 插件完全静默（最快的止血手段），并自动解除字段锁定
   showCheckButton: true,      // false = 不注入「智能录入」按钮（此时不锁字段，避免无法录入）

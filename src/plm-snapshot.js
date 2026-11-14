@@ -224,6 +224,38 @@ export function finishUpload(body) {
 const ERP_NDJSON = path.join(DATA, 'materials.ndjson')
 const MERGED = path.join(DATA, 'materials-merged.ndjson')
 const DIFF = path.join(DATA, 'plm-erp-diff.json')
+const PLM_ONLY_CSV = path.join(DATA, 'plm-only.csv')
+
+/** .NET ticks → 'YYYY-MM-DD HH:mm:ss'；0 或非法值返回空串 */
+function ticksToDate(t) {
+  const n = Number(t)
+  if (!n || n < 621355968000000000) return ''
+  const d = new Date((n - 621355968000000000) / 10000)
+  if (isNaN(d.getTime())) return ''
+  const p = (x) => String(x).padStart(2, '0')
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
+    + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds())
+}
+
+/** CSV 单元格转义：含逗号/引号/换行时用双引号包裹 */
+function csvCell(v) {
+  const s = String(v == null ? '' : v)
+  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s
+}
+
+/** PLM 独有清单 → CSV（Excel 可直接打开） */
+function toCsv(rows) {
+  const head = ['编码', '名称', '规格型号', '主要参数', 'PLM更新时间', '物料类型', '说明']
+  const lines = [head.join(',')]
+  for (const r of rows) {
+    lines.push([
+      r.code, r.name, r.spec, r.zycs || '',
+      ticksToDate(r.updatedAt), r.itemType || '',
+      'ERP 中不存在，需确认是否为新物料',
+    ].map(csvCell).join(','))
+  }
+  return lines.join('\r\n') + '\r\n'
+}
 
 function readNdjson(file) {
   if (!fs.existsSync(file)) return []
@@ -301,8 +333,16 @@ export function mergeWithErp() {
       if (na && nb && na !== nb && nameDiff.length < 500) {
         nameDiff.push({ code, erp: old.FNAME, plm: rec.FNAME })
       }
-    } else if (plmOnly.length < 500) {
-      plmOnly.push({ code, name: rec.FNAME, spec: rec.FSPECIFICATION })
+    } else if (plmOnly.length < 2000) {
+      // 全量收集（当前 389 条，便于导出完整清单供人工核对）
+      plmOnly.push({
+        code,
+        name: rec.FNAME,
+        spec: rec.FSPECIFICATION,
+        zycs: rec.F_ZXCV_ZYCS,
+        updatedAt: rec.FMODIFYDATE,
+        itemType: p.ITEMTYPE || '',
+      })
     }
     map.set(code, rec)
   }
@@ -344,6 +384,11 @@ export function mergeWithErp() {
     nameDiff,
   }
   fs.writeFileSync(DIFF, JSON.stringify(report, null, 2) + '\n', 'utf8')
+
+  // PLM 独有清单单独出 CSV（Excel 可直接打开核对，带 BOM 防中文乱码）
+  try {
+    fs.writeFileSync(PLM_ONLY_CSV, '\uFEFF' + toCsv(plmOnly), 'utf8')
+  } catch (e) { /* 导出失败不影响主流程 */ }
 
   // 元数据补记合并结果
   const m = loadMeta()

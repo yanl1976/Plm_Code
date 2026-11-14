@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.77';
+  var PLUGIN_VERSION = '1.78';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -60,6 +60,14 @@
     enabled: true,               // 总开关：false 时完全静默
     timeout: 1500,               // 单次请求超时(ms)，超时即降级放行
   plmQueryTimeout: 180000,     // PLM 对象查询超时(ms)，默认 3 分钟；大基数小类（如端子 1000+ 条）需要更长
+  // 自动同步物料快照：工作时间每 N 小时一次（页面常驻时生效，关页面即停）
+  autoSync: {
+    enabled: true,
+    hours: 2,          // 间隔小时数
+    workStart: 8,      // 工作时间起（含）
+    workEnd: 18,       // 工作时间止（不含）
+    checkMinutes: 30,  // 每多少分钟检查一次是否该同步
+  },
     suggestDebounce: 300,        // 输入防抖(ms)
     minLen: 2,                   // 触发联想的最少字符数
     autoFillZycs: false,         // 旧逻辑：用结构化建议回填 ZYCS（现由 fillSpecToParams 统一处理，默认关闭）
@@ -165,7 +173,7 @@
   // 用白名单而不是全量合并：写错键名不会悄悄改掉别的行为。
   var CFG_OVERRIDABLE = [
     'version', 'apiBase', 'apiPort', 'apiLabel', 'inventoryBase', 'inventorySource', 'allowDirectErp', 'enabled', 'showCheckButton', 'lockFields',
-  'plmQueryTimeout',
+  'plmQueryTimeout', 'autoSync',
     'checkButtonText', 'checkButtonHost', 'checkButtonPlace',
     'checkButtonOffsetX', 'checkButtonOffsetY',
     'restrictItemType', 'itemTypeAllowText', 'itemTypeAllowValues',
@@ -4129,11 +4137,47 @@
       step()
     }
 
+    // ===== 自动同步：工作时间每 N 小时检查一次 =====
+    var autoTimer = null
+    function autoSyncTick() {
+      var a = CFG.autoSync || {}
+      if (a.enabled === false) return
+      if (syncState.running) return
+      var now = new Date()
+      var h = now.getHours()
+      var ws = a.workStart == null ? 8 : a.workStart
+      var we = a.workEnd == null ? 18 : a.workEnd
+      if (h < ws || h >= we) return   // 非工作时间不跑
+      syncPlan(function (e, plan) {
+        if (e || !plan || !plan.ok) return
+        var last = plan.lastAt ? new Date(plan.lastAt).getTime() : 0
+        var need = (a.hours || 2) * 3600 * 1000
+        var gap = last ? (Date.now() - last) : Infinity
+        if (gap < need) return
+        syncLog('距上次同步 ' + (last ? Math.round(gap / 3600000) + ' 小时' : '从未同步') + '，自动开始')
+        syncStart({ force: !last })
+      })
+    }
+
+    function autoStart() {
+      var a = CFG.autoSync || {}
+      if (a.enabled === false) { syncLog('自动同步已关闭'); return }
+      var mins = a.checkMinutes || 30
+      // 页面加载 30 秒后首次检查（避开初始化高峰），之后每 checkMinutes 检查
+      setTimeout(autoSyncTick, 30000)
+      if (autoTimer) clearInterval(autoTimer)
+      autoTimer = setInterval(autoSyncTick, mins * 60000)
+      syncLog('自动同步已启用：工作时间 ' + (a.workStart == null ? 8 : a.workStart) + ':00~'
+        + (a.workEnd == null ? 18 : a.workEnd) + ':00，每 ' + (a.hours || 2) + ' 小时一次'
+        + '（每 ' + mins + ' 分钟检查）')
+    }
+
     window.__plmSync = {
       plan: function () { syncPlan(function (e, r) { if (e) { err(e); return } log('计划', r) }) },
       start: syncStart,
       status: syncStatus,
       retry: syncRetry,
+      auto: { start: autoStart, tick: autoSyncTick, stop: function () { if (autoTimer) { clearInterval(autoTimer); autoTimer = null } syncLog('自动同步已停止') } },
       failed: function () {
         var list = loadFailedSubs()
         if (!list.length) { syncLog('没有待补跑的小类 ✅'); return [] }
@@ -4150,7 +4194,9 @@
       page: page, pageTest: pageTest, scan: scan, pagerTest: pagerTest,
       env: envCheck, service: { filter: SVC_FILTER, stock: SVC_STOCK },
     }
-    log('快照同步工具已挂载：__plmSync.plan() / start() / status() / retry([subs])')
+    log('快照同步工具已挂载：__plmSync.plan() / start() / status() / retry([subs]) / auto')
+    // 启用自动同步（工作时间每 N 小时，页面常驻时生效）
+    try { autoStart() } catch (e) { err('自动同步启动失败：' + (e && e.message)) }
     log('探测工具已挂载：__plmProbe.help() 查看用法')
   })();
 })(window, window.jQuery);

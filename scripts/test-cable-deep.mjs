@@ -92,9 +92,9 @@ const unitCases = [
 ]
 for (const [spec, expect] of unitCases) {
   const r = check('电缆', spec, SUB)
-  // 单位转换体现在「规范写法」提示里（suggestSpec 负责，specFormat 只管空格类）
-  const hit = r.warnings.some((w) => /规范写法/.test(w) && w.includes(expect))
-  ok('单位 ' + spec + ' → ' + expect, hit, JSON.stringify(r.warnings))
+  // 完整规范写法已统一由 specFormat.fixed 承载（warnings 不再单独输出「规范写法」，避免与「建议改为」重复）
+  const fixed = String(r.fixed || '')
+  ok('单位 ' + spec + ' → ' + expect, fixed.includes(expect), 'fixed=' + fixed)
 }
 // 反例：不许把长度/温度/电压的单位改掉
 const unitSafe = [
@@ -104,8 +104,9 @@ const unitSafe = [
 ]
 for (const spec of unitSafe) {
   const r = check('电缆', spec, SUB)
-  const bad = r.warnings.some((w) => /规范写法/.test(w) && /mm²/.test(w) && !/mm²/.test(spec))
-  ok('不误伤 ' + spec, !bad, JSON.stringify(r.warnings))
+  const fixed = String(r.fixed || '')
+  const bad = /mm²/.test(fixed) && !/mm²/.test(spec)
+  ok('不误伤 ' + spec, !bad, 'fixed=' + fixed)
 }
 
 // ───────────────────────── C. 电压写法 ─────────────────────────

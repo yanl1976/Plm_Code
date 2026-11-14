@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.86';
+  var PLUGIN_VERSION = '1.87';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1179,22 +1179,14 @@
   function applyCheckResult(r, oldName, oldSpec) {
     var applied = [];
 
-    // 名称：格式修正（空格/分隔符）+ 同义词归一，后端已算好 final
-    var newName = oldName;
-    if (r.nameFormat && r.nameFormat.final) newName = r.nameFormat.final;
-    else if (r.nameSynonym && r.nameSynonym.exact && r.nameSynonym.std) newName = r.nameSynonym.std;
-    if (newName && newName !== oldName && writeText(state.ename, newName)) {
-      fireBlur(state.ename);
-      applied.push('名称');
-    }
-
-    // 规格：只做空格整理（乘号策略未定，不自动改写）
+    // 回填范围约束：只回填「规格型号」
+    //   名称由设计人员自己填（各人对实物描述有差异，自动改写会覆盖人工判断）
+    //   主要参数(ZYCS) / 分类属性(FLSXHB) 属于 PLM 字段，回填助手不越权写
     var newSpec = oldSpec;
     if (r.specFormat && r.specFormat.fixed != null) newSpec = r.specFormat.fixed;
     if (newSpec !== oldSpec && writeText(state.ggxh, newSpec)) {
       fireBlur(state.ggxh);
-      if (CFG.fillSpecToParams) syncSpecToParams(newSpec);
-      applied.push('规格');
+      applied.push('规格型号');
     }
 
     var dup = (r.duplicates || []).filter(function (x) { return x.level === 'exact' || x.level === 'sep'; });
@@ -2856,11 +2848,10 @@
         if (r.specFormat && r.specFormat.fixed != null) sp = r.specFormat.fixed;
       }
 
+      // 回填范围约束：只写「规格型号」，名称与主要参数/分类属性一律不动
       var applied = [];
-      if (nm && writeText(state.ename, nm)) { fireBlur(state.ename); applied.push('名称'); }
       if (sp && writeText(state.ggxh, sp)) {
         fireBlur(state.ggxh);
-        if (CFG.fillSpecToParams) syncSpecToParams(sp);
         applied.push('规格型号');
       }
       closeEditor();

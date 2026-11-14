@@ -220,17 +220,9 @@ export function checkSpec(raw, sub) {
               fmt.reasons.includes('含制表符或全角空格'))) {
     warnings.push('规格里有连续空格，请用单个空格分隔参数')
   }
-  // 规范写法去重：单项问题已有专门提示时，不再重复整串
-  //   ① 只差「中文括号→半角」→ 由「括号请使用半角」说明
-  //   ② 只差「乘号 x/× → *」→ 由「乘号统一用 *」说明
-  // 多种问题并存时仍输出规范写法，用户能看到完整答案
-  const onlyBracketDiff = cnBracket && sug !== s
-    && sug === s.replace(/（/g, '(').replace(/）/g, ')')
-  const multFix = (x) => String(x)
-    .replace(/(\d)\s*[×xX]\s*(?=\d)/g, '$1*')
-    .replace(/[×✕✖]/g, '*')
-  const onlyMultDiff = mult.length > 0 && sug !== s && sug === multFix(s)
-  if (sug && sug !== s && !onlyBracketDiff && !onlyMultDiff) warnings.push('规范写法：' + sug)
+  // 说明性提示（乘号/括号/空格）已在上面分别给出；
+  // 完整写法统一由 specFormat.fixed 承载（见下方 return），这里不再 push「规范写法」，
+  // 否则会与「建议改为」重复显示同一段内容。
 
   // 该小类关键参数至少命中 N 个，否则无法与相似物料区分
   if (sub) {
@@ -247,7 +239,18 @@ export function checkSpec(raw, sub) {
     } catch (e) { /* 分类信息缺失时跳过参数校验 */ }
   }
 
-  return { ok: errors.length === 0, errors, warnings, suggestion: sug, specFormat: fmt }
+  // 「建议改为」必须给完整规范写法：
+  // 原来的 fixSpecFormat 只去空格，用户照着改完乘号/括号仍是错的，还得再改一次。
+  // 这里直接用 suggestSpec 的结果，一次点到位（空格 + 乘号 + 括号 + 单位 + 全角统一处理）。
+  const rawS = String(raw == null ? '' : raw)
+  const fmtFinal = (sug && sug !== rawS)
+    ? {
+        raw: rawS,
+        fixed: sug,
+        reasons: (fmt && fmt.reasons && fmt.reasons.length) ? fmt.reasons.slice() : ['存在不规范写法'],
+      }
+    : fmt
+  return { ok: errors.length === 0, errors, warnings, suggestion: sug, specFormat: fmtFinal }
 }
 
 /**

@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.84';
+  var PLUGIN_VERSION = '1.85';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1445,10 +1445,34 @@
     var selBtn = dlgEl('button', 'flex:0 0 auto;border:1px solid rgba(127,127,127,.45);background:transparent;'
       + 'color:inherit;border-radius:4px;padding:5px 12px;cursor:pointer;font-size:12px;', '选型助手');
     selBtn.className = 'plm-smart-sel-btn';
-    selBtn.title = '按厂家样本的参数筛选型号，点行回填规格';
     selBtn.onclick = function () { openSelectModal(); };
     nameRow.appendChild(selBtn);
     body.appendChild(nameRow);
+
+    // 选型助手按钮状态约束：
+    //   该小类有启用的选型系列 → 可点击；没有（或服务不可用）→ 禁用
+    // 初始一律禁用，探测结果回来再放开，避免用户点了才发现空
+    var selBtnReady = false;
+    function setSelBtn(n) {
+      selBtnReady = n > 0;
+      selBtn.disabled = !selBtnReady;
+      selBtn.style.opacity = selBtnReady ? '1' : '.45';
+      selBtn.style.cursor = selBtnReady ? 'pointer' : 'not-allowed';
+      selBtn.title = selBtnReady
+        ? '按厂家样本的参数筛选型号（' + n + ' 个系列），点行回填规格'
+        : '该小类暂无选型数据（需先在治理看板维护选型库）';
+    }
+    setSelBtn(0);
+    (function probeSelectSeries() {
+      var sub = String(currentSub() || '');
+      if (!sub) return;
+      apiAbsolute(apiUrl('/api/plm/select/series?sub=' + encodeURIComponent(sub)), function (r) {
+        var all = (r && r.series) || [];
+        var n = 0;
+        for (var i = 0; i < all.length; i++) if (all[i].enabled !== false) n++;
+        setSelBtn(n);
+      });
+    })();
 
     // 名称的问题只出现在名称框下面
     var nameTip = dlgEl('div', 'margin:4px 0 6px;min-height:16px;');
@@ -2208,6 +2232,8 @@
 
     function openSelectModal() {
       if (selMask) return;
+      // 双保险：按钮已禁用时不允许打开（部分 UI 库会忽略 disabled 属性）
+      if (!selBtnReady) { log('该小类暂无选型数据，已禁用选型助手'); return; }
       var sub = String(currentSub() || '');
       if (!sub) { alert('请先选择小类'); return; }
 

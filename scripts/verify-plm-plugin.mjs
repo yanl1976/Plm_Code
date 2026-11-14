@@ -1201,6 +1201,39 @@ async function run() {
     ok('标题含插件名与版本 V x.y', /PLM 物料录入助手/.test(txt) && /V\d+\.\d+/.test(txt), 'got=' + txt)
   }
 
+  // S40 选型助手按钮状态：无选型数据必须禁用，有数据才可点
+  {
+    console.log('[S40] 选型助手按钮状态约束')
+    const cases = [
+      { label: '无选型数据', series: [], expectDisabled: true },
+      { label: '全部停用', series: [{ id: 'A1', enabled: false }], expectDisabled: true },
+      { label: '有 2 个系列', series: [{ id: 'A1', enabled: true }, { id: 'A2', enabled: true }], expectDisabled: false },
+    ]
+    for (const cse of cases) {
+      const p = newPage({
+        ctrls: baseCtrl(),
+        ajaxHandler: router({
+          '/health': HEALTH_OK,
+          '/check': CHECK_CLEAN,
+          '/select/series': { ok: true, series: cse.series },
+        }),
+        dataService: (uri) => String(uri).indexOf('CommonGetObjectDataByFilter') >= 0
+          ? JSON.stringify({ PSEITEM: [] }) : { Rows: [] },
+      })
+      p.ctl['ECODE_Value'].__text = '10010100271'
+      p.ctl['ECODE_Value'].__tag = { value: '10010100271' }
+      p.ctl['ENAME_Value'].__text = '固定式框架断路器'
+      p.ctl['GGXH_Value'].__text = 'CDW3-2000 2000/1600A 65/50kA 3P 400V'
+      p.OnCreate()
+      const b = findBtn(p)
+      if (b) b.onclick({ preventDefault() { }, stopPropagation() { } })
+      await sleep(150)
+      const sel = findByClass(p, 'plm-smart-sel-btn')
+      ok('选型助手「' + cse.label + '」disabled=' + cse.expectDisabled,
+        !!sel && sel.disabled === cse.expectDisabled, 'got=' + (sel && sel.disabled))
+    }
+  }
+
   console.log('\n----------------------------------------')
   console.log(`结果: ${pass} 通过 / ${fail} 失败`)
   if (fail) console.log('失败项: ' + failures.join(' | '))

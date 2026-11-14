@@ -567,6 +567,23 @@ HoteamUI.DataService.Call('Hoteam.InforCenter.ERPService.GetStockSearchData', {
 > 页签配置的 `PagePara` 只有 `{"ItemName":"StockSearchManagement"}`，ObjectID 是 `TabsCtrl_GetUrlPara` 从父页面参数 `para.ObjectID = para.SelectID` 整体继承的（见 `Platform/Js/Common/TabsCtrl.js` L68、`MenuCtrl.js` L724）。
 > `SearchStockData` 等批量方法未发布（404），当前只能**按单个对象**查询。
 
+### 5.0 环境与数据源约束（硬性，不得绕过）
+
+| 项 | 规定 |
+|---|---|
+| **唯一数据库** | 只允许使用 `.env` 的 `DB_SERVER` / `DB_DATABASE`（当前 `198.168.6.26` / `AIS20240102122641TEST20240918`，即测试 ERP） |
+| **禁止访问** | **`198.168.6.15` 及其 `AIS20240102122641`（生产 ERP）一律不连、不查、不比对** |
+| **PLM 查询** | 只能通过 `.env` 中显式配置的地址（WebAPI 的 `PLM_BASE`，或 PLM 主库 `TCPLM` 的独立连接配置）；**不得读取 PLM 站点里的 `Config\Apps.database`** 作为连接来源 |
+| 原因 | 生产数据与测试数据混用会导致查重结论、快照基线、差异比对全部失真；且生产库不允许本项目访问 |
+
+**代码层保障（已核查 2026-11-14）**
+
+- `src/db.js` 用 `requireEnv('DB_SERVER')` / `requireEnv('DB_DATABASE')` 强制读环境变量，无硬编码兜底
+- `src/*.js`、`scripts/*.mjs` 全文检索 `198.168.6.15` 与 `AIS20240102122641`（非 TEST）**均无命中**
+- PLM 站点 `Config\Apps.database` 里的 `ERPSQLSERVER`（指向生产库）当前 `Enable="false"`，且本项目**不引用该文件**
+
+**新增任何数据源前，必须先在 `.env` 中登记，并在本节补一行说明。**
+
 ### 5.2.0 「命名规范」菜单（三标签）
 
 看板导航第 6 个入口，把三块与「怎么写物料」相关的内容集中管理（原先散在「系统设置」里，需要长距离滚动）。

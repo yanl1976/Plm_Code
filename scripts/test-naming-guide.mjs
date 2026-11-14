@@ -56,6 +56,23 @@ for (const code of codes) {
 
   ok(tag + ' subName 非空', !!String(g.subName || '').trim())
   ok(tag + ' source 非空', !!String(g.source || '').trim())
+
+  // 标准必须带年份（如 GB/T 14048.2-2020），且不得引用已废止版本
+  const src = String(g.source || '')
+  ok(tag + ' source 含标准年份', /-[12]\d{3}/.test(src), src.slice(0, 60))
+
+  const BANNED = [
+    'GB/T 1984-2014',      // 已于 2025-04-01 废止，被 2024 版代替
+    'GB/T 14048.3-2017',   // 被 2025 版代替
+    'GB/T 14048.2-2008',   // 被 2020 版代替
+    'GB/T 14048.4-2010',   // 被 2020 版代替
+    'GB/T 10963.1-2014',   // 被 2020 版代替
+    'GB/T 14048.5-2008',   // 被 2017 版代替
+  ]
+  // 只检查「依据」位置（每个 / 分隔段的开头），不误伤括号里的「代替 xxx」
+  const segs = src.split(' / ').map((x) => x.trim())
+  const badVer = segs.filter((seg) => BANNED.some((b) => seg.startsWith(b)))
+  ok(tag + ' 未引用废止版本', badVer.length === 0, badVer.join('；'))
   ok(tag + ' specPattern 非空', !!String(g.specPattern || '').trim())
   ok(tag + ' example 非空', !!String(g.example || '').trim())
   ok(tag + ' 小类号存在', validCodes.has(code))

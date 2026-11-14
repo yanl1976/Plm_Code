@@ -157,6 +157,7 @@
       <div class="sub-tabs">
         <button class="sub-tab active" data-subtab="syn">名称同义词字典</button>
         <button class="sub-tab" data-subtab="guide">国标命名范式库</button>
+        <button class="sub-tab" data-subtab="std">标准查新</button>
         <span id="rulesSummary" class="sub-tabs-sum"></span>
       </div>
 
@@ -193,6 +194,28 @@
           </div>
           <div id="ngMsg" class="syn-msg"></div>
           <div id="ngList" class="ng-list"></div>
+        </div>
+      </div>
+
+      <div class="sub-panel" id="sub-std">
+        <div class="settings-card">
+          <h3>标准查新 <span class="syn-tip">定期核查范式库引用的国标是否仍为现行版本 · 只提醒，改动需人工确认</span></h3>
+          <div class="syn-bar">
+            <label class="std-label">核查周期</label>
+            <select id="stdPeriod">
+              <option value="month">每月</option>
+              <option value="quarter">每季度</option>
+              <option value="halfyear">每半年</option>
+            </select>
+            <label class="std-label" style="margin-left:10px">
+              <input type="checkbox" id="stdAuto" /> 自动核查
+            </label>
+            <button id="btnStdRun" class="primary" title="全量核查，约 2~5 分钟">立即核查</button>
+            <button id="btnStdDue" class="ghost" title="只查已到期或上次失败的">查待核查</button>
+            <span id="stdStats" class="syn-stats"></span>
+          </div>
+          <div id="stdMsg" class="syn-msg"></div>
+          <div id="stdList" class="ng-list"></div>
         </div>
       </div>
     </section>

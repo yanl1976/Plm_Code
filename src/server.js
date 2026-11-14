@@ -21,6 +21,7 @@ import { loadTemplates, buildTree, rebuildMid, addCustomParam, removeCustomParam
 import { getOverride, saveOverride, deleteOverride, bulkPrefill, overrideMtime, countParamUsage } from './feature-store.js'
 import XLSX from 'xlsx'
 import { cableSpecHints } from './cable-spec.js'
+import { summary as stdWatchSummary, runCheck as stdWatchRun, loadWatch as stdWatchLoad, saveWatch as stdWatchSave, isDue as stdWatchDue } from './std-watch.js'
 import { normalize, tokenize, jaccard, looseSignature, modelOf } from './spec.js'
 import { checkMaterial, fixSpecFormat, rules as materialRules, resolveNameFix, detectNameModel } from './material-rules.js'
 import * as nameSyn from './name-synonyms.js'
@@ -1530,6 +1531,39 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
+    // 标准查新：台账 + 待核查清单
+    if (p === '/api/std-watch') {
+      try { return sendJson(res, 200, { ok: true, ...stdWatchSummary() }) } catch (e) {
+        return sendJson(res, 500, { ok: false, error: String((e && e.message) || e) })
+      }
+    }
+
+    // 标准查新：立即核查（同步；全量约 2~5 分钟，可只查指定标准）
+    if (p === '/api/std-watch/run' && req.method === 'POST') {
+      const b = await readBody(req)
+      try {
+        const r = await stdWatchRun({
+          force: !!b.force,
+          codes: Array.isArray(b.codes) && b.codes.length ? b.codes : null,
+          delayMs: typeof b.delayMs === 'number' ? b.delayMs : 250,
+        })
+        return sendJson(res, 200, { ok: true, ...r, summary: stdWatchSummary() })
+      } catch (e) {
+        return sendJson(res, 500, { ok: false, error: String((e && e.message) || e) })
+      }
+    }
+
+    // 标准查新：周期与自动开关
+    if (p === '/api/std-watch/config' && req.method === 'PUT') {
+      const b = await readBody(req)
+      const w = stdWatchLoad()
+      w.meta = w.meta || {}
+      if (b.period && ['month', 'quarter', 'halfyear'].indexOf(b.period) >= 0) w.meta.period = b.period
+      if (typeof b.autoCheck === 'boolean') w.meta.autoCheck = b.autoCheck
+      stdWatchSave(w)
+      return sendJson(res, 200, { ok: true, meta: w.meta })
+    }
+
     // 命名范式：按小类返回国标规定的名称定义与规格书写格式（仅提示，不参与校验）
     if (p === '/api/naming-guide') {
       const sub = (url.searchParams.get('sub') || '').trim().slice(0, 6)
@@ -2030,6 +2064,22 @@ server.on('listening', () => {
   console.log(`物料治理前端已启动: http://localhost:${addr.port}`)
   if (WEB_HOST) console.log(`  监听地址 ${WEB_HOST}:${addr.port}`)
   watchSnapshot()
+
+  // 标准查新：每小时检查一次是否到期（月 / 季度 / 半年），到期且开了自动就后台跑
+  const timer = setInterval(() => {
+    try {
+      const w = stdWatchLoad()
+      if (w.meta && w.meta.autoCheck === false) return
+      if (!stdWatchDue(w)) return
+      console.log('[std-watch] 已到核查周期，开始后台核查标准版本…')
+      stdWatchRun({ delayMs: 400 })
+        .then((r) => console.log(`[std-watch] 完成：核查 ${r.checked}，过期 ${r.outdated}，失败 ${r.failed}`))
+        .catch((e) => console.error('[std-watch] 核查失败：', e && e.message))
+    } catch (e) {
+      console.error('[std-watch] 调度异常：', e && e.message)
+    }
+  }, 60 * 60 * 1000)
+  if (timer.unref) timer.unref()
 })
 
 server.on('error', (e) => {

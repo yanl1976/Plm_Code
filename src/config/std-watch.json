@@ -1,0 +1,3332 @@
+{
+  "meta": {
+    "period": "quarter",
+    "autoCheck": true,
+    "lastRunAt": "2026-11-14T04:33:07.023Z",
+    "lastRunResult": {
+      "checked": 1,
+      "outdated": 0,
+      "failed": 0,
+      "at": "2026-11-14T04:33:07.023Z"
+    }
+  },
+  "standards": {
+    "GB 15763.2": {
+      "base": "GB 15763.2",
+      "refVers": [],
+      "subs": [
+        "110402"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:26:48.417Z",
+      "error": "",
+      "latest": "2005",
+      "status": "废止",
+      "name": "建筑用安全玻璃 第2部分：钢化玻璃",
+      "implDate": "2006-03-01",
+      "code": "GB 15763.2-2005",
+      "history": [
+        {
+          "code": "GB 15763.2-2005",
+          "status": "废止",
+          "implDate": "2006-03-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB 19147": {
+      "base": "GB 19147",
+      "refVers": [],
+      "subs": [
+        "110408"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:26:50.199Z",
+      "error": "",
+      "latest": "2016",
+      "status": "现行",
+      "name": "车用柴油",
+      "implDate": "2016-12-23",
+      "code": "GB 19147-2016",
+      "history": [
+        {
+          "code": "GB 19147-2016",
+          "status": "现行",
+          "implDate": "2016-12-23"
+        },
+        {
+          "code": "GB 19147-2016",
+          "status": "现行",
+          "implDate": "2016-12-23"
+        },
+        {
+          "code": "GB 19147-2013",
+          "status": "废止",
+          "implDate": "2013-06-08"
+        },
+        {
+          "code": "GB 19147 -2013",
+          "status": "废止",
+          "implDate": "2013-02-07"
+        },
+        {
+          "code": "GB 19147-2009",
+          "status": "废止",
+          "implDate": "2010-01-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB 3836.1": {
+      "base": "GB 3836.1",
+      "refVers": [
+        "2021"
+      ],
+      "subs": [
+        "101902"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:26:51.964Z",
+      "error": "",
+      "latest": "2010",
+      "status": "废止",
+      "name": "爆炸性环境 第1部分：设备 通用要求",
+      "implDate": "2011-08-01",
+      "code": "GB 3836.1-2010",
+      "history": [
+        {
+          "code": "GB 3836.1-2010",
+          "status": "废止",
+          "implDate": "2011-08-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB 4943.1": {
+      "base": "GB 4943.1",
+      "refVers": [
+        "2022"
+      ],
+      "subs": [
+        "100406",
+        "100407",
+        "100507",
+        "100508",
+        "101508",
+        "101509",
+        "101510",
+        "101514",
+        "102001",
+        "102004",
+        "102005",
+        "120403"
+      ],
+      "refCount": 12,
+      "checkedAt": "2026-11-14T04:26:53.770Z",
+      "error": "",
+      "latest": "2022",
+      "status": "现行",
+      "name": "音视频、信息技术和通信技术设备 第1部分：安全要求",
+      "implDate": "2023-08-01",
+      "code": "GB 4943.1-2022",
+      "history": [
+        {
+          "code": "GB 4943.1-2022",
+          "status": "现行",
+          "implDate": "2023-08-01"
+        },
+        {
+          "code": "GB 4943.1-2011",
+          "status": "废止",
+          "implDate": "2012-12-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB 50348": {
+      "base": "GB 50348",
+      "refVers": [],
+      "subs": [
+        "101913",
+        "120407"
+      ],
+      "refCount": 2,
+      "checkedAt": "2026-11-14T04:26:56.323Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB 7000.1": {
+      "base": "GB 7000.1",
+      "refVers": [
+        "2015"
+      ],
+      "subs": [
+        "101807"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:26:58.164Z",
+      "error": "",
+      "latest": "2015",
+      "status": "废止",
+      "name": "灯具 第1部分：一般要求与试验",
+      "implDate": "2017-01-01",
+      "code": "GB 7000.1-2015",
+      "history": [
+        {
+          "code": "GB 7000.1-2015",
+          "status": "废止",
+          "implDate": "2017-01-01"
+        },
+        {
+          "code": "GB 7000.1-2007",
+          "status": "废止",
+          "implDate": "2009-01-01"
+        },
+        {
+          "code": "GB 7000.1-2002",
+          "status": "废止",
+          "implDate": "2003-08-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 10194": {
+      "base": "GB/T 10194",
+      "refVers": [],
+      "subs": [
+        "101304"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:26:59.935Z",
+      "error": "",
+      "latest": "1997",
+      "status": "现行",
+      "name": "电子设备用压敏电阻器 第2部分:分规范 浪涌抑制型压敏电阻器",
+      "implDate": "1998-09-01",
+      "code": "GB/T 10194-1997",
+      "history": [
+        {
+          "code": "GB/T 10194-1997",
+          "status": "现行",
+          "implDate": "1998-09-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 1094.1": {
+      "base": "GB/T 1094.1",
+      "refVers": [
+        "2013"
+      ],
+      "subs": [
+        "100701",
+        "100702",
+        "100703",
+        "100704"
+      ],
+      "refCount": 4,
+      "checkedAt": "2026-11-14T04:27:02.124Z",
+      "error": "",
+      "latest": "2013",
+      "status": "现行",
+      "name": "电力变压器 第1部分：总则",
+      "implDate": "2014-12-14",
+      "code": "GB/T 1094.1-2013",
+      "history": [
+        {
+          "code": "GB/T 1094.1-2013",
+          "status": "现行",
+          "implDate": "2014-12-14"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 1094.11": {
+      "base": "GB/T 1094.11",
+      "refVers": [
+        "2022"
+      ],
+      "subs": [
+        "100701",
+        "100702"
+      ],
+      "refCount": 2,
+      "checkedAt": "2026-11-14T04:27:04.271Z",
+      "error": "",
+      "latest": "2022",
+      "status": "现行",
+      "name": "电力变压器 第11部分：干式变压器",
+      "implDate": "2022-10-01",
+      "code": "GB/T 1094.11-2022",
+      "history": [
+        {
+          "code": "GB/T 1094.11-2022",
+          "status": "现行",
+          "implDate": "2022-10-01"
+        },
+        {
+          "code": "GB/T 1094.11-2007",
+          "status": "废止",
+          "implDate": "2008-04-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 1094.6": {
+      "base": "GB/T 1094.6",
+      "refVers": [
+        "2011"
+      ],
+      "subs": [
+        "100601",
+        "100602"
+      ],
+      "refCount": 2,
+      "checkedAt": "2026-11-14T04:27:06.112Z",
+      "error": "",
+      "latest": "2011",
+      "status": "现行",
+      "name": "电力变压器 第6部分：电抗器",
+      "implDate": "2011-12-01",
+      "code": "GB/T 1094.6-2011",
+      "history": [
+        {
+          "code": "GB/T 1094.6-2011",
+          "status": "现行",
+          "implDate": "2011-12-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 10963.1": {
+      "base": "GB/T 10963.1",
+      "refVers": [
+        "2020"
+      ],
+      "subs": [
+        "100105"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:27:07.932Z",
+      "error": "",
+      "latest": "2020",
+      "status": "现行",
+      "name": "电气附件 家用及类似场所用过电流保护断路器 第1部分：用于交流的断路器",
+      "implDate": "2021-06-01",
+      "code": "GB/T 10963.1-2020",
+      "history": [
+        {
+          "code": "GB/T 10963.1-2020",
+          "status": "现行",
+          "implDate": "2021-06-01"
+        },
+        {
+          "code": "GB/T 10963.1-2005",
+          "status": "废止",
+          "implDate": "2006-08-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 11032": {
+      "base": "GB/T 11032",
+      "refVers": [
+        "2010",
+        "2020"
+      ],
+      "subs": [
+        "100404"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:27:09.744Z",
+      "error": "",
+      "latest": "2020",
+      "status": "现行",
+      "name": "交流无间隙金属氧化物避雷器",
+      "implDate": "2021-07-01",
+      "code": "GB/T 11032-2020",
+      "history": [
+        {
+          "code": "GB/T 11032-2020",
+          "status": "现行",
+          "implDate": "2021-07-01"
+        },
+        {
+          "code": "GB/T 11032-2010",
+          "status": "废止",
+          "implDate": "2011-08-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 11614": {
+      "base": "GB/T 11614",
+      "refVers": [],
+      "subs": [
+        "110402"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:27:11.764Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 117": {
+      "base": "GB/T 117",
+      "refVers": [],
+      "subs": [
+        "120108"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:27:13.733Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 119.1": {
+      "base": "GB/T 119.1",
+      "refVers": [],
+      "subs": [
+        "120108"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:27:15.736Z",
+      "error": "",
+      "latest": "2000",
+      "status": "现行",
+      "name": "圆柱销 不淬硬钢和奥氏体不锈钢",
+      "implDate": "2001-02-01",
+      "code": "GB/T 119.1-2000",
+      "history": [
+        {
+          "code": "GB/T 119.1-2000",
+          "status": "现行",
+          "implDate": "2001-02-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 11918.1": {
+      "base": "GB/T 11918.1",
+      "refVers": [
+        "2025"
+      ],
+      "subs": [
+        "101604",
+        "101605"
+      ],
+      "refCount": 2,
+      "checkedAt": "2026-11-14T04:27:17.523Z",
+      "error": "",
+      "latest": "2025",
+      "status": "现行",
+      "name": "工业用插头、固定式或移动式插座和器具输入插座 第1部分：通用要求",
+      "implDate": "2026-05-01",
+      "code": "GB/T 11918.1-2025",
+      "history": [
+        {
+          "code": "GB/T 11918.1-2025",
+          "status": "现行",
+          "implDate": "2026-05-01"
+        },
+        {
+          "code": "GB/T 11918.1-2014",
+          "status": "废止",
+          "implDate": "2015-01-22"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 1226": {
+      "base": "GB/T 1226",
+      "refVers": [
+        "2010",
+        "2017"
+      ],
+      "subs": [
+        "100911"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:27:19.235Z",
+      "error": "",
+      "latest": "2017",
+      "status": "现行",
+      "name": "一般压力表",
+      "implDate": "2018-07-01",
+      "code": "GB/T 1226-2017",
+      "history": [
+        {
+          "code": "GB/T 1226-2017",
+          "status": "现行",
+          "implDate": "2018-07-01"
+        },
+        {
+          "code": "GB/T 1226-2010",
+          "status": "废止",
+          "implDate": "2010-12-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 1236": {
+      "base": "GB/T 1236",
+      "refVers": [],
+      "subs": [
+        "101802"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:27:20.982Z",
+      "error": "",
+      "latest": "2017",
+      "status": "现行",
+      "name": "工业通风机 用标准化风道性能试验",
+      "implDate": "2018-05-01",
+      "code": "GB/T 1236-2017",
+      "history": [
+        {
+          "code": "GB/T 1236-2017",
+          "status": "现行",
+          "implDate": "2018-05-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 1237": {
+      "base": "GB/T 1237",
+      "refVers": [
+        "2000"
+      ],
+      "subs": [
+        "120102",
+        "120103",
+        "120104",
+        "120105",
+        "120106",
+        "120108",
+        "120109",
+        "120110",
+        "120111"
+      ],
+      "refCount": 9,
+      "checkedAt": "2026-11-14T04:27:22.951Z",
+      "error": "",
+      "latest": "2000",
+      "status": "现行",
+      "name": "紧固件标记方法",
+      "implDate": "2001-02-01",
+      "code": "GB/T 1237-2000",
+      "history": [
+        {
+          "code": "GB/T 1237-2000",
+          "status": "现行",
+          "implDate": "2001-02-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 12668": {
+      "base": "GB/T 12668",
+      "refVers": [],
+      "subs": [
+        "101908",
+        "102006"
+      ],
+      "refCount": 2,
+      "checkedAt": "2026-11-14T04:27:24.671Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 12668.2": {
+      "base": "GB/T 12668.2",
+      "refVers": [],
+      "subs": [
+        "101901",
+        "101903",
+        "101905"
+      ],
+      "refCount": 3,
+      "checkedAt": "2026-11-14T04:27:26.431Z",
+      "error": "",
+      "latest": "2002",
+      "status": "现行",
+      "name": "调速电气传动系统 第2部分:一般要求 低压交流变频电气传动系统额定值的规定",
+      "implDate": "2003-04-01",
+      "code": "GB/T 12668.2-2002",
+      "history": [
+        {
+          "code": "GB/T 12668.2-2025",
+          "status": "即将实施",
+          "implDate": "2027-01-01"
+        },
+        {
+          "code": "GB/T 12668.2-2002",
+          "status": "现行",
+          "implDate": "2003-04-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 12706.1": {
+      "base": "GB/T 12706.1",
+      "refVers": [
+        "2020"
+      ],
+      "subs": [
+        "110302"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:27:28.223Z",
+      "error": "",
+      "latest": "2020",
+      "status": "现行",
+      "name": "额定电压1 kV(Um=1.2 kV)到35 kV(Um=40.5 kV)挤包绝缘电力电缆及附件 第1部分：额定电压1 kV(Um=1.2 kV)和3 kV(Um=3.6 kV)电缆",
+      "implDate": "2020-10-01",
+      "code": "GB/T 12706.1-2020",
+      "history": [
+        {
+          "code": "GB/T 12706.1-2020",
+          "status": "现行",
+          "implDate": "2020-10-01"
+        },
+        {
+          "code": "GB/T 12706.1-2008",
+          "status": "废止",
+          "implDate": "2009-11-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 1303": {
+      "base": "GB/T 1303",
+      "refVers": [],
+      "subs": [
+        "110403"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:27:30.098Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 13539.1": {
+      "base": "GB/T 13539.1",
+      "refVers": [
+        "2015"
+      ],
+      "subs": [
+        "100401",
+        "100402",
+        "100403"
+      ],
+      "refCount": 3,
+      "checkedAt": "2026-11-14T04:27:31.867Z",
+      "error": "",
+      "latest": "2015",
+      "status": "现行",
+      "name": "低压熔断器 第1部分：基本要求",
+      "implDate": "2016-10-01",
+      "code": "GB/T 13539.1-2015",
+      "history": [
+        {
+          "code": "GB/T 13539.1-2015",
+          "status": "现行",
+          "implDate": "2016-10-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 13818": {
+      "base": "GB/T 13818",
+      "refVers": [],
+      "subs": [
+        "110203"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:27:33.776Z",
+      "error": "",
+      "latest": "2024",
+      "status": "现行",
+      "name": "压铸锌合金",
+      "implDate": "2024-04-25",
+      "code": "GB/T 13818-2024",
+      "history": [
+        {
+          "code": "GB/T 13818-2024",
+          "status": "现行",
+          "implDate": "2024-04-25"
+        },
+        {
+          "code": "GB/T 13818-2009",
+          "status": "废止",
+          "implDate": "2009-12-01"
+        },
+        {
+          "code": "GB/T 13818-1992",
+          "status": "废止",
+          "implDate": "1993-10-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 13850": {
+      "base": "GB/T 13850",
+      "refVers": [
+        "1998",
+        "2025"
+      ],
+      "subs": [
+        "101201",
+        "101202",
+        "101203",
+        "101204",
+        "101205"
+      ],
+      "refCount": 5,
+      "checkedAt": "2026-11-14T04:27:35.572Z",
+      "error": "",
+      "latest": "2025",
+      "status": "现行",
+      "name": "交流电量和直流电量转换为模拟信号或数字信号的电测量变送器",
+      "implDate": "2026-05-01",
+      "code": "GB/T 13850-2025",
+      "history": [
+        {
+          "code": "GB/T 13850-2025",
+          "status": "现行",
+          "implDate": "2026-05-01"
+        },
+        {
+          "code": "GB/T 13850-1998",
+          "status": "废止",
+          "implDate": "1999-05-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 14048.1": {
+      "base": "GB/T 14048.1",
+      "refVers": [
+        "2023"
+      ],
+      "subs": [
+        "101602",
+        "101603"
+      ],
+      "refCount": 2,
+      "checkedAt": "2026-11-14T04:27:37.960Z",
+      "error": "",
+      "latest": "2023",
+      "status": "现行",
+      "name": "低压开关设备和控制设备 第1部分：总则",
+      "implDate": "2024-06-01",
+      "code": "GB/T 14048.1-2023",
+      "history": [
+        {
+          "code": "GB/T 14048.1-2023",
+          "status": "现行",
+          "implDate": "2024-06-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 14048.2": {
+      "base": "GB/T 14048.2",
+      "refVers": [
+        "2020"
+      ],
+      "subs": [
+        "100101",
+        "100102",
+        "100103",
+        "100104"
+      ],
+      "refCount": 4,
+      "checkedAt": "2026-11-14T04:33:07.023Z",
+      "error": "",
+      "latest": "2020",
+      "status": "现行",
+      "name": "低压开关设备和控制设备 第2部分：断路器",
+      "implDate": "2021-04-01",
+      "code": "GB/T 14048.2-2020",
+      "history": [
+        {
+          "code": "GB/T 14048.2-2020",
+          "status": "现行",
+          "implDate": "2021-04-01"
+        },
+        {
+          "code": "GB/T 14048.2-2008",
+          "status": "废止",
+          "implDate": "2009-06-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 14048.3": {
+      "base": "GB/T 14048.3",
+      "refVers": [
+        "2017",
+        "2025"
+      ],
+      "subs": [
+        "100301",
+        "100302",
+        "100303",
+        "100304",
+        "100305"
+      ],
+      "refCount": 5,
+      "checkedAt": "2026-11-14T04:27:41.397Z",
+      "error": "",
+      "latest": "2025",
+      "status": "现行",
+      "name": "低压开关设备和控制设备 第3部分：开关、隔离器、隔离开关及熔断器组合电器",
+      "implDate": "2026-05-01",
+      "code": "GB/T 14048.3-2025",
+      "history": [
+        {
+          "code": "GB/T 14048.3-2025",
+          "status": "现行",
+          "implDate": "2026-05-01"
+        },
+        {
+          "code": "GB/T 14048.3-2017",
+          "status": "废止",
+          "implDate": "2018-07-01"
+        },
+        {
+          "code": "GB/T 14048.3-2008",
+          "status": "废止",
+          "implDate": "2009-06-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 14048.4": {
+      "base": "GB/T 14048.4",
+      "refVers": [
+        "2020"
+      ],
+      "subs": [
+        "100201",
+        "100202",
+        "100203",
+        "100805",
+        "101904"
+      ],
+      "refCount": 5,
+      "checkedAt": "2026-11-14T04:27:43.128Z",
+      "error": "",
+      "latest": "2020",
+      "status": "现行",
+      "name": "低压开关设备和控制设备 第4-1部分：接触器和电动机起动器 机电式接触器和电动机起动器（含电动机保护器）",
+      "implDate": "2021-04-01",
+      "code": "GB/T 14048.4-2020",
+      "history": [
+        {
+          "code": "GB/T 14048.4-2020",
+          "status": "现行",
+          "implDate": "2021-04-01"
+        },
+        {
+          "code": "GB/T 14048.4-2010",
+          "status": "废止",
+          "implDate": "2011-09-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 14048.5": {
+      "base": "GB/T 14048.5",
+      "refVers": [
+        "2017"
+      ],
+      "subs": [
+        "100107",
+        "100204",
+        "100801",
+        "100802",
+        "100804",
+        "101001",
+        "101002",
+        "101003",
+        "101004",
+        "101005",
+        "101006",
+        "101008",
+        "101010",
+        "101101",
+        "101103"
+      ],
+      "refCount": 15,
+      "checkedAt": "2026-11-14T04:27:44.892Z",
+      "error": "",
+      "latest": "2017",
+      "status": "现行",
+      "name": "低压开关设备和控制设备 第5-1部分：控制电路电器和开关元件 机电式控制电路电器",
+      "implDate": "2018-05-01",
+      "code": "GB/T 14048.5-2017",
+      "history": [
+        {
+          "code": "GB/T 14048.5-2017",
+          "status": "现行",
+          "implDate": "2018-05-01"
+        },
+        {
+          "code": "GB/T 14048.5-2008",
+          "status": "废止",
+          "implDate": "2009-06-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 14048.7": {
+      "base": "GB/T 14048.7",
+      "refVers": [
+        "2016"
+      ],
+      "subs": [
+        "101601"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:27:46.640Z",
+      "error": "",
+      "latest": "2016",
+      "status": "现行",
+      "name": "低压开关设备和控制设备 第7-1部分：辅助器件 铜导体的接线端子排",
+      "implDate": "2016-09-01",
+      "code": "GB/T 14048.7-2016",
+      "history": [
+        {
+          "code": "GB/T 14048.7-2016",
+          "status": "现行",
+          "implDate": "2016-09-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 14315": {
+      "base": "GB/T 14315",
+      "refVers": [],
+      "subs": [
+        "120203"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:27:48.312Z",
+      "error": "",
+      "latest": "2008",
+      "status": "现行",
+      "name": "电力电缆导体用压接型铜、铝接线端子和连接管",
+      "implDate": "2009-10-01",
+      "code": "GB/T 14315-2008",
+      "history": [
+        {
+          "code": "GB/T 14315-2008",
+          "status": "现行",
+          "implDate": "2009-10-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 14598": {
+      "base": "GB/T 14598",
+      "refVers": [],
+      "subs": [
+        "100803"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:27:50.318Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 15288": {
+      "base": "GB/T 15288",
+      "refVers": [],
+      "subs": [
+        "101514"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:27:52.006Z",
+      "error": "",
+      "latest": "1994",
+      "status": "现行",
+      "name": "抑制射频干扰整件滤波器 第二部分:分规范 试验方法的选择和一般要求",
+      "implDate": "1995-07-01",
+      "code": "GB/T 15288-1994",
+      "history": [
+        {
+          "code": "GB/T 15288-1994",
+          "status": "现行",
+          "implDate": "1995-07-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 15291": {
+      "base": "GB/T 15291",
+      "refVers": [
+        "2015"
+      ],
+      "subs": [
+        "101504",
+        "101512"
+      ],
+      "refCount": 2,
+      "checkedAt": "2026-11-14T04:27:54.131Z",
+      "error": "",
+      "latest": "2015",
+      "status": "现行",
+      "name": "半导体器件 第6部分：晶闸管",
+      "implDate": "2017-01-01",
+      "code": "GB/T 15291-2015",
+      "history": [
+        {
+          "code": "GB/T 15291-2015",
+          "status": "现行",
+          "implDate": "2017-01-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 15298": {
+      "base": "GB/T 15298",
+      "refVers": [
+        "1994"
+      ],
+      "subs": [
+        "101308"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:27:55.869Z",
+      "error": "",
+      "latest": "1994",
+      "status": "现行",
+      "name": "电子设备用电位器 第一部分:总规范",
+      "implDate": "1995-07-01",
+      "code": "GB/T 15298-1994",
+      "history": [
+        {
+          "code": "GB/T 15298-1994",
+          "status": "现行",
+          "implDate": "1995-07-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 15298.1": {
+      "base": "GB/T 15298.1",
+      "refVers": [
+        "2026"
+      ],
+      "subs": [
+        "101308"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:27:57.627Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 15969": {
+      "base": "GB/T 15969",
+      "refVers": [],
+      "subs": [
+        "102004",
+        "102005",
+        "102007"
+      ],
+      "refCount": 3,
+      "checkedAt": "2026-11-14T04:27:59.389Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 16916.1": {
+      "base": "GB/T 16916.1",
+      "refVers": [
+        "2014"
+      ],
+      "subs": [
+        "100106"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:01.179Z",
+      "error": "",
+      "latest": "2014",
+      "status": "现行",
+      "name": "家用和类似用途的不带过电流保护的剩余电流动作断路器(RCCB) 第1部分: 一般规则",
+      "implDate": "2015-06-29",
+      "code": "GB/T 16916.1-2014",
+      "history": [
+        {
+          "code": "GB/T 16916.1-2014",
+          "status": "现行",
+          "implDate": "2015-06-29"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 16917.1": {
+      "base": "GB/T 16917.1",
+      "refVers": [
+        "2014"
+      ],
+      "subs": [
+        "100106"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:03.241Z",
+      "error": "",
+      "latest": "2014",
+      "status": "现行",
+      "name": "家用和类似用途的带过电流保护的剩余电流动作断路器(RCBO) 第1部分: 一般规则",
+      "implDate": "2015-06-29",
+      "code": "GB/T 16917.1-2014",
+      "history": [
+        {
+          "code": "GB/T 16917.1-2014",
+          "status": "现行",
+          "implDate": "2015-06-29"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 17215.211": {
+      "base": "GB/T 17215.211",
+      "refVers": [
+        "2021"
+      ],
+      "subs": [
+        "100907"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:05.047Z",
+      "error": "",
+      "latest": "2021",
+      "status": "现行",
+      "name": "电测量设备（交流） 通用要求、试验和试验条件 第11部分：测量设备",
+      "implDate": "2021-11-01",
+      "code": "GB/T 17215.211-2021",
+      "history": [
+        {
+          "code": "GB/T 17215.211-2021",
+          "status": "现行",
+          "implDate": "2021-11-01"
+        },
+        {
+          "code": "GB/T 17215.211-2006",
+          "status": "废止",
+          "implDate": "2006-10-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 17215.321": {
+      "base": "GB/T 17215.321",
+      "refVers": [
+        "2021"
+      ],
+      "subs": [
+        "100907"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:06.917Z",
+      "error": "",
+      "latest": "2021",
+      "status": "现行",
+      "name": "电测量设备（交流） 特殊要求 第21部分：静止式有功电能表 (A级、B级、C级、D级和E级)",
+      "implDate": "2021-11-01",
+      "code": "GB/T 17215.321-2021",
+      "history": [
+        {
+          "code": "GB/T 17215.321-2021",
+          "status": "现行",
+          "implDate": "2021-11-01"
+        },
+        {
+          "code": "GB/T 17215.321-2008",
+          "status": "废止",
+          "implDate": "2009-01-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 1727": {
+      "base": "GB/T 1727",
+      "refVers": [],
+      "subs": [
+        "110407"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:08.848Z",
+      "error": "",
+      "latest": "2021",
+      "status": "现行",
+      "name": "漆膜一般制备法",
+      "implDate": "2022-03-01",
+      "code": "GB/T 1727-2021",
+      "history": [
+        {
+          "code": "GB/T 1727-2021",
+          "status": "现行",
+          "implDate": "2022-03-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 17574": {
+      "base": "GB/T 17574",
+      "refVers": [],
+      "subs": [
+        "101511"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:10.796Z",
+      "error": "",
+      "latest": "1998",
+      "status": "现行",
+      "name": "半导体器件 集成电路 第2部分:数字集成电路",
+      "implDate": "1999-06-01",
+      "code": "GB/T 17574-1998",
+      "history": [
+        {
+          "code": "GB/T 17574-1998",
+          "status": "现行",
+          "implDate": "1999-06-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 17626": {
+      "base": "GB/T 17626",
+      "refVers": [],
+      "subs": [
+        "101515"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:12.798Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 18015": {
+      "base": "GB/T 18015",
+      "refVers": [],
+      "subs": [
+        "110303"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:14.806Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 18216": {
+      "base": "GB/T 18216",
+      "refVers": [],
+      "subs": [
+        "100908"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:16.907Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 18268": {
+      "base": "GB/T 18268",
+      "refVers": [],
+      "subs": [
+        "101206"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:18.759Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 18487": {
+      "base": "GB/T 18487",
+      "refVers": [],
+      "subs": [
+        "101508"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:20.486Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 18655": {
+      "base": "GB/T 18655",
+      "refVers": [],
+      "subs": [
+        "100909"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:22.409Z",
+      "error": "",
+      "latest": "2025",
+      "status": "现行",
+      "name": "车辆、船和内燃机 无线电骚扰特性 用于保护车载接收机的限值和测量方法",
+      "implDate": "2025-02-28",
+      "code": "GB/T 18655-2025",
+      "history": [
+        {
+          "code": "GB/T 18655-2025",
+          "status": "现行",
+          "implDate": "2025-02-28"
+        },
+        {
+          "code": "GB/T 18655-2018",
+          "status": "废止",
+          "implDate": "2019-02-01"
+        },
+        {
+          "code": "GB/T 18655-2010",
+          "status": "废止",
+          "implDate": "2011-06-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 18802.11": {
+      "base": "GB/T 18802.11",
+      "refVers": [
+        "2020"
+      ],
+      "subs": [
+        "100405"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:24.165Z",
+      "error": "",
+      "latest": "2020",
+      "status": "现行",
+      "name": "低压电涌保护器(SPD) 第11部分：低压电源系统的电涌保护器 性能要求和试验方法",
+      "implDate": "2021-07-01",
+      "code": "GB/T 18802.11-2020",
+      "history": [
+        {
+          "code": "GB/T 18802.11-2020",
+          "status": "现行",
+          "implDate": "2021-07-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 19334": {
+      "base": "GB/T 19334",
+      "refVers": [],
+      "subs": [
+        "120205"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:25.893Z",
+      "error": "",
+      "latest": "2021",
+      "status": "现行",
+      "name": "低压开关设备和控制设备的尺寸 在开关设备和控制设备及其附件中作机械支承的标准安装轨",
+      "implDate": "2022-05-01",
+      "code": "GB/T 19334-2021",
+      "history": [
+        {
+          "code": "GB/T 19334-2021",
+          "status": "现行",
+          "implDate": "2022-05-01"
+        },
+        {
+          "code": "GB/T 19334-2003",
+          "status": "废止",
+          "implDate": "2004-05-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 19638": {
+      "base": "GB/T 19638",
+      "refVers": [],
+      "subs": [
+        "101804",
+        "101911"
+      ],
+      "refCount": 2,
+      "checkedAt": "2026-11-14T04:28:27.572Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 1984": {
+      "base": "GB/T 1984",
+      "refVers": [
+        "2014",
+        "2024"
+      ],
+      "subs": [
+        "100108"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:29.304Z",
+      "error": "",
+      "latest": "2024",
+      "status": "现行",
+      "name": "高压交流断路器",
+      "implDate": "2025-04-01",
+      "code": "GB/T 1984-2024",
+      "history": [
+        {
+          "code": "GB/T 1984-2024",
+          "status": "现行",
+          "implDate": "2025-04-01"
+        },
+        {
+          "code": "GB/T 1984-2014",
+          "status": "废止",
+          "implDate": "2015-01-22"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 20041": {
+      "base": "GB/T 20041",
+      "refVers": [],
+      "subs": [
+        "110404"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:30.971Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 2040": {
+      "base": "GB/T 2040",
+      "refVers": [
+        "2017"
+      ],
+      "subs": [
+        "110101",
+        "110201"
+      ],
+      "refCount": 2,
+      "checkedAt": "2026-11-14T04:28:33.076Z",
+      "error": "",
+      "latest": "2017",
+      "status": "现行",
+      "name": "铜及铜合金板材",
+      "implDate": "2017-12-01",
+      "code": "GB/T 2040-2017",
+      "history": [
+        {
+          "code": "GB/T 2040-2017",
+          "status": "现行",
+          "implDate": "2017-12-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 2059": {
+      "base": "GB/T 2059",
+      "refVers": [
+        "2017"
+      ],
+      "subs": [
+        "110105"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:34.981Z",
+      "error": "",
+      "latest": "2017",
+      "status": "现行",
+      "name": "铜及铜合金带材",
+      "implDate": "2017-12-01",
+      "code": "GB/T 2059-2017",
+      "history": [
+        {
+          "code": "GB/T 2059-2017",
+          "status": "现行",
+          "implDate": "2017-12-01"
+        },
+        {
+          "code": "GB/T 2059-2008",
+          "status": "废止",
+          "implDate": "2008-12-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 20840.1": {
+      "base": "GB/T 20840.1",
+      "refVers": [
+        "2010"
+      ],
+      "subs": [
+        "100501",
+        "100502",
+        "100503"
+      ],
+      "refCount": 3,
+      "checkedAt": "2026-11-14T04:28:36.755Z",
+      "error": "",
+      "latest": "2010",
+      "status": "现行",
+      "name": "互感器 第1部分：通用技术要求",
+      "implDate": "2011-08-01",
+      "code": "GB/T 20840.1-2010",
+      "history": [
+        {
+          "code": "GB/T 20840.1-2026",
+          "status": "即将实施",
+          "implDate": "2027-02-01"
+        },
+        {
+          "code": "GB/T 20840.1-2010",
+          "status": "现行",
+          "implDate": "2011-08-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 20840.2": {
+      "base": "GB/T 20840.2",
+      "refVers": [
+        "2014"
+      ],
+      "subs": [
+        "100501",
+        "100503"
+      ],
+      "refCount": 2,
+      "checkedAt": "2026-11-14T04:28:38.483Z",
+      "error": "",
+      "latest": "2014",
+      "status": "现行",
+      "name": "互感器 第2部分：电流互感器的补充技术要求",
+      "implDate": "2015-08-03",
+      "code": "GB/T 20840.2-2014",
+      "history": [
+        {
+          "code": "GB/T 20840.2-2014",
+          "status": "现行",
+          "implDate": "2015-08-03"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 20840.3": {
+      "base": "GB/T 20840.3",
+      "refVers": [
+        "2013"
+      ],
+      "subs": [
+        "100502"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:40.380Z",
+      "error": "",
+      "latest": "2013",
+      "status": "现行",
+      "name": "互感器 第3部分：电磁式电压互感器的补充技术要求",
+      "implDate": "2014-11-14",
+      "code": "GB/T 20840.3-2013",
+      "history": [
+        {
+          "code": "GB/T 20840.3-2013",
+          "status": "现行",
+          "implDate": "2014-11-14"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 20878": {
+      "base": "GB/T 20878",
+      "refVers": [
+        "2024"
+      ],
+      "subs": [
+        "110204"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:42.113Z",
+      "error": "",
+      "latest": "2024",
+      "status": "现行",
+      "name": "不锈钢 牌号及化学成分",
+      "implDate": "2025-02-01",
+      "code": "GB/T 20878-2024",
+      "history": [
+        {
+          "code": "GB/T 20878-2024",
+          "status": "现行",
+          "implDate": "2025-02-01"
+        },
+        {
+          "code": "GB/T 20878-2024",
+          "status": "现行",
+          "implDate": "2025-02-01"
+        },
+        {
+          "code": "GB/T 20878-2007",
+          "status": "废止",
+          "implDate": "2007-10-01"
+        },
+        {
+          "code": "GB/T 20878-2007",
+          "status": "废止",
+          "implDate": "2007-10-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 2099.1": {
+      "base": "GB/T 2099.1",
+      "refVers": [
+        "2021"
+      ],
+      "subs": [
+        "101604",
+        "101605"
+      ],
+      "refCount": 2,
+      "checkedAt": "2026-11-14T04:28:44.146Z",
+      "error": "",
+      "latest": "2021",
+      "status": "现行",
+      "name": "家用和类似用途插头插座 第1部分：通用要求",
+      "implDate": "2022-11-01",
+      "code": "GB/T 2099.1-2021",
+      "history": [
+        {
+          "code": "GB/T 2099.1-2021",
+          "status": "现行",
+          "implDate": "2022-11-01"
+        },
+        {
+          "code": "GB/T 2099.1-2008",
+          "status": "废止",
+          "implDate": "2009-08-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 21671": {
+      "base": "GB/T 21671",
+      "refVers": [],
+      "subs": [
+        "101515"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:45.851Z",
+      "error": "",
+      "latest": "2018",
+      "status": "现行",
+      "name": "基于以太网技术的局域网（LAN）系统验收测试方法",
+      "implDate": "2019-01-01",
+      "code": "GB/T 21671-2018",
+      "history": [
+        {
+          "code": "GB/T 21671-2018",
+          "status": "现行",
+          "implDate": "2019-01-01"
+        },
+        {
+          "code": "GB/T 21671-2008",
+          "status": "废止",
+          "implDate": "2008-09-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 22239": {
+      "base": "GB/T 22239",
+      "refVers": [],
+      "subs": [
+        "120401"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:47.725Z",
+      "error": "",
+      "latest": "2019",
+      "status": "现行",
+      "name": "信息安全技术 网络安全等级保护基本要求",
+      "implDate": "2019-12-01",
+      "code": "GB/T 22239-2019",
+      "history": [
+        {
+          "code": "GB/T 22239-2019",
+          "status": "现行",
+          "implDate": "2019-12-01"
+        },
+        {
+          "code": "GB/T 22239-2008",
+          "status": "废止",
+          "implDate": "2008-11-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 22344": {
+      "base": "GB/T 22344",
+      "refVers": [],
+      "subs": [
+        "110404"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:49.442Z",
+      "error": "",
+      "latest": "2018",
+      "status": "现行",
+      "name": "包装用聚酯捆扎带",
+      "implDate": "2018-10-01",
+      "code": "GB/T 22344-2018",
+      "history": [
+        {
+          "code": "GB/T 22344-2018",
+          "status": "现行",
+          "implDate": "2018-10-01"
+        },
+        {
+          "code": "GB/T 22344-2008",
+          "status": "废止",
+          "implDate": "2009-02-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 2423": {
+      "base": "GB/T 2423",
+      "refVers": [],
+      "subs": [
+        "102002"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:51.163Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 2693": {
+      "base": "GB/T 2693",
+      "refVers": [
+        "2001"
+      ],
+      "subs": [
+        "101401",
+        "101402",
+        "101403",
+        "101404",
+        "101405",
+        "101406",
+        "101407",
+        "101408",
+        "101411"
+      ],
+      "refCount": 9,
+      "checkedAt": "2026-11-14T04:28:53.490Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 30429": {
+      "base": "GB/T 30429",
+      "refVers": [
+        "2013"
+      ],
+      "subs": [
+        "100506",
+        "100914"
+      ],
+      "refCount": 2,
+      "checkedAt": "2026-11-14T04:28:55.224Z",
+      "error": "",
+      "latest": "2013",
+      "status": "现行",
+      "name": "工业热电偶",
+      "implDate": "2014-08-01",
+      "code": "GB/T 30429-2013",
+      "history": [
+        {
+          "code": "GB/T 30429-2013",
+          "status": "现行",
+          "implDate": "2014-08-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 3190": {
+      "base": "GB/T 3190",
+      "refVers": [],
+      "subs": [
+        "110202"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:57.089Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 3274": {
+      "base": "GB/T 3274",
+      "refVers": [
+        "2017"
+      ],
+      "subs": [
+        "110105"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:28:58.760Z",
+      "error": "",
+      "latest": "2017",
+      "status": "现行",
+      "name": "碳素结构钢和低合金结构钢热轧钢板和钢带",
+      "implDate": "2017-11-01",
+      "code": "GB/T 3274-2017",
+      "history": [
+        {
+          "code": "GB/T 3274-2017",
+          "status": "现行",
+          "implDate": "2017-11-01"
+        },
+        {
+          "code": "GB/T 3274-2017",
+          "status": "现行",
+          "implDate": "2017-11-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 3452": {
+      "base": "GB/T 3452",
+      "refVers": [],
+      "subs": [
+        "110406"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:29:00.597Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 36972": {
+      "base": "GB/T 36972",
+      "refVers": [],
+      "subs": [
+        "101804"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:29:02.351Z",
+      "error": "",
+      "latest": "2026",
+      "status": "现行",
+      "name": "电动自行车用锂离子蓄电池性能技术规范",
+      "implDate": "2026-09-01",
+      "code": "GB/T 36972-2026",
+      "history": [
+        {
+          "code": "GB/T 36972-2026",
+          "status": "现行",
+          "implDate": "2026-09-01"
+        },
+        {
+          "code": "GB/T 36972-2018",
+          "status": "废止",
+          "implDate": "2019-07-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 3864": {
+      "base": "GB/T 3864",
+      "refVers": [],
+      "subs": [
+        "110401"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:29:04.136Z",
+      "error": "",
+      "latest": "2025",
+      "status": "现行",
+      "name": "工业氮",
+      "implDate": "2026-02-01",
+      "code": "GB/T 3864-2025",
+      "history": [
+        {
+          "code": "GB/T 3864-2025",
+          "status": "现行",
+          "implDate": "2026-02-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 3880": {
+      "base": "GB/T 3880",
+      "refVers": [],
+      "subs": [
+        "110202"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:29:05.827Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 4023": {
+      "base": "GB/T 4023",
+      "refVers": [
+        "2015"
+      ],
+      "subs": [
+        "101501",
+        "101506",
+        "101507",
+        "101513"
+      ],
+      "refCount": 4,
+      "checkedAt": "2026-11-14T04:29:07.764Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 4023.8": {
+      "base": "GB/T 4023.8",
+      "refVers": [
+        "2026"
+      ],
+      "subs": [
+        "101503"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:29:09.537Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 4423": {
+      "base": "GB/T 4423",
+      "refVers": [],
+      "subs": [
+        "110103"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:29:11.318Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 4586": {
+      "base": "GB/T 4586",
+      "refVers": [
+        "1994"
+      ],
+      "subs": [
+        "101503",
+        "101512",
+        "101513"
+      ],
+      "refCount": 3,
+      "checkedAt": "2026-11-14T04:29:13.006Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 470": {
+      "base": "GB/T 470",
+      "refVers": [],
+      "subs": [
+        "110203"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:29:14.730Z",
+      "error": "",
+      "latest": "2026",
+      "status": "即将实施",
+      "name": "锌锭",
+      "implDate": "2026-12-01",
+      "code": "GB/T 470-2026",
+      "history": [
+        {
+          "code": "GB/T 470-2026",
+          "status": "即将实施",
+          "implDate": "2026-12-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 4937": {
+      "base": "GB/T 4937",
+      "refVers": [],
+      "subs": [
+        "101502",
+        "101505",
+        "101506"
+      ],
+      "refCount": 3,
+      "checkedAt": "2026-11-14T04:29:16.593Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 5013": {
+      "base": "GB/T 5013",
+      "refVers": [
+        "2008"
+      ],
+      "subs": [
+        "110302"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:29:19.030Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 5023": {
+      "base": "GB/T 5023",
+      "refVers": [
+        "2008"
+      ],
+      "subs": [
+        "101606",
+        "101809",
+        "110301",
+        "110302"
+      ],
+      "refCount": 4,
+      "checkedAt": "2026-11-14T04:29:21.136Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 5095": {
+      "base": "GB/T 5095",
+      "refVers": [],
+      "subs": [
+        "101607"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:29:23.280Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 5117": {
+      "base": "GB/T 5117",
+      "refVers": [],
+      "subs": [
+        "120204"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:29:24.927Z",
+      "error": "",
+      "latest": "2012",
+      "status": "现行",
+      "name": "非合金钢及细晶粒钢焊条",
+      "implDate": "2013-03-01",
+      "code": "GB/T 5117-2012",
+      "history": [
+        {
+          "code": "GB/T 5117-2012",
+          "status": "现行",
+          "implDate": "2013-03-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 5231": {
+      "base": "GB/T 5231",
+      "refVers": [
+        "2012",
+        "2022"
+      ],
+      "subs": [
+        "110201"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:29:26.633Z",
+      "error": "",
+      "latest": "2022",
+      "status": "现行",
+      "name": "加工铜及铜合金牌号和化学成分",
+      "implDate": "2022-10-01",
+      "code": "GB/T 5231-2022",
+      "history": [
+        {
+          "code": "GB/T 5231-2022",
+          "status": "现行",
+          "implDate": "2022-10-01"
+        },
+        {
+          "code": "GB/T 5231-2012",
+          "status": "废止",
+          "implDate": "2013-10-01"
+        },
+        {
+          "code": "GB/T 5231-2001",
+          "status": "废止",
+          "implDate": "2001-12-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 5574": {
+      "base": "GB/T 5574",
+      "refVers": [],
+      "subs": [
+        "110406"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:29:28.319Z",
+      "error": "",
+      "latest": "2008",
+      "status": "现行",
+      "name": "工业用橡胶板",
+      "implDate": "2008-10-01",
+      "code": "GB/T 5574-2008",
+      "history": [
+        {
+          "code": "GB/T 5574-2008",
+          "status": "现行",
+          "implDate": "2008-10-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 5729": {
+      "base": "GB/T 5729",
+      "refVers": [
+        "2003"
+      ],
+      "subs": [
+        "101301",
+        "101302",
+        "101303",
+        "101306",
+        "101307",
+        "101909"
+      ],
+      "refCount": 6,
+      "checkedAt": "2026-11-14T04:29:30.061Z",
+      "error": "",
+      "latest": "2003",
+      "status": "现行",
+      "name": "电子设备用固定电阻器 第1部分:总规范",
+      "implDate": "2004-08-01",
+      "code": "GB/T 5729-2003",
+      "history": [
+        {
+          "code": "GB/T 5729-2003",
+          "status": "现行",
+          "implDate": "2004-08-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 5782": {
+      "base": "GB/T 5782",
+      "refVers": [
+        "2025"
+      ],
+      "subs": [
+        "120102"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:29:31.764Z",
+      "error": "",
+      "latest": "2025",
+      "status": "现行",
+      "name": "紧固件 六角头螺栓",
+      "implDate": "2026-02-01",
+      "code": "GB/T 5782-2025",
+      "history": [
+        {
+          "code": "GB/T 5782-2025",
+          "status": "现行",
+          "implDate": "2026-02-01"
+        },
+        {
+          "code": "GB/T 5782-2016",
+          "status": "废止",
+          "implDate": "2016-06-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 601": {
+      "base": "GB/T 601",
+      "refVers": [],
+      "subs": [
+        "110405"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:29:33.588Z",
+      "error": "",
+      "latest": "2016",
+      "status": "现行",
+      "name": "化学试剂 标准滴定溶液的制备",
+      "implDate": "2017-05-01",
+      "code": "GB/T 601-2016",
+      "history": [
+        {
+          "code": "GB/T 601-2016",
+          "status": "现行",
+          "implDate": "2017-05-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 6170": {
+      "base": "GB/T 6170",
+      "refVers": [],
+      "subs": [
+        "120103",
+        "120104"
+      ],
+      "refCount": 2,
+      "checkedAt": "2026-11-14T04:29:35.993Z",
+      "error": "",
+      "latest": "2015",
+      "status": "现行",
+      "name": "1型六角螺母",
+      "implDate": "2016-04-01",
+      "code": "GB/T 6170-2015",
+      "history": [
+        {
+          "code": "GB/T 6170-2015",
+          "status": "现行",
+          "implDate": "2016-04-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 6346.1": {
+      "base": "GB/T 6346.1",
+      "refVers": [
+        "2024"
+      ],
+      "subs": [
+        "101401",
+        "101402",
+        "101403",
+        "101404",
+        "101405",
+        "101406",
+        "101407",
+        "101408",
+        "101409",
+        "101410",
+        "101411"
+      ],
+      "refCount": 11,
+      "checkedAt": "2026-11-14T04:29:37.928Z",
+      "error": "",
+      "latest": "2024",
+      "status": "现行",
+      "name": "电子设备用固定电容器 第1部分：总规范",
+      "implDate": "2024-03-15",
+      "code": "GB/T 6346.1-2024",
+      "history": [
+        {
+          "code": "GB/T 6346.1-2024",
+          "status": "现行",
+          "implDate": "2024-03-15"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 6663": {
+      "base": "GB/T 6663",
+      "refVers": [],
+      "subs": [
+        "101305"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:29:39.836Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 70.1": {
+      "base": "GB/T 70.1",
+      "refVers": [
+        "2008"
+      ],
+      "subs": [
+        "120102"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:29:41.716Z",
+      "error": "",
+      "latest": "2008",
+      "status": "现行",
+      "name": "内六角圆柱头螺钉",
+      "implDate": "2009-02-01",
+      "code": "GB/T 70.1-2008",
+      "history": [
+        {
+          "code": "GB/T 70.1-2008",
+          "status": "现行",
+          "implDate": "2009-02-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 7000.1": {
+      "base": "GB/T 7000.1",
+      "refVers": [
+        "2023"
+      ],
+      "subs": [
+        "101807"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:29:43.633Z",
+      "error": "",
+      "latest": "2023",
+      "status": "现行",
+      "name": "灯具 第1部分：一般要求与试验",
+      "implDate": "2026-01-01",
+      "code": "GB/T 7000.1-2023",
+      "history": [
+        {
+          "code": "GB/T 7000.1-2023",
+          "status": "现行",
+          "implDate": "2026-01-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 702": {
+      "base": "GB/T 702",
+      "refVers": [],
+      "subs": [
+        "110103"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:29:45.449Z",
+      "error": "",
+      "latest": "2026",
+      "status": "现行",
+      "name": "钢棒尺寸、外形、重量及允许偏差",
+      "implDate": "2026-11-01",
+      "code": "GB/T 702-2026",
+      "history": [
+        {
+          "code": "GB/T 702-2026",
+          "status": "现行",
+          "implDate": "2026-11-01"
+        },
+        {
+          "code": "GB/T 702-2017",
+          "status": "废止",
+          "implDate": "2018-06-01"
+        },
+        {
+          "code": "GB/T 702-2017",
+          "status": "废止",
+          "implDate": "2018-06-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 706": {
+      "base": "GB/T 706",
+      "refVers": [
+        "2016"
+      ],
+      "subs": [
+        "110104"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:29:47.254Z",
+      "error": "",
+      "latest": "2016",
+      "status": "现行",
+      "name": "热轧型钢",
+      "implDate": "2017-09-01",
+      "code": "GB/T 706-2016",
+      "history": [
+        {
+          "code": "GB/T 706-2026",
+          "status": "即将实施",
+          "implDate": "2026-12-01"
+        },
+        {
+          "code": "GB/T 706-2016",
+          "status": "现行",
+          "implDate": "2017-09-01"
+        },
+        {
+          "code": "GB/T 706-2016",
+          "status": "现行",
+          "implDate": "2017-09-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 708": {
+      "base": "GB/T 708",
+      "refVers": [],
+      "subs": [
+        "110101"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:29:49.064Z",
+      "error": "",
+      "latest": "2019",
+      "status": "现行",
+      "name": "冷轧钢板和钢带的尺寸、外形、重量及允许偏差",
+      "implDate": "2020-02-01",
+      "code": "GB/T 708-2019",
+      "history": [
+        {
+          "code": "GB/T 708-2026",
+          "status": "即将实施",
+          "implDate": "2026-12-01"
+        },
+        {
+          "code": "GB/T 708-2019",
+          "status": "现行",
+          "implDate": "2020-02-01"
+        },
+        {
+          "code": "GB/T 708-2019",
+          "status": "现行",
+          "implDate": "2020-02-01"
+        },
+        {
+          "code": "GB/T 708-2006",
+          "status": "废止",
+          "implDate": "2007-02-01"
+        },
+        {
+          "code": "GB/T 708-1988",
+          "status": "废止",
+          "implDate": "1989-07-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 7113": {
+      "base": "GB/T 7113",
+      "refVers": [
+        "2003"
+      ],
+      "subs": [
+        "101705",
+        "101706"
+      ],
+      "refCount": 2,
+      "checkedAt": "2026-11-14T04:29:50.747Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 7113.1": {
+      "base": "GB/T 7113.1",
+      "refVers": [
+        "2014"
+      ],
+      "subs": [
+        "101705",
+        "101706",
+        "110403"
+      ],
+      "refCount": 3,
+      "checkedAt": "2026-11-14T04:29:52.625Z",
+      "error": "",
+      "latest": "2014",
+      "status": "现行",
+      "name": "绝缘软管 第1部分：定义和一般要求",
+      "implDate": "2015-02-01",
+      "code": "GB/T 7113.1-2014",
+      "history": [
+        {
+          "code": "GB/T 7113.1-2014",
+          "status": "现行",
+          "implDate": "2015-02-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 7251": {
+      "base": "GB/T 7251",
+      "refVers": [],
+      "subs": [
+        "101901",
+        "102003",
+        "120301",
+        "120302",
+        "120303",
+        "120304",
+        "120305",
+        "120306"
+      ],
+      "refCount": 8,
+      "checkedAt": "2026-11-14T04:29:54.350Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 7251.1": {
+      "base": "GB/T 7251.1",
+      "refVers": [],
+      "subs": [
+        "120201",
+        "120206",
+        "120207"
+      ],
+      "refCount": 3,
+      "checkedAt": "2026-11-14T04:29:56.210Z",
+      "error": "",
+      "latest": "2023",
+      "status": "现行",
+      "name": "低压成套开关设备和控制设备 第1部分：总则",
+      "implDate": "2024-03-01",
+      "code": "GB/T 7251.1-2023",
+      "history": [
+        {
+          "code": "GB/T 7251.1-2023",
+          "status": "现行",
+          "implDate": "2024-03-01"
+        },
+        {
+          "code": "GB/T 7251.1-2013",
+          "status": "废止",
+          "implDate": "2015-01-13"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 7251.3": {
+      "base": "GB/T 7251.3",
+      "refVers": [
+        "2017",
+        "2026"
+      ],
+      "subs": [
+        "101906",
+        "101907"
+      ],
+      "refCount": 2,
+      "checkedAt": "2026-11-14T04:29:58.055Z",
+      "error": "",
+      "latest": "2017",
+      "status": "现行",
+      "name": "低压成套开关设备和控制设备 第3部分: 由一般人员操作的配电板（DBO）",
+      "implDate": "2018-05-01",
+      "code": "GB/T 7251.3-2017",
+      "history": [
+        {
+          "code": "GB/T 7251.3-2026",
+          "status": "即将实施",
+          "implDate": "2027-04-01"
+        },
+        {
+          "code": "GB/T 7251.3-2017",
+          "status": "现行",
+          "implDate": "2018-05-01"
+        },
+        {
+          "code": "GB/T 7251.3-2006",
+          "status": "废止",
+          "implDate": "2007-03-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 7423": {
+      "base": "GB/T 7423",
+      "refVers": [],
+      "subs": [
+        "101801"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:29:59.752Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 755": {
+      "base": "GB/T 755",
+      "refVers": [
+        "2019",
+        "2025"
+      ],
+      "subs": [
+        "101810"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:01.803Z",
+      "error": "",
+      "latest": "2025",
+      "status": "现行",
+      "name": "旋转电机 定额与性能",
+      "implDate": "2026-02-01",
+      "code": "GB/T 755-2025",
+      "history": [
+        {
+          "code": "GB/T 755-2025",
+          "status": "现行",
+          "implDate": "2026-02-01"
+        },
+        {
+          "code": "GB/T 755-2019",
+          "status": "废止",
+          "implDate": "2020-07-01"
+        },
+        {
+          "code": "GB/T 755-2008",
+          "status": "废止",
+          "implDate": "2009-06-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 7666": {
+      "base": "GB/T 7666",
+      "refVers": [],
+      "subs": [
+        "100509",
+        "100510"
+      ],
+      "refCount": 2,
+      "checkedAt": "2026-11-14T04:30:04.062Z",
+      "error": "",
+      "latest": "2005",
+      "status": "现行",
+      "name": "传感器命名法及代号",
+      "implDate": "2006-02-01",
+      "code": "GB/T 7666-2005",
+      "history": [
+        {
+          "code": "GB/T 7666-2026",
+          "status": "即将实施",
+          "implDate": "2026-12-01"
+        },
+        {
+          "code": "GB/T 7666-2005",
+          "status": "现行",
+          "implDate": "2006-02-01"
+        },
+        {
+          "code": "GB/T 7666-1987",
+          "status": "废止",
+          "implDate": "1988-01-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 7676": {
+      "base": "GB/T 7676",
+      "refVers": [],
+      "subs": [
+        "102007"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:06.003Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 7676.1": {
+      "base": "GB/T 7676.1",
+      "refVers": [
+        "2017"
+      ],
+      "subs": [
+        "100901",
+        "100902",
+        "100903",
+        "100904",
+        "100910"
+      ],
+      "refCount": 5,
+      "checkedAt": "2026-11-14T04:30:07.865Z",
+      "error": "",
+      "latest": "2017",
+      "status": "现行",
+      "name": "直接作用模拟指示电测量仪表及其附件 第1部分：定义和通用要求",
+      "implDate": "2018-04-01",
+      "code": "GB/T 7676.1-2017",
+      "history": [
+        {
+          "code": "GB/T 7676.1-2017",
+          "status": "现行",
+          "implDate": "2018-04-01"
+        },
+        {
+          "code": "GB/T 7676.1-1998",
+          "status": "废止",
+          "implDate": "1999-05-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 7676.2": {
+      "base": "GB/T 7676.2",
+      "refVers": [
+        "2017"
+      ],
+      "subs": [
+        "100901",
+        "100902"
+      ],
+      "refCount": 2,
+      "checkedAt": "2026-11-14T04:30:09.593Z",
+      "error": "",
+      "latest": "2017",
+      "status": "现行",
+      "name": "直接作用模拟指示电测量仪表及其附件 第2部分：电流表和电压表的特殊要求",
+      "implDate": "2018-04-01",
+      "code": "GB/T 7676.2-2017",
+      "history": [
+        {
+          "code": "GB/T 7676.2-2017",
+          "status": "现行",
+          "implDate": "2018-04-01"
+        },
+        {
+          "code": "GB/T 7676.2-1998",
+          "status": "废止",
+          "implDate": "1999-05-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 7676.3": {
+      "base": "GB/T 7676.3",
+      "refVers": [
+        "2017"
+      ],
+      "subs": [
+        "100903"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:11.600Z",
+      "error": "",
+      "latest": "2017",
+      "status": "现行",
+      "name": "直接作用模拟指示电测量仪表及其附件 第3部分：功率表和无功功率表的特殊要求",
+      "implDate": "2018-04-01",
+      "code": "GB/T 7676.3-2017",
+      "history": [
+        {
+          "code": "GB/T 7676.3-2017",
+          "status": "现行",
+          "implDate": "2018-04-01"
+        },
+        {
+          "code": "GB/T 7676.3-1998",
+          "status": "废止",
+          "implDate": "1999-05-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 7676.4": {
+      "base": "GB/T 7676.4",
+      "refVers": [
+        "2017"
+      ],
+      "subs": [
+        "100904"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:13.979Z",
+      "error": "",
+      "latest": "2017",
+      "status": "现行",
+      "name": "直接作用模拟指示电测量仪表及其附件 第4部分：频率表的特殊要求",
+      "implDate": "2018-04-01",
+      "code": "GB/T 7676.4-2017",
+      "history": [
+        {
+          "code": "GB/T 7676.4-2017",
+          "status": "现行",
+          "implDate": "2018-04-01"
+        },
+        {
+          "code": "GB/T 7676.4-1998",
+          "status": "废止",
+          "implDate": "1999-05-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 7676.5": {
+      "base": "GB/T 7676.5",
+      "refVers": [
+        "2017"
+      ],
+      "subs": [
+        "100905",
+        "100906"
+      ],
+      "refCount": 2,
+      "checkedAt": "2026-11-14T04:30:16.265Z",
+      "error": "",
+      "latest": "2017",
+      "status": "现行",
+      "name": "直接作用模拟指示电测量仪表及其附件 第5部分：相位表、功率因数表和同步指示器的特殊要求",
+      "implDate": "2018-04-01",
+      "code": "GB/T 7676.5-2017",
+      "history": [
+        {
+          "code": "GB/T 7676.5-2017",
+          "status": "现行",
+          "implDate": "2018-04-01"
+        },
+        {
+          "code": "GB/T 7676.5-1998",
+          "status": "废止",
+          "implDate": "1999-05-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 7725": {
+      "base": "GB/T 7725",
+      "refVers": [
+        "2022"
+      ],
+      "subs": [
+        "101910",
+        "120406"
+      ],
+      "refCount": 2,
+      "checkedAt": "2026-11-14T04:30:18.371Z",
+      "error": "",
+      "latest": "2022",
+      "status": "现行",
+      "name": "房间空气调节器",
+      "implDate": "2023-05-01",
+      "code": "GB/T 7725-2022",
+      "history": [
+        {
+          "code": "GB/T 7725-2022",
+          "status": "现行",
+          "implDate": "2023-05-01"
+        },
+        {
+          "code": "GB/T 7725-2004",
+          "status": "废止",
+          "implDate": "2005-03-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 8110": {
+      "base": "GB/T 8110",
+      "refVers": [],
+      "subs": [
+        "120204"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:20.271Z",
+      "error": "",
+      "latest": "2020",
+      "status": "现行",
+      "name": "熔化极气体保护电弧焊用非合金钢及细晶粒钢实心焊丝",
+      "implDate": "2021-06-01",
+      "code": "GB/T 8110-2020",
+      "history": [
+        {
+          "code": "GB/T 8110-2020",
+          "status": "现行",
+          "implDate": "2021-06-01"
+        },
+        {
+          "code": "GB/T 8110-2008",
+          "status": "废止",
+          "implDate": "2009-01-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 8163": {
+      "base": "GB/T 8163",
+      "refVers": [
+        "2008",
+        "2018"
+      ],
+      "subs": [
+        "110102"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:22.023Z",
+      "error": "",
+      "latest": "2018",
+      "status": "现行",
+      "name": "输送流体用无缝钢管",
+      "implDate": "2019-02-01",
+      "code": "GB/T 8163-2018",
+      "history": [
+        {
+          "code": "GB/T 8163-2018",
+          "status": "现行",
+          "implDate": "2019-02-01"
+        },
+        {
+          "code": "GB/T 8163-2018",
+          "status": "现行",
+          "implDate": "2019-02-01"
+        },
+        {
+          "code": "GB/T 8163-2008",
+          "status": "废止",
+          "implDate": "2009-04-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 8287": {
+      "base": "GB/T 8287",
+      "refVers": [],
+      "subs": [
+        "101704"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:23.777Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 8287.1": {
+      "base": "GB/T 8287.1",
+      "refVers": [
+        "2008"
+      ],
+      "subs": [
+        "101703"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:26.358Z",
+      "error": "",
+      "latest": "2008",
+      "status": "现行",
+      "name": "标称电压高于1000V系统用户内和户外支柱绝缘子 第1部分：瓷或玻璃绝缘子的试验",
+      "implDate": "2009-04-01",
+      "code": "GB/T 8287.1-2008",
+      "history": [
+        {
+          "code": "GB/T 8287.1-2008",
+          "status": "现行",
+          "implDate": "2009-04-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 8287.2": {
+      "base": "GB/T 8287.2",
+      "refVers": [
+        "2008"
+      ],
+      "subs": [
+        "101703"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:28.125Z",
+      "error": "",
+      "latest": "2008",
+      "status": "现行",
+      "name": "标称电压高于1000V系统用户内和户外支柱绝缘子 第2部分：尺寸与特性",
+      "implDate": "2009-04-01",
+      "code": "GB/T 8287.2-2008",
+      "history": [
+        {
+          "code": "GB/T 8287.2-2008",
+          "status": "现行",
+          "implDate": "2009-04-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 845": {
+      "base": "GB/T 845",
+      "refVers": [],
+      "subs": [
+        "120110"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:29.930Z",
+      "error": "",
+      "latest": "2017",
+      "status": "现行",
+      "name": "十字槽盘头自攻螺钉",
+      "implDate": "2018-02-01",
+      "code": "GB/T 845-2017",
+      "history": [
+        {
+          "code": "GB/T 845-2017",
+          "status": "现行",
+          "implDate": "2018-02-01"
+        },
+        {
+          "code": "GB/T 845-1985",
+          "status": "废止",
+          "implDate": "1986-06-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 846": {
+      "base": "GB/T 846",
+      "refVers": [],
+      "subs": [
+        "120110"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:31.734Z",
+      "error": "",
+      "latest": "2017",
+      "status": "现行",
+      "name": "十字槽沉头自攻螺钉",
+      "implDate": "2018-02-01",
+      "code": "GB/T 846-2017",
+      "history": [
+        {
+          "code": "GB/T 846-2017",
+          "status": "现行",
+          "implDate": "2018-02-01"
+        },
+        {
+          "code": "GB/T 846-1985",
+          "status": "废止",
+          "implDate": "1986-06-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 848": {
+      "base": "GB/T 848",
+      "refVers": [],
+      "subs": [
+        "120105"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:33.713Z",
+      "error": "",
+      "latest": "2002",
+      "status": "现行",
+      "name": "小垫圈 A级",
+      "implDate": "2003-06-01",
+      "code": "GB/T 848-2002",
+      "history": [
+        {
+          "code": "GB/T 848-2002",
+          "status": "现行",
+          "implDate": "2003-06-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 859": {
+      "base": "GB/T 859",
+      "refVers": [],
+      "subs": [
+        "120106"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:35.661Z",
+      "error": "",
+      "latest": "2025",
+      "status": "现行",
+      "name": "紧固件 弹簧垫圈 轻型",
+      "implDate": "2026-02-01",
+      "code": "GB/T 859-2025",
+      "history": [
+        {
+          "code": "GB/T 859-2025",
+          "status": "现行",
+          "implDate": "2026-02-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 867": {
+      "base": "GB/T 867",
+      "refVers": [],
+      "subs": [
+        "120109"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:37.413Z",
+      "error": "",
+      "latest": "1986",
+      "status": "现行",
+      "name": "半圆头铆钉",
+      "implDate": "1987-06-01",
+      "code": "GB/T 867-1986",
+      "history": [
+        {
+          "code": "GB/T 867-1986",
+          "status": "现行",
+          "implDate": "1987-06-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 869": {
+      "base": "GB/T 869",
+      "refVers": [],
+      "subs": [
+        "120109"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:39.133Z",
+      "error": "",
+      "latest": "1986",
+      "status": "现行",
+      "name": "沉头铆钉",
+      "implDate": "1987-06-01",
+      "code": "GB/T 869-1986",
+      "history": [
+        {
+          "code": "GB/T 869-1986",
+          "status": "现行",
+          "implDate": "1987-06-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 893": {
+      "base": "GB/T 893",
+      "refVers": [],
+      "subs": [
+        "120111"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:40.885Z",
+      "error": "",
+      "latest": "2017",
+      "status": "现行",
+      "name": "孔用弹性挡圈",
+      "implDate": "2018-02-01",
+      "code": "GB/T 893-2017",
+      "history": [
+        {
+          "code": "GB/T 893-2017",
+          "status": "现行",
+          "implDate": "2018-02-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 894": {
+      "base": "GB/T 894",
+      "refVers": [],
+      "subs": [
+        "120111"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:42.759Z",
+      "error": "",
+      "latest": "2017",
+      "status": "现行",
+      "name": "轴用弹性挡圈",
+      "implDate": "2018-02-01",
+      "code": "GB/T 894-2017",
+      "history": [
+        {
+          "code": "GB/T 894-2017",
+          "status": "现行",
+          "implDate": "2018-02-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 901": {
+      "base": "GB/T 901",
+      "refVers": [],
+      "subs": [
+        "120103",
+        "120104"
+      ],
+      "refCount": 2,
+      "checkedAt": "2026-11-14T04:30:44.483Z",
+      "error": "",
+      "latest": "1988",
+      "status": "现行",
+      "name": "等长双头螺柱 B级",
+      "implDate": "1989-01-01",
+      "code": "GB/T 901-1988",
+      "history": [
+        {
+          "code": "GB/T 901-1988",
+          "status": "现行",
+          "implDate": "1989-01-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 93": {
+      "base": "GB/T 93",
+      "refVers": [],
+      "subs": [
+        "120106"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:46.290Z",
+      "error": "",
+      "latest": "2025",
+      "status": "现行",
+      "name": "紧固件 弹簧垫圈 标准型",
+      "implDate": "2026-02-01",
+      "code": "GB/T 93-2025",
+      "history": [
+        {
+          "code": "GB/T 93-2025",
+          "status": "现行",
+          "implDate": "2026-02-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 9330": {
+      "base": "GB/T 9330",
+      "refVers": [
+        "2020"
+      ],
+      "subs": [
+        "110302"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:48.071Z",
+      "error": "",
+      "latest": "2020",
+      "status": "现行",
+      "name": "塑料绝缘控制电缆",
+      "implDate": "2020-10-01",
+      "code": "GB/T 9330-2020",
+      "history": [
+        {
+          "code": "GB/T 9330-2020",
+          "status": "现行",
+          "implDate": "2020-10-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 9331": {
+      "base": "GB/T 9331",
+      "refVers": [
+        "2008"
+      ],
+      "subs": [
+        "110302"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:49.801Z",
+      "error": "",
+      "latest": "2008",
+      "status": "现行",
+      "name": "船舶电气装置 额定电压1kV和3kV挤包绝缘非径向电场单芯和多芯电力电缆",
+      "implDate": "2009-04-01",
+      "code": "GB/T 9331-2008",
+      "history": [
+        {
+          "code": "GB/T 9331-2008",
+          "status": "现行",
+          "implDate": "2009-04-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 9546.1": {
+      "base": "GB/T 9546.1",
+      "refVers": [
+        "2026"
+      ],
+      "subs": [
+        "101302",
+        "101303",
+        "101306",
+        "101307"
+      ],
+      "refCount": 4,
+      "checkedAt": "2026-11-14T04:30:51.498Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 9634": {
+      "base": "GB/T 9634",
+      "refVers": [],
+      "subs": [
+        "101803"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:53.291Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "GB/T 97.1": {
+      "base": "GB/T 97.1",
+      "refVers": [],
+      "subs": [
+        "120105"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:30:55.154Z",
+      "error": "",
+      "latest": "2002",
+      "status": "现行",
+      "name": "平垫圈 A级",
+      "implDate": "2003-06-01",
+      "code": "GB/T 97.1-2002",
+      "history": [
+        {
+          "code": "GB/T 97.1-2002",
+          "status": "现行",
+          "implDate": "2003-06-01"
+        }
+      ],
+      "outdated": false
+    },
+    "GB/T 9813": {
+      "base": "GB/T 9813",
+      "refVers": [],
+      "subs": [
+        "102001",
+        "102002",
+        "120403"
+      ],
+      "refCount": 3,
+      "checkedAt": "2026-11-14T04:30:56.996Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "JB/T 3837": {
+      "base": "JB/T 3837",
+      "refVers": [
+        "2016"
+      ],
+      "subs": [
+        "100701",
+        "100702"
+      ],
+      "refCount": 2,
+      "checkedAt": "2026-11-14T04:30:58.943Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    },
+    "JB/T 9286": {
+      "base": "JB/T 9286",
+      "refVers": [],
+      "subs": [
+        "100504"
+      ],
+      "refCount": 1,
+      "checkedAt": "2026-11-14T04:31:00.877Z",
+      "error": "",
+      "latest": "",
+      "status": "未查到"
+    }
+  }
+}

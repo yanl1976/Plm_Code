@@ -577,3 +577,11 @@ tr.saving { opacity:.45; }
 
 /* 列表铺满：不再限高，滚动交给整页 */
 #sub-syn .syn-list,#sub-guide .ng-list{max-height:none;overflow:visible}
+
+/* 标准查新 */
+.std-label{font-size:12px;color:var(--muted);white-space:nowrap}
+.std-ok{color:var(--green);font-size:11px}
+.std-bad{color:var(--red);font-size:11px;font-weight:600}
+.std-warn{color:var(--amber);font-size:11px}
+.std-row-bad td{background:rgba(255,80,80,.06)}
+.std-row-warn td{background:rgba(255,180,0,.05)}

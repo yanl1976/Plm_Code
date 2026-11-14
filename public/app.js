@@ -1008,7 +1008,7 @@ $('#ngSearch') && $('#ngSearch').addEventListener('input', () => {
 })
 
 // ================= 命名规范页（两个子标签：同义词 / 命名范式） =================
-const rulesLoaded = { syn: false, guide: false }
+const rulesLoaded = { syn: false, guide: false, std: false }
 
 function switchSubTab(name) {
   document.querySelectorAll('.sub-tab').forEach((b) => {
@@ -1019,12 +1019,138 @@ function switchSubTab(name) {
   })
   if (name === 'syn' && !rulesLoaded.syn) { rulesLoaded.syn = true; loadSynonyms() }
   if (name === 'guide' && !rulesLoaded.guide) { rulesLoaded.guide = true; loadGuideList() }
+  if (name === 'std' && !rulesLoaded.std) { rulesLoaded.std = true; loadStdWatch() }
 }
+
+// ================= 标准查新 =================
+let stdItems = []
+
+async function loadStdWatch() {
+  const box = $('#stdList')
+  if (!box) return
+  try {
+    const r = await api('/api/std-watch')
+    stdItems = (r && r.standards) || []
+    if ($('#stdPeriod') && r && r.meta) $('#stdPeriod').value = r.meta.period || 'quarter'
+    if ($('#stdAuto') && r && r.meta) $('#stdAuto').checked = r.meta.autoCheck !== false
+    const st = $('#stdStats')
+    if (st) {
+      st.textContent = '共 ' + ((r && r.total) || 0) + ' 个标准'
+        + (r && r.outdated && r.outdated.length ? '，' + r.outdated.length + ' 个过期' : '')
+        + (r && r.dueCount ? '，' + r.dueCount + ' 个待核查' : '')
+        + (r && r.meta && r.meta.lastRunAt ? ' · 上次 ' + String(r.meta.lastRunAt).slice(0, 10) : '')
+    }
+    renderStdList()
+  } catch (e) {
+    const m = $('#stdMsg')
+    if (m) { m.className = 'syn-msg err'; m.textContent = '加载失败：' + (e && e.message ? e.message : e) }
+  }
+}
+
+function renderStdList() {
+  const box = $('#stdList')
+  if (!box) return
+  if (!stdItems.length) {
+    box.innerHTML = '<div class="muted" style="padding:10px">还没有核查记录，点「立即核查」开始</div>'
+    return
+  }
+  let h = '<table class="ng-table"><thead><tr>'
+    + '<th style="width:170px">标准号</th>'
+    + '<th style="width:100px">现行版本</th>'
+    + '<th style="width:90px">状态</th>'
+    + '<th style="width:110px">实施日期</th>'
+    + '<th style="width:110px">上次核查</th>'
+    + '<th style="width:70px">引用</th>'
+    + '<th>标准名称</th>'
+    + '</tr></thead><tbody>'
+  for (const x of stdItems) {
+    let badge = ''
+    let rowCls = ''
+    if (x.outdated) { badge = '<span class="std-bad">过期</span>'; rowCls = 'std-row-bad' }
+    else if (x.error) { badge = '<span class="std-warn">核查失败</span>'; rowCls = 'std-row-warn' }
+    else if (x.status === '未查到') { badge = '<span class="std-warn">未查到</span>' }
+    else if (/即将实施/.test(x.status || '')) { badge = '<span class="std-warn">即将实施</span>' }
+    else if (/现行/.test(x.status || '')) { badge = '<span class="std-ok">现行</span>' }
+    h += '<tr class="' + rowCls + '">'
+      + '<td class="mono">' + escapeHtml(x.base)
+      + (x.outdated ? ' <span class="std-bad">→ ' + escapeHtml(x.latest || '') + '</span>' : '') + '</td>'
+      + '<td class="mono">' + escapeHtml(x.latest || '—') + '</td>'
+      + '<td>' + badge + '</td>'
+      + '<td class="mono">' + escapeHtml(x.implDate || '—') + '</td>'
+      + '<td class="mono">' + escapeHtml(x.checkedAt ? String(x.checkedAt).slice(0, 10) : '—') + '</td>'
+      + '<td style="text-align:center">' + (x.refCount || 0) + '</td>'
+      + '<td class="ng-clip" title="' + escapeHtml(x.name || '') + '">' + escapeHtml(x.name || '') + '</td>'
+      + '</tr>'
+  }
+  h += '</tbody></table>'
+  box.innerHTML = h
+}
+
+async function runStdCheck(onlyDue) {
+  const msg = $('#stdMsg')
+  const btn = $('#btnStdRun')
+  if (msg) {
+    msg.className = 'syn-msg'
+    msg.textContent = onlyDue ? '核查待核查项中…' : '全量核查中，约需 2~5 分钟，请保持页面打开…'
+  }
+  if (btn) btn.disabled = true
+  try {
+    const r = await fetch('/api/std-watch/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ force: !onlyDue, delayMs: 200 }),
+    }).then((x) => x.json())
+    if (!r || !r.ok) {
+      if (msg) { msg.className = 'syn-msg err'; msg.textContent = '核查失败：' + ((r && r.error) || '未知错误') }
+      return
+    }
+    if (msg) {
+      msg.className = 'syn-msg'
+      msg.textContent = '核查完成：共 ' + r.checked + ' 个，过期 ' + r.outdated + ' 个，失败 ' + r.failed + ' 个'
+    }
+    await loadStdWatch()
+    updateRulesSummary()
+  } catch (e) {
+    if (msg) { msg.className = 'syn-msg err'; msg.textContent = '核查失败：' + (e && e.message ? e.message : e) }
+  } finally {
+    if (btn) btn.disabled = false
+  }
+}
+
+$('#btnStdRun') && ($('#btnStdRun').onclick = () => {
+  if (!confirm('全量核查 136 个标准，约需 2~5 分钟，确认开始？')) return
+  runStdCheck(false)
+})
+$('#btnStdDue') && ($('#btnStdDue').onclick = () => runStdCheck(true))
+$('#stdPeriod') && ($('#stdPeriod').onchange = async () => {
+  try {
+    await fetch('/api/std-watch/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ period: $('#stdPeriod').value }),
+    }).then((r) => r.json())
+    const m = $('#stdMsg')
+    if (m) { m.className = 'syn-msg'; m.textContent = '核查周期已改为「' + $('#stdPeriod').selectedOptions[0].textContent + '」' }
+    await loadStdWatch()
+  } catch (e) { }
+})
+$('#stdAuto') && ($('#stdAuto').onchange = async () => {
+  try {
+    await fetch('/api/std-watch/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ autoCheck: $('#stdAuto').checked }),
+    }).then((r) => r.json())
+    const m = $('#stdMsg')
+    if (m) { m.className = 'syn-msg'; m.textContent = '自动核查已' + ($('#stdAuto').checked ? '开启' : '关闭') }
+  } catch (e) { }
+})
 
 async function loadRules() {
   const cur = document.querySelector('.sub-tab.active')
   const name = cur ? cur.dataset.subtab : 'syn'
   if (name === 'guide') { rulesLoaded.guide = true; await loadGuideList() }
+  else if (name === 'std') { rulesLoaded.std = true; await loadStdWatch() }
   else { rulesLoaded.syn = true; await loadSynonyms() }
   updateRulesSummary()
 }

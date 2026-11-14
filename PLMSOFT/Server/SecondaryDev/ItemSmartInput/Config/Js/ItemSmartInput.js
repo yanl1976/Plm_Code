@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.69';
+  var PLUGIN_VERSION = '1.70';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -3510,8 +3510,8 @@
       return []
     }
 
-    /** 调 PLM 服务；cb(errInfo, rows, meta) */
-    function callPlm(filterString, cb) {
+    /** 调 PLM 服务；cb(errInfo, rows, meta)；orderBy 用于分页时保证有序 */
+    function callPlm(filterString, cb, orderBy) {
       var env = envCheck()
       if (!env.DataService || (!env.AsyncCall && !env.Call)) {
         cb({ step: 'env', message: '数据服务不可用' }, [], null)
@@ -3521,7 +3521,7 @@
       var para = {
         para: {
           Data: JSON.stringify({
-            PSEITEM: { FilterInfo: [], FilterString: filterString, OrderbyString: '' },
+            PSEITEM: { FilterInfo: [], FilterString: filterString, OrderbyString: orderBy || '' },
           }),
         },
       }
@@ -3590,6 +3590,8 @@
       log('  __plmProbe.state(code)   对比带/不带 STATEID 过滤')
       log('  __plmProbe.fields(code)  只列字段名')
       log('  __plmProbe.timing([codes])  批量测耗时')
+      log('  __plmProbe.page({after,limit})  游标分页探测（阶段 2 前置）')
+      log('  __plmProbe.pageTest()    分页能力对照测试')
       log('提示：Console 里按 "[PLM探测]" 过滤本工具输出')
       envCheck()
     }
@@ -3664,8 +3666,55 @@
       })
     }
 
+    /**
+     * 分页探测：游标方式（ECODE > after），按 ECODE 升序
+     * 用法：__plmProbe.page({ after: '10010100000', limit: 500 })
+     */
+    function page(opts) {
+      var o = opts || {}
+      var limit = o.limit || 500
+      var prefix = o.prefix || ['10', '11', '12']
+      var after = o.after || ''
+      var conds = prefix.map(function (p) { return "ECODE LIKE '" + p + "%'" })
+      var fs = '(' + conds.join(' OR ') + ") AND STATEID = 'Using'"
+      if (after) fs += " AND ECODE > '" + String(after).replace(/'/g, "''") + "'"
+      log('=== 分页探测 after=' + (after || '(从头)') + ' limit=' + limit + ' ===')
+      log('FilterString: ' + fs)
+      callPlm(fs, function (e, rows, meta) {
+        if (e) return
+        log('返回 ' + rows.length + ' 行，耗时 ' + (meta && meta.cost) + 'ms')
+        if (!rows.length) { warn('没有返回行（可能已到末尾，或条件不被支持）'); return }
+        var first = rows[0], last = rows[rows.length - 1]
+        log('首条 ECODE=' + first.ECODE + '　末条 ECODE=' + last.ECODE)
+        if (String(first.ECODE) > String(last.ECODE)) {
+          err('结果不是升序 —— OrderbyString 可能未生效，游标分页不可用')
+        } else {
+          log('结果升序 ✅ 下次游标：__plmProbe.page({ after: "' + last.ECODE + '", limit: ' + limit + ' })')
+        }
+        if (rows.length > limit) err('返回 ' + rows.length + ' 行 > limit ' + limit + ' —— limit 未生效')
+        else if (rows.length === limit) log('返回行数正好等于 limit，可能还有下一页')
+      }, 'ECODE')
+    }
+
+    /**
+     * 分页能力对照：先看小范围一次返回多少（默认上限），再试游标
+     * 用法：__plmProbe.pageTest()
+     */
+    function pageTest() {
+      log('=== 分页能力对照测试（先测 100101 小类，安全范围）===')
+      callPlm("ECODE LIKE '100101%' AND STATEID = 'Using'", function (e1, rows1, m1) {
+        if (e1) return
+        log('① 不传 limit，ECODE LIKE 100101% → 返回 ' + rows1.length + ' 行，耗时 ' + (m1 && m1.cost) + 'ms')
+        log('② 接下来试游标分页（limit 500）')
+        setTimeout(function () {
+          page({ after: '10010100000', limit: 500 })
+        }, 500)
+      }, 'ECODE')
+    }
+
     window.__plmProbe = {
       help: help, one: one, raw: raw, state: state, fields: fields, timing: timing,
+      page: page, pageTest: pageTest,
       env: envCheck, service: { filter: SVC_FILTER, stock: SVC_STOCK },
     }
     log('探测工具已挂载：__plmProbe.help() 查看用法')

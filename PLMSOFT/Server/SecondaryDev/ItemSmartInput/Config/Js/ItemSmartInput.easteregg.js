@@ -90,14 +90,17 @@
     var n = Math.max(0, Number(total) || 0)
     var s = Math.log2(1 + n / 100)        // 次数 → 强度刻度：100→1，1500→4，5000→5.67，100k→9.97
     return {
-      waves: Math.min(Math.max(1, Math.round(1 + s * 0.85)), 10),      // 波数 1~10
-      perWave: Math.min(Math.max(40, Math.round(30 + s * 12)), 200),   // 每波粒子 40~200
-      spread: Math.min(4 + s * 0.4, 10),                               // 爆炸初速
-      radius: Math.min(1 + s * 0.12, 2.8),                             // 粒子半径
-      duration: Math.min(3200 + s * 300, 7000),                        // 动画时长
-      colors: Math.min(3 + Math.floor(s * 0.8), HUES.length),          // 参与的颜色数
-      trailAt: 300,                                                    // 累计超过这个数就开拖尾
-      textAt: 1000,                                                    // 累计超过这个数就显示次数
+      // 基础档也要有场面：最低 3 波 × 70，而不是原来的 1 波 × 40
+      waves: Math.min(Math.max(3, Math.round(3 + s * 0.9)), 10),        // 波数 3~10
+      perWave: Math.min(Math.max(70, Math.round(60 + s * 14)), 150),    // 每波粒子 70~150
+      petals: Math.min(2 + Math.floor(s * 0.9), 6),                     // 二次小爆的朵数
+      spread: Math.min(5 + s * 0.5, 11),                                // 爆炸初速
+      radius: Math.min(1.1 + s * 0.13, 3),                              // 粒子半径
+      // 时长要覆盖：升空(约 0.3s) + 主爆 + 二次爆(约 0.4s) + 余烬飘落
+      duration: Math.min(4200 + s * 320, 8200),
+      colors: Math.min(3 + Math.floor(s * 0.8), HUES.length),           // 参与的颜色数
+      trailAt: 0,                                                       // 全等级都开拖尾
+      textAt: 1000,                                                     // 累计超过这个数就显示次数
     }
   }
 
@@ -140,49 +143,114 @@
     var perWave = st.perWave
     var useTrail = (total == null ? readCount() : total) >= st.trailAt
     var huePool = HUES.slice(0, Math.max(3, Math.min(st.colors, HUES.length)))
-    var parts = []
-    var rings = []      // 爆炸瞬间的冲击波光环
+    var parts = []       // 所有粒子（含主爆/二次爆/余烬）
+    var rings = []       // 爆炸瞬间的冲击波光环
+    var rockets = []     // 升空中的光点
+    var flashes = []     // 爆炸瞬间的屏幕泛光
     var timers = []
 
-    /**
-     * 一次爆炸
-     * 真实烟花的三个特征：
-     *   ① 一次爆炸通常是同一种颜色（这里取主色 + 小幅色相抖动，而不是全随机）
-     *   ② 有速度层次：多数中速，少数飞得远
-     *   ③ 寿命差异大：有的很快熄灭，有的拖得很久
-     */
-    function burst(cx, cy, n) {
-      var hue = huePool[(Math.random() * huePool.length) | 0]
-      var span = 14 + Math.random() * 16
-      // 冲击波：一圈快速扩散的细环
-      rings.push({ x: cx, y: cy, r: 3, hue: hue, life: 1 })
+    /** 余烬：少量缓慢下落的火星，负责收尾 */
+    function addEmbers(cx, cy, n, hue) {
       for (var i = 0; i < n; i++) {
-        var ang = Math.random() * Math.PI * 2
-        var t = Math.random()
-        var sp = 2 + t * t * (st.spread + 2)     // t² 让快慢分层更明显
+        var ang = Math.random() * TAU
+        var sp = 0.3 + Math.random() * 1.4
         parts.push({
           x: cx, y: cy,
           vx: Math.cos(ang) * sp,
-          vy: Math.sin(ang) * sp - 1.6,
-          r: 0.8 + Math.random() * st.radius,
-          hue: hue + (Math.random() * span * 2 - span),
-          light: 58 + Math.random() * 22,
+          vy: Math.sin(ang) * sp - 0.4,
+          r: 0.6 + Math.random() * 0.9,
+          hue: hue + (Math.random() * 20 - 10),
+          light: 58 + Math.random() * 16,
           life: 1,
-          decay: 0.006 + Math.random() * 0.016,
-          trail: Math.random() < 0.35,
+          decay: 0.0025 + Math.random() * 0.003,   // 活得很久，慢慢飘落
+          trail: false,
+          ember: true,
           px: cx, py: cy,
         })
       }
     }
 
-    // 多波次：错开时间在屏幕中上部随机位置炸开
+    /**
+     * 一次爆炸 = 主爆 + 二次小爆 + 余烬
+     * 真实烟花的三层：一次炸开的主体、外围的碎花、飘落的余烬
+     */
+    function burst(cx, cy, n, hueIn) {
+      var hue = (hueIn == null) ? huePool[(Math.random() * huePool.length) | 0] : hueIn
+      var span = 12 + Math.random() * 14
+      rings.push({ x: cx, y: cy, r: 3, hue: hue, life: 1 })
+      flashes.push({ x: cx, y: cy, hue: hue, life: 1 })
+
+      for (var i = 0; i < n; i++) {
+        var ang = Math.random() * TAU
+        var t = Math.random()
+        var sp = 2.4 + t * t * (st.spread + 2)   // t² 让快慢分层更明显
+        parts.push({
+          x: cx, y: cy,
+          vx: Math.cos(ang) * sp,
+          vy: Math.sin(ang) * sp - 1.8,
+          r: 0.9 + Math.random() * st.radius,
+          hue: hue + (Math.random() * span * 2 - span),
+          light: 60 + Math.random() * 20,
+          life: 1,
+          decay: 0.005 + Math.random() * 0.015,
+          trail: Math.random() < 0.45,
+          px: cx, py: cy,
+        })
+      }
+      addEmbers(cx, cy, Math.max(6, Math.round(n * 0.12)), hue)
+
+      // 二次小爆：主爆外围补几朵，形成「簇」
+      for (var k = 0; k < st.petals; k++) {
+        (function (idx) {
+          timers.push(window.setTimeout(function () {
+            var pa = Math.random() * TAU
+            var pd = 45 + Math.random() * 95
+            var px2 = cx + Math.cos(pa) * pd
+            var py2 = cy + Math.sin(pa) * pd * 0.7
+            var pn = Math.max(8, Math.round(n * 0.22))
+            rings.push({ x: px2, y: py2, r: 2, hue: hue, life: 0.8 })
+            for (var m = 0; m < pn; m++) {
+              var a2 = Math.random() * TAU
+              var sp2 = 1.2 + Math.random() * (st.spread * 0.55)
+              parts.push({
+                x: px2, y: py2,
+                vx: Math.cos(a2) * sp2,
+                vy: Math.sin(a2) * sp2 - 1,
+                r: 0.7 + Math.random() * st.radius * 0.7,
+                hue: hue + (Math.random() * 18 - 9),
+                light: 62 + Math.random() * 18,
+                life: 1,
+                decay: 0.008 + Math.random() * 0.014,
+                trail: Math.random() < 0.3,
+                px: px2, py: py2,
+              })
+            }
+          }, 170 + idx * 45))
+        })(k)
+      }
+    }
+
+    /** 升空：从屏幕底部射一条光点，到点后再炸开 */
+    function rocket(cx, cy, n, hue) {
+      rockets.push({
+        sx: cx + (Math.random() * 120 - 60),
+        sy: H + 20,
+        tx: cx, ty: cy,
+        x: cx, y: H + 20,
+        t: 0, dur: 16 + Math.round(Math.random() * 8),
+        hue: hue, n: n,
+      })
+    }
+
+    // 多波次：每波先升空再炸开，节奏比原来更紧凑
     for (var w = 0; w < waves; w++) {
       (function (idx) {
         timers.push(window.setTimeout(function () {
-          var cx = W * (0.28 + Math.random() * 0.44)
-          var cy = H * (0.18 + Math.random() * 0.28)
-          burst(cx, cy, perWave)
-        }, idx * 230))
+          var cx = W * (0.22 + Math.random() * 0.56)
+          var cy = H * (0.15 + Math.random() * 0.3)
+          var hue = huePool[(Math.random() * huePool.length) | 0]
+          rocket(cx, cy, perWave, hue)
+        }, idx * 190))
       })(w)
     }
 
@@ -207,6 +275,47 @@
         ctx.globalCompositeOperation = 'lighter'
       } else {
         ctx.clearRect(0, 0, W, H)
+      }
+
+      // 升空光点：一条上升的光迹，到点后触发爆炸
+      for (var ri = rockets.length - 1; ri >= 0; ri--) {
+        var rk = rockets[ri]
+        rk.t++
+        var kr = rk.t / rk.dur
+        if (kr >= 1) {
+          rockets.splice(ri, 1)
+          burst(rk.tx, rk.ty, rk.n, rk.hue)
+          continue
+        }
+        rk.x = rk.sx + (rk.tx - rk.sx) * kr
+        rk.y = rk.sy + (rk.ty - rk.sy) * (1 - Math.pow(1 - kr, 2.2))   // 越升越慢
+        ctx.globalAlpha = 0.95
+        ctx.fillStyle = 'hsl(' + (rk.hue | 0) + ',100%,80%)'
+        ctx.beginPath()
+        ctx.arc(rk.x, rk.y, 2.2, 0, TAU)
+        ctx.fill()
+        // 上升尾迹：向下拖两三条短线
+        ctx.globalAlpha = 0.32
+        ctx.strokeStyle = 'hsl(' + (rk.hue | 0) + ',100%,66%)'
+        ctx.lineWidth = 1.6
+        ctx.beginPath()
+        ctx.moveTo(rk.x, rk.y)
+        ctx.lineTo(rk.x + (Math.random() * 3 - 1.5), rk.y + 18 + Math.random() * 12)
+        ctx.stroke()
+      }
+
+      // 爆炸瞬间的屏幕泛光：让「炸开」有照亮感
+      for (var fi = flashes.length - 1; fi >= 0; fi--) {
+        var fl = flashes[fi]
+        fl.life -= 0.09
+        if (fl.life <= 0) { flashes.splice(fi, 1); continue }
+        var rad = 260 + (1 - fl.life) * 320
+        var grad = ctx.createRadialGradient(fl.x, fl.y, 0, fl.x, fl.y, rad)
+        grad.addColorStop(0, 'hsla(' + (fl.hue | 0) + ',100%,72%,' + (fl.life * 0.22).toFixed(3) + ')')
+        grad.addColorStop(1, 'hsla(' + (fl.hue | 0) + ',100%,72%,0)')
+        ctx.globalAlpha = 1
+        ctx.fillStyle = grad
+        ctx.fillRect(fl.x - rad, fl.y - rad, rad * 2, rad * 2)
       }
 
       // 冲击波光环：快速扩散并淡出
@@ -238,6 +347,17 @@
         var a = p.life
         var r = p.r * (0.25 + 0.75 * a)      // 燃烧中越来越小
         var col = 'hsl(' + (p.hue | 0) + ',100%,' + (p.light | 0) + '%)'
+
+        // 余烬：暗淡、缓慢闪烁，只画一个小点
+        if (p.ember) {
+          var flick = 0.55 + 0.45 * Math.sin(elapsed * 0.02 + p.x * 0.1)
+          ctx.globalAlpha = a * 0.5 * flick
+          ctx.fillStyle = col
+          ctx.beginPath()
+          ctx.arc(p.x, p.y, r * 0.85, 0, TAU)
+          ctx.fill()
+          continue
+        }
 
         // 火星拖尾：一条渐隐短线
         if (p.trail) {

@@ -1101,6 +1101,12 @@ const server = http.createServer(async (req, res) => {
       try {
         const r = plmSnapshotFinish(b)
         if (r.ok) {
+          // 自动用 ERP 快照补齐 PLM 快照并输出差异（省掉手动调 merge）
+          try {
+            r.merge = plmSnapshotMerge()
+          } catch (e) {
+            r.mergeError = String((e && e.message) || e)
+          }
           // 快照换了，索引必须重建
           try { await loadIndex({ force: true }) } catch (e) { /* 索引重建失败不影响落盘 */ }
         }

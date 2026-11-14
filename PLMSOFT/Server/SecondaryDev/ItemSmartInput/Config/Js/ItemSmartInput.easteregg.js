@@ -259,6 +259,11 @@
       return { count: n, every: c.every, level: levelOf(n, c.milestones), enabled: c.enabled, milestones: c.milestones }
     },
     test: function (lv) { launch(Number(lv == null ? 3 : lv), readCount()) },
+    /**
+     * 按「假设已累计 N 次」预览礼花强度（不改计数、不影响真实使用）
+     * 演示页和现场调参用：__plmEgg.preview(1500) 就能看到 1500 次的样子
+     */
+    preview: function (total) { launch(0, Math.max(0, Number(total) || 0)) },
     reset: function () { writeCount(0); log('计数已清零') },
     off: function () {
       try {

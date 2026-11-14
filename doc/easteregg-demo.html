@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>物料录入助手 · 彩蛋演示</title>
+<style>
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: #12161c;
+    color: #e6edf3;
+    font: 14px/1.7 "Microsoft YaHei", Arial, sans-serif;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 28px 20px; box-sizing: border-box;
+  }
+  h1 { font-size: 17px; margin: 0 0 4px; font-weight: 600; }
+  .sub { color: #8b98a5; font-size: 12px; margin-bottom: 22px; text-align: center; }
+  .panel {
+    background: #1a2029; border: 1px solid #2a323d; border-radius: 8px;
+    padding: 16px 20px; width: min(760px, 96vw); box-sizing: border-box;
+  }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+  .row:last-child { margin-bottom: 0; }
+  .label { color: #8b98a5; font-size: 12px; min-width: 82px; }
+  button {
+    background: #232b36; color: #e6edf3; border: 1px solid #333d4a;
+    border-radius: 5px; padding: 6px 13px; cursor: pointer; font-size: 13px;
+    font-family: inherit; transition: background .12s, border-color .12s;
+  }
+  button:hover { background: #2c3641; border-color: #46525f; }
+  button.primary { background: #1d4e89; border-color: #2b6cb0; }
+  button.primary:hover { background: #235c9e; }
+  .count { font-size: 15px; font-weight: 600; color: #58b368; }
+  .note { color: #6b7784; font-size: 12px; margin-top: 16px; line-height: 1.8; }
+  code { background: #232b36; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<h1>物料录入助手 · 礼花彩蛋演示</h1>
+<div class="sub">
+  纯前端 canvas 动画，不依赖 PLM / 3100 / 任何服务。调整窗口大小可看不同屏幕尺寸的效果。
+</div>
+
+<div class="panel">
+  <div class="row">
+    <span class="label">当前累计</span>
+    <span class="count" id="cnt">0</span>
+    <span style="color:#6b7784;font-size:12px">次</span>
+    <button class="primary" id="btn-tick" style="margin-left:auto">模拟保存一次 (+1)</button>
+    <button id="btn-reset">计数清零</button>
+  </div>
+
+  <div class="row">
+    <span class="label">按次数预览</span>
+    <button data-n="100">100</button>
+    <button data-n="300">300</button>
+    <button data-n="500">500</button>
+    <button data-n="1000">1,000</button>
+    <button data-n="1500">1,500</button>
+    <button data-n="2000">2,000</button>
+    <button data-n="5000">5,000</button>
+    <button data-n="10000">1 万</button>
+    <button data-n="20000">2 万</button>
+    <button data-n="50000">5 万</button>
+    <button data-n="100000">10 万</button>
+  </div>
+
+  <div class="row">
+    <span class="label">按级别预览</span>
+    <button data-lv="0">Lv.0</button>
+    <button data-lv="1">Lv.1</button>
+    <button data-lv="2">Lv.2</button>
+    <button data-lv="3">Lv.3</button>
+    <button data-lv="5">Lv.5</button>
+    <button data-lv="8">Lv.8</button>
+  </div>
+</div>
+
+<div class="note">
+  <b>说明</b><br>
+  · 「按次数预览」调用 <code>__plmEgg.preview(N)</code>，强度由累计次数算出，<b>不改计数</b>，与真实使用完全一致<br>
+  · 「按级别预览」调用 <code>__plmEgg.test(N)</code>，只作对比参考<br>
+  · 真实触发：每 <code>every</code>（默认 100）次保存放一次；累计达到 500 / 1000 / 1500 … 时升级<br>
+  · 本页直接加载插件目录下的 <code>ItemSmartInput.easteregg.js</code>，改源码后刷新即生效
+</div>
+
+<!-- 相对路径引用真实彩蛋文件，保证演示与线上完全一致 -->
+<script src="../PLMSOFT/Server/SecondaryDev/ItemSmartInput/Config/Js/ItemSmartInput.easteregg.js"></script>
+<script>
+(function () {
+  var egg = window.__plmEgg
+  var cntEl = document.getElementById('cnt')
+
+  function refresh() {
+    var n = (egg && egg.count) ? egg.count() : 0
+    cntEl.textContent = String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  }
+
+  if (!egg) {
+    cntEl.textContent = '未加载'
+    document.body.insertAdjacentHTML('beforeend',
+      '<div style="color:#d9534f;margin-top:20px">彩蛋模块未加载：确认 ItemSmartInput.easteregg.js 与本文件相对路径正确</div>')
+    return
+  }
+
+  document.getElementById('btn-tick').onclick = function () {
+    egg.tick()
+    refresh()
+  }
+
+  document.getElementById('btn-reset').onclick = function () {
+    egg.reset()
+    refresh()
+  }
+
+  var nBtns = document.querySelectorAll('[data-n]')
+  for (var i = 0; i < nBtns.length; i++) {
+    (function (b) {
+      b.onclick = function () { egg.preview(Number(b.getAttribute('data-n'))) }
+    })(nBtns[i])
+  }
+
+  var lvBtns = document.querySelectorAll('[data-lv]')
+  for (var k = 0; k < lvBtns.length; k++) {
+    (function (b) {
+      b.onclick = function () { egg.test(Number(b.getAttribute('data-lv'))) }
+    })(lvBtns[k])
+  }
+
+  refresh()
+  // 每 300ms 同步一次计数（便于边点 +1 边看）
+  setInterval(refresh, 300)
+})()
+</script>
+</body>
+</html>

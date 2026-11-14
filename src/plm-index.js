@@ -23,7 +23,20 @@ import { extractParams } from './struct-spec.js'
 import { findAllSuggestions } from './name-synonyms.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const NDJSON = path.join(ROOT, 'data', 'materials.ndjson')
+const ERP_NDJSON = path.join(ROOT, 'data', 'materials.ndjson')
+const MERGED_NDJSON = path.join(ROOT, 'data', 'materials-merged.ndjson')
+
+/**
+ * 当前生效的数据源（每次加载时求值，合并快照生成后无需重启）
+ *   优先 materials-merged.ndjson（PLM 为主 + ERP 补齐，每条带 SOURCE）
+ *   回退 materials.ndjson（纯 ERP，未做 PLM 合并时）
+ */
+function activeSource() {
+  try {
+    if (fs.statSync(MERGED_NDJSON).size > 0) return MERGED_NDJSON
+  } catch (e) { /* 合并快照不存在 */ }
+  return ERP_NDJSON
+}
 const FUZZY_THRESHOLD = 0.8
 
 /** 内存状态 */
@@ -125,7 +138,7 @@ export function indexStatus() {
     subs: state.subs.size,
     skippedNoCategory: state.noSub,
     fuzzyThreshold: FUZZY_THRESHOLD,
-    source: NDJSON,
+    source: activeSource(),
   }
 }
 
@@ -135,8 +148,9 @@ export function indexStatus() {
  */
 export async function loadIndex({ force = false } = {}) {
   if (loading) return loading
+  const src = activeSource()
   let mtime = 0
-  try { mtime = fs.statSync(NDJSON).mtimeMs } catch {
+  try { mtime = fs.statSync(src).mtimeMs } catch {
     throw new Error('未找到 data/materials.ndjson，请先运行 npm run extract')
   }
   if (!force && state.count > 0 && state.mtime === mtime) return indexStatus()
@@ -144,13 +158,15 @@ export async function loadIndex({ force = false } = {}) {
   loading = (async () => {
     const subs = new Map()
     let count = 0, noSub = 0
-    const rl = readline.createInterface({ input: fs.createReadStream(NDJSON, 'utf8'), crlfDelay: Infinity })
+    const rl = readline.createInterface({ input: fs.createReadStream(src, 'utf8'), crlfDelay: Infinity })
     for await (const line of rl) {
       if (!line.trim()) continue
       let rec
       try { rec = JSON.parse(line) } catch { continue }
 
-      const st = applyRecord(subs, rec, 'erp')
+      // 来源：合并快照里每条带 SOURCE（PLM / ERP），纯 ERP 快照则默认 erp
+      const recSrc = String(rec.SOURCE || '').toUpperCase() === 'PLM' ? 'plm' : 'erp'
+      const st = applyRecord(subs, rec, recSrc)
       if (st === 'ok') count++
       else if (st === 'nocat') noSub++
     }

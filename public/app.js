@@ -2314,8 +2314,13 @@ function renderNmSpecCheck(c) {
     if (seriesHtml) bindNmSeriesFill(el)
     return
   }
-  // ERP 实时补查出来的命中项，单独标注来源
-  const erpTag = (h) => (h.fromErp ? '<span class="nm-badge erp">ERP实时</span> ' : '')
+  // 来源标注：区分「ERP 实时补查」与「ERP 历史基线」
+  //   合并快照里 99.8% 来自 PLM，默认不标；只有来自 ERP 的才标，界面才清爽
+  const erpTag = (h) => {
+    if (h.fromErp) return '<span class="nm-badge erp">ERP实时</span> '
+    if (h.source === 'erp') return '<span class="nm-badge erp">ERP历史</span> '
+    return ''
+  }
   const stockHtml = (h) => {
     if (h.qty == null) return ''
     const avb = h.avbqty !== h.qty ? '（可用 ' + fmt(h.avbqty) + '）' : ''
@@ -2327,7 +2332,7 @@ function renderNmSpecCheck(c) {
   if (orderSame.length) {
     html += '<div class="nm-warn">⚠ 疑似相同规格（参数完全相同，仅书写顺序不同）：</div>'
     html += orderSame.slice(0, 5).map((h) =>
-      `<div class="nm-hit nm-hit-order"><span class="nm-badge order">顺序不同</span> <b>${escapeHtml(h.fnumber)}</b> · <span class="mono">${escapeHtml(h.spec)}</span>${escapeHtml(h.name || '')}</div>`
+      `<div class="nm-hit nm-hit-order">${erpTag(h)}<span class="nm-badge order">顺序不同</span> <b>${escapeHtml(h.fnumber)}</b> · <span class="mono">${escapeHtml(h.spec)}</span>${escapeHtml(h.name || '')}</div>`
     ).join('')
     html += '<label class="nm-dup-confirm"><input type="checkbox" id="nmConfirmOrder" />'
       + ' 我已确认与上述物料<b>不是同一物料</b>（如参数顺序在本品类有不同含义），允许继续录入</label>'

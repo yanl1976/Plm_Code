@@ -2,7 +2,7 @@
 
 > 版本 **v1.61** ｜ 适用：InforCenter Enterprise Platform 2020.3（8.3.8）＋ 物料治理服务（本仓库 Node）
 > 插件文件：`ItemSmartInput.js` **v1.68** — 159,183 字节 / 3,420 行 / UTF-8 无 BOM
-> SHA256：`D7B5A2FB798AC8BC4F247EB76FB0C70971136C7E84E40B58C8CD3C0B5DA03D11`
+> SHA256：`EEC5F595A483EA13D0C45C6EDD41489C8B38CD0518C5462B19AA2B90292404CC`
 > **后端本次有改动**：`src/plm-server.js` 新增 `columns[].specPart`（哪些列拼进规格）与 `sampleSpec`
 > **后端本次有改动**：`src/plm-index.js` 新增「仅规格相同」索引（12,174 字节），需部署并重启 3100（v1.52 起前端也做了兜底，后端没换也能拦住）
 >

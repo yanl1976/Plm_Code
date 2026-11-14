@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.68';
+  var PLUGIN_VERSION = '1.69';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -3417,4 +3417,257 @@
 
   // 兜底：PSE_ItemGuide 等不触发 CreatePage_OnCreate 的入口，靠 DOM 轮询接管
   watchDialog();
+
+  // ===================== 阶段 0：PLM 物料查询接口探测（临时调试，整段可删）=====================
+  // 目的：确认 CommonGetObjectDataByFilter 能否按编码查到物料、返回哪些字段、
+  //       是否包含 STATEID（使用状态）、是否支持 FilterString 里带状态条件。
+  // 用法（F12 Console，输入后回车）：
+  //   __plmProbe.help()
+  //   __plmProbe.one('10010100271')      查一条，打印全部（推荐先跑这个）
+  //   __plmProbe.raw('10010100271')      只打印原始返回，不剥壳
+  //   __plmProbe.state('10010100271')    对比「带/不带 STATEID 过滤」的结果差异
+  //   __plmProbe.fields('10010100271')   只列返回的字段名
+  //   __plmProbe.timing(['10010100271','10010100223'])   批量测耗时
+  (function () {
+    var TAG = '[PLM探测]'
+    var SVC_FILTER = 'InforCenter.Common.ObjectService.CommonGetObjectDataByFilter'
+    var SVC_STOCK = 'Hoteam.InforCenter.ERPService.GetStockSearchData'
+    var KEY_FIELDS = ['ECODE', 'ENAME', 'GGXH', 'ZYCS', 'UNIT', 'STATEID', 'WORKFLOWSTATE', 'EID', 'EUID', 'UPDATETIME', 'EVERSION']
+    var TIMEOUT = 10000
+
+    function stamp() {
+      var d = new Date()
+      function p(n) { return (n < 10 ? '0' : '') + n }
+      return p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()) + '.' + String(d.getMilliseconds())
+    }
+    function c(style, args) {
+      var a = [].slice.call(args)
+      a.unshift('%c' + TAG + ' ' + style, 'color:#0a7;font-weight:bold')
+      return a
+    }
+    function log() { var a = [].slice.call(arguments); if (console && console.log) console.log.apply(console, c('', a)) }
+    function warn() { var a = [].slice.call(arguments); if (console && console.warn) console.warn.apply(console, c('color:#c80', a)) }
+    function err() { var a = [].slice.call(arguments); if (console && console.error) console.error.apply(console, c('color:#c00', a)) }
+
+    function nowMs() { return (window.performance && window.performance.now) ? window.performance.now() : Date.now() }
+    function cut(s, n) {
+      s = String(s == null ? '' : s)
+      return s.length > n ? s.slice(0, n) + '…（共 ' + s.length + ' 字）' : s
+    }
+
+    /** 环境自检：HoteamUI / DataService / AsyncCall 是否可用 */
+    function envCheck() {
+      var root = window.HoteamUI
+      var ds = root && root.DataService
+      var info = {
+        HoteamUI: !!root,
+        DataService: !!ds,
+        AsyncCall: !!(ds && typeof ds.AsyncCall === 'function'),
+        Call: !!(ds && typeof ds.Call === 'function'),
+        ServiceUri: SVC_FILTER,
+        timeoutMs: TIMEOUT,
+      }
+      log('环境自检', info)
+      if (!info.HoteamUI) err('window.HoteamUI 不存在 —— 当前页面不是 PLM 页面，或平台脚本未加载')
+      else if (!info.DataService) err('window.HoteamUI.DataService 不存在 —— 平台数据服务未就绪')
+      else if (!info.AsyncCall && !info.Call) err('DataService 既没有 AsyncCall 也没有 Call —— 无法调用服务')
+      return info
+    }
+
+    /** 逐层剥壳：ASMX 可能套 {d:"json"} / 单键对象 / 字符串 */
+    function deepUnwrap(v) {
+      var x = v
+      for (var i = 0; i < 6; i++) {
+        if (typeof x === 'string') {
+          var s = x.trim()
+          if (!s || (s.charAt(0) !== '{' && s.charAt(0) !== '[')) break
+          try { x = JSON.parse(s); continue } catch (e) { break }
+        }
+        if (Object.prototype.toString.call(x) === '[object Array]') break
+        if (x && typeof x === 'object') {
+          var keys = Object.keys(x)
+          if (keys.length === 1) { x = x[keys[0]]; continue }
+          if (x.d !== undefined) { x = x.d; continue }
+        }
+        break
+      }
+      return x
+    }
+
+    /** 从返回里取出行数组（PSEITEM / PSEITEM$ / Rows / Data） */
+    function pickRows(data) {
+      if (!data) return []
+      if (Object.prototype.toString.call(data) === '[object Array]') return data
+      var cand = ['PSEITEM', 'PSEITEM$', 'PSEITEMMASTER', 'Rows', 'Data', 'data', 'Result']
+      for (var i = 0; i < cand.length; i++) {
+        var v = data[cand[i]]
+        if (Object.prototype.toString.call(v) === '[object Array]') return v
+        if (v && typeof v === 'object') {
+          var inner = pickRows(v)
+          if (inner.length) return inner
+        }
+      }
+      return []
+    }
+
+    /** 调 PLM 服务；cb(errInfo, rows, meta) */
+    function callPlm(filterString, cb) {
+      var env = envCheck()
+      if (!env.DataService || (!env.AsyncCall && !env.Call)) {
+        cb({ step: 'env', message: '数据服务不可用' }, [], null)
+        return
+      }
+      var ds = window.HoteamUI.DataService
+      var para = {
+        para: {
+          Data: JSON.stringify({
+            PSEITEM: { FilterInfo: [], FilterString: filterString, OrderbyString: '' },
+          }),
+        },
+      }
+      var t0 = nowMs()
+      var done = false, timer = null
+
+      function finish(errInfo, raw) {
+        if (done) return
+        done = true
+        if (timer) { clearTimeout(timer); timer = null }
+        var cost = Math.round(nowMs() - t0)
+        if (errInfo) { err('调用返回错误', errInfo, '耗时 ' + cost + 'ms'); cb(errInfo, [], { cost: cost, raw: raw }); return }
+        var unwrapped = deepUnwrap(raw)
+        var rows = pickRows(unwrapped)
+        log('调用完成  耗时 ' + cost + 'ms  行数 ' + rows.length)
+        cb(null, rows, { cost: cost, raw: raw, unwrapped: unwrapped })
+      }
+
+      timer = setTimeout(function () {
+        finish({ step: 'timeout', message: '超过 ' + TIMEOUT + 'ms 无返回' }, null)
+      }, TIMEOUT)
+
+      try {
+        if (env.AsyncCall) {
+          ds.AsyncCall({
+            serviceuri: SVC_FILTER,
+            paras: para,
+            callback: function (ret) { finish(null, ret) },
+            errorCallback: function (e) {
+              finish({ step: 'callback', message: 'errorCallback 触发', detail: cut(e && (e.message || e.statusText || e), 200) }, null)
+            },
+            showErrorMessage: false,
+          })
+          log('已发起 AsyncCall', { serviceuri: SVC_FILTER, FilterString: filterString })
+        } else {
+          var ret = ds.Call(SVC_FILTER, para)
+          finish(null, ret)
+        }
+      } catch (e) {
+        finish({ step: 'throw', message: String(e && e.message || e), stack: e && e.stack ? String(e.stack).split('\n').slice(0, 4).join(' | ') : '' }, null)
+      }
+    }
+
+    function summarize(rows) {
+      if (!rows.length) { warn('没有返回行'); return }
+      var keys = Object.keys(rows[0] || {})
+      log('字段清单（' + keys.length + ' 个）: ' + keys.join(', '))
+      var missing = []
+      for (var i = 0; i < KEY_FIELDS.length; i++) if (keys.indexOf(KEY_FIELDS[i]) < 0) missing.push(KEY_FIELDS[i])
+      if (missing.length) warn('缺少关键字段: ' + missing.join(', '))
+      else log('关键字段齐全 ✅')
+      for (var r = 0; r < rows.length && r < 5; r++) {
+        var o = rows[r], one = {}
+        for (var k = 0; k < KEY_FIELDS.length; k++) {
+          var f = KEY_FIELDS[k]
+          if (o[f] !== undefined) one[f] = cut(o[f], 40)
+        }
+        log('第 ' + (r + 1) + ' 行关键值', one)
+      }
+    }
+
+    function help() {
+      log('阶段 0 探测工具已就绪。可用命令：')
+      log('  __plmProbe.one(code)     查一条并打印全部（先跑这个）')
+      log('  __plmProbe.raw(code)     只打印原始返回')
+      log('  __plmProbe.state(code)   对比带/不带 STATEID 过滤')
+      log('  __plmProbe.fields(code)  只列字段名')
+      log('  __plmProbe.timing([codes])  批量测耗时')
+      log('提示：Console 里按 "[PLM探测]" 过滤本工具输出')
+      envCheck()
+    }
+
+    function one(code) {
+      if (!code) { err('请传编码，如 __plmProbe.one(\'10010100271\')'); return }
+      log('=== 查单条：' + code + ' ===')
+      callPlm("ECODE = '" + String(code).replace(/'/g, "''") + "'", function (e, rows) {
+        if (e) return
+        if (!rows.length) { warn('未查到该编码（可能是停用/废弃已排除，或编码不存在）'); return }
+        summarize(rows)
+        log('第一条完整对象：', rows[0])
+        var st = rows[0].STATEID
+        if (st === undefined) err('返回里没有 STATEID 字段 —— 无法判断使用状态，需换接口')
+        else log('STATEID = "' + st + '"' + (st === 'Using' ? '（启用，可引用）' : '（非启用，不可引用）'))
+      })
+    }
+
+    function raw(code) {
+      log('=== 原始返回：' + code + ' ===')
+      callPlm("ECODE = '" + String(code).replace(/'/g, "''") + "'", function (e, rows, meta) {
+        if (e) { err('原始返回失败', e); return }
+        log('meta', { cost: meta && meta.cost, type: typeof meta.raw })
+        if (typeof meta.raw === 'string') log('原始字符串（前 1200 字）:', cut(meta.raw, 1200))
+        else log('原始对象:', meta.raw)
+      })
+    }
+
+    function state(code) {
+      log('=== 状态过滤对比：' + code + ' ===')
+      log('① 不带状态条件')
+      callPlm("ECODE = '" + String(code).replace(/'/g, "''") + "'", function (e1, rows1) {
+        var n1 = e1 ? -1 : rows1.length
+        var s1 = e1 ? '(失败)' : (rows1[0] ? String(rows1[0].STATEID) : '(空)')
+        log('① 结果：行数 ' + n1 + '  STATEID=' + s1)
+        log('② 带 STATEID = \'Using\'')
+        callPlm("ECODE = '" + String(code).replace(/'/g, "''") + "' AND STATEID = 'Using'", function (e2, rows2) {
+          var n2 = e2 ? -1 : rows2.length
+          log('② 结果：行数 ' + n2)
+          if (n1 === n2) warn('两种写法行数相同 —— 接口可能不支持状态过滤，需客户端自己筛')
+          else log('两种写法行数不同 —— 接口支持状态过滤 ✅')
+        })
+      })
+    }
+
+    function fields(code) {
+      callPlm("ECODE = '" + String(code).replace(/'/g, "''") + "'", function (e, rows) {
+        if (e) return
+        if (!rows.length) { warn('没有返回行，无法列字段'); return }
+        var keys = Object.keys(rows[0] || {})
+        log('共 ' + keys.length + ' 个字段：')
+        keys.forEach(function (k) { log('  ' + k + ' = ' + cut(rows[0][k], 60)) })
+      })
+    }
+
+    function timing(codes) {
+      codes = codes || []
+      if (!codes.length) { err('请传编码数组，如 __plmProbe.timing([\'10010100271\',\'10010100223\'])'); return }
+      var total = 0, done = 0, failed = 0
+      codes.forEach(function (code, idx) {
+        var t0 = nowMs()
+        callPlm("ECODE = '" + String(code).replace(/'/g, "''") + "'", function (e, rows) {
+          var cost = Math.round(nowMs() - t0)
+          total += cost
+          done++
+          if (e) failed++
+          log('[' + (idx + 1) + '/' + codes.length + '] ' + code + '  行数 ' + (e ? '-' : rows.length) + '  耗时 ' + cost + 'ms')
+          if (done === codes.length) {
+            log('合计：' + codes.length + ' 次，平均 ' + Math.round(total / done) + 'ms，失败 ' + failed)
+          }
+        })
+      })
+    }
+
+    window.__plmProbe = {
+      help: help, one: one, raw: raw, state: state, fields: fields, timing: timing,
+      env: envCheck, service: { filter: SVC_FILTER, stock: SVC_STOCK },
+    }
+    log('探测工具已挂载：__plmProbe.help() 查看用法')
+  })();
 })(window, window.jQuery);

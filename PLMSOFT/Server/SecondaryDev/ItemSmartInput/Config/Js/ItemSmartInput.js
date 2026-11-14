@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.94';
+  var PLUGIN_VERSION = '1.95';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1333,6 +1333,34 @@
     erpBadge.className = 'plm-smart-erp-badge';
     erpBadge.title = '库存数据经 PLM 接口访问 ERP；这里显示 ERP 是否可达';
     head.appendChild(erpBadge);
+
+    // 累计回填次数：来自彩蛋模块（ItemSmartInput.easteregg.js）
+    // 彩蛋被移除或关闭时不显示，主插件不依赖它
+    var countBadge = dlgEl('span', 'float:right;margin-right:8px;font-weight:normal;font-size:11px;line-height:18px;'
+      + 'padding:1px 8px;border-radius:9px;background:rgba(127,127,127,.12);color:' + C_MUTE + ';display:none;', '');
+    countBadge.className = 'plm-smart-count-badge';
+    head.appendChild(countBadge);
+
+    /** 千分位 / 万为单位 */
+    function fmtEggCount(n) {
+      var v = Number(n) || 0;
+      if (v >= 10000) return (v / 10000).toFixed(1).replace(/\.0$/, '') + ' 万';
+      return String(v).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    /** 刷新累计次数徽标；彩蛋模块不存在或计数为 0 时隐藏 */
+    function refreshEggBadge() {
+      if (!countBadge) return;
+      var n = 0;
+      try {
+        n = (window.__plmEgg && window.__plmEgg.count) ? Number(window.__plmEgg.count()) || 0 : 0;
+      } catch (e) { n = 0 }
+      if (!n) { countBadge.style.display = 'none'; return; }
+      countBadge.style.display = '';
+      countBadge.textContent = '✓ ' + fmtEggCount(n) + ' 次';
+      countBadge.title = '本机累计通过本助手回填 ' + n + ' 次（统计在浏览器本地）';
+    }
+    refreshEggBadge();
 
     /**
      * 更新 ERP 状态点
@@ -2919,6 +2947,7 @@
       if (applied.length) {
         try { if (window.__plmEgg && window.__plmEgg.tick) window.__plmEgg.tick() } catch (e) { }
       }
+      try { refreshEggBadge() } catch (e) { }
     };
 
     // 按要求：只有右上角 ×（和「取消」）能关闭，点遮罩不关闭

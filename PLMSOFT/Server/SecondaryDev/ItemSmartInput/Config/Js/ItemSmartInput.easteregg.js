@@ -249,6 +249,8 @@
 
   window.__plmEgg = {
     tick: tick,
+    /** 只读当前累计次数（无日志、无副作用），供标题栏徽标显示 */
+    count: function () { return readCount() },
     status: function () {
       var c = cfg()
       var n = readCount()

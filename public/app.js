@@ -1055,13 +1055,14 @@ function renderStdList() {
     return
   }
   let h = '<table class="ng-table"><thead><tr>'
-    + '<th style="width:170px">标准号</th>'
-    + '<th style="width:100px">现行版本</th>'
-    + '<th style="width:90px">状态</th>'
-    + '<th style="width:110px">实施日期</th>'
-    + '<th style="width:110px">上次核查</th>'
-    + '<th style="width:70px">引用</th>'
+    + '<th style="width:168px">标准号</th>'
+    + '<th style="width:92px">现行版本</th>'
+    + '<th style="width:88px">状态</th>'
+    + '<th style="width:106px">实施日期</th>'
+    + '<th style="width:106px">上次核查</th>'
+    + '<th style="width:56px">引用</th>'
     + '<th>标准名称</th>'
+    + '<th style="width:280px">被引用小类（名称）</th>'
     + '</tr></thead><tbody>'
   for (const x of stdItems) {
     let badge = ''
@@ -1071,6 +1072,10 @@ function renderStdList() {
     else if (x.status === '未查到') { badge = '<span class="std-warn">未查到</span>' }
     else if (/即将实施/.test(x.status || '')) { badge = '<span class="std-warn">即将实施</span>' }
     else if (/现行/.test(x.status || '')) { badge = '<span class="std-ok">现行</span>' }
+
+    // 被引用小类：小类号 + 名称，逗号分隔；过长时省略号 + 悬停看全文
+    const subList = x.subNames || []
+    const subText = subList.map((s) => s.sub + ' ' + (s.name || '')).join('、')
     h += '<tr class="' + rowCls + '">'
       + '<td class="mono">' + escapeHtml(x.base)
       + (x.outdated ? ' <span class="std-bad">→ ' + escapeHtml(x.latest || '') + '</span>' : '') + '</td>'
@@ -1080,6 +1085,7 @@ function renderStdList() {
       + '<td class="mono">' + escapeHtml(x.checkedAt ? String(x.checkedAt).slice(0, 10) : '—') + '</td>'
       + '<td style="text-align:center">' + (x.refCount || 0) + '</td>'
       + '<td class="ng-clip" title="' + escapeHtml(x.name || '') + '">' + escapeHtml(x.name || '') + '</td>'
+      + '<td class="ng-clip std-subs" title="' + escapeHtml(subText || '—') + '">' + escapeHtml(subText || '—') + '</td>'
       + '</tr>'
   }
   h += '</tbody></table>'

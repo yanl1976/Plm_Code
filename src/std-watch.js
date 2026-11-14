@@ -257,6 +257,19 @@ export function summary() {
   const watch = loadWatch()
   const stds = Object.values(watch.standards || {})
   const due = dueStandards(watch)
+
+  // 小类号 → 小类名，用于「被引用小类」列
+  let clsMap = {}
+  try { clsMap = JSON.parse(fs.readFileSync(path.join(CFG, 'classification-map.json'), 'utf8')) } catch (e) { clsMap = {} }
+
+  const withSubs = stds.map((x) => ({
+    ...x,
+    subNames: (x.subs || []).map((s) => ({
+      sub: s,
+      name: (clsMap[s] || {}).subName || '',
+    })),
+  }))
+
   return {
     meta: watch.meta || {},
     total: stds.length,
@@ -264,6 +277,6 @@ export function summary() {
     due: due.map((x) => x.base),
     outdated: stds.filter((x) => x.outdated).map((x) => x.base),
     failed: stds.filter((x) => x.error).map((x) => x.base),
-    standards: stds.sort((a, b) => String(a.base).localeCompare(String(b.base))),
+    standards: withSubs.sort((a, b) => String(a.base).localeCompare(String(b.base))),
   }
 }

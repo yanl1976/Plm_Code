@@ -592,3 +592,4 @@ tr.saving { opacity:.45; }
 #sub-guide .ng-table th:nth-child(3),#sub-guide .ng-table td:nth-child(3){min-width:220px}
 .ng-nowrap{white-space:nowrap}
 #sub-guide .ng-table td.ng-clip{max-width:none}
+.std-subs{font-size:11px;color:var(--muted)}

@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.87';
+  var PLUGIN_VERSION = '1.88';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1425,9 +1425,9 @@
       }
     }
 
-    body.appendChild(dlgEl('div', 'color:#666;margin-bottom:4px;', '物料名称'));
-    // 名称框与右侧「选型助手」同一行，和下方「规格 + 类似型号」的排版保持一致
-    var nameRow = dlgEl('div', 'display:flex;align-items:center;gap:8px;margin-bottom:12px;');
+    // 名称：左标签 + 右输入框，紧跟顶部信息条（行间距收紧到 4px）
+    var nameRow = dlgEl('div', 'display:flex;align-items:center;gap:8px;margin-bottom:4px;');
+    nameRow.appendChild(dlgEl('span', 'flex:0 0 auto;width:64px;color:#666;font-size:13px;', '物料名称'));
     var nameIn = dlgEl('input', 'flex:1 1 auto;min-width:0;box-sizing:border-box;padding:6px 8px;border:' + C_LINE + ';'
       + 'border-radius:3px;font-size:13px;background:' + C_INPUT_BG + ';color:inherit;');
     nameIn.className = 'plm-smart-dlg-name';
@@ -1466,22 +1466,16 @@
       });
     })();
 
-    // 名称的问题只出现在名称框下面
-    var nameTip = dlgEl('div', 'margin:4px 0 6px;min-height:16px;');
+    // 名称提示：不在输入框之间占位，统一放到两个输入框下方（见下方 append 顺序）
+    var nameTip = dlgEl('div', 'margin:2px 0 4px;min-height:16px;');
     nameTip.className = 'plm-smart-dlg-nametip';
-    body.appendChild(nameTip);
-
-    // 标准写法提示块已下移到「规格型号」下方（见下方 append），
-    // 这样名称框、规格框都在它上方，异步加载不会推动任何输入框
 
     // 名称联想（同 /api/plm/suggest field=name，与页面输入框同源）
-    var nameSugBox = dlgEl('div', 'margin:0 0 8px;');
-    body.appendChild(nameSugBox);
+    var nameSugBox = dlgEl('div', 'margin:0 0 6px;');
 
-    body.appendChild(dlgEl('div', 'color:#666;margin-bottom:4px;', '规格型号'));
-
-    // 规格输入框与右侧入口同一行：输入框自适应，入口固定宽度
-    var specRow = dlgEl('div', 'display:flex;align-items:center;gap:8px;');
+    // 规格：左标签 + 右输入框 + 右侧库存/类似型号，与名称行同样紧凑
+    var specRow = dlgEl('div', 'display:flex;align-items:center;gap:8px;margin-bottom:4px;');
+    specRow.appendChild(dlgEl('span', 'flex:0 0 auto;width:64px;color:#666;font-size:13px;', '规格型号'));
     var specIn = dlgEl('input', 'flex:1 1 auto;min-width:0;box-sizing:border-box;padding:6px 8px;border:' + C_LINE + ';'
       + 'border-radius:3px;font-size:13px;background:' + C_INPUT_BG + ';color:inherit;');
     specIn.className = 'plm-smart-dlg-spec';
@@ -1510,23 +1504,24 @@
     specRow.appendChild(quickRow);
     body.appendChild(specRow);
 
-    // 标准写法提示块：放在「规格型号」下方，并预留固定高度（min-height:186px）
-    // 名称框与规格框都在它上方，异步加载只影响下方内容，两个输入框全程不漂移
-    body.appendChild(guideBox);
-
     // 规格输入下方的「同型号系列」近似联想（看板同款，数据来自 3130）
     var specSug = dlgEl('div', 'display:none;margin-top:4px;border:' + C_LINE + ';border-radius:4px;'
       + 'overflow:hidden;font-size:12px;background:' + C_INPUT_BG + ';max-height:230px;overflow-y:auto;');
     specSug.className = 'plm-smart-dlg-sug';
-    body.appendChild(specSug);
 
-    // 规格的问题只出现在规格框下面
-    var specTip = dlgEl('div', 'margin-top:2px;min-height:16px;');
+    // 规格的问题提示 + 规范写法
+    var specTip = dlgEl('div', 'margin:2px 0 4px;min-height:16px;');
     specTip.className = 'plm-smart-dlg-spectip';
-    body.appendChild(specTip);
-    // 规范写法
-    var specMeta = dlgEl('div', 'margin-top:2px;');
-    body.appendChild(specMeta);
+    var specMeta = dlgEl('div', 'margin:2px 0 4px;');
+
+    // ===== 提示区：全部放在两个输入框下方，格式与展开/折叠逻辑保持不变 =====
+    // 顺序：名称提示 → 规格提示 → 规范写法 → 标准写法块 → 名称联想 → 同型号系列
+    body.appendChild(nameTip);      // 名称：问题 / 标准叫法 / 建议改为
+    body.appendChild(specTip);      // 规格：问题 / 建议改为 / 查重明细
+    body.appendChild(specMeta);     // 规格元信息（规范写法）
+    body.appendChild(guideBox);     // 标准写法（3 行 + 展开 ▾ 折叠 ▴）
+    body.appendChild(nameSugBox);   // 名称联想候选
+    body.appendChild(specSug);      // 同型号系列联想
 
     var foot = dlgEl('div', 'padding:10px 16px;border-top:' + C_LINE + ';text-align:right;background:' + C_HEAD_BG + ';');
     var cancelBtn = dlgEl('button', 'padding:4px 14px;margin-left:8px;border:' + C_LINE + ';background:transparent;'

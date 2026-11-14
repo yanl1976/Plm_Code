@@ -825,16 +825,17 @@ function renderGuideList() {
     box.innerHTML = '<div class="muted" style="padding:10px">' + (ngKw ? '没有匹配的小类' : '暂无数据') + '</div>'
     return
   }
-  let h = '<table class="ng-table"><thead><tr>'
-    + '<th style="width:78px">小类号</th>'
-    + '<th style="width:150px">小类名</th>'
-    + '<th style="width:74px">置信度</th>'
-    + '<th style="width:150px">条款依据</th>'
-    + '<th>依据</th>'
-    + '<th style="width:280px">规格结构</th>'
-    + '<th style="width:230px">示例</th>'
-    + '<th style="width:50px">字段</th>'
-    + '<th style="width:104px">操作</th>'
+  // 按百分比分配，任何屏宽下都不会把某一列压到不可读
+  let h = '<table class="ng-table ng-fixed"><thead><tr>'
+    + '<th style="width:5%">小类号</th>'
+    + '<th style="width:9%">小类名</th>'
+    + '<th style="width:6%">置信度</th>'
+    + '<th style="width:6%">条款依据</th>'
+    + '<th style="width:27%">依据</th>'
+    + '<th style="width:17%">规格结构</th>'
+    + '<th style="width:14%">示例</th>'
+    + '<th style="width:4%">字段</th>'
+    + '<th style="width:12%">操作</th>'
     + '</tr></thead><tbody>'
   const GRADE = {
     A: { cls: 'g-A', text: 'A 国标' },
@@ -847,8 +848,8 @@ function renderGuideList() {
       + '<td class="mono">' + it.sub + '</td>'
       + '<td class="ng-nowrap">' + escapeHtml(it.subName) + (it.hasStd ? '' : ' <span class="ng-nostd">无国标</span>') + '</td>'
       + '<td><span class="ng-grade ' + gd.cls + '">' + gd.text + '</span></td>'
-      + '<td class="mono ng-clip" title="' + escapeHtml(it.sourceRef || '待补条款号') + '">' + escapeHtml(it.sourceRef || '—') + '</td>'
-      + '<td title="' + escapeHtml(it.source) + '">' + escapeHtml(it.source) + '</td>'
+      + '<td class="mono" title="' + escapeHtml(it.sourceRef || '待补条款号') + '">' + escapeHtml(it.sourceRef || '—') + '</td>'
+      + '<td class="ng-src" title="' + escapeHtml(it.source) + '">' + escapeHtml(it.source) + '</td>'
       + '<td class="mono ng-clip" title="' + escapeHtml(it.specPattern) + '">' + escapeHtml(it.specPattern) + '</td>'
       + '<td class="mono ng-clip" title="' + escapeHtml(it.example) + '">' + escapeHtml(it.example) + '</td>'
       + '<td style="text-align:center">' + it.fieldCount + '</td>'

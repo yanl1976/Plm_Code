@@ -607,3 +607,8 @@ tr.saving { opacity:.45; }
 .g-B{color:var(--amber)}
 .g-C{color:var(--red);opacity:.85}
 .g-none{color:var(--muted)}
+
+/* 命名范式表：固定布局 + 比例列宽，避免某一列被压成多行 */
+.ng-table.ng-fixed{table-layout:fixed}
+.ng-table.ng-fixed th,.ng-table.ng-fixed td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ng-table.ng-fixed td.ng-src{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.45;word-break:break-all}

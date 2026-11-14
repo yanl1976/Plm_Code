@@ -27,6 +27,13 @@ import { loadIndex, indexStatus, queryDuplicates, suggestNames, suggestSpecs, ca
 import { checkMaterial, suggestSpec } from './material-rules.js'
 import { cableSpecHints } from './cable-spec.js'
 import { applyBlocks, isHardDup, normalizeBlocks } from './block-gate.js'
+import {
+  getPlan as plmSnapshotPlan,
+  uploadBatch as plmSnapshotUpload,
+  finishUpload as plmSnapshotFinish,
+  snapshotStatus as plmSnapshotStatus,
+  resetUpload as plmSnapshotReset,
+} from './plm-snapshot.js'
 import { extractParams } from './struct-spec.js'
 import { env, envPort, logEnvSource } from './env.js'
 
@@ -1029,6 +1036,57 @@ const server = http.createServer(async (req, res) => {
       log('[suggest]', body.field || 'name', JSON.stringify(String(body.value || '').slice(0, 40)), '->', out.suggestions.length)
       return send(res, 200, out)
     }
+    // ---------- PLM 物料快照（插件采集 → 3100 落盘）----------
+    if (p === '/api/plm/snapshot/plan' && req.method === 'GET') {
+      try {
+        const force = url.searchParams.get('force') === '1'
+        return send(res, 200, { ok: true, ...plmSnapshotPlan({ force }) })
+      } catch (e) {
+        return send(res, 500, { ok: false, error: String((e && e.message) || e) })
+      }
+    }
+
+    if (p === '/api/plm/snapshot/status' && req.method === 'GET') {
+      try {
+        return send(res, 200, { ok: true, ...plmSnapshotStatus() })
+      } catch (e) {
+        return send(res, 500, { ok: false, error: String((e && e.message) || e) })
+      }
+    }
+
+    if (p === '/api/plm/snapshot/reset' && req.method === 'POST') {
+      try {
+        plmSnapshotReset()
+        return send(res, 200, { ok: true })
+      } catch (e) {
+        return send(res, 500, { ok: false, error: String((e && e.message) || e) })
+      }
+    }
+
+    if (p === '/api/plm/snapshot/upload' && req.method === 'POST') {
+      const b = await readBody(req, 8 * 1024 * 1024)
+      try {
+        const r = plmSnapshotUpload(b)
+        return send(res, 200, { ok: true, ...r })
+      } catch (e) {
+        return send(res, 500, { ok: false, error: String((e && e.message) || e) })
+      }
+    }
+
+    if (p === '/api/plm/snapshot/done' && req.method === 'POST') {
+      const b = await readBody(req, 1024 * 1024)
+      try {
+        const r = plmSnapshotFinish(b)
+        if (r.ok) {
+          // 快照换了，索引必须重建
+          try { await loadIndex({ force: true }) } catch (e) { /* 索引重建失败不影响落盘 */ }
+        }
+        return send(res, 200, r)
+      } catch (e) {
+        return send(res, 500, { ok: false, error: String((e && e.message) || e) })
+      }
+    }
+
     if (p === '/api/plm/check' && req.method === 'POST') {
       const body = await readBody(req)
       const out = handleCheck(body)

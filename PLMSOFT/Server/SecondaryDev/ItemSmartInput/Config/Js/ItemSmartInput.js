@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.72';
+  var PLUGIN_VERSION = '1.73';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -3828,11 +3828,169 @@
       }, 'ECODE')
     }
 
+    // ===== 阶段 2：物料快照同步（查 PLM → 上报 3100）=====
+    var syncState = {
+      running: false, mode: '', total: 0, done: 0, failed: 0,
+      rows: 0, batchNo: 0, buf: [], errors: [], startedAt: 0,
+    }
+
+    function syncLog() {
+      var a = [].slice.call(arguments)
+      a.unshift('[快照同步]')
+      if (console && console.log) console.log.apply(console, a)
+    }
+
+    function postJson(url, body, cb) {
+      try {
+        if (window.$ && $.ajax) {
+          $.ajax({
+            url: url, type: 'POST', contentType: 'application/json',
+            data: JSON.stringify(body), dataType: 'json', timeout: 60000,
+            success: function (r) { cb(null, r) },
+            error: function (x, s, e) { cb({ status: x && x.status, msg: String(e || s) }) },
+          })
+        } else {
+          fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+            .then(function (r) { return r.json() })
+            .then(function (r) { cb(null, r) })
+            .catch(function (e) { cb({ msg: String(e && e.message || e) }) })
+        }
+      } catch (e) { cb({ msg: String(e && e.message || e) }) }
+    }
+
+    function syncPlan(cb) {
+      var url = apiUrl('/api/plm/snapshot/plan')
+      syncLog('获取计划：' + url)
+      try {
+        if (window.$ && $.ajax) {
+          $.ajax({ url: url, type: 'GET', dataType: 'json', timeout: 20000,
+            success: function (r) { cb(null, r) },
+            error: function (x, s, e) { cb({ status: x && x.status, msg: String(e || s) }) } })
+        } else {
+          fetch(url).then(function (r) { return r.json() }).then(function (r) { cb(null, r) })
+            .catch(function (e) { cb({ msg: String(e && e.message || e) }) })
+        }
+      } catch (e) { cb({ msg: String(e && e.message || e) }) }
+    }
+
+    function syncStatus() {
+      var s = syncState
+      var pct = s.total ? Math.round(s.done / s.total * 100) : 0
+      syncLog('进度 ' + s.done + '/' + s.total + '（' + pct + '%）  上报 ' + s.rows + ' 条  失败 ' + s.failed)
+      return { running: s.running, mode: s.mode, total: s.total, done: s.done, rows: s.rows, failed: s.failed, errors: s.errors }
+    }
+
+    /**
+     * 开始同步：每个小类查完立即上报一个小批次（简单可靠，并发安全）
+     * @param {{force?:boolean, concurrency?:number}} opts
+     */
+    function syncStart(opts) {
+      var o = opts || {}
+      if (syncState.running) { warn('已有同步任务在跑，先等它结束'); return }
+      syncPlan(function (e, plan) {
+        if (e) { err('获取计划失败：' + (e.msg || e.status) + ' —— 检查 3100 是否可达：' + apiUrl('')); return }
+        if (!plan || !plan.ok) { err('计划返回异常'); return }
+        if (!plan.subs || !plan.subs.length) { err('计划里没有小类'); return }
+
+        var concurrency = Math.max(1, Math.min(6, o.concurrency || plan.concurrency || 3))
+        var afterTicks = o.force ? 0 : Number(plan.afterTicks || 0)
+        var t0 = nowMs()
+
+        syncState = {
+          running: true, mode: o.force ? 'full' : (plan.mode || 'full'),
+          total: plan.subs.length, done: 0, failed: 0,
+          rows: 0, batchNo: 0, errors: [], startedAt: t0, lastTicks: afterTicks,
+        }
+        syncLog('开始：' + syncState.mode + ' 模式，' + plan.subs.length + ' 个小类，并发 ' + concurrency
+          + '，起点 ticks=' + afterTicks)
+        if (!afterTicks) syncLog('（全量模式：不加时间条件，扫描全部）')
+
+        var idx = 0, finished = false
+
+        function finishAll() {
+          if (finished) return
+          finished = true
+          syncState.running = false
+          var elapsed = Math.round(nowMs() - t0)
+          postJson(apiUrl('/api/plm/snapshot/done'), {
+            mode: syncState.mode, client: 'PLM页面', elapsedMs: elapsed,
+            batches: syncState.batchNo, lastTicks: syncState.lastTicks || 0,
+          }, function (e2, r2) {
+            if (e2) { err('收尾失败：' + (e2.msg || e2.status)); return }
+            syncLog('=== 同步完成 ===')
+            syncLog('  模式 ' + syncState.mode + '，小类 ' + syncState.total + '，失败查询 ' + syncState.failed)
+            syncLog('  上报 ' + syncState.rows + ' 条，耗时 ' + Math.round(elapsed / 1000) + ' 秒')
+            if (r2 && r2.ok) syncLog('  快照已更新：共 ' + r2.count + ' 条，lastTicks=' + r2.lastTicks)
+            if (syncState.errors.length) warn('失败明细：', syncState.errors.slice(0, 5))
+          })
+        }
+
+        function next() {
+          if (!syncState.running) { if (syncState.done >= syncState.total) finishAll(); return }
+          if (idx >= plan.subs.length) {
+            if (syncState.done >= syncState.total) finishAll()
+            return
+          }
+          var sub = plan.subs[idx++]
+          // 增量模式：加 UPDATETIME 条件（ticks 比较，不加 STATEID 过滤，才能发现被停用的）
+          var fsStr = "ECODE LIKE '" + sub + "%'"
+          if (afterTicks > 0) fsStr += ' AND UPDATETIME > ' + afterTicks
+
+          callPlm(fsStr, function (e2, rows) {
+            syncState.done++
+            if (e2) {
+              syncState.failed++
+              syncState.errors.push(sub + '：' + (e2.message || e2.step))
+              return next()
+            }
+            if (!rows.length) return next()
+
+            var items = []
+            for (var i = 0; i < rows.length; i++) {
+              var r = rows[i]
+              items.push({
+                ECODE: r.ECODE, ENAME: r.ENAME, GGXH: r.GGXH, ZYCS: r.ZYCS,
+                UNIT: r.UNIT, STATEID: r.STATEID, EID: r.EID, EUID: r.EUID,
+                UPDATETIME: r.UPDATETIME, ITEMTYPE: r.ITEMTYPE,
+              })
+              var tk = Number(r.UPDATETIME || 0)
+              if (tk > (syncState.lastTicks || 0)) syncState.lastTicks = tk
+            }
+            syncState.batchNo++
+            var bn = syncState.batchNo
+            postJson(apiUrl('/api/plm/snapshot/upload'), { batch: bn, items: items, mode: syncState.mode }, function (e3, r3) {
+              if (e3) {
+                syncState.errors.push('批次 ' + bn + ' 上报失败：' + (e3.msg || e3.status))
+                syncLog('批次 ' + bn + '（' + sub + '）上报失败：' + (e3.msg || e3.status))
+              } else {
+                syncState.rows += (r3 && r3.received) || 0
+                if (syncState.done % 20 === 0 || rows.length > 500) {
+                  syncLog('批次 ' + bn + '（' + sub + '）' + items.length + ' 条，累计 ' + syncState.rows
+                    + '，进度 ' + syncState.done + '/' + syncState.total)
+                }
+              }
+              next()
+            })
+          }, 'ECODE')
+        }
+
+        for (var c = 0; c < concurrency; c++) next()
+      })
+    }
+
+    window.__plmSync = {
+      plan: function () { syncPlan(function (e, r) { if (e) { err(e); return } log('计划', r) }) },
+      start: syncStart,
+      status: syncStatus,
+      stop: function () { syncState.running = false; warn('已请求停止（当前批次结束后生效）') },
+    }
+
     window.__plmProbe = {
       help: help, one: one, raw: raw, state: state, fields: fields, timing: timing,
       page: page, pageTest: pageTest, scan: scan, pagerTest: pagerTest,
       env: envCheck, service: { filter: SVC_FILTER, stock: SVC_STOCK },
     }
+    log('快照同步工具已挂载：__plmSync.plan() / __plmSync.start() / __plmSync.status()')
     log('探测工具已挂载：__plmProbe.help() 查看用法')
   })();
 })(window, window.jQuery);

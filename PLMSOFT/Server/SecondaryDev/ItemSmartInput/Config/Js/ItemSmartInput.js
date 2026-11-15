@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.98';
+  var PLUGIN_VERSION = '1.99';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1051,9 +1051,112 @@
     return null;
   }
 
+  // ===================== 平台页面结构注入（首选路径） =====================
+  // 实测 PSEITEM-CREATE（新建零组件）页结构：
+  //   <div cid="ENAME" class="LayoutContainer ENAME noMargin">    ← 字段行，总宽 434px
+  //     <div class="hoteam-layout-horizontal" style="width:100px">  ← 列1 标签
+  //       <div cid="ENAME_Label">名称</div>
+  //     <div class="hoteam-layout-horizontal" style="width:314px">  ← 列2 输入框
+  //       <div cid="ENAME_Value" class="TextBox"><input></div>
+  //     <div class="hoteam-layout-horizontal" style="width:20px">   ← 列3 必填标记
+  //   </div>
+  //
+  // 三列宽度都是硬编码 px，合计正好等于容器宽 434，没有余量。
+  // 因此新增一列 34px 放按钮时，必须把列2 同步缩窄 34px（314→280）才不溢出。
+  // 按钮插在字段行首，位于「名称」标签左侧；且按钮在弹窗容器内部，弹窗销毁时一起消失，
+  // 不会像挂 body 的浮层那样残留到下一个弹窗。
+  var PLATFORM_BTN_W = 34;
+  var PLATFORM_COL_TARGET = 280;   // 列2 缩窄后的宽度（314 - 34）
+
+  /** 让输入框列保持缩窄后的宽度（平台重绘会写回原值时自动再缩一次） */
+  function syncShrunkCol(valCol) {
+    try {
+      if (!valCol || !valCol.style) return;
+      var cur = parseInt(valCol.style.width, 10);
+      if (cur === PLATFORM_COL_TARGET) return;
+      valCol.style.width = PLATFORM_COL_TARGET + 'px';
+      valCol.style.flex = '0 0 ' + PLATFORM_COL_TARGET + 'px';
+    } catch (e) { }
+  }
+
+  /** 2×2 竖排按钮：「智能录入」34px 宽自动折成上下各两字 */
+  function buildPlatformButton() {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'plm-smart-check-btn';
+    btn.style.cssText = 'width:' + PLATFORM_BTN_W + 'px;min-height:38px;padding:2px 0;'
+      + 'box-sizing:border-box;font:12px/1.2 inherit;text-align:center;'
+      + 'word-break:break-all;white-space:normal;letter-spacing:0;'
+      + 'border:1px solid #3f8fd2;background:#eaf3fb;color:#16558c;border-radius:3px;'
+      + 'cursor:pointer;vertical-align:middle;position:relative;z-index:9;';
+    btn.textContent = CFG.checkButtonText || '智能录入';
+    var fired = false;
+    var fire = function (ev) {
+      try {
+        if (ev && ev.preventDefault) ev.preventDefault();
+        if (ev && ev.stopPropagation) ev.stopPropagation();
+      } catch (e) { }
+      if (fired) return false;
+      fired = true;
+      setTimeout(function () { fired = false; }, 300);
+      log('按钮已点击（平台容器）');
+      openEditor();
+      return false;
+    };
+    btn.onclick = fire;
+    btn.onmousedown = fire;
+    return btn;
+  }
+
+  /**
+   * 命中 PLM 官方页面结构时注入按钮；未命中返回 false，由原有 DOM 猜测逻辑接管。
+   */
+  function tryPlatformInject() {
+    try {
+      var pg = (document.querySelector ? document.querySelector('[pagepagename="PSEITEM-CREATE"]') : null);
+      if (!pg || !pg.querySelector) return false;
+      var row = pg.querySelector('[cid="ENAME"]');
+      var val = pg.querySelector('[cid="ENAME_Value"]');
+      if (!row || !val || !val.parentNode) return false;
+
+      var valCol = val.parentNode;
+
+      // 幂等：已有按钮就只校正列宽，不重复插入
+      var exists = row.querySelector ? row.querySelector('.plm-smart-check-btn') : null;
+      if (exists) {
+        state.checkBtn = exists;
+        state.btnPlace = 'platform';
+        syncShrunkCol(valCol);
+        return true;
+      }
+
+      var btn = buildPlatformButton();
+      var col = document.createElement('div');
+      col.className = 'plm-smart-btn-col';
+      col.style.cssText = 'width:' + PLATFORM_BTN_W + 'px;flex:0 0 ' + PLATFORM_BTN_W + 'px;'
+        + 'display:flex;align-items:center;justify-content:center;';
+      col.appendChild(btn);
+      row.insertBefore(col, row.firstChild);
+
+      syncShrunkCol(valCol);
+      state.checkBtn = btn;
+      state.btnPlace = 'platform';
+      log('已在「名称」行首注入按钮（' + PLATFORM_BTN_W + 'px 竖排，输入框列 314→'
+        + PLATFORM_COL_TARGET + 'px）');
+      return true;
+    } catch (e) {
+      log('平台容器注入失败（回退 DOM 猜测）：' + (e && e.message));
+      return false;
+    }
+  }
+
   /** 在名称/规格输入框旁注入按钮（同一页面实例只注入一次） */
   function ensureCheckButton() {
     if (!CFG.enabled || !CFG.showCheckButton) return false;
+
+    // 首选：PLM 官方页面结构（按钮在弹窗容器内，随弹窗销毁）
+    if (tryPlatformInject()) return true;
+
     var hostCtl = CFG.checkButtonHost === 'name' ? state.ename : state.ggxh;
     var trace = [];
     var el = domOf(hostCtl, trace);
@@ -3541,6 +3644,18 @@
       try {
         if (state.checkTip && state.checkTip.parentNode) state.checkTip.parentNode.removeChild(state.checkTip);
       } catch (e) { }
+      // 平台容器模式：移除包按钮的那一列，并把输入框列宽度还原，避免留下 34px 空列
+      try {
+        var col = (document.querySelector ? document.querySelector('.plm-smart-btn-col') : null);
+        if (col && col.parentNode) col.parentNode.removeChild(col);
+        var pg = (document.querySelector ? document.querySelector('[pagepagename="PSEITEM-CREATE"]') : null);
+        var val = pg && pg.querySelector ? pg.querySelector('[cid="ENAME_Value"]') : null;
+        var vc = val && val.parentNode;
+        if (vc && vc.style && parseInt(vc.style.width, 10) === PLATFORM_COL_TARGET) {
+          vc.style.width = '314px';
+          vc.style.flex = '0 0 314px';
+        }
+      } catch (e) { }
       if (state.typeTimer) { clearInterval(state.typeTimer); state.typeTimer = null; }
       state.checkBtn = null;
       state.checkTip = null;
@@ -3572,6 +3687,14 @@
 
         var attached = !!(state.checkBtn && document.body && document.body.contains
           && document.body.contains(state.checkBtn));
+        // 平台容器模式：平台重绘可能把列宽写回 314，这里持续校正（开销仅一次比较）
+        if (attached && state.btnPlace === 'platform') {
+          try {
+            var pgNow = (document.querySelector ? document.querySelector('[pagepagename="PSEITEM-CREATE"]') : null);
+            var valNow = (pgNow && pgNow.querySelector) ? pgNow.querySelector('[cid="ENAME_Value"]') : null;
+            if (valNow && valNow.parentNode) syncShrunkCol(valNow.parentNode);
+          } catch (e) { }
+        }
         if (!attached) {
           if (state.checkBtn) resetTakeover();      // 弹窗关闭：按钮已脱离 DOM
           var now = Date.now();

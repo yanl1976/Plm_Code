@@ -564,8 +564,8 @@ async function run() {
         specIn.value = '  NXB-63   C16  '
         saveBtn.onclick({ preventDefault() { }, stopPropagation() { } })
         await sleep(20)
-        // 回填范围约束（v1.87）：只回填规格型号，名称保持用户原文不动
-        ok('名称不回填（保留用户原文）', p.ctl['ENAME_Value'].__text === '空气 开关',
+        // 回填范围：名称 + 规格型号（主要参数/分类属性仍不写）
+        ok('名称回填为 nameFormat.final', p.ctl['ENAME_Value'].__text === '微型断路器',
           'got=' + JSON.stringify(p.ctl['ENAME_Value'].__text))
         ok('规格回填并整理空格', p.ctl['GGXH_Value'].__text === 'NXB-63 C16',
           'got=' + JSON.stringify(p.ctl['GGXH_Value'].__text))

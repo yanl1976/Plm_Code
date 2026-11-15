@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.09';
+  var PLUGIN_VERSION = '2.10';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1098,42 +1098,29 @@
    */
   function applyNameRowLayout(row, labCol, valCol, lab, btn) {
     try {
-      if (!labCol || !labCol.style) return;
-
-      // 行容器：保持平台原有的块级布局，不做任何改动
+      // 行容器作为定位基准；不改它的 display / 宽高，标签位置自然不动
       if (row && row.style) {
-        row.style.display = '';
-        row.style.flexWrap = '';
-        row.style.alignItems = '';
-        row.style.position = '';
+        row.style.overflow = 'visible';
+        try {
+          var pos = window.getComputedStyle ? window.getComputedStyle(row).position : '';
+          if (!pos || pos === 'static') row.style.position = 'relative';
+        } catch (e2) { row.style.position = 'relative'; }
       }
 
-      // 标签列：宽度不动（所有行共享的 100px，为「规格型号/图号」预留），
-      // 只让内部「标签 + 按钮」横排且不换行。
-      labCol.style.whiteSpace = 'nowrap';
-      labCol.style.overflow = 'visible';
-
-      // 标签：从 block 改成 inline-block，宽度只占文字本身的约 30px，
-      // 这样它右侧空出来的 70px 就能放按钮，而标签起点仍与其他行对齐。
-      if (lab && lab.style && lab.style.setProperty) {
-        lab.style.setProperty('display', 'inline-block', 'important');
-        lab.style.setProperty('width', 'auto', 'important');
-        lab.style.setProperty('max-width', 'none', 'important');
-        lab.style.setProperty('white-space', 'nowrap', 'important');
-        lab.style.setProperty('text-overflow', 'clip', 'important');
-        lab.style.setProperty('overflow', 'visible', 'important');
-        lab.style.setProperty('vertical-align', 'middle', 'important');
-      }
-
-      // 按钮：跟在标签后面，单行内并排
+      // 按钮：绝对定位在行左端（标签左侧的空白处），完全脱离文档流。
+      // 这样宽度、高度、位置都不受平台任何布局规则影响，
+      // 也不会推挤标签列（标签仍然在 x≈68 处，与「类型」「编号」对齐）。
       if (btn && btn.style) {
-        btn.style.display = 'inline-block';
-        btn.style.verticalAlign = 'middle';
+        btn.style.position = 'absolute';
+        btn.style.left = '0';
+        btn.style.top = '50%';
+        btn.style.transform = 'translateY(-50%)';
         btn.style.width = PLATFORM_BTN_W + 'px';
         btn.style.minWidth = PLATFORM_BTN_W + 'px';
         btn.style.maxWidth = PLATFORM_BTN_W + 'px';
-        btn.style.marginLeft = '4px';
-        btn.style.marginRight = '0';
+        btn.style.height = '34px';
+        btn.style.margin = '0';
+        btn.style.zIndex = '5';
       }
     } catch (e) { }
   }
@@ -1197,7 +1184,7 @@
       } catch (e3) { }
 
       // 幂等：已有按钮就只校正布局
-      var exists = labCol.querySelector ? labCol.querySelector('.plm-smart-check-btn') : null;
+      var exists = (row && row.querySelector) ? row.querySelector('.plm-smart-check-btn') : null;
       if (exists) {
         applyNameRowLayout(row, labCol, valCol, lab, exists);
         state.checkBtn = exists;
@@ -1206,15 +1193,15 @@
       }
 
       var btn = buildPlatformButton();
-      // 插在标签之后：利用标签列右侧的空白（100px 里标签只占约 30px，
-      // 「规格型号/图号」才占满），标签起点位置完全不动。
-      labCol.appendChild(btn);
+      // 挂到行容器（绝对定位相对它），不放进标签列，避免被列内布局压缩
+      row.appendChild(btn);
 
       applyNameRowLayout(row, labCol, valCol, lab, btn);
 
       state.checkBtn = btn;
       state.btnPlace = 'platform';
-      log('已在「名称」标签右侧空白处注入按钮（标签列宽度与其他行一致，未推挤标签）');
+      log('已在「名称」行左端注入按钮（绝对定位，' + PLATFORM_BTN_W
+        + 'px 宽，不参与任何布局，标签位置不受影响）');
       return true;
     } catch (e) {
       log('平台容器注入失败（回退 DOM 猜测）：' + (e && e.message));
@@ -1359,9 +1346,17 @@
   function applyCheckResult(r, oldName, oldSpec) {
     var applied = [];
 
-    // 回填范围约束：只回填「规格型号」
-    //   名称由设计人员自己填（各人对实物描述有差异，自动改写会覆盖人工判断）
-    //   主要参数(ZYCS) / 分类属性(FLSXHB) 属于 PLM 字段，回填助手不越权写
+    // 回填范围：名称 + 规格型号
+    //   名称：格式修正（空格/分隔符）优先，其次同义词标准名
+    //   主要参数(ZYCS) / 分类属性(FLSXHB) 仍不写（属于 PLM 计算字段，回填助手不越权写）
+    var newName = oldName;
+    if (r.nameFormat && r.nameFormat.final) newName = r.nameFormat.final;
+    else if (r.nameSynonym && r.nameSynonym.exact && r.nameSynonym.std) newName = r.nameSynonym.std;
+    if (newName && newName !== oldName && writeText(state.ename, newName)) {
+      fireBlur(state.ename);
+      applied.push('名称');
+    }
+
     var newSpec = oldSpec;
     if (r.specFormat && r.specFormat.fixed != null) newSpec = r.specFormat.fixed;
     if (newSpec !== oldSpec && writeText(state.ggxh, newSpec)) {
@@ -3120,8 +3115,12 @@
         if (r.specFormat && r.specFormat.fixed != null) sp = r.specFormat.fixed;
       }
 
-      // 回填范围约束：只写「规格型号」，名称与主要参数/分类属性一律不动
+      // 回填范围：名称 + 规格型号（主要参数/分类属性仍不写）
       var applied = [];
+      if (nm && writeText(state.ename, nm)) {
+        fireBlur(state.ename);
+        applied.push('名称');
+      }
       if (sp && writeText(state.ggxh, sp)) {
         fireBlur(state.ggxh);
         applied.push('规格型号');
@@ -3809,7 +3808,7 @@
               var labNow = pgNow.querySelector('[cid="ENAME_Label"]');
               var valNow = pgNow.querySelector('[cid="ENAME_Value"]');
               if (rowNow && labNow && valNow) {
-                var btnNow = labNow.parentNode.querySelector('.plm-smart-check-btn');
+                var btnNow = rowNow.querySelector('.plm-smart-check-btn');
                 if (btnNow) {
                   applyNameRowLayout(rowNow, labNow.parentNode, valNow.parentNode, labNow, btnNow);
                 }

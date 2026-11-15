@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.96';
+  var PLUGIN_VERSION = '1.97';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -61,6 +61,10 @@
     timeout: 1500,               // 单次请求超时(ms)，超时即降级放行
   plmQueryTimeout: 180000,     // PLM 对象查询超时(ms)，默认 3 分钟；大基数小类（如端子 1000+ 条）需要更长
   stockTimeout: 8000,          // 库存查询超时(ms)：ERP 关闭访问时 AsyncCall 可能永不回调，必须有超时兜底
+  // 彩蛋文件地址（可选）。留空 = 主插件自动从自身 script 标签推导同目录位置；
+  // 若平台用 XHR+eval 加载脚本（页面无 script 标签，推导失败），在这里写死：
+  //   easterEggFile: '/InforCenter/Config/ItemSmartInput/Js/ItemSmartInput.easteregg.js',
+  easterEggFile: '',
   // 自动同步物料快照：工作时间每 N 小时一次（页面常驻时生效，关页面即停）
   autoSync: {
     enabled: true,
@@ -174,7 +178,7 @@
   // 用白名单而不是全量合并：写错键名不会悄悄改掉别的行为。
   var CFG_OVERRIDABLE = [
     'version', 'apiBase', 'apiPort', 'apiLabel', 'inventoryBase', 'inventorySource', 'enabled', 'showCheckButton', 'lockFields',
-  'plmQueryTimeout', 'stockTimeout', 'autoSync',
+  'plmQueryTimeout', 'stockTimeout', 'autoSync', 'easterEggFile', 'easterEgg',
     'checkButtonText', 'checkButtonHost', 'checkButtonPlace',
     'checkButtonOffsetX', 'checkButtonOffsetY',
     'restrictItemType', 'itemTypeAllowText', 'itemTypeAllowValues',
@@ -4375,19 +4379,25 @@
     (function injectEasterEgg() {
       try {
         var tags = document.getElementsByTagName('script')
-        var selfSrc = ''
-        for (var i = 0; i < tags.length; i++) {
-          var src = String(tags[i].src || '')
-          if (/\/ItemSmartInput\.js(\?|$)/.test(src)) { selfSrc = src; break }
+        var eggSrc = ''
+
+        // ① 优先用配置里写死的地址（平台用 XHR+eval 加载时页面无 script 标签，只能靠配置）
+        var cfgFile = String(CFG.easterEggFile || '').trim()
+        if (cfgFile) {
+          eggSrc = cfgFile
+        } else {
+          // ② 从自己的 script 标签推导同目录路径
+          var selfSrc = ''
+          for (var i = 0; i < tags.length; i++) {
+            var src = String(tags[i].src || '')
+            if (/\/ItemSmartInput\.js(\?|$)/.test(src)) { selfSrc = src; break }
+          }
+          // ③ 都拿不到时按最常见的部署路径兜底（D:\...\InforCenter\Config\ItemSmartInput\Js\）
+          if (!selfSrc) selfSrc = '/InforCenter/Config/ItemSmartInput/Js/ItemSmartInput.js'
+          eggSrc = selfSrc.replace(/ItemSmartInput\.js(\?[^#]*)?$/, 'ItemSmartInput.easteregg.js')
         }
-        if (!selfSrc) {
-          // 兜底：若平台用 XHR+eval 方式加载（页面上没有对应 script 标签），
-          // 按 fileref 里登记的约定路径推断（~/SecondaryDev/... → 站点根下）
-          selfSrc = '/SecondaryDev/ItemSmartInput/Config/Js/ItemSmartInput.js'
-        }
-        // 与主插件同目录，只替换文件名
-        var eggSrc = selfSrc.replace(/ItemSmartInput\.js(\?[^#]*)?$/, 'ItemSmartInput.easteregg.js')
-        if (!eggSrc || eggSrc === selfSrc) return
+        if (!eggSrc || /ItemSmartInput\.js(\?|$)/.test(eggSrc)) return
+
         // 已注入过就不重复
         for (var k = 0; k < tags.length; k++) {
           if (String(tags[k].src || '').indexOf('ItemSmartInput.easteregg.js') >= 0) return
@@ -4396,7 +4406,10 @@
         el.src = eggSrc
         el.async = true
         el.onload = function () { log('彩蛋模块已注入：__plmEgg.status() 可查看累计次数') }
-        el.onerror = function () { log('彩蛋模块未找到（' + eggSrc + '），不影响录入与查重') }
+        el.onerror = function () {
+          log('彩蛋模块未找到（' + eggSrc + '），不影响录入与查重')
+          log('若路径不对，请在 ItemSmartInput.config.js 里设置 easterEggFile 为彩蛋文件的完整地址')
+        }
         var host = document.head || document.getElementsByTagName('head')[0] || document.body
         if (host) host.appendChild(el)
       } catch (e) { /* 彩蛋是附加功能，任何异常都静默 */ }

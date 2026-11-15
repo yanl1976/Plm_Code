@@ -20,6 +20,13 @@ window.ItemSmartInputConfig = {
   // 原用途：PLM 查不到时走看板 3130 直连 ERP 库。现已由 PLM 快照 + PLM 标准接口完全覆盖。
   inventoryBase: 'http://192.168.20.31:3130', // 治理看板地址：弹窗里显示「现有库存」；留空则不显示
   timeout: 1500,                          // 单次请求超时(ms)，超时降级放行
+  // 彩蛋文件地址（可选）
+  // 留空 = 主插件自动从自身路径推导同目录位置；
+  // 若平台用 XHR+eval 加载脚本（Console 里查不到 ItemSmartInput 的 script 标签），推导会失败，
+  // 此时在这里写死完整地址（相对站点根），例如：
+  //   easterEggFile: '/InforCenter/Config/ItemSmartInput/Js/ItemSmartInput.easteregg.js',
+  easterEggFile: '',
+
   // ---------- 彩蛋（礼花）----------
   // 只在「保存并回填」成功后计数；放大屏 canvas，不遮挡、不拦截点击，约 3.6 秒自动清除
   easterEgg: {

@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.07';
+  var PLUGIN_VERSION = '2.08';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1096,7 +1096,7 @@
    * @param {Element} labCol 标签列（原 100px）
    * @param {Element} valCol 输入框列（原 314px）
    */
-  function applyRowFlexLayout(row, labCol, valCol) {
+  function applyRowFlexLayout(row, labCol, valCol, btnCol) {
     try {
       if (!row || !row.style) return;
 
@@ -1104,6 +1104,11 @@
       row.style.flexWrap = 'nowrap';
       row.style.alignItems = 'center';
       row.style.overflow = 'visible';
+      // 绝对定位的按钮以行为基准
+      try {
+        var pos = window.getComputedStyle ? window.getComputedStyle(row).position : '';
+        if (!pos || pos === 'static') row.style.position = 'relative';
+      } catch (e2) { row.style.position = 'relative'; }
 
       // 标签列：保留平台原宽，硬性不压缩
       if (labCol && labCol.style) {
@@ -1123,6 +1128,20 @@
         valCol.style.flex = '1 1 auto';
         valCol.style.width = 'auto';
         valCol.style.minWidth = '0';
+      }
+
+      // 按钮列：脱离文档流浮在行左侧空白处，
+      // 这样标签列起点与「类型」「编号」等其他行完全对齐（不被推右 30px）。
+      if (btnCol && btnCol.style) {
+        btnCol.style.position = 'absolute';
+        btnCol.style.right = '100%';
+        btnCol.style.top = '0';
+        btnCol.style.bottom = '0';
+        btnCol.style.width = PLATFORM_BTN_W + 'px';
+        btnCol.style.minWidth = PLATFORM_BTN_W + 'px';
+        btnCol.style.display = 'flex';
+        btnCol.style.alignItems = 'center';
+        btnCol.style.justifyContent = 'center';
       }
     } catch (e) { }
   }
@@ -1180,28 +1199,28 @@
       // 幂等：已有按钮列就只校正布局，不重复插入
       var exists = (row && row.querySelector) ? row.querySelector('.plm-smart-btn-col') : null;
       if (exists) {
-        applyRowFlexLayout(row, labCol, valCol);
+        applyRowFlexLayout(row, labCol, valCol, exists);
         state.checkBtn = exists.querySelector ? exists.querySelector('.plm-smart-check-btn') : exists;
         state.btnPlace = 'platform';
         return true;
       }
 
-      // 按钮独立成一列，插在行首（标签列之前）
+      // 按钮列：脱离文档流浮在行左侧，不占用标签列的空间
       var btn = buildPlatformButton();
       var btnCol = document.createElement('div');
       btnCol.className = 'plm-smart-btn-col';
-      btnCol.style.cssText = 'flex:0 0 ' + PLATFORM_BTN_W + 'px;width:' + PLATFORM_BTN_W + 'px;'
-        + 'min-width:' + PLATFORM_BTN_W + 'px;display:flex;align-items:center;'
-        + 'justify-content:center;box-sizing:border-box;';
+      btnCol.style.cssText = 'position:absolute;right:100%;top:0;bottom:0;'
+        + 'width:' + PLATFORM_BTN_W + 'px;min-width:' + PLATFORM_BTN_W + 'px;'
+        + 'display:flex;align-items:center;justify-content:center;';
       btnCol.appendChild(btn);
       row.insertBefore(btnCol, row.firstChild);
 
-      applyRowFlexLayout(row, labCol, valCol);
+      applyRowFlexLayout(row, labCol, valCol, btnCol);
 
       state.checkBtn = btn;
       state.btnPlace = 'platform';
-      log('已重排「名称」行为 flex 并注入按钮列（按钮 ' + PLATFORM_BTN_W
-        + 'px 独立列、标签列保持原宽、输入框列自适应）');
+      log('已重排「名称」行为 flex 并注入按钮（按钮绝对定位在行左侧，'
+        + '标签列位置与其他行保持一致，输入框列自适应）');
       return true;
     } catch (e) {
       log('平台容器注入失败（回退 DOM 猜测）：' + (e && e.message));
@@ -3728,6 +3747,7 @@
           row.style.flexWrap = '';
           row.style.alignItems = '';
           row.style.overflow = '';
+          row.style.position = '';
         }
         var labCol = lab && lab.parentNode;
         if (labCol && labCol.style) {
@@ -3784,7 +3804,8 @@
               var labNow = pgNow.querySelector('[cid="ENAME_Label"]');
               var valNow = pgNow.querySelector('[cid="ENAME_Value"]');
               if (rowNow && labNow && valNow) {
-                applyRowFlexLayout(rowNow, labNow.parentNode, valNow.parentNode);
+                var btnColNow = rowNow.querySelector('.plm-smart-btn-col');
+                applyRowFlexLayout(rowNow, labNow.parentNode, valNow.parentNode, btnColNow);
               }
             }
           } catch (e) { }

@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.97';
+  var PLUGIN_VERSION = '1.98';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1688,11 +1688,15 @@
 
       // 前端兜底：similar-models 里 similarity=1 等价于「规格完全相同」。
       // 3100 尚未升级（不返回 spec 级）时，靠这一条也能拦住重复新增。
+      // 双保险：只采纳与「当前规格」一致的兜底项——回填后 specDupItems 可能还残留上一次的值，
+      // 不对规格做校验会误报「存在完全相同规格」。
       var selfCode = String(readEcode() || '');
+      var curSpecKey = normKey(specIn.value);
       for (var si = 0; si < specDupItems.length; si++) {
         var sd = specDupItems[si];
         var sdCode = String(sd.fnumber || '');
         if (!sdCode || sdCode === selfCode) continue;
+        if (curSpecKey && normKey(sd.spec) !== curSpecKey) continue;
         var existDup = false;
         for (var dj = 0; dj < dup.length; dj++) {
           if (String(dup[dj].fNumber || '') === sdCode) { existDup = true; break; }
@@ -2794,6 +2798,12 @@
       var key = nm + '|' + sp;
       if (key === lastCheckedKey) return;
       lastCheckedKey = key;
+      // 名称/规格变了，上一次「类似型号」的兜底判重数据立即作废。
+      // 原因：renderTips 在 loadSimilar 之前执行，若不清空，会拿上一次规格的
+      // specDupItems 误报「存在完全相同规格」（实测：先点类似型号回填、再用选型助手回填时必现）。
+      specDupItems = [];
+      lastSimilar = null;
+      topSimilarCode = '';
       if (!nm && !sp) {
         nameTip.innerHTML = ''; specTip.innerHTML = '';
         nameSugBox.innerHTML = ''; specMeta.innerHTML = '';

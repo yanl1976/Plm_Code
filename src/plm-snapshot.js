@@ -67,7 +67,25 @@ export function snapshotStatus() {
     const txt = fs.readFileSync(SNAPSHOT, 'utf8')
     for (const line of txt.split('\n')) if (line.trim()) lines++
   } catch (e) { /* 文件不存在 */ }
-  return { ...m, exists, lines, size, mtime }
+
+  // 合并快照的实际行数：PLM 原始快照被增量写空时用合并文件兜底，
+  // 避免 /snapshot/status 返回 count=0 让人误以为数据全丢了
+  let mergedLines = 0
+  try {
+    const txt2 = fs.readFileSync(path.join(DATA, 'materials-merged.ndjson'), 'utf8')
+    for (const line of txt2.split('\n')) if (line.trim()) mergedLines++
+  } catch (e) { /* 合并文件不存在 */ }
+
+  return {
+    ...m,
+    count: lines || mergedLines || Number(m.count || 0),   // 真实条数优先于 meta
+    metaCount: Number(m.count || 0),                       // 保留 meta 原值，便于排查
+    exists,
+    lines,
+    mergedLines,
+    size,
+    mtime,
+  }
 }
 
 /**
@@ -186,6 +204,32 @@ export function finishUpload(body) {
     }
   }
 
+  // 增量同步但没有任何变化：不覆盖快照文件，也不改写 count / lastTicks。
+  // 原实现会把 count 写成 0、lastTicks 写成 0 —— 后果有两个：
+  //   ① 下次同步因 lastTicks=0 退化成全量（23 个小类全扫，约 10 分钟）
+  //   ② /snapshot/status 显示 0 条，让人误以为数据丢了
+  if (mode === 'incremental' && byCode.size === 0) {
+    const m0 = loadMeta()
+    saveMeta({
+      ...m0,
+      at: new Date().toISOString(),
+      mode,
+      client: String(b.client || ''),
+      elapsedMs: Number(b.elapsedMs || 0),
+      batches: Number(b.batches || files.length),
+    })
+    resetUpload()
+    return {
+      ok: true,
+      count: Number(m0.count || 0),
+      received: 0,
+      mode,
+      lastTicks: Number(m0.lastTicks || 0),
+      files: files.length,
+      note: '增量无变化，快照未改动',
+    }
+  }
+
   const rows = [...finalMap.values()].sort((a, c) => String(a.ECODE).localeCompare(String(c.ECODE)))
   const out = rows.map((x) => JSON.stringify(x)).join('\n') + (rows.length ? '\n' : '')
   fs.writeFileSync(SNAPSHOT, out, 'utf8')
@@ -204,7 +248,7 @@ export function finishUpload(body) {
     count: rows.length,
     mode,
     client: String(b.client || ''),
-    lastTicks: maxTicks,
+    lastTicks: maxTicks || Number(m.lastTicks || 0),   // maxTicks 为 0 时保留原值，避免增量把起点清零
     elapsedMs: Number(b.elapsedMs || 0),
     batches: Number(b.batches || files.length),
   }

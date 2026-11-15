@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.11';
+  var PLUGIN_VERSION = '2.12';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -93,6 +93,11 @@
     notifyDuplicateOnBlur: true, // 失焦时是否在浮层提示重复（不弹框）
     tidySpecSpace: true,         // 规格失焦/保存前自动整理空格（首尾 + 连续），不处理乘号
     domWatchDelay: 2500,         // DOM 兜底接管延时(ms)：给正常 OnCreate 留出时间，避免重复接管
+
+  // 详细日志开关：false = 控制台保持干净（推荐）
+  // true  = 输出挂接/探测/类型判定/库存查询等全部过程，用于排查问题
+  // 注意：warn 与 err 不受此开关影响，异常一定可见
+  debug: false,
     showCheckButton: true,       // 在新建零组件窗口注入「智能录入」按钮
     lockFields: 'auto',          // 名称/规格锁定：'auto'=服务可用才锁；true=始终锁；false=不锁
     checkButtonText: '智能录入',
@@ -184,7 +189,7 @@
     'restrictItemType', 'itemTypeAllowText', 'itemTypeAllowValues',
     'tidySpecSpace', 'fillSpecToParams', 'blockOnDuplicate',
     'notifyDuplicateOnBlur', 'strictWidth',
-    'suggestDebounce', 'minLen', 'timeout', 'domWatchDelay'
+    'suggestDebounce', 'minLen', 'timeout', 'domWatchDelay', 'debug'
   ];
 
   var EXT_KEYS = [];
@@ -3647,8 +3652,13 @@
       if (!el) return '未找到';
       return (el.id || '(无id)') + '[' + (nearLabel(el) || '?') + ']';
     };
-    log('检测到新增弹窗（DOM 兜底接管）：规格=' + desc(specEl)
-      + ' 名称=' + desc(enameEl) + ' 编号=' + desc(ecodeEl) + ' 类型=' + desc(typeEl));
+    // 先试平台容器路径：命中就不再声称「DOM 兜底」，避免两条日志看起来互相矛盾
+    var usedPlatform = false;
+    try { usedPlatform = tryPlatformInject(); } catch (e4) { usedPlatform = false; }
+    if (!usedPlatform) {
+      log('检测到新增弹窗（DOM 兜底接管）：规格=' + desc(specEl)
+        + ' 名称=' + desc(enameEl) + ' 编号=' + desc(ecodeEl) + ' 类型=' + desc(typeEl));
+    }
     try { bindSuggest(state.ename, 'name'); } catch (e) { }
     try { bindSuggest(state.ggxh, 'spec'); } catch (e) { }
     var okBtn = false;
@@ -3792,6 +3802,9 @@
     domWatchTimer = setTimeout(tick, delay);
   }
 
+  // 版本号挂在全局：控制台默认静默后，用 __plmVersion 即可确认插件是否加载、是哪个版本
+  try { window.__plmVersion = pluginVersion() } catch (e5) { }
+
   log('脚本已加载 v' + pluginVersion() + '（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')
     + '；外部配置=' + (EXT_KEYS.length ? EXT_KEYS.join('/') : '未使用')
@@ -3830,7 +3843,14 @@
       a.unshift('%c' + TAG + ' ' + style, 'color:#0a7;font-weight:bold')
       return a
     }
-    function log() { var a = [].slice.call(arguments); if (console && console.log) console.log.apply(console, c('', a)) }
+    // 详细日志受 CFG.debug 控制（默认关闭，控制台保持干净）
+    // 需要排查时把 ItemSmartInput.config.js 里的 debug 改成 true，回收应用池 + Ctrl+F5
+    // warn / err 不受此开关影响，出问题一定可见
+    function log() {
+      if (!CFG.debug) return
+      var a = [].slice.call(arguments)
+      if (console && console.log) console.log.apply(console, c('', a))
+    }
     function warn() { var a = [].slice.call(arguments); if (console && console.warn) console.warn.apply(console, c('color:#c80', a)) }
     function err() { var a = [].slice.call(arguments); if (console && console.error) console.error.apply(console, c('color:#c00', a)) }
 

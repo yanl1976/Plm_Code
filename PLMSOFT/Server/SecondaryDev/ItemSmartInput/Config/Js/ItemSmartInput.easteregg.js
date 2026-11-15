@@ -60,7 +60,12 @@
   function writeCount(n) {
     try { window.localStorage.setItem(KEY_COUNT, String(n)) } catch (e) { /* 隐私模式忽略 */ }
   }
+  /** 彩蛋日志：跟随主插件的 debug 开关（ItemSmartInput.config.js 的 debug） */
   function log() {
+    try {
+      var ext = window.ItemSmartInputConfig
+      if (!ext || !ext.debug) return
+    } catch (e) { return }
     var a = [].slice.call(arguments)
     a.unshift('[彩蛋]')
     if (window.console && window.console.log) window.console.log.apply(window.console, a)

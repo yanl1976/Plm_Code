@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.00';
+  var PLUGIN_VERSION = '2.01';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1066,21 +1066,47 @@
   // 按钮插在字段行首，位于「名称」标签左侧；且按钮在弹窗容器内部，弹窗销毁时一起消失，
   // 不会像挂 body 的浮层那样残留到下一个弹窗。
   var PLATFORM_BTN_W = 32;
+  var PLATFORM_TAG_EXTRA = 24;      // 标签列加宽量，等量从输入框列扣除，总宽不变
 
   /**
-   * 让「标签列」内部横排（按钮 + 标签），并禁止换行。
-   * 标签列本身宽 100px，按钮 32px + 「名称」约 30px = 62px，放得下；
-   * 关键是不能新增列——实测容器内宽略小于列宽之和，新增一列会触发 flex 换行，
-   * 导致整行被 overflow:hidden 裁掉（名称会「消失」）。
+   * 调整「标签列 / 输入框列」宽度，给按钮腾地方。
+   *
+   * 实测 PSEITEM-CREATE 的 ENAME 行：列1(100px) + 列2(314px) + 列3(20px) = 434，
+   * 三列都是硬编码 px，合计正好等于容器内宽。
+   * 因此不能新增第 4 列（会触发 flex 换行，整行被 overflow:hidden 裁掉，名称消失），
+   * 只能在现有两列之间挪宽度：列1 +24、列2 -24，总数仍是 3 列、总宽不变。
+   *
+   * 平台重绘会把宽度写回原值，所以原始宽度记在 data-plm-ow 属性上，
+   * 每次校正都按「原始值 ± 偏移」重算，不会累积。
    */
-  function ensureLabelColFit(labCol) {
+  function applyTagColLayout(labCol, valCol) {
     try {
-      if (!labCol || !labCol.style) return;
+      if (!labCol || !labCol.style || !valCol || !valCol.style) return;
+
+      if (!labCol.getAttribute('data-plm-ow')) {
+        var w1 = parseInt(labCol.style.width, 10);
+        if (w1) labCol.setAttribute('data-plm-ow', String(w1));
+      }
+      if (!valCol.getAttribute('data-plm-ow')) {
+        var w2 = parseInt(valCol.style.width, 10);
+        if (w2) valCol.setAttribute('data-plm-ow', String(w2));
+      }
+      var ow1 = parseInt(labCol.getAttribute('data-plm-ow'), 10);
+      var ow2 = parseInt(valCol.getAttribute('data-plm-ow'), 10);
+      if (!ow1 || !ow2) return;
+
+      var t1 = ow1 + PLATFORM_TAG_EXTRA;
+      var t2 = Math.max(120, ow2 - PLATFORM_TAG_EXTRA);
+
+      if (parseInt(labCol.style.width, 10) !== t1) {
+        labCol.style.width = t1 + 'px';
+        labCol.style.flex = '0 0 ' + t1 + 'px';
+      }
+      if (parseInt(valCol.style.width, 10) !== t2) {
+        valCol.style.width = t2 + 'px';
+        valCol.style.flex = '0 0 ' + t2 + 'px';
+      }
       labCol.style.whiteSpace = 'nowrap';
-      labCol.style.overflow = 'visible';
-      labCol.style.display = 'flex';
-      labCol.style.alignItems = 'center';
-      labCol.style.flexWrap = 'nowrap';
     } catch (e) { }
   }
 
@@ -1121,27 +1147,30 @@
       var pg = (document.querySelector ? document.querySelector('[pagepagename="PSEITEM-CREATE"]') : null);
       if (!pg || !pg.querySelector) return false;
 
-      // 名称的标签容器：ENAME_Label 的父节点（即 100px 的列1）
+      // 名称：标签容器（列1）与输入框容器（列2）
       var lab = pg.querySelector('[cid="ENAME_Label"]');
-      if (!lab || !lab.parentNode) return false;
+      var val = pg.querySelector('[cid="ENAME_Value"]');
+      if (!lab || !lab.parentNode || !val || !val.parentNode) return false;
       var labCol = lab.parentNode;
+      var valCol = val.parentNode;
 
-      // 幂等：已有按钮就不再插入
+      // 幂等：已有按钮就只校正宽度，不重复插入
       var exists = labCol.querySelector ? labCol.querySelector('.plm-smart-check-btn') : null;
       if (exists) {
         state.checkBtn = exists;
         state.btnPlace = 'platform';
-        ensureLabelColFit(labCol);
+        applyTagColLayout(labCol, valCol);
         return true;
       }
 
       var btn = buildPlatformButton();
       labCol.insertBefore(btn, lab);      // 按钮 → 标签，同一列内并排
-      ensureLabelColFit(labCol);
+      applyTagColLayout(labCol, valCol);
 
       state.checkBtn = btn;
       state.btnPlace = 'platform';
-      log('已在「名称」标签前注入按钮（' + PLATFORM_BTN_W + 'px 竖排，未改动任何列宽）');
+      log('已在「名称」标签前注入按钮（' + PLATFORM_BTN_W + 'px 竖排；标签列 +'
+        + PLATFORM_TAG_EXTRA + 'px、输入框列 -' + PLATFORM_TAG_EXTRA + 'px，总宽不变）');
       return true;
     } catch (e) {
       log('平台容器注入失败（回退 DOM 猜测）：' + (e && e.message));
@@ -3643,10 +3672,28 @@
       try {
         if (state.checkTip && state.checkTip.parentNode) state.checkTip.parentNode.removeChild(state.checkTip);
       } catch (e) { }
-      // 兼容早期版本：清掉可能残留的独立按钮列（现在按钮直接插在标签列内，不会产生该元素）
+      // 平台容器模式收尾：清掉可能残留的按钮列，并把标签列/输入框列宽度还原
       try {
         var col = (document.querySelector ? document.querySelector('.plm-smart-btn-col') : null);
         if (col && col.parentNode) col.parentNode.removeChild(col);
+
+        var pg = (document.querySelector ? document.querySelector('[pagepagename="PSEITEM-CREATE"]') : null);
+        var lab = (pg && pg.querySelector) ? pg.querySelector('[cid="ENAME_Label"]') : null;
+        var val = (pg && pg.querySelector) ? pg.querySelector('[cid="ENAME_Value"]') : null;
+        var labCol = lab && lab.parentNode;
+        var valCol = val && val.parentNode;
+        if (labCol && labCol.getAttribute && labCol.getAttribute('data-plm-ow')) {
+          var o1 = labCol.getAttribute('data-plm-ow');
+          labCol.style.width = o1 + 'px';
+          labCol.style.flex = '0 0 ' + o1 + 'px';
+          labCol.removeAttribute('data-plm-ow');
+        }
+        if (valCol && valCol.getAttribute && valCol.getAttribute('data-plm-ow')) {
+          var o2 = valCol.getAttribute('data-plm-ow');
+          valCol.style.width = o2 + 'px';
+          valCol.style.flex = '0 0 ' + o2 + 'px';
+          valCol.removeAttribute('data-plm-ow');
+        }
       } catch (e) { }
       if (state.typeTimer) { clearInterval(state.typeTimer); state.typeTimer = null; }
       state.checkBtn = null;
@@ -3679,12 +3726,15 @@
 
         var attached = !!(state.checkBtn && document.body && document.body.contains
           && document.body.contains(state.checkBtn));
-        // 平台容器模式：平台重绘可能复位标签列样式，这里持续校正（开销仅几次样式赋值）
+        // 平台容器模式：平台重绘可能把列宽写回原值，这里持续校正（两次整数比较）
         if (attached && state.btnPlace === 'platform') {
           try {
             var pgNow = (document.querySelector ? document.querySelector('[pagepagename="PSEITEM-CREATE"]') : null);
             var labNow = (pgNow && pgNow.querySelector) ? pgNow.querySelector('[cid="ENAME_Label"]') : null;
-            if (labNow && labNow.parentNode) ensureLabelColFit(labNow.parentNode);
+            var valNow = (pgNow && pgNow.querySelector) ? pgNow.querySelector('[cid="ENAME_Value"]') : null;
+            if (labNow && labNow.parentNode && valNow && valNow.parentNode) {
+              applyTagColLayout(labNow.parentNode, valNow.parentNode);
+            }
           } catch (e) { }
         }
         if (!attached) {

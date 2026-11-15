@@ -141,6 +141,28 @@ export function detectSubMismatch(rawName, sub) {
     }
   }
 
+  // 短名称兜底（≤3 字）：bigram 只有 1~2 个，Dice 会被长名称的 bigram 数量稀释。
+  //   例：「框架」vs「固定式框架断路器」= 2×1/(1+7) = 0.25，永远过不了 minBest。
+  //   这类写法恰恰是最典型的错填（只写关键区分词），改用「是否为其它小类标准名的子串」判断。
+  if (cmpName.length <= 3) {
+    const subHit = SUB_GRAMS
+      .filter((x) => x.sub !== sub && x.subName && x.subName.indexOf(cmpName) >= 0)
+      .sort((a, b) => a.subName.length - b.subName.length)
+    if (subHit.length) {
+      const cands = subHit.slice(0, 3).map((x) => ({
+        sub: x.sub, subName: x.subName, midName: x.midName, score: 0.9,
+      }))
+      const list = cands.map((x) => `${x.sub} ${x.subName}`).join(' / ')
+      return {
+        name,
+        current: { sub, subName: info.subName, score: +curScore.toFixed(3) },
+        best: cands[0],
+        candidates: cands,
+        msg: `名称「${name}」与所选小类「${info.subName}」不匹配，更像 ${list}，请确认小类是否选错`,
+      }
+    }
+  }
+
   const ranked = SUB_GRAMS
     .filter((x) => x.sub !== sub && x.subName)
     .map((x) => ({ sub: x.sub, subName: x.subName, midName: x.midName, score: diceOf(gq, x.grams) }))

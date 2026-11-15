@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.12';
+  var PLUGIN_VERSION = '2.13';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -235,7 +235,11 @@
     return readText(state.ename) + '|' + readText(state.ggxh);
   }
 
+  // 详细日志受 CFG.debug 控制（默认 false，控制台保持干净）
+  // 需要排查时把 ItemSmartInput.config.js 的 debug 改成 true，回收应用池 + Ctrl+F5
+  // 注意：warn / err 不受此开关影响，异常始终可见
   function log() {
+    if (!CFG.debug) return;
     if (window.console && console.log) {
       try { console.log.apply(console, [LOG_TAG].concat([].slice.call(arguments))); } catch (e) { }
     }

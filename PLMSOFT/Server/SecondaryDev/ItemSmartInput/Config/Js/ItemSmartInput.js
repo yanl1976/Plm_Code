@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.10';
+  var PLUGIN_VERSION = '2.11';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1311,35 +1311,6 @@
       + '；挂载方式：' + (trace.join(' > ') || '未知') + '；锚点=' + (anchor.tagName || '?')
       + '；父节点=' + (host.tagName || '?') + '）');
     return true;
-  }
-
-  /** 点按钮：校验 → 把合规写法回填到名称/规格型号 */
-  function runCheckAndFill() {
-    if (!CFG.enabled) return;
-    if (!isTypeAllowed()) { setCheckTip(typeHint(), 'warn'); return; }
-    var sub = currentSub();
-    if (!sub) {
-      setCheckTip('请先在「编号」右侧点「…」申请编码', 'bad');
-      msgBox('提示', '请先在「编号」右侧点「…」申请编码。\n'
-        + '插件需要根据编码前 6 位确定小类，才能做分类校验与查重。');
-      return;
-    }
-    var name = readText(state.ename);
-    var spec = readRaw(state.ggxh);
-    if (!name && !spec) { setCheckTip('请先填写名称或规格型号', 'bad'); return; }
-
-    setCheckTip('校验中…');
-    apiAsync('/api/plm/check', {
-      name: name, spec: spec, sub: sub, ecode: readEcode()
-    }, function (r) {
-      if (!r || r.ok === false) {
-        var tip = '治理服务不可用，未做处理（' + CFG.apiLabel + '）';
-        setCheckTip(tip, 'bad');
-        msgBox('校验未完成', tip + '\n\n请确认服务已启动，且浏览器能直接访问该地址。');
-        return;
-      }
-      applyCheckResult(r, name, spec);
-    });
   }
 
   /** 回填可机械修正的部分，并展示剩余问题 */
@@ -3403,7 +3374,6 @@
   var domWatchTimer = null;
   var domLastTry = 0;
   var domWarned = false;
-  var lastInputSig = '';
 
   // ---- 名称/规格锁定（全锁 + 服务降级自动解锁）----
   var svc = { ok: null, at: 0 };        // 治理服务可用性：null=未知，true=可用，false=不可用
@@ -3487,22 +3457,6 @@
     applyLock(on);
   }
 
-  /** 当前可见的输入框（弹窗打开时才有意义） */
-  function visibleInputs() {
-    var out = [];
-    try {
-      var all = document.querySelectorAll('input,textarea');
-      for (var i = 0; i < all.length; i++) {
-        var el = all[i];
-        var r = null;
-        try { r = el.getBoundingClientRect(); } catch (e) { r = null; }
-        if (!r || r.width <= 0 || r.height <= 0) continue;
-        out.push(el);
-      }
-    } catch (e) { }
-    return out;
-  }
-
   function textOf(el) {
     try { return String(el.textContent || '').replace(/\s+/g, ''); } catch (e) { return ''; }
   }
@@ -3548,6 +3502,22 @@
    * 比「从标签找输入框」稳得多（后者会被左侧导航里 "名称,编号,项目代号,…" 带偏）。
    * 只认带 id 的输入框，避免命中首页/搜索框。
    */
+  /** 收集当前页面上可见的输入框（兜底定位用） */
+  function visibleInputs() {
+    var out = [];
+    try {
+      var all = document.querySelectorAll('input,textarea');
+      for (var i = 0; i < all.length; i++) {
+        var el = all[i];
+        var r = null;
+        try { r = el.getBoundingClientRect(); } catch (e) { r = null; }
+        if (!r || r.width <= 0 || r.height <= 0) continue;
+        out.push(el);
+      }
+    } catch (e) { }
+    return out;
+  }
+
   function findInputByLabel(names, opts) {
     var list = visibleInputs();
     var noDd = !!(opts && opts.noDropdown);
@@ -3562,22 +3532,6 @@
       }
     }
     return null;
-  }
-
-  /** 打一份可见输入框清单，用于现场定位真实 id（只需看一眼控制台） */
-  function dumpInputs(list) {
-    var lines = [];
-    for (var i = 0; i < list.length && i < 30; i++) {
-      var el = list[i];
-      lines.push('  [' + i + '] id=' + (el.id || '(空)')
-        + ' label=' + (nearLabel(el) || '(空)')
-        + ' ph=' + (el.placeholder || '')
-        + ' type=' + (el.type || ''));
-    }
-    var frames = 0;
-    try { frames = document.querySelectorAll('iframe').length; } catch (e) { }
-    log('可见输入框 ' + list.length + ' 个（未命中 *_Value，供定位；iframe=' + frames + '）：\n'
-      + lines.join('\n'));
   }
 
   function findInput(baseId) {
@@ -3821,14 +3775,7 @@
           var now = Date.now();
           if (now - domLastTry > 1200) {            // 最多每 1.2s 尝试一次，避免频繁重绑
             domLastTry = now;
-            // 只要可见输入框集合变化就打一份清单（不论接管成功与否），
-            // 弹窗打开时必然会出现一次，用来确认标签与 id 的对应关系
-            var list = visibleInputs();
-            var sig = list.length + '#' + ((list[0] && list[0].id) || '');
-            if (list.length >= 4 && sig !== lastInputSig) {
-              lastInputSig = sig;
-              dumpInputs(list);
-            }
+            // v2.10 起用 [pagepagename] + [cid] 精准定位，不再打印输入框清单
             if (!takeOverByDom() && !domWarned) {
               domWarned = true;
               log('尚未探测到新增弹窗（需同时出现 规格型号 / 编号 / 类型 三个字段），继续等待');
@@ -3878,11 +3825,6 @@
     // 依据：实测 1080 行要 19.5 秒，但个别小类会卡住超过 60 秒，需要放宽并允许现场调整
     var TIMEOUT = Number(CFG.plmQueryTimeout) || 180000
 
-    function stamp() {
-      var d = new Date()
-      function p(n) { return (n < 10 ? '0' : '') + n }
-      return p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()) + '.' + String(d.getMilliseconds())
-    }
     function c(style, args) {
       var a = [].slice.call(args)
       a.unshift('%c' + TAG + ' ' + style, 'color:#0a7;font-weight:bold')

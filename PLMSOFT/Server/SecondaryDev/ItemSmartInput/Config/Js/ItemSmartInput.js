@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '1.99';
+  var PLUGIN_VERSION = '2.00';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1065,17 +1065,22 @@
   // 因此新增一列 34px 放按钮时，必须把列2 同步缩窄 34px（314→280）才不溢出。
   // 按钮插在字段行首，位于「名称」标签左侧；且按钮在弹窗容器内部，弹窗销毁时一起消失，
   // 不会像挂 body 的浮层那样残留到下一个弹窗。
-  var PLATFORM_BTN_W = 34;
-  var PLATFORM_COL_TARGET = 280;   // 列2 缩窄后的宽度（314 - 34）
+  var PLATFORM_BTN_W = 32;
 
-  /** 让输入框列保持缩窄后的宽度（平台重绘会写回原值时自动再缩一次） */
-  function syncShrunkCol(valCol) {
+  /**
+   * 让「标签列」内部横排（按钮 + 标签），并禁止换行。
+   * 标签列本身宽 100px，按钮 32px + 「名称」约 30px = 62px，放得下；
+   * 关键是不能新增列——实测容器内宽略小于列宽之和，新增一列会触发 flex 换行，
+   * 导致整行被 overflow:hidden 裁掉（名称会「消失」）。
+   */
+  function ensureLabelColFit(labCol) {
     try {
-      if (!valCol || !valCol.style) return;
-      var cur = parseInt(valCol.style.width, 10);
-      if (cur === PLATFORM_COL_TARGET) return;
-      valCol.style.width = PLATFORM_COL_TARGET + 'px';
-      valCol.style.flex = '0 0 ' + PLATFORM_COL_TARGET + 'px';
+      if (!labCol || !labCol.style) return;
+      labCol.style.whiteSpace = 'nowrap';
+      labCol.style.overflow = 'visible';
+      labCol.style.display = 'flex';
+      labCol.style.alignItems = 'center';
+      labCol.style.flexWrap = 'nowrap';
     } catch (e) { }
   }
 
@@ -1115,34 +1120,28 @@
     try {
       var pg = (document.querySelector ? document.querySelector('[pagepagename="PSEITEM-CREATE"]') : null);
       if (!pg || !pg.querySelector) return false;
-      var row = pg.querySelector('[cid="ENAME"]');
-      var val = pg.querySelector('[cid="ENAME_Value"]');
-      if (!row || !val || !val.parentNode) return false;
 
-      var valCol = val.parentNode;
+      // 名称的标签容器：ENAME_Label 的父节点（即 100px 的列1）
+      var lab = pg.querySelector('[cid="ENAME_Label"]');
+      if (!lab || !lab.parentNode) return false;
+      var labCol = lab.parentNode;
 
-      // 幂等：已有按钮就只校正列宽，不重复插入
-      var exists = row.querySelector ? row.querySelector('.plm-smart-check-btn') : null;
+      // 幂等：已有按钮就不再插入
+      var exists = labCol.querySelector ? labCol.querySelector('.plm-smart-check-btn') : null;
       if (exists) {
         state.checkBtn = exists;
         state.btnPlace = 'platform';
-        syncShrunkCol(valCol);
+        ensureLabelColFit(labCol);
         return true;
       }
 
       var btn = buildPlatformButton();
-      var col = document.createElement('div');
-      col.className = 'plm-smart-btn-col';
-      col.style.cssText = 'width:' + PLATFORM_BTN_W + 'px;flex:0 0 ' + PLATFORM_BTN_W + 'px;'
-        + 'display:flex;align-items:center;justify-content:center;';
-      col.appendChild(btn);
-      row.insertBefore(col, row.firstChild);
+      labCol.insertBefore(btn, lab);      // 按钮 → 标签，同一列内并排
+      ensureLabelColFit(labCol);
 
-      syncShrunkCol(valCol);
       state.checkBtn = btn;
       state.btnPlace = 'platform';
-      log('已在「名称」行首注入按钮（' + PLATFORM_BTN_W + 'px 竖排，输入框列 314→'
-        + PLATFORM_COL_TARGET + 'px）');
+      log('已在「名称」标签前注入按钮（' + PLATFORM_BTN_W + 'px 竖排，未改动任何列宽）');
       return true;
     } catch (e) {
       log('平台容器注入失败（回退 DOM 猜测）：' + (e && e.message));
@@ -3644,17 +3643,10 @@
       try {
         if (state.checkTip && state.checkTip.parentNode) state.checkTip.parentNode.removeChild(state.checkTip);
       } catch (e) { }
-      // 平台容器模式：移除包按钮的那一列，并把输入框列宽度还原，避免留下 34px 空列
+      // 兼容早期版本：清掉可能残留的独立按钮列（现在按钮直接插在标签列内，不会产生该元素）
       try {
         var col = (document.querySelector ? document.querySelector('.plm-smart-btn-col') : null);
         if (col && col.parentNode) col.parentNode.removeChild(col);
-        var pg = (document.querySelector ? document.querySelector('[pagepagename="PSEITEM-CREATE"]') : null);
-        var val = pg && pg.querySelector ? pg.querySelector('[cid="ENAME_Value"]') : null;
-        var vc = val && val.parentNode;
-        if (vc && vc.style && parseInt(vc.style.width, 10) === PLATFORM_COL_TARGET) {
-          vc.style.width = '314px';
-          vc.style.flex = '0 0 314px';
-        }
       } catch (e) { }
       if (state.typeTimer) { clearInterval(state.typeTimer); state.typeTimer = null; }
       state.checkBtn = null;
@@ -3687,12 +3679,12 @@
 
         var attached = !!(state.checkBtn && document.body && document.body.contains
           && document.body.contains(state.checkBtn));
-        // 平台容器模式：平台重绘可能把列宽写回 314，这里持续校正（开销仅一次比较）
+        // 平台容器模式：平台重绘可能复位标签列样式，这里持续校正（开销仅几次样式赋值）
         if (attached && state.btnPlace === 'platform') {
           try {
             var pgNow = (document.querySelector ? document.querySelector('[pagepagename="PSEITEM-CREATE"]') : null);
-            var valNow = (pgNow && pgNow.querySelector) ? pgNow.querySelector('[cid="ENAME_Value"]') : null;
-            if (valNow && valNow.parentNode) syncShrunkCol(valNow.parentNode);
+            var labNow = (pgNow && pgNow.querySelector) ? pgNow.querySelector('[cid="ENAME_Label"]') : null;
+            if (labNow && labNow.parentNode) ensureLabelColFit(labNow.parentNode);
           } catch (e) { }
         }
         if (!attached) {

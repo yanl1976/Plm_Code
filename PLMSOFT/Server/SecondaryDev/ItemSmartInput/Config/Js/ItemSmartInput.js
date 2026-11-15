@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.03';
+  var PLUGIN_VERSION = '2.04';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1100,10 +1100,16 @@
           labCol.style.flex = '0 0 ' + t1 + 'px';
         }
       }
+      // 实测：labCol 的 display 是 block（class 虽叫 layout-horizontal 但实际是块级），
+      // 而标签本身也是 block 且占满整列，导致 inline-block 的按钮被压成 0 宽（看不见）。
+      // 必须显式改成 flex，flex:0 0 30px 才会生效，按钮和标签才能横排。
+      labCol.style.display = 'flex';
+      labCol.style.alignItems = 'center';
+      labCol.style.flexWrap = 'nowrap';
       labCol.style.overflow = 'visible';
       labCol.style.whiteSpace = 'nowrap';
 
-      // 关键：标签不参与压缩，否则会被按钮挤成 0 宽
+      // 标签不参与压缩、不换行，否则会被按钮挤成 0 宽
       if (lab && lab.style) {
         lab.style.flex = '0 0 auto';
         lab.style.flexShrink = '0';
@@ -1129,8 +1135,10 @@
     btn.type = 'button';
     btn.className = 'plm-smart-check-btn';
     // 参与布局但不被压缩：flex:0 0 <宽>，与标签并排放在标签列内
-    btn.style.cssText = 'flex:0 0 ' + PLATFORM_BTN_W + 'px;width:' + PLATFORM_BTN_W + 'px;'
-      + 'min-height:34px;padding:2px 0;margin-right:4px;'
+    // display/min-width/max-width 都显式给死，避免被平台的 block 级规则压成 0 宽
+    btn.style.cssText = 'display:inline-block;flex:0 0 ' + PLATFORM_BTN_W + 'px;'
+      + 'width:' + PLATFORM_BTN_W + 'px;min-width:' + PLATFORM_BTN_W + 'px;'
+      + 'max-width:' + PLATFORM_BTN_W + 'px;min-height:34px;padding:2px 0;margin-right:4px;'
       + 'box-sizing:border-box;font:12px/1.2 inherit;text-align:center;'
       + 'word-break:break-all;white-space:normal;letter-spacing:0;'
       + 'border:1px solid #3f8fd2;background:#eaf3fb;color:#16558c;border-radius:3px;'

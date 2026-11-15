@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.04';
+  var PLUGIN_VERSION = '2.05';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1101,19 +1101,20 @@
         }
       }
       // 实测：labCol 的 display 是 block（class 虽叫 layout-horizontal 但实际是块级），
-      // 而标签本身也是 block 且占满整列，导致 inline-block 的按钮被压成 0 宽（看不见）。
-      // 必须显式改成 flex，flex:0 0 30px 才会生效，按钮和标签才能横排。
+      // 改成 flex 后按钮才不再被压成 0 宽；但标签又会被 flex-basis 算成 0，
+      // 所以标签尺寸一律用 !important 强锁，避免被平台 CSS 覆盖。
       labCol.style.display = 'flex';
+      labCol.style.flexDirection = 'row';
       labCol.style.alignItems = 'center';
       labCol.style.flexWrap = 'nowrap';
       labCol.style.overflow = 'visible';
       labCol.style.whiteSpace = 'nowrap';
 
-      // 标签不参与压缩、不换行，否则会被按钮挤成 0 宽
-      if (lab && lab.style) {
-        lab.style.flex = '0 0 auto';
-        lab.style.flexShrink = '0';
-        lab.style.whiteSpace = 'nowrap';
+      if (lab && lab.style && lab.style.setProperty) {
+        lab.style.setProperty('flex', '0 0 auto', 'important');
+        lab.style.setProperty('width', 'auto', 'important');
+        lab.style.setProperty('min-width', '2.4em', 'important');
+        lab.style.setProperty('white-space', 'nowrap', 'important');
       }
 
       if (valCol && valCol.style) {
@@ -1134,8 +1135,7 @@
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'plm-smart-check-btn';
-    // 参与布局但不被压缩：flex:0 0 <宽>，与标签并排放在标签列内
-    // display/min-width/max-width 都显式给死，避免被平台的 block 级规则压成 0 宽
+    // 宽度三重锁 + flex 不伸缩，避免被平台规则压扁
     btn.style.cssText = 'display:inline-block;flex:0 0 ' + PLATFORM_BTN_W + 'px;'
       + 'width:' + PLATFORM_BTN_W + 'px;min-width:' + PLATFORM_BTN_W + 'px;'
       + 'max-width:' + PLATFORM_BTN_W + 'px;min-height:34px;padding:2px 0;margin-right:4px;'
@@ -3715,9 +3715,11 @@
             labCol.removeAttribute('data-plm-ow');
           }
         }
-        if (lab && lab.style) {
-          lab.style.flexShrink = '';
-          lab.style.flex = '';
+        if (lab && lab.style && lab.style.removeProperty) {
+          lab.style.removeProperty('flex');
+          lab.style.removeProperty('width');
+          lab.style.removeProperty('min-width');
+          lab.style.removeProperty('white-space');
         }
         if (valCol && valCol.style && valCol.getAttribute && valCol.getAttribute('data-plm-ow')) {
           var o2 = valCol.getAttribute('data-plm-ow');

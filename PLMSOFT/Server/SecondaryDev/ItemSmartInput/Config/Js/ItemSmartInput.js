@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.02';
+  var PLUGIN_VERSION = '2.03';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1065,25 +1065,61 @@
   // 因此新增一列 34px 放按钮时，必须把列2 同步缩窄 34px（314→280）才不溢出。
   // 按钮插在字段行首，位于「名称」标签左侧；且按钮在弹窗容器内部，弹窗销毁时一起消失，
   // 不会像挂 body 的浮层那样残留到下一个弹窗。
-  var PLATFORM_BTN_W = 32;
+  var PLATFORM_BTN_W = 30;
+  var PLATFORM_TAG_EXTRA = 30;      // 标签列加宽量，等量从输入框列扣除
 
   /**
-   * 给标签列准备定位基准：按钮用绝对定位浮在标签左侧，不占文档流。
+   * 标签列布局：按钮与标签并排，且必须阻止标签被 flex 压缩。
    *
-   * 为什么不用「插进标签列」：
-   *   标签列（hoteam-layout-horizontal，100px）是 flex 容器，
-   *   插入按钮后标签元素被 flex-shrink 压成接近 0 宽，
-   *   文字溢出被 overflow:hidden 裁掉 → 「名称」两个字消失。
-   *   新增第 4 列又会触发整行换行，同样被裁。
-   * 所以按钮必须脱离文档流：absolute 定位 + right:100% 贴到标签列左外侧。
+   * 前几版失败的原因：
+   *   ① 新增第 4 列 → 总宽超出 → flex 换行 → 整行被裁
+   *   ② 插进标签列但没设 flex-shrink:0 → 标签被压成接近 0 宽，文字没了
+   *   ③ 绝对定位到列外 → 标签列离弹窗左边只有 20px，按钮 32px 被裁
+   *
+   * 本版：列1 加宽 30px、列2 收窄 30px（总数仍是 3 列、总宽不变），
+   * 并对标签元素设 flex:0 0 auto + nowrap，保证文字完整。
    */
-  function applyTagColLayout(labCol) {
+  function applyTagColLayout(labCol, valCol, lab) {
     try {
       if (!labCol || !labCol.style) return;
-      var pos = '';
-      try { pos = window.getComputedStyle ? window.getComputedStyle(labCol).position : ''; } catch (e) { pos = ''; }
-      if (pos === 'static' || !pos) labCol.style.position = 'relative';
-      labCol.style.overflow = 'visible';       // 允许按钮溢出到列外
+
+      if (!labCol.getAttribute('data-plm-ow')) {
+        var w1 = parseInt(labCol.style.width, 10);
+        if (w1) labCol.setAttribute('data-plm-ow', String(w1));
+      }
+      if (valCol && valCol.style && !valCol.getAttribute('data-plm-ow')) {
+        var w2 = parseInt(valCol.style.width, 10);
+        if (w2) valCol.setAttribute('data-plm-ow', String(w2));
+      }
+
+      var ow1 = parseInt(labCol.getAttribute('data-plm-ow'), 10);
+      if (ow1) {
+        var t1 = ow1 + PLATFORM_TAG_EXTRA;
+        if (parseInt(labCol.style.width, 10) !== t1) {
+          labCol.style.width = t1 + 'px';
+          labCol.style.flex = '0 0 ' + t1 + 'px';
+        }
+      }
+      labCol.style.overflow = 'visible';
+      labCol.style.whiteSpace = 'nowrap';
+
+      // 关键：标签不参与压缩，否则会被按钮挤成 0 宽
+      if (lab && lab.style) {
+        lab.style.flex = '0 0 auto';
+        lab.style.flexShrink = '0';
+        lab.style.whiteSpace = 'nowrap';
+      }
+
+      if (valCol && valCol.style) {
+        var ow2 = parseInt(valCol.getAttribute('data-plm-ow'), 10);
+        if (ow2) {
+          var t2 = Math.max(140, ow2 - PLATFORM_TAG_EXTRA);
+          if (parseInt(valCol.style.width, 10) !== t2) {
+            valCol.style.width = t2 + 'px';
+            valCol.style.flex = '0 0 ' + t2 + 'px';
+          }
+        }
+      }
     } catch (e) { }
   }
 
@@ -1092,13 +1128,13 @@
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'plm-smart-check-btn';
-    // 绝对定位：右边缘贴住标签列左外侧，垂直居中，不占文档流
-    btn.style.cssText = 'position:absolute;right:100%;margin-right:2px;top:50%;'
-      + 'transform:translateY(-50%);width:' + PLATFORM_BTN_W + 'px;min-height:38px;padding:2px 0;'
+    // 参与布局但不被压缩：flex:0 0 <宽>，与标签并排放在标签列内
+    btn.style.cssText = 'flex:0 0 ' + PLATFORM_BTN_W + 'px;width:' + PLATFORM_BTN_W + 'px;'
+      + 'min-height:34px;padding:2px 0;margin-right:4px;'
       + 'box-sizing:border-box;font:12px/1.2 inherit;text-align:center;'
       + 'word-break:break-all;white-space:normal;letter-spacing:0;'
       + 'border:1px solid #3f8fd2;background:#eaf3fb;color:#16558c;border-radius:3px;'
-      + 'cursor:pointer;z-index:5;';
+      + 'cursor:pointer;position:relative;z-index:5;';
     btn.textContent = CFG.checkButtonText || '智能录入';
     var fired = false;
     var fire = function (ev) {
@@ -1126,27 +1162,30 @@
       var pg = (document.querySelector ? document.querySelector('[pagepagename="PSEITEM-CREATE"]') : null);
       if (!pg || !pg.querySelector) return false;
 
-      // 名称的标签列（按钮以绝对定位浮在它左侧）
+      // 名称：标签列（列1）与输入框列（列2）
       var lab = pg.querySelector('[cid="ENAME_Label"]');
+      var val = pg.querySelector('[cid="ENAME_Value"]');
       if (!lab || !lab.parentNode) return false;
       var labCol = lab.parentNode;
+      var valCol = val && val.parentNode;
 
-      // 幂等：已有按钮就不再插入
+      // 幂等：已有按钮就只校正布局，不重复插入
       var exists = labCol.querySelector ? labCol.querySelector('.plm-smart-check-btn') : null;
       if (exists) {
         state.checkBtn = exists;
         state.btnPlace = 'platform';
-        applyTagColLayout(labCol);
+        applyTagColLayout(labCol, valCol, lab);
         return true;
       }
 
       var btn = buildPlatformButton();
-      labCol.appendChild(btn);            // 绝对定位，不参与布局
-      applyTagColLayout(labCol);
+      labCol.insertBefore(btn, lab);      // 按钮 → 标签，同一列内并排
+      applyTagColLayout(labCol, valCol, lab);
 
       state.checkBtn = btn;
       state.btnPlace = 'platform';
-      log('已在「名称」标签左侧浮出按钮（' + PLATFORM_BTN_W + 'px 竖排，绝对定位，未改动任何列宽）');
+      log('已在「名称」标签前注入按钮（' + PLATFORM_BTN_W + 'px；标签列 +' + PLATFORM_TAG_EXTRA
+        + 'px、输入框列 -' + PLATFORM_TAG_EXTRA + 'px，总宽不变；标签已设 flexShrink=0）');
       return true;
     } catch (e) {
       log('平台容器注入失败（回退 DOM 猜测）：' + (e && e.message));
@@ -3655,10 +3694,11 @@
 
         var pg = (document.querySelector ? document.querySelector('[pagepagename="PSEITEM-CREATE"]') : null);
         var lab = (pg && pg.querySelector) ? pg.querySelector('[cid="ENAME_Label"]') : null;
+        var val = (pg && pg.querySelector) ? pg.querySelector('[cid="ENAME_Value"]') : null;
         var labCol = lab && lab.parentNode;
+        var valCol = val && val.parentNode;
+
         if (labCol && labCol.style) {
-          // 绝对定位方案不改列宽，只把临时加的定位上下文还原
-          labCol.style.position = '';
           labCol.style.overflow = '';
           if (labCol.getAttribute && labCol.getAttribute('data-plm-ow')) {
             var o1 = labCol.getAttribute('data-plm-ow');
@@ -3666,6 +3706,16 @@
             labCol.style.flex = '0 0 ' + o1 + 'px';
             labCol.removeAttribute('data-plm-ow');
           }
+        }
+        if (lab && lab.style) {
+          lab.style.flexShrink = '';
+          lab.style.flex = '';
+        }
+        if (valCol && valCol.style && valCol.getAttribute && valCol.getAttribute('data-plm-ow')) {
+          var o2 = valCol.getAttribute('data-plm-ow');
+          valCol.style.width = o2 + 'px';
+          valCol.style.flex = '0 0 ' + o2 + 'px';
+          valCol.removeAttribute('data-plm-ow');
         }
       } catch (e) { }
       if (state.typeTimer) { clearInterval(state.typeTimer); state.typeTimer = null; }
@@ -3704,7 +3754,10 @@
           try {
             var pgNow = (document.querySelector ? document.querySelector('[pagepagename="PSEITEM-CREATE"]') : null);
             var labNow = (pgNow && pgNow.querySelector) ? pgNow.querySelector('[cid="ENAME_Label"]') : null;
-            if (labNow && labNow.parentNode) applyTagColLayout(labNow.parentNode);
+            var valNow = (pgNow && pgNow.querySelector) ? pgNow.querySelector('[cid="ENAME_Value"]') : null;
+            if (labNow && labNow.parentNode) {
+              applyTagColLayout(labNow.parentNode, valNow && valNow.parentNode, labNow);
+            }
           } catch (e) { }
         }
         if (!attached) {

@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.13';
+  var PLUGIN_VERSION = '2.14';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1890,8 +1890,12 @@
           var diffName = dup[i].level === 'spec' ? '　（名称不同）' : '';
           // 来源标注：合并快照里绝大多数来自 PLM，只有 ERP 的才标，避免界面噪音
           var srcMark = dup[i].source === 'erp' ? '[ERP历史] ' : '';
+          // 物料编码用深色（近黑）突出，名称与规格保持灰色：
+          // 编码是唯一可操作的信息（拿去搜索/复用），其余只是辅助辨认
           sHtml += '<div style="color:' + C_MUTE + ';margin-left:12px">'
-            + srcMark + escHtml(dc) + '　' + escHtml(dn) + '　' + escHtml(ds) + diffName + '</div>';
+            + srcMark
+            + '<span style="color:#111;font-family:Consolas,Monaco,monospace;">' + escHtml(dc) + '</span>'
+            + '　' + escHtml(dn) + '　' + escHtml(ds) + diffName + '</div>';
         }
       }
       // 参数顺序不同但参数集合完全相同：疑似同一规格，插件侧只提示不阻断（看板侧需勾选确认）
@@ -1902,7 +1906,9 @@
           var oc = orderDup[i].fNumber || orderDup[i].fnumber || '';
           var os = orderDup[i].fSpec || orderDup[i].spec || '';
           var oMark = orderDup[i].source === 'erp' ? '[ERP历史] ' : '';
-          sHtml += '<div style="color:' + C_MUTE + ';margin-left:12px">' + oMark + escHtml(oc) + '　' + escHtml(os) + '</div>';
+          sHtml += '<div style="color:' + C_MUTE + ';margin-left:12px">' + oMark
+            + '<span style="color:#111;font-family:Consolas,Monaco,monospace;">' + escHtml(oc) + '</span>'
+            + '　' + escHtml(os) + '</div>';
         }
       }
       // 名称结构化建议：标准叫法 / 建议改为

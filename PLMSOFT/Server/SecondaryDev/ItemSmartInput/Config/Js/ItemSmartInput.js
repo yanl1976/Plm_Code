@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.08';
+  var PLUGIN_VERSION = '2.09';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1096,52 +1096,44 @@
    * @param {Element} labCol 标签列（原 100px）
    * @param {Element} valCol 输入框列（原 314px）
    */
-  function applyRowFlexLayout(row, labCol, valCol, btnCol) {
+  function applyNameRowLayout(row, labCol, valCol, lab, btn) {
     try {
-      if (!row || !row.style) return;
+      if (!labCol || !labCol.style) return;
 
-      row.style.display = 'flex';
-      row.style.flexWrap = 'nowrap';
-      row.style.alignItems = 'center';
-      row.style.overflow = 'visible';
-      // 绝对定位的按钮以行为基准
-      try {
-        var pos = window.getComputedStyle ? window.getComputedStyle(row).position : '';
-        if (!pos || pos === 'static') row.style.position = 'relative';
-      } catch (e2) { row.style.position = 'relative'; }
-
-      // 标签列：保留平台原宽，硬性不压缩
-      if (labCol && labCol.style) {
-        if (!labCol.getAttribute('data-plm-labw')) {
-          var w = parseInt(labCol.style.width, 10);
-          labCol.setAttribute('data-plm-labw', String(w || 100));
-        }
-        var lw = labCol.getAttribute('data-plm-labw');
-        labCol.style.flex = '0 0 ' + lw + 'px';
-        labCol.style.width = lw + 'px';
-        labCol.style.minWidth = lw + 'px';
-        labCol.style.overflow = 'visible';
+      // 行容器：保持平台原有的块级布局，不做任何改动
+      if (row && row.style) {
+        row.style.display = '';
+        row.style.flexWrap = '';
+        row.style.alignItems = '';
+        row.style.position = '';
       }
 
-      // 输入框列：吃掉剩余空间（不再写死 314px）
-      if (valCol && valCol.style) {
-        valCol.style.flex = '1 1 auto';
-        valCol.style.width = 'auto';
-        valCol.style.minWidth = '0';
+      // 标签列：宽度不动（所有行共享的 100px，为「规格型号/图号」预留），
+      // 只让内部「标签 + 按钮」横排且不换行。
+      labCol.style.whiteSpace = 'nowrap';
+      labCol.style.overflow = 'visible';
+
+      // 标签：从 block 改成 inline-block，宽度只占文字本身的约 30px，
+      // 这样它右侧空出来的 70px 就能放按钮，而标签起点仍与其他行对齐。
+      if (lab && lab.style && lab.style.setProperty) {
+        lab.style.setProperty('display', 'inline-block', 'important');
+        lab.style.setProperty('width', 'auto', 'important');
+        lab.style.setProperty('max-width', 'none', 'important');
+        lab.style.setProperty('white-space', 'nowrap', 'important');
+        lab.style.setProperty('text-overflow', 'clip', 'important');
+        lab.style.setProperty('overflow', 'visible', 'important');
+        lab.style.setProperty('vertical-align', 'middle', 'important');
       }
 
-      // 按钮列：脱离文档流浮在行左侧空白处，
-      // 这样标签列起点与「类型」「编号」等其他行完全对齐（不被推右 30px）。
-      if (btnCol && btnCol.style) {
-        btnCol.style.position = 'absolute';
-        btnCol.style.right = '100%';
-        btnCol.style.top = '0';
-        btnCol.style.bottom = '0';
-        btnCol.style.width = PLATFORM_BTN_W + 'px';
-        btnCol.style.minWidth = PLATFORM_BTN_W + 'px';
-        btnCol.style.display = 'flex';
-        btnCol.style.alignItems = 'center';
-        btnCol.style.justifyContent = 'center';
+      // 按钮：跟在标签后面，单行内并排
+      if (btn && btn.style) {
+        btn.style.display = 'inline-block';
+        btn.style.verticalAlign = 'middle';
+        btn.style.width = PLATFORM_BTN_W + 'px';
+        btn.style.minWidth = PLATFORM_BTN_W + 'px';
+        btn.style.maxWidth = PLATFORM_BTN_W + 'px';
+        btn.style.marginLeft = '4px';
+        btn.style.marginRight = '0';
       }
     } catch (e) { }
   }
@@ -1196,31 +1188,33 @@
       // 行容器找不到时退回标签列的父节点（结构上是同一个）
       if (!row) row = labCol.parentNode;
 
-      // 幂等：已有按钮列就只校正布局，不重复插入
-      var exists = (row && row.querySelector) ? row.querySelector('.plm-smart-btn-col') : null;
+      // 清理历史版本可能残留的独立按钮列
+      try {
+        var oldCols = pg.querySelectorAll('.plm-smart-btn-col');
+        for (var oi = oldCols.length - 1; oi >= 0; oi--) {
+          if (oldCols[oi].parentNode) oldCols[oi].parentNode.removeChild(oldCols[oi]);
+        }
+      } catch (e3) { }
+
+      // 幂等：已有按钮就只校正布局
+      var exists = labCol.querySelector ? labCol.querySelector('.plm-smart-check-btn') : null;
       if (exists) {
-        applyRowFlexLayout(row, labCol, valCol, exists);
-        state.checkBtn = exists.querySelector ? exists.querySelector('.plm-smart-check-btn') : exists;
+        applyNameRowLayout(row, labCol, valCol, lab, exists);
+        state.checkBtn = exists;
         state.btnPlace = 'platform';
         return true;
       }
 
-      // 按钮列：脱离文档流浮在行左侧，不占用标签列的空间
       var btn = buildPlatformButton();
-      var btnCol = document.createElement('div');
-      btnCol.className = 'plm-smart-btn-col';
-      btnCol.style.cssText = 'position:absolute;right:100%;top:0;bottom:0;'
-        + 'width:' + PLATFORM_BTN_W + 'px;min-width:' + PLATFORM_BTN_W + 'px;'
-        + 'display:flex;align-items:center;justify-content:center;';
-      btnCol.appendChild(btn);
-      row.insertBefore(btnCol, row.firstChild);
+      // 插在标签之后：利用标签列右侧的空白（100px 里标签只占约 30px，
+      // 「规格型号/图号」才占满），标签起点位置完全不动。
+      labCol.appendChild(btn);
 
-      applyRowFlexLayout(row, labCol, valCol, btnCol);
+      applyNameRowLayout(row, labCol, valCol, lab, btn);
 
       state.checkBtn = btn;
       state.btnPlace = 'platform';
-      log('已重排「名称」行为 flex 并注入按钮（按钮绝对定位在行左侧，'
-        + '标签列位置与其他行保持一致，输入框列自适应）');
+      log('已在「名称」标签右侧空白处注入按钮（标签列宽度与其他行一致，未推挤标签）');
       return true;
     } catch (e) {
       log('平台容器注入失败（回退 DOM 猜测）：' + (e && e.message));
@@ -3755,7 +3749,18 @@
           labCol.style.flex = lw ? '0 0 ' + lw + 'px' : '';
           labCol.style.width = lw ? lw + 'px' : '';
           labCol.style.minWidth = '';
+          labCol.style.whiteSpace = '';
           labCol.style.overflow = '';
+        }
+        // 还原标签的 inline-block 与省略号相关样式
+        if (lab && lab.style && lab.style.removeProperty) {
+          lab.style.removeProperty('display');
+          lab.style.removeProperty('width');
+          lab.style.removeProperty('max-width');
+          lab.style.removeProperty('white-space');
+          lab.style.removeProperty('text-overflow');
+          lab.style.removeProperty('overflow');
+          lab.style.removeProperty('vertical-align');
         }
         var valCol = val && val.parentNode;
         if (valCol && valCol.style) {
@@ -3804,8 +3809,10 @@
               var labNow = pgNow.querySelector('[cid="ENAME_Label"]');
               var valNow = pgNow.querySelector('[cid="ENAME_Value"]');
               if (rowNow && labNow && valNow) {
-                var btnColNow = rowNow.querySelector('.plm-smart-btn-col');
-                applyRowFlexLayout(rowNow, labNow.parentNode, valNow.parentNode, btnColNow);
+                var btnNow = labNow.parentNode.querySelector('.plm-smart-check-btn');
+                if (btnNow) {
+                  applyNameRowLayout(rowNow, labNow.parentNode, valNow.parentNode, labNow, btnNow);
+                }
               }
             }
           } catch (e) { }

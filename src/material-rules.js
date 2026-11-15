@@ -103,10 +103,25 @@ export function detectSubMismatch(rawName, sub) {
   const info = getCategory(sub)
   if (!info || !info.subName) return null
 
-  const gq = bigramsOf(name)
+  // 去掉型号段（数字/字母/常见分隔符），只留中文部分参与比较。
+  // 理由：「塑壳断路器 100A」与「固定式塑壳断路器」的 Dice 会被 "100A" 稀释到 0.5 以下，
+  // 导致明明填错小类却不提示；而型号本来就不承载类别信息。
+  const pure = name.replace(/[A-Za-z0-9\-*./_]+/g, ' ').replace(/\s+/g, ' ').trim()
+  const cmpName = (pure && pure.length >= 2) ? pure : name
+
+  const gq = bigramsOf(cmpName)
   if (!gq.size) return null
+
+  // 名称完整包含当前小类标准名 → 视为匹配（型号后缀会稀释 Dice，例如
+  // 「微型断路器 NXB-63 C16」与「微型断路器」的相似度只有 0.5 左右）。
+  // 反向不成立：「断路器」包含于「微型断路器」，但它是泛称，应该继续判断。
+  if (cmpName.indexOf(info.subName) >= 0) return null
+
   const curScore = diceOf(gq, bigramsOf(info.subName))
-  if (curScore >= num(R, 'minCurrent', 0.4)) return null
+  // 阈值 0.4 → 0.7：中文「XX断路器」共享「断路/路器」两个 bigram，
+  // 塑壳/漏电/框架 与「微型断路器」的 Dice 都在 0.5 左右，
+  // 0.4 会让它们全被当成「匹配」，跨小类错填就不会提示。
+  if (curScore >= num(R, 'minCurrent', 0.7)) return null
 
   // 短标准名兜底：像「端子」这种 1 个二元组的标准名，Dice 会被长名字稀释，
   // 导致「端子标记号」这类明显同族的写法漏判。名称以其它小类标准名开头时直接命中。

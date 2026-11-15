@@ -40,7 +40,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.05';
+  var PLUGIN_VERSION = '2.06';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1066,7 +1066,7 @@
   // 按钮插在字段行首，位于「名称」标签左侧；且按钮在弹窗容器内部，弹窗销毁时一起消失，
   // 不会像挂 body 的浮层那样残留到下一个弹窗。
   var PLATFORM_BTN_W = 30;
-  var PLATFORM_TAG_EXTRA = 30;      // 标签列加宽量，等量从输入框列扣除
+  var PLATFORM_TAG_EXTRA = 42;      // 标签列加宽量（按钮 30 + 间距 + 余量），等量从输入框列扣除
 
   /**
    * 标签列布局：按钮与标签并排，且必须阻止标签被 flex 压缩。
@@ -1110,11 +1110,17 @@
       labCol.style.overflow = 'visible';
       labCol.style.whiteSpace = 'nowrap';
 
+      // 标签宽度用 max-content 锁死为「文字完整宽度」，并关掉省略号：
+      // 平台 .Label 带 overflow:hidden + text-overflow:ellipsis，
+      // 一旦 flex 给的空间不足就会显示成「名…」，所以必须显式给足并禁止截断。
       if (lab && lab.style && lab.style.setProperty) {
         lab.style.setProperty('flex', '0 0 auto', 'important');
-        lab.style.setProperty('width', 'auto', 'important');
-        lab.style.setProperty('min-width', '2.4em', 'important');
+        lab.style.setProperty('width', 'max-content', 'important');
+        lab.style.setProperty('min-width', 'max-content', 'important');
+        lab.style.setProperty('max-width', 'none', 'important');
         lab.style.setProperty('white-space', 'nowrap', 'important');
+        lab.style.setProperty('text-overflow', 'clip', 'important');
+        lab.style.setProperty('overflow', 'visible', 'important');
       }
 
       if (valCol && valCol.style) {
@@ -3719,7 +3725,10 @@
           lab.style.removeProperty('flex');
           lab.style.removeProperty('width');
           lab.style.removeProperty('min-width');
+          lab.style.removeProperty('max-width');
           lab.style.removeProperty('white-space');
+          lab.style.removeProperty('text-overflow');
+          lab.style.removeProperty('overflow');
         }
         if (valCol && valCol.style && valCol.getAttribute && valCol.getAttribute('data-plm-ow')) {
           var o2 = valCol.getAttribute('data-plm-ow');

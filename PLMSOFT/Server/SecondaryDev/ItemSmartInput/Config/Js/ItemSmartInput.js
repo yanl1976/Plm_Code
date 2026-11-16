@@ -4539,24 +4539,38 @@
 
     // ===== 自动同步：工作时间每 N 小时检查一次 =====
     var autoTimer = null
-    function autoSyncTick() {
+    /**
+     * @param {{verbose?:boolean}} [opts] verbose=true 时把「为什么没跑」也打出来
+     *        定时器调用不传（保持控制台安静）；__plmSync.auto.tick() 传 true
+     * @returns {string} 本次判定结果，便于控制台直接看到
+     */
+    function autoSyncTick(opts) {
+      var say = (opts && opts.verbose) ? syncLog : function () { }
       var a = CFG.autoSync || {}
-      if (a.enabled === false) return
-      if (syncState.running) return
-      var now = new Date()
-      var h = now.getHours()
       var ws = a.workStart == null ? 8 : a.workStart
       var we = a.workEnd == null ? 18 : a.workEnd
-      if (h < ws || h >= we) return   // 非工作时间不跑
+      var h = new Date().getHours()
+      if (a.enabled === false) { say('未执行：自动同步已关闭（autoSync.enabled=false）'); return 'disabled' }
+      if (syncState.running) { say('未执行：上一轮同步仍在进行中'); return 'running' }
+      if (h < ws || h >= we) { say('未执行：非工作时间（设定 ' + ws + ':00~' + we + ':00，当前 ' + h + ' 点）'); return 'offwork' }
+      say('检查中：当前 ' + h + ' 点，属工作时间，计划每 ' + (a.hours || 2) + ' 小时同步一次')
       syncPlan(function (e, plan) {
-        if (e || !plan || !plan.ok) return
+        if (e || !plan || !plan.ok) {
+          say('未执行：取同步计划失败（' + ((e && (e.msg || e.status)) || 'plan 无效') + '）')
+          return
+        }
         var last = plan.lastAt ? new Date(plan.lastAt).getTime() : 0
         var need = (a.hours || 2) * 3600 * 1000
         var gap = last ? (Date.now() - last) : Infinity
-        if (gap < need) return
+        if (gap < need) {
+          say('未执行：距上次同步 ' + (gap / 3600000).toFixed(1) + ' 小时，未到 ' + (a.hours || 2) + ' 小时（上次 '
+            + (last ? new Date(last).toLocaleString() : '从未同步') + '）')
+          return
+        }
         syncLog('距上次同步 ' + (last ? Math.round(gap / 3600000) + ' 小时' : '从未同步') + '，自动开始')
         syncStart({ force: !last })
       })
+      return 'checked'
     }
 
     function autoStart() {
@@ -4577,7 +4591,25 @@
       start: syncStart,
       status: syncStatus,
       retry: syncRetry,
-      auto: { start: autoStart, tick: autoSyncTick, stop: function () { if (autoTimer) { clearInterval(autoTimer); autoTimer = null } syncLog('自动同步已停止') } },
+      auto: {
+        start: autoStart,
+        // 手动调用带 verbose：会打印「未执行：距上次 1.2 小时…」这类原因，并返回判定结果
+        tick: function () { return autoSyncTick({ verbose: true }) },
+        stop: function () { if (autoTimer) { clearInterval(autoTimer); autoTimer = null } syncLog('自动同步已停止') },
+        // 只读诊断：不开同步也能看当前判定条件
+        why: function () {
+          var a = CFG.autoSync || {}
+          return {
+            enabled: a.enabled !== false,
+            hours: a.hours || 2,
+            workStart: a.workStart == null ? 8 : a.workStart,
+            workEnd: a.workEnd == null ? 18 : a.workEnd,
+            nowHour: new Date().getHours(),
+            running: syncState.running,
+            onDuty: (function () { var h = new Date().getHours(); return h >= (a.workStart == null ? 8 : a.workStart) && h < (a.workEnd == null ? 18 : a.workEnd) })(),
+          }
+        },
+      },
       failed: function () {
         var list = loadFailedSubs()
         if (!list.length) { syncLog('没有待补跑的小类 ✅'); return [] }

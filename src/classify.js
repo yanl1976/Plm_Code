@@ -28,15 +28,23 @@ export function chooseAttrs(info) {
 }
 
 // 返回该小类需要结构化的「特征参数」名称列表（用于型号规格结构化提取）
+//
+// 无声明一律返回 []（不介入），绝不退回全局默认参数集：
+//   默认集（型号/直径/螺纹/长度/颜色/材质）套到计算机、安防设备、软件、其它器件等
+//   小类上会提错参数——实测「TE 1mm^2 黄色」被提成「长度=1mm」（实为导线截面）、
+//   「NPEXA-CM31」被提成「材质=PE」（型号字母被当聚乙烯）、「Φ4平方毫米」被提成「直径=4」。
+//   错误参数会污染「物料特征」视图与一物多号对比页的参数列（制造假差异、误导人工复核）。
+//   无规则的小类由界面明确提示「校验规则待完善」，等范式库补齐声明后再启用。
 export function chooseTokens(info) {
   if (!info) return []
   const hay = [info.subName, info.midName, info.bigName].filter(Boolean).join(' ')
   for (const h of RULES.heuristics) {
     if (h.match.some((kw) => hay.includes(kw)) && Array.isArray(h.tokens)) return h.tokens
   }
+  // 小类级显式声明（subOverrides）优先于兜底；这是人工确认过的「该小类确实要这些参数」
   if (info.sub && RULES.subOverrides[info.sub] && Array.isArray(RULES.subOverrides[info.sub].tokens))
     return RULES.subOverrides[info.sub].tokens
-  return RULES.defaultTokens || []
+  return []
 }
 
 // 给一条物料记录附加分类信息 + 查重属性

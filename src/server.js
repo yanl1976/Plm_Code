@@ -189,10 +189,14 @@ function getMaterialIndex() {
       missing: ins.missing,
       errors: ins.errors,
       warns: ins.warns,
-      status: ins.errors.length ? 'error' : (ins.missing.length ? 'missing' : 'ok'),
+      rulePending: ins.rulePending === true,
+      // pending = 该小类还没有特征参数规则，本次未介入校验。
+      // 必须独立成一档：若落到 ok，页面会把「没校验」读成「校验通过」。
+      status: ins.rulePending ? 'pending'
+        : (ins.errors.length ? 'error' : (ins.missing.length ? 'missing' : 'ok')),
     }
   })
-  const statusCounts = { ok: 0, missing: 0, error: 0 }
+  const statusCounts = { ok: 0, missing: 0, error: 0, pending: 0 }
   let warnCount = 0
   const subMap = new Map()
   for (const it of items) {

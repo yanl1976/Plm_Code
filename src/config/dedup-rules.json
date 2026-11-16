@@ -2,7 +2,8 @@
   "meta": {
     "description": "强制查重 / 一物多号清洗 的灵活规则配置。修改此文件即可调整归一化与查重口径，无需改代码。",
     "signatureLogic": "同一小类内，signature = normalize(名称) + '|' + normalize(型号规格) + 关键特征 token；signature 相同的不同 FNUMBER 即「疑似一物多号」候选。",
-    "fuzzyLogic": "近重：对名称+规格做 token 集合 Jaccard 相似度，>= fuzzyThreshold 且不同 FNUMBER 计入近重候选。"
+    "fuzzyLogic": "近重：对名称+规格做 token 集合 Jaccard 相似度，>= fuzzyThreshold 且不同 FNUMBER 计入近重候选。",
+    "tokensPolicy": "未在 heuristics / subOverrides 里声明的小类一律【不提取特征参数】，不套用任何全局默认集，界面上显示「校验规则待完善」。2026-11-16 停用原 defaultTokens（型号/直径/螺纹/长度/颜色/材质）：它被套到计算机、安防设备、系统软件、其它器件等小类上会提错参数——实测「TE 1mm^2 黄色」被提成「长度=1mm」（实为导线截面）、「NPEXA-CM31」被提成「材质=PE」（型号字母被当聚乙烯）、「Φ4平方毫米」被提成「直径=4」，错误参数会污染物料特征视图与一物多号参数对比。今后为某小类补参数，二选一：在 heuristics 里加 match 关键词（按小类/中类/大类名称匹配）+ tokens，或在 subOverrides 里按小类编码显式声明。"
   },
   "normalize": {
     "lowercase": true,
@@ -28,14 +29,6 @@
   "defaultAttrs": [
     "FNAME",
     "FSPECIFICATION"
-  ],
-  "defaultTokens": [
-    "型号",
-    "直径",
-    "螺纹",
-    "长度",
-    "颜色",
-    "材质"
   ],
   "fuzzyThreshold": 0.8,
   "heuristics": [

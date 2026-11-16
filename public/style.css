@@ -237,6 +237,8 @@ table.cmp th.param, table.cmp td.param { font-family:ui-monospace,SFMono-Regular
 .tag.ok { background:rgba(63,185,80,.18); color:var(--green); }
 .tag.amber { background:rgba(210,153,34,.18); color:var(--amber); }
 .tag.err { background:rgba(248,81,73,.18); color:var(--red); }
+/* 未介入：该小类暂无特征参数规则。中性色，避免与「通过」（绿）混淆 */
+.tag.pending { background:rgba(139,148,158,.2); color:var(--muted); }
 b.green { color:var(--green); } b.red { color:var(--red); } b.amber { color:var(--amber); }
 mark.src { background:rgba(210,153,34,.38); color:inherit; border-radius:3px; padding:0 2px; }
 table.mat { width:100%; border-collapse:collapse; font-size:13px; }

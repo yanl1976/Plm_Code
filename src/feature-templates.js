@@ -27,7 +27,6 @@ export function buildTemplates() {
   const fields = readJson(path.join(CONFIG, 'spec-fields.json')) || {}
   const canonicalOrder = Array.isArray(fields.order) ? fields.order : []
   const heuristics = Array.isArray(rules.heuristics) ? rules.heuristics : []
-  const defaultTokens = Array.isArray(rules.defaultTokens) ? rules.defaultTokens : []
 
   // 按「中类」（小类前4位 = 大类2位+中类2位）聚合，避免跨大类中类码重复导致混淆
   const midGroups = new Map()
@@ -42,18 +41,19 @@ export function buildTemplates() {
   const templates = {}
   for (const [key4, g] of midGroups) {
     const tokenSet = new Set()
-    let matchedAny = false
     for (const s of g.subs) {
       const info = map[s.sub]
       const hay = [s.subName, info.midName, info.bigName].filter(Boolean).join(' ')
       for (const h of heuristics) {
         if (Array.isArray(h.match) && h.match.some((kw) => hay.includes(kw)) && Array.isArray(h.tokens)) {
-          matchedAny = true
           h.tokens.forEach((t) => tokenSet.add(t))
         }
       }
     }
-    if (!matchedAny) defaultTokens.forEach((t) => tokenSet.add(t))
+    // 无任何 heuristics 命中的中类：参数模板留空（候选只保留「附加参数」）。
+    // 不套用全局 defaultTokens —— 否则「标准特征参数」里会出现与该中类无关的
+    // 直径/螺纹/长度等，用户在模板编辑器里会把它当成该类该有的参数。
+    // 这类中类在界面上显式提示「校验规则待完善」。
     // 按 canonicalOrder 排序；不在主序列中的参数追加到末尾（保持并集出现顺序）
     const seen = new Set()
     const ordered = []

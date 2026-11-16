@@ -293,7 +293,7 @@ async function loadMaterials(page = 1) {
   $('#matMeta').innerHTML = '<h3>物料特征数据（策略提取 · 全量校验）</h3><ul><li>'
     + `提取规则版本 <b>${escapeHtml(d.meta.ruleVersion || '-')}</b> · 规则校验结论 `
     + `<span class="tag ${d.meta.validationPass === true ? 'ok' : d.meta.validationPass === false ? 'err' : 'amber'}">${d.meta.validationPass === true ? 'PASS' : d.meta.validationPass === false ? 'FAIL' : '未运行'}</span>`
-    + ` · 物料 <b>${fmt(d.meta.total)}</b> 条：通过 <b class="green">${fmt(sc.ok)}</b> / 有缺项 <b class="amber">${fmt(sc.missing)}</b>（策略期望但原文未提供，可筛选核查）/ 有缺陷 <b class="red">${fmt(sc.error)}</b> / 待核查 <b class="amber">${fmt(d.meta.warnCount || 0)}</b> ⚠（型号首词存疑等，不阻断）`
+    + ` · 物料 <b>${fmt(d.meta.total)}</b> 条：通过 <b class="green">${fmt(sc.ok)}</b> / 有缺项 <b class="amber">${fmt(sc.missing)}</b>（策略期望但原文未提供，可筛选核查）/ 有缺陷 <b class="red">${fmt(sc.error)}</b> / 规则待完善 <b>${fmt(sc.pending || 0)}</b>（该小类暂无特征参数规则，未做提取与校验）/ 待核查 <b class="amber">${fmt(d.meta.warnCount || 0)}</b> ⚠（型号首词存疑等，不阻断）`
     + '</li><li>每条物料的特征参数均在<strong>规格原文</strong>中黄底标注来源片段，可逐条核对「没有编造、没有丢失原文」；规格原文始终完整展示。ERP 原始参数字段（主要/技术参数）一并列出对照。</li></ul>'
   const dl = $('#subList'); dl.innerHTML = ''
   d.subs.slice(0, 300).forEach((s) => { const o = document.createElement('option'); o.value = s.name; dl.appendChild(o) })
@@ -333,11 +333,14 @@ async function loadMaterials(page = 1) {
     const erp = [m.zycs && `主要参数: ${escapeHtml(m.zycs)}`, m.jscs && `技术参数: ${escapeHtml(m.jscs)}`].filter(Boolean).join('<br/>')
     const warnMark = m.warns?.length
       ? `<i class="warn" title="${escapeHtml(m.warns.map((w) => w.param + ': ' + w.reason).join('；'))}"> ⚠待核查${m.warns.length}</i>` : ''
-    const tag = m.status === 'error'
-      ? `<span class="tag err" title="${escapeHtml(m.errors.map((e) => e.param + ': ' + e.reason).join('；'))}">缺陷${m.errors.length}</span>`
-      : m.status === 'missing'
-        ? `<span class="tag amber" title="缺项: ${escapeHtml(m.missing.join('、'))}">缺项${m.missing.length}</span>${warnMark}`
-        : `<span class="tag ok">通过</span>${warnMark}`
+    const tag = m.status === 'pending'
+      // 该小类没有特征参数声明 → 本次未提取、未校验。必须区别于「通过」，否则等于虚假合规结论
+      ? '<span class="tag pending" title="该小类在「命名与查重规则」中还没有特征参数声明：本次不提取参数、不判缺项/缺陷。补齐该小类规则后自动生效">校验规则待完善</span>'
+      : m.status === 'error'
+        ? `<span class="tag err" title="${escapeHtml(m.errors.map((e) => e.param + ': ' + e.reason).join('；'))}">缺陷${m.errors.length}</span>`
+        : m.status === 'missing'
+          ? `<span class="tag amber" title="缺项: ${escapeHtml(m.missing.join('、'))}">缺项${m.missing.length}</span>${warnMark}`
+          : `<span class="tag ok">通过</span>${warnMark}`
     const tr = document.createElement('tr')
     tr.innerHTML = `<td><b>${m.fnumber}</b></td>
       <td>${escapeHtml(m.subName || m.sub)}</td>
@@ -373,7 +376,9 @@ async function openCluster(index) {
     paramKeys = paramKeys.filter(hasVal)
   }
   const pHead = paramKeys.map((k) => `<th class="param">${escapeHtml(k)}</th>`).join('')
-  const pHint = paramKeys.length ? ' ；特征参数列红色=与首行差异' : ''
+  const pHint = paramKeys.length
+    ? ' ；特征参数列红色=与首行差异'
+    : ' ；该小类暂无特征参数规则（校验规则待完善），仅比对名称与规格原文'
   const semLine = semM?.sem
     ? `<div class="sem-line">🏷 <b>${escapeHtml(semM.sem.brand)}</b> · ${escapeHtml(semM.sem.series)}：`
       + semM.sem.features.map((f) => `<span class="pv semf" title="${escapeHtml(f.meaning)}">${escapeHtml(f.key)} <b>${escapeHtml(f.value)}</b></span>`).join(' ')

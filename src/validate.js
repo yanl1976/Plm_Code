@@ -148,8 +148,12 @@ export function inspectRow(rec) {
   const out = {
     subName: info ? (info.subName || info.midName || info.bigName || '') : '',
     tokens, params: {}, missing: [], errors: [], warns: [],
+    // 该小类在 dedup-rules 里没有任何声明（也无 subOverrides）→ 本次不介入：
+    //   既不提取参数、也不判缺项/缺陷。界面上必须显示「校验规则待完善」，
+    //   绝不能因为「没校验」而显示成「通过」（那是虚假合规结论）。
+    rulePending: false,
   }
-  if (!tokens.length) return out
+  if (!tokens.length) { out.rulePending = true; return out }
   try { out.params = extractParams(spec, tokens) }
   catch (e) { out.errors.push({ param: '_extract', value: '', reason: `抛错:${e.message}` }) }
   try { out.sem = decodeSemantics(spec) } catch { out.sem = null } // 品牌编码语义（对照生产商编码表）

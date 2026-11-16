@@ -2659,12 +2659,9 @@ function renderNmSuggest(q, items, summary) {
   const cHtml = nmCompleteHtml(nm.complete)
   if (!list.length && !cHtml) { el.innerHTML = ''; el.classList.remove('show'); return }
   const ql = q.toLowerCase()
-  // 输入正好是一个型号段时，先说明"这个型号已有多少规格"，避免一条条翻候选
-  const head = summary
-    ? '<div class="nm-series">ℹ 同型号系列 <b class="mono">' + escapeHtml(summary.model) + '</b>（含变体）：同小类已有 <b>'
-      + summary.specCount + '</b> 条规格 / <b>' + summary.itemCount + '</b> 个物料，挑最接近的即可</div>'
-    : ''
-  el.innerHTML = cHtml + head + list.map((it) => {
+  // 原先这里有一条「同型号系列 N 条规格 / M 个物料」的说明块：
+  // 与每条候选自带的「型号段 N 条」标注重复，且常出现 1250 条这类无意义的大数，已移除。
+  el.innerHTML = cHtml + list.map((it) => {
     const s = String(it.spec || '')
     const idx = s.toLowerCase().indexOf(ql)
     const html = idx >= 0

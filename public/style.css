@@ -345,7 +345,8 @@ table.ptab td.brand { color:var(--accent); font-weight:700; }
 /* 查重提示里的「同型号系列」块（输入半截型号时的提醒） */
 .nm-series { margin:4px 0; padding:5px 8px; border-left:2px solid var(--accent); background:rgba(62,166,255,.08); border-radius:4px; font-size:12px; }
 /* 规格分段补全：输入框内灰色续写（IDE 式），下方一行横向候选 */
-.nm-spec-wrap { position:relative; }
+/* 作为 .nm-row（flex）的子项占满剩余宽度；同时是 #nmSuggest 的定位基准 */
+.nm-spec-wrap { position:relative; flex:1; min-width:0; }
 .nm-ghost { position:absolute; left:0; top:0; right:0; bottom:0; pointer-events:none;
   overflow:hidden; box-sizing:border-box; white-space:pre-wrap; word-break:break-word;
   color:transparent; }

@@ -1,4 +1,6 @@
-﻿const api = (p) => fetch(p).then((r) => r.json())
+﻿// 注意：必须把第二个参数透传给 fetch，否则带 method/body 的调用会退化成 GET，
+// 导致「保存设置」「修改同义词」「重跑提取」等写操作静默失效（只读不写）。
+const api = (p, opts) => fetch(p, opts).then((r) => r.json())
 const $ = (s) => document.querySelector(s)
 const fmt = (n) => (n == null ? '-' : n.toLocaleString('zh-CN'))
 
@@ -687,10 +689,8 @@ async function doBackup(keys) {
   if (!confirm('将备份以下库：\n\n' + names + '\n\n继续？')) return
   if (msg) msg.textContent = '备份中…'
   try {
-    const r = await api('/api/backup/create', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keys }),
-    })
+    // 注意：api() 只发 GET，这里必须用 apiPost
+    const r = await apiPost('/api/backup/create', { keys })
     if (msg) msg.textContent = r && r.ok
       ? ('已备份 ' + keys.length + ' 个库（' + fmtBytes(r.totalBytes) + '）')
       : ('备份失败：' + ((r && r.error) || '未知'))
@@ -705,10 +705,7 @@ async function delBackup(id) {
   if (!confirm('确定删除这份备份？删除后不可恢复。')) return
   const msg = $('#bkMsg')
   try {
-    const r = await api('/api/backup/delete', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    })
+    const r = await apiPost('/api/backup/delete', { id })
     if (msg) msg.textContent = r && r.ok ? '已删除' : ('删除失败：' + ((r && r.error) || '未知'))
     await loadBackupList()
   } catch (e) {
@@ -745,10 +742,7 @@ async function openRestore(id) {
   // 先预览：会覆盖哪些文件
   let dry = null
   try {
-    dry = await api('/api/backup/restore', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, keys, dryRun: true }),
-    })
+    dry = await apiPost('/api/backup/restore', { id, keys, dryRun: true })
   } catch (e) {
     alert('预览失败：' + ((e && e.message) || e) + '\n\n若接口 404，说明服务端未部署最新版本')
     return
@@ -762,10 +756,7 @@ async function openRestore(id) {
   if (msg) msg.textContent = '恢复中…'
   let r = null
   try {
-    r = await api('/api/backup/restore', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, keys }),
-    })
+    r = await apiPost('/api/backup/restore', { id, keys })
   } catch (e) {
     if (msg) msg.textContent = '恢复失败：' + ((e && e.message) || e)
     return

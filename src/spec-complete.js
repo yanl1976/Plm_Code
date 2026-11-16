@@ -95,8 +95,9 @@ function statOf(sub, items) {
   const table = new Map()
   for (const it of src) {
     // 调用方可以传"该小类"或"全量"：这里统一按小类过滤
+    // 三处来源字段命名不同：plm-index 的 minimal() 用 fNumber，看板 allDocs() 用 fnumber，快照用 FNUMBER
     const sn = String(it.sub || it.SUB || '').slice(0, 6)
-    const fn = String(it.fnumber || it.FNUMBER || '')
+    const fn = String(it.fnumber || it.FNUMBER || it.fNumber || '')
     if (sn ? sn !== sub : !fn.startsWith(sub)) continue
     const spec = String(it.fSpec || it.spec || '')
     if (!spec) continue

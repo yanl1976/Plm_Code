@@ -23,7 +23,8 @@ import fs from 'fs'
 import path from 'path'
 import XLSX from 'xlsx'
 import { fileURLToPath } from 'url'
-import { loadIndex, indexStatus, queryDuplicates, suggestNames, suggestSpecs, categoryOf, tokensOf } from './plm-index.js'
+import { loadIndex, indexStatus, queryDuplicates, suggestNames, suggestSpecs, categoryOf, tokensOf, bucketItems } from './plm-index.js'
+import { complete as specComplete } from './spec-complete.js'
 import { checkMaterial, suggestSpec } from './material-rules.js'
 import { cableSpecHints } from './cable-spec.js'
 import { applyBlocks, isHardDup, normalizeBlocks } from './block-gate.js'
@@ -1177,6 +1178,19 @@ const server = http.createServer(async (req, res) => {
       log('[select]', JSON.stringify(body), '->', out.total)
       return send(res, 200, out)
     }
+    // 规格分段补全（插件端）：与看板 /api/new-material/spec-complete 同一套逻辑，
+    // 数据取本进程已加载的该小类物料（bucketItems），不额外读盘。
+    if (p === '/api/plm/spec-complete') {
+      const q = url.searchParams
+      const sub = String(q.get('sub') || '').slice(0, 6)
+      const value = q.get('q') || ''
+      try {
+        return send(res, 200, sub ? specComplete(sub, value, bucketItems(sub)) : { ok: false, options: [] })
+      } catch (e) {
+        return send(res, 200, { ok: false, reason: String((e && e.message) || e), options: [] })
+      }
+    }
+
     if (p === '/api/plm/suggest' && req.method === 'POST') {
       const body = await readBody(req)
       const out = handleSuggest(body)

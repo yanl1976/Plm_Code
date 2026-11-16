@@ -599,7 +599,17 @@ function fmtTime(iso) {
 }
 
 async function loadBackup() {
-  const r = await api('/api/backup/libs')
+  let r = null
+  try {
+    r = await api('/api/backup/libs')
+  } catch (e) {
+    // 服务端未部署时接口 404：给出可读提示，避免整个设置页白屏
+    const box = $('#bkLibs')
+    if (box) box.innerHTML = '<p class="muted">备份功能不可用（接口未就绪，可能是服务端未部署最新版本）。</p>'
+    const msg = $('#bkMsg')
+    if (msg) msg.textContent = '接口不可用：' + ((e && e.message) || e)
+    return
+  }
   bkState.libs = (r && r.libs) || []
   // 默认勾选「同义词字典 / 国标命名范式库 / 命名与查重规则」这三个最常改的
   if (!bkState.selected.size) {
@@ -676,23 +686,34 @@ async function doBackup(keys) {
   const names = keys.map((k) => (bkState.libs.find((x) => x.key === k) || {}).name || k).join('、')
   if (!confirm('将备份以下库：\n\n' + names + '\n\n继续？')) return
   if (msg) msg.textContent = '备份中…'
-  const r = await api('/api/backup/create', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ keys }),
-  })
-  if (msg) msg.textContent = r && r.ok ? ('已备份 ' + keys.length + ' 个库（' + fmtBytes(r.totalBytes) + '）') : ('备份失败：' + ((r && r.error) || '未知'))
-  await loadBackupList()
+  try {
+    const r = await api('/api/backup/create', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keys }),
+    })
+    if (msg) msg.textContent = r && r.ok
+      ? ('已备份 ' + keys.length + ' 个库（' + fmtBytes(r.totalBytes) + '）')
+      : ('备份失败：' + ((r && r.error) || '未知'))
+    await loadBackupList()
+  } catch (e) {
+    // 常见原因：服务端未部署最新版本（/api/backup/* 返回 404）
+    if (msg) msg.textContent = '备份失败：' + ((e && e.message) || e) + '｜若接口 404，说明服务端需要部署最新版本'
+  }
 }
 
 async function delBackup(id) {
   if (!confirm('确定删除这份备份？删除后不可恢复。')) return
-  const r = await api('/api/backup/delete', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id }),
-  })
   const msg = $('#bkMsg')
-  if (msg) msg.textContent = r && r.ok ? '已删除' : ('删除失败：' + ((r && r.error) || '未知'))
-  await loadBackupList()
+  try {
+    const r = await api('/api/backup/delete', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    if (msg) msg.textContent = r && r.ok ? '已删除' : ('删除失败：' + ((r && r.error) || '未知'))
+    await loadBackupList()
+  } catch (e) {
+    if (msg) msg.textContent = '删除失败：' + ((e && e.message) || e)
+  }
 }
 
 async function openRestore(id) {
@@ -722,10 +743,16 @@ async function openRestore(id) {
   if (!keys.length) { alert('没有匹配的库'); return }
 
   // 先预览：会覆盖哪些文件
-  const dry = await api('/api/backup/restore', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, keys, dryRun: true }),
-  })
+  let dry = null
+  try {
+    dry = await api('/api/backup/restore', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, keys, dryRun: true }),
+    })
+  } catch (e) {
+    alert('预览失败：' + ((e && e.message) || e) + '\n\n若接口 404，说明服务端未部署最新版本')
+    return
+  }
   if (!dry || !dry.ok) { alert('预览失败：' + ((dry && dry.error) || '未知')); return }
   const list = (dry.files || []).map((f) => '  ' + f.rel).join('\n')
   if (!confirm('将覆盖以下 ' + dry.count + ' 个文件：\n\n' + list
@@ -733,10 +760,16 @@ async function openRestore(id) {
 
   const msg = $('#bkMsg')
   if (msg) msg.textContent = '恢复中…'
-  const r = await api('/api/backup/restore', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, keys }),
-  })
+  let r = null
+  try {
+    r = await api('/api/backup/restore', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, keys }),
+    })
+  } catch (e) {
+    if (msg) msg.textContent = '恢复失败：' + ((e && e.message) || e)
+    return
+  }
   if (r && r.ok) {
     if (msg) msg.textContent = '已恢复 ' + r.count + ' 个文件' + (r.preSnapshot ? ('（恢复前快照：' + r.preSnapshot + '）') : '')
     await loadBackupList()

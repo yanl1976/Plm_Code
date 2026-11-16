@@ -135,17 +135,31 @@ export function complete(sub, q, items) {
     return { ok: false, reason: '该小类模板无法对齐参数库', param: '', prefix: '', options: [], segments: [], pattern: st.pattern, sampleSize: st.total }
   }
 
-  const vals = extractParams(raw, st.tokens)
-  // 当前段 = 第一个尚未填全的段；都填了则停在最后一段（便于修改）
-  let idx = st.segments.findIndex((sg) => !sg.params.every((p) => vals[p]))
-  if (idx < 0) idx = st.segments.length - 1
-  const seg = st.segments[idx]
-
-  // 正在输入的片段 = 最后一个空格后的内容；只有它确实属于本段参数时才当prefix
   const tail = (/([^\s]*)$/.exec(raw) || [, ''])[1]
-  const tailVals = tail ? extractParams(tail, seg.params) : {}
-  const belongs = !!(tail && seg.params.some((p) => tailVals[p]))
-  const prefix = belongs ? tail : ''
+  const vals = extractParams(raw, st.tokens)
+
+  // 当前段推断（IDE 语义：先补全"正在打的那一段"，再考虑"下一段"）
+  //   ① 末尾片段能归属某段 → 就是它（例：NXB-6 仍在填型号，不该跳到极数）
+  //   ② 末尾为空（刚打空格）→ 取第一个未填段
+  // 关键：归属只从「head 已填完的段之后」开始找。
+  //       否则「型号」这类宽正则会把 3P / C1 也认成型号（实测：NXB-63 3P 被判成型号段）。
+  const headStr = tail ? raw.slice(0, raw.length - tail.length) : raw
+  const headVals = extractParams(headStr, st.tokens)
+  let start = 0
+  for (let i = 0; i < st.segments.length; i++) {
+    if (st.segments[i].params.every((p) => headVals[p])) start = i + 1
+    else break
+  }
+  let idx = -1
+  if (tail) {
+    for (let i = start; i < st.segments.length; i++) {
+      const tv = extractParams(tail, st.segments[i].params)
+      if (st.segments[i].params.some((p) => tv[p])) { idx = i; break }
+    }
+  }
+  if (idx < 0) idx = start < st.segments.length ? start : st.segments.length - 1
+  const seg = st.segments[idx]
+  const prefix = tail
 
   const all = st.ranked.get(seg.key) || []
   const key = prefix.toLowerCase()
@@ -154,8 +168,10 @@ export function complete(sub, q, items) {
     : all
 
   // 单位补全：本段带单位、输入是「数字（可带 k/M/μ 倍率）」→ 优先给「数字+单位」
-  // 例：电阻段输入 10k → 10kΩ；电缆截面输入 2.5 → 2.5mm^2
-  const unitHit = seg.unit && /^[\d.]+\s*[kKmMμuGg]?$/.test(prefix)
+  // 例：电阻段输入 10k → 10kΩ
+  // 限定单参数段：组合段 `{芯数}*{截面}mm^2` 的单位只属于后半段，
+  // 若对整段补单位，输入 "3" 会被补成 "3mm^2"（实测发现的错误）
+  const unitHit = seg.unit && seg.params.length === 1 && /^[\d.]+\s*[kKmMμuGg]?$/.test(prefix)
   if (unitHit) {
     const withUnit = prefix + seg.unit
     opts = [{ value: withUnit, count: 0, kind: 'unit' }, ...opts.filter((x) => x.value !== withUnit)]

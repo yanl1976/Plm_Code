@@ -287,7 +287,10 @@
           </div>
           <div class="nm-row nm-spec"><label>规格型号</label>
             <div class="nm-spec-wrap">
-              <textarea id="nmSpec" rows="2" placeholder="如 C65N-C16/3P AC400V" autocomplete="off"></textarea>
+              <div class="nm-spec-wrap">
+                <textarea id="nmSpec" rows="2" placeholder="如 C65N-C16/3P AC400V" autocomplete="off"></textarea>
+                <div id="nmGhost" class="nm-ghost" aria-hidden="true"></div>
+              </div>
               <div id="nmSuggest" class="nm-suggest"></div>
             </div>
             <span id="nmSpecStock" class="nm-spec-stock">现有库存 -</span>

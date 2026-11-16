@@ -344,16 +344,23 @@ table.ptab td.brand { color:var(--accent); font-weight:700; }
 .nm-name-tip-std:hover { text-decoration:underline solid; }
 /* 查重提示里的「同型号系列」块（输入半截型号时的提醒） */
 .nm-series { margin:4px 0; padding:5px 8px; border-left:2px solid var(--accent); background:rgba(62,166,255,.08); border-radius:4px; font-size:12px; }
-/* 规格分段补全：顶部"当前段 + 候选"，Tab 采用首个 */
-.nm-complete { margin:2px 0 5px; padding:5px 0; border-bottom:1px dashed rgba(255,255,255,.12); }
-.nm-complete-head { font-size:11px; color:var(--muted); margin:0 6px 4px; }
-.nm-complete-head b { color:var(--accent); font-weight:600; }
-.nm-complete-step { margin-left:8px; opacity:.7; }
-.nm-complete-key { margin-left:8px; opacity:.55; }
-.nm-copt { display:flex; align-items:center; justify-content:space-between; cursor:pointer;
-  font-size:12px; padding:2px 6px; border-left:2px solid transparent; }
-.nm-copt:hover, .nm-copt.on { background:rgba(62,166,255,.12); border-left-color:var(--accent); }
-.nm-copt .nm-cnt { opacity:.55; font-size:11px; margin-left:10px; }
+/* 规格分段补全：输入框内灰色续写（IDE 式），下方一行横向候选 */
+.nm-spec-wrap { position:relative; }
+.nm-ghost { position:absolute; left:0; top:0; right:0; bottom:0; pointer-events:none;
+  overflow:hidden; box-sizing:border-box; white-space:pre-wrap; word-break:break-word;
+  color:transparent; }
+.nm-ghost .gr { color:var(--muted); opacity:.75; }
+
+.nm-suggest > .nm-complete { display:flex; flex-wrap:wrap; align-items:center; gap:4px;
+  padding:5px 8px; font-family:ui-monospace, Consolas, monospace; font-size:12px;
+  border-bottom:1px dashed rgba(255,255,255,.14); justify-content:flex-start; cursor:default; }
+.nm-suggest > .nm-complete:hover { background:none; color:inherit; }
+.nm-cseg { color:var(--muted); font-size:11px; margin-right:2px; }
+.nm-copt { padding:1px 7px; border-radius:4px; border:1px solid var(--line); cursor:pointer; }
+.nm-copt:hover { border-color:var(--accent); color:var(--accent); }
+.nm-copt.on { border-color:var(--accent); background:rgba(62,166,255,.14); color:var(--accent); }
+.nm-copt b { font-weight:600; }
+.nm-ckey { margin-left:auto; color:var(--muted); font-size:11px; opacity:.75; }
 
 .nm-series b { color:var(--accent); }
 .nm-hit-series { padding-left:2px; }

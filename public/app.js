@@ -2070,7 +2070,9 @@ function bindNmEvents() {
   $('#nmExport').onclick = () => window.open('/api/new-material/export', '_blank')
   $('#nmSpec').addEventListener('input', () => {
     clearTimeout(nm.timer)
-    nm.timer = setTimeout(nmSpecInput, 300)
+    nm.timer = setTimeout(nmSpecInput, 180)   // 补全接口是内存计算，比整条规格联想快，防抖可短一些
+    nm.complete = null      // 输入一变就撤掉旧续写，避免显示过期候选
+    updateNmGhost()
     nmRuleTick()
   })
   // 名称：边打字边在同义词浮层里即时提示（轻量接口，120ms 防抖）
@@ -2078,6 +2080,11 @@ function bindNmEvents() {
   $('#nmName').addEventListener('focus', () => { if (($('#nmName').value || '').trim()) nmNameSuggest() })
   $('#nmName').addEventListener('keydown', (e) => { if (e.key === 'Escape') hideNmNameTip() })
   $('#nmSpec').addEventListener('focus', () => { if (($('#nmSpec').value || '').trim()) nmSpecInput() })
+  // 滚动时续写层跟随（textarea 内容超两行时）
+  $('#nmSpec').addEventListener('scroll', () => {
+    const g = $('#nmGhost'), inp = $('#nmSpec')
+    if (g && inp) g.scrollTop = inp.scrollTop
+  })
   // 分段补全：Tab 采用首个候选（不能用 Enter——PLM/表单一栏里 Enter 常触发提交）
   $('#nmSpec').addEventListener('keydown', (e) => {
     if (e.isComposing) return                    // 中文输入法组字中，不拦截
@@ -2307,6 +2314,7 @@ function nmSpecInput() {
     .then((c) => {
       if (seq !== nm.sugSeq) return
       nm.complete = (c && c.ok) ? c : null
+      updateNmGhost()
       renderNmSuggest(q, nm.lastItems || [], nm.lastSummary)
     })
   // ② 整条规格联想（存量写法）：与①并发，各自渲染时都会带上补全区
@@ -2577,17 +2585,49 @@ function nmSpecCheckOnly() {
  */
 function nmCompleteHtml(r) {
   if (!r || !r.ok || !r.options || !r.options.length) return ''
-  const unit = r.unit ? '（单位 ' + escapeHtml(r.unit) + '）' : ''
-  const opts = r.options.map((o, i) => {
-    const tag = o.kind === 'unit' ? '补单位' : (o.count ? String(o.count) : '')
-    return '<div class="nm-copt' + (i === 0 ? ' on' : '') + '" data-cv="' + escapeHtml(o.value) + '">'
-      + escapeHtml(o.value) + '<span class="nm-cnt">' + tag + '</span></div>'
+  const seg = r.unit ? r.param + '（' + r.unit + '）' : r.param
+  const pf = String(r.prefix || '').toLowerCase()
+  // 横向一行：候选按已输入前缀高亮，Tab 是首个
+  const opts = r.options.slice(0, 5).map((o, i) => {
+    const v = String(o.value || '')
+    const hit = pf && v.toLowerCase().startsWith(pf)
+    const html = hit
+      ? '<b>' + escapeHtml(v.slice(0, pf.length)) + '</b>' + escapeHtml(v.slice(pf.length))
+      : escapeHtml(v)
+    return '<span class="nm-copt' + (i === 0 ? ' on' : '') + '" data-cv="' + escapeHtml(v) + '">' + html + '</span>'
   }).join('')
-  return '<div class="nm-complete">'
-    + '<div class="nm-complete-head">当前段：<b>' + escapeHtml(r.param) + '</b>' + unit
-    + '<span class="nm-complete-step">第 ' + (r.index + 1) + '/' + r.total + ' 段</span>'
-    + '<span class="nm-complete-key">Tab 采用首个</span></div>'
-    + opts + '</div>'
+  return '<div class="nm-complete"><span class="nm-cseg">' + escapeHtml(seg) + '</span>'
+    + opts + '<span class="nm-ckey">Tab 补全</span></div>'
+}
+
+/**
+ * 输入框内的灰色续写（IDE 式）：已输入部分透明占位，剩余部分灰色显示。
+ * 用与 textarea 完全一致的字体与内边距，保证字符位置对齐；不改动输入内容与光标。
+ */
+function updateNmGhost() {
+  const g = $('#nmGhost'), inp = $('#nmSpec')
+  if (!g || !inp) return
+  const r = nm.complete
+  if (!r || !r.ok || !(r.options || []).length) { g.innerHTML = ''; return }
+  const val = inp.value || ''
+  const cand = String(r.options[0].value || '')
+  const tail = String(r.prefix || '')
+  const rest = tail ? cand.slice(tail.length) : cand
+  if (!rest) { g.innerHTML = ''; return }
+  // 只在光标位于末尾时续写（中途编辑时续写会错位）
+  if (inp.selectionStart != null && inp.selectionStart !== (inp.value || '').length) { g.innerHTML = ''; return }
+  // 与 textarea 的排版同步（不同主题/字号下面板样式可能不同）
+  const cs = getComputedStyle(inp)
+  g.style.font = cs.font
+  g.style.lineHeight = cs.lineHeight
+  g.style.padding = cs.padding
+  g.style.letterSpacing = cs.letterSpacing
+  g.style.textIndent = cs.textIndent
+  g.style.borderWidth = cs.borderWidth
+  g.style.borderStyle = 'solid'
+  g.style.borderColor = 'transparent'
+  g.scrollTop = inp.scrollTop
+  g.innerHTML = escapeHtml(val) + '<span class="gr">' + escapeHtml(rest) + '</span>'
 }
 
 /** 采用某个补全候选：替换当前段的已输入片段，不足一段时补空格 */
@@ -2602,10 +2642,13 @@ function applySpecComplete(value) {
   inp.value = base ? base + ' ' + value : value
   clearTimeout(nm.timer)
   nm.sugSeq++
+  nm.complete = null
+  updateNmGhost()
   nmSpecCheckOnly()
   nmRuleTick()
-  const unit = $('#nmUnit')
-  if (unit) unit.focus()
+  // 焦点留在规格框内，便于连续录入（此前跳到单位框会打断，是"难用"的主因之一）
+  inp.focus()
+  try { inp.setSelectionRange(inp.value.length, inp.value.length) } catch (e) { /* 忽略 */ }
 }
 
 function renderNmSuggest(q, items, summary) {

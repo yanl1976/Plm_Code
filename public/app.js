@@ -2477,8 +2477,21 @@ function renderNmRule(r) {
   }
   otherWarns.forEach((w) => pushHint(w))
 
+  // 跨小类：名称明显属于另一个小类（如 110301 电线 里填「电话线」）。
+  // 后端 detectSubMismatch 已给出 msg/level，但看板此前完全没有渲染这个字段 ——
+  // 用户选错小类后只能看到「书写格式符合规范」，无从得知类选错了。
+  // 放在最前面，且 level=error 用红色（未阻断保存，只是必须让用户看见）。
+  const mm = r.subMismatch
+  const mmHtml = mm
+    ? '<div class="nm-hint" style="color:' + (mm.level === 'error' ? 'var(--red)' : 'var(--amber)') + '">'
+      + '<span class="nm-hint-icon">⚠</span>'
+      + '<span class="nm-hint-text">' + escapeHtml(mm.msg
+        || ('名称「' + mm.name + '」与所选小类「' + ((mm.current && mm.current.subName) || '') + '」不匹配'))
+      + '</span></div>'
+    : ''
+
   const ORDER = ['name', 'spec', 'dup', 'stock', 'env']
-  let html = ''
+  let html = mmHtml
   for (const g of ORDER) {
     const list = buckets[g]
     if (!list || !list.length) continue

@@ -4993,7 +4993,7 @@
             "光功率计适配器"
           ],
           "traits": [],
-          "crossSub": false
+          "crossSub": true
         }
       ],
       "systemWords": [],
@@ -6855,7 +6855,7 @@
           "traits": [
             "接口"
           ],
-          "crossSub": false
+          "crossSub": true
         },
         {
           "name": "通讯电缆",
@@ -6915,7 +6915,7 @@
             "接口",
             "长度"
           ],
-          "crossSub": false
+          "crossSub": true
         },
         {
           "name": "电话线",
@@ -6925,7 +6925,7 @@
           "traits": [
             "芯数"
           ],
-          "crossSub": false
+          "crossSub": true
         },
         {
           "name": "排线",
@@ -8570,7 +8570,7 @@
           "traits": [
             "芯数"
           ],
-          "crossSub": false
+          "crossSub": true
         },
         {
           "name": "光纤跳线",
@@ -8616,7 +8616,7 @@
           "traits": [
             "识别方式"
           ],
-          "crossSub": false
+          "crossSub": true
         },
         {
           "name": "出门按钮",
@@ -8629,7 +8629,7 @@
           "traits": [
             "类型"
           ],
-          "crossSub": false
+          "crossSub": true
         },
         {
           "name": "磁力锁",
@@ -8642,7 +8642,7 @@
             "门数",
             "拉力"
           ],
-          "crossSub": false
+          "crossSub": true
         },
         {
           "name": "人脸门禁一体机",
@@ -8662,7 +8662,7 @@
           "traits": [
             "电压"
           ],
-          "crossSub": false
+          "crossSub": true
         },
         {
           "name": "独立式感烟探测器",
@@ -8683,7 +8683,7 @@
           "traits": [
             "容量"
           ],
-          "crossSub": false
+          "crossSub": true
         },
         {
           "name": "应急灯",
@@ -8698,7 +8698,7 @@
           "traits": [
             "方向"
           ],
-          "crossSub": false
+          "crossSub": true
         },
         {
           "name": "机柜",

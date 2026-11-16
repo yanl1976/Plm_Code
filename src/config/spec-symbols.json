@@ -4,7 +4,8 @@
   "policy": {
     "baseline": "GBK / CP936 —— Windows 中文版、Excel 默认编码、金蝶 PLM 接口、CAD SHX 字形的共同交集",
     "rule": "规格只允许 ASCII + whitelist 符号；其余按下表转换。must=CP936 无法表示（跨系统必乱码）；should=能显示但语义错或同义混用，应统一",
-    "note": "平方/立方统一写成幂记号 ^2/^3：GB 3101 规范写法是上标（mm²），但 CAD 的 SHX 字形与 GBK(CP936) 都不含上标字符，而 CAD、PLM 里现行写法就是 mm^2，故以 ^2 为统一形式（ASCII，四端全通，语义不变）"
+    "note": "平方/立方统一写成幂记号 ^2/^3：GB 3101 规范写法是上标（mm²），但 CAD 的 SHX 字形与 GBK(CP936) 都不含上标字符，而 CAD、PLM 里现行写法就是 mm^2，故以 ^2 为统一形式（ASCII，四端全通，语义不变）",
+    "cubeNote": "立方：m³/³ → m^3、㎥ → m^3；**不改小写 m3** —— 与螺纹 M3（库内 77 条）无法区分，误改会破坏螺纹规格"
   },
   "replace": [
     {
@@ -122,6 +123,15 @@
       "group": "立方",
       "name": "上标3",
       "reason": "同上，统一为幂记号 ^3",
+      "hits": 0
+    },
+    {
+      "from": "㎥",
+      "to": "m^3",
+      "level": "must",
+      "group": "体积",
+      "name": "兼容字符立方米",
+      "reason": "U+33A5 CJK 兼容「立方米」，CP936 下变问号；应写 m^3",
       "hits": 0
     }
   ],

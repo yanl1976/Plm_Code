@@ -57,6 +57,12 @@ function libByKey(key) {
   return LIBS.find((x) => x.key === key) || null
 }
 
+/** 各库「一条」的量词：同义词/规则按条，范式库按小类，标准查新按标准 */
+const UNIT = {
+  synonyms: '条', guide: '个小类', rules: '条', classify: '项',
+  feature: '项', std: '个标准', selection: '个文件', settings: '项',
+}
+
 /** 库涉及的文件绝对路径列表 */
 function filesOf(lib) {
   if (!lib) return []
@@ -112,19 +118,56 @@ export function statLib(lib) {
       } catch (e) { /* 文件不存在 */ }
     }
   }
-  return { key: lib.key, name: lib.name, desc: lib.desc, kind: lib.kind, exists, files, bytes, rows }
+  return {
+    key: lib.key, name: lib.name, desc: lib.desc, kind: lib.kind,
+    exists, files, bytes, rows, unit: UNIT[lib.key] || '项',
+  }
 }
 
-/** 粗略统计 JSON 里的条目数：数组取长度；对象取键数（含一层 subs 之类的容器） */
+/** 元信息键：不参与业务条目计数 */
+const META_KEYS = new Set(['meta', 'version', 'updatedAt', 'description', 'note', 'notes'])
+
+const isPrim = (v) => v == null || typeof v !== 'object'
+/** 纯字典：所有值都是原始类型（如 { "空气开关": "微型断路器" }） */
+const isPrimDict = (o) => !!o && typeof o === 'object' && !Array.isArray(o)
+  && Object.keys(o).length > 0 && Object.values(o).every(isPrim)
+
+/**
+ * 统计 JSON 里的业务条目数。
+ *
+ * 不同库的「一条」含义不同，按结构区分：
+ *   · 数组                     → 长度（如 categories: [大类, 大类, 大类]）
+ *   · 全原始值的对象           → 键数（字典表，如 synonyms.global 的 alias→std）
+ *   · 子项全是字典的对象       → 各子项键数之和（如 synonyms.bySub: { 100101: {别名:标准名}, ... }）
+ *   · 子项是配置对象的对象     → 子项个数（如 naming-guide.subs 的 209 个小类、std-watch.standards 的 136 个标准）
+ *
+ * 这样「同义词字典」得到 159（41 通用 + 118 小类内），
+ * 「范式库」得到 209（小类数）而不是把每个小类的字段都算成一条。
+ */
 function countRows(j) {
   if (Array.isArray(j)) return j.length
   if (!j || typeof j !== 'object') return 0
+
+  const keys = Object.keys(j).filter((k) => !META_KEYS.has(k))
+  if (!keys.length) return 0
+
+  // 整体就是一张字典表
+  if (keys.every((k) => isPrim(j[k]))) return keys.length
+
   let n = 0
-  for (const k of Object.keys(j)) {
+  for (const k of keys) {
     const v = j[k]
-    if (Array.isArray(v)) n += v.length
-    else if (v && typeof v === 'object') n += Object.keys(v).length
-    else n += 1
+    if (Array.isArray(v)) { n += v.length; continue }
+    if (isPrim(v)) { n += 1; continue }
+    if (isPrimDict(v)) { n += Object.keys(v).length; continue }   // 二级字典
+    const subs = Object.values(v)
+    if (subs.length && subs.every(isPrimDict)) {
+      // 分组字典：每个子项都是字典表 → 累加各自的键数
+      n += subs.reduce((s, x) => s + Object.keys(x).length, 0)
+    } else {
+      // 分组配置：每个子项算一条（一个小类 / 一个标准 / 一个模板）
+      n += Object.keys(v).length
+    }
   }
   return n
 }

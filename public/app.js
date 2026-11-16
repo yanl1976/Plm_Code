@@ -620,7 +620,7 @@ function renderBackupLibs() {
     return `<label class="bk-lib"${missing}>
       <input type="checkbox" class="bk-chk" data-key="${escapeHtml(x.key)}"${checked} />
       <span class="bk-name">${escapeHtml(x.name)}</span>
-      <span class="bk-meta">${x.exists ? (x.rows ? x.rows + ' 条 · ' : '') + fmtBytes(x.bytes) : '文件不存在'}</span>
+      <span class="bk-meta">${x.exists ? (x.rows ? x.rows + ' ' + (x.unit || '条') + ' · ' : '') + fmtBytes(x.bytes) : '文件不存在'}</span>
       <span class="bk-desc">${escapeHtml(x.desc || '')}</span>
     </label>`
   }).join('')

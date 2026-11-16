@@ -873,7 +873,7 @@ const server = http.createServer(async (req, res) => {
       const pageSize = Math.min(200, parseInt(url.searchParams.get('pageSize') || '50', 10))
       let list = idx.items
       if (sub) list = list.filter((m) => m.subName.toLowerCase().includes(sub) || m.sub.includes(sub))
-      if (['ok', 'missing', 'error'].includes(status)) list = list.filter((m) => m.status === status)
+      if (['ok', 'missing', 'error', 'pending'].includes(status)) list = list.filter((m) => m.status === status)
       if (q) list = list.filter((m) => m.fnumber.toLowerCase().includes(q) || m.name.toLowerCase().includes(q) || m.spec.toLowerCase().includes(q))
       const human = url.searchParams.get('human') || ''
       if (human === '1') list = list.filter((m) => (m.humanFields || []).length > 0)

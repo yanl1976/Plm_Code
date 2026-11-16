@@ -169,7 +169,8 @@ export function extractParams(spec, tokens = [], lib = LIB) {
       let model = m ? m[1] : ''
       if (!/[A-Za-z]/.test(model)) model = ''          // 必须含字母，纯数字不是型号
       // 纯数字或 数字+单位（尺寸/数值，如 500mm、2200、100）→ 不是型号
-      if (/^[\d.]+(?:mm|cm|m|kV|V|A|W|Ω|kA|mA|µm|um)?$/i.test(model)) model = ''
+      // 容量/存储单位也算：8TB、4T、16G、512GB 是规格容量，不是型号（否则「监控硬盘 8TB」会判为型号齐全）
+      if (/^[\d.]+(?:mm|cm|kV|TB|GB|MB|m|V|A|W|Ω|kA|mA|µm|um|T|G|M)?$/i.test(model)) model = ''
       // 单字母 + 后接 =/:/* 或 空格+数字 → 是尺寸变量前缀（L=7 / L:3m），不是型号
       if (/^[A-Za-z]$/.test(model) && /^[=:*]|\s\d/.test(s.slice(m ? m.index + m[0].length : 0))) model = ''
       // 型号结尾若粘连极数/电流（如 IC65N-2P-6A、ABB-1P3A），拆解：型号取到首个 -[1-4]P 之前，极数与电流由各自正则另行捕获

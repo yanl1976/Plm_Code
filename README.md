@@ -93,10 +93,13 @@ Plm_Code/
     config/                     # 规则配置：改这里即可调整行为，无需改代码
       classification.json       # 由 xlsx 生成的分类树（3 大类 / 209 小类）
       classification-map.json   # 6 位小类编码 -> 大类/中类/小类 定位与名称
-      dedup-rules.json          # 查重口径：归一化规则 + 各小类关键属性 + 近重阈值
+      dedup-rules.json          # 查重口径：归一化规则 + 各小类关键属性 + 近重阈值 + tokensPolicy
       spec-fields.json          # 特征参数取值正则库（按头部企业命名方式归纳）
+      spec-symbols.json         # 规格字符统一表（GBK/CP936 兼容；must=会乱码、should=同义统一）
       material-rules.json       # 名称/规格书写规则（硬错误 + 提示）及文案
+      naming-guide.json         # 命名范式库（每小类 nameRule / specPattern / fields / nameUnits）
       name-synonyms.json        # 名称同义词字典（global + bySub 两级，bySub 优先）
+      guide-field-map.json      # 范式字段名 → 参数名 映射（配置期翻译与完备度审计用）
       feature-templates.json    # 中类特征参数模板（feature-templates.js 产出，勿手改）
       model-semantics.json      # 品牌型号编码语义解码表（逐段解码，fill-when-empty）
       brand-decode.json         # 型号编码解码表（文本提取为空时的盲区填充）
@@ -205,7 +208,7 @@ pm2 delete plm-api plm-web       # 停掉本项目两个，不影响同机其它
 | 柜体/结构件 | 型号, 尺寸(宽×深×高) | `800×600×2200` |
 | 保护器/熔断器 | 型号, 额定电压, 额定电流 | `RT28-63Z 63A` |
 
-- **提取配置（两层可配、无需改代码）**：某小类提取哪些参数 → `src/config/dedup-rules.json` 的 `heuristics[].tokens`（或 `subOverrides[<小类>].tokens`，未命中品类回退 `defaultTokens`）；每个参数如何取值 → `src/config/spec-fields.json` 的 `library`（正则）。实现见 `src/struct-spec.js` + `src/classify.js`(`chooseTokens`)，`src/dedup.js` 在聚类时为每个成员附加 `params`。前端查重簇对比表动态生成**参数列**（等宽居中、首行为参考、差异红字）。
+- **提取配置（两层可配、无需改代码）**：某小类提取哪些参数 → `src/config/dedup-rules.json` 的 `heuristics[].tokens`（或 `subOverrides[<小类>].tokens`）。**未命中且无 subOverrides 声明的小类一律不提取参数**（不再回退全局默认集，见 `meta.tokensPolicy`），界面显示「校验规则待完善」；每个参数如何取值 → `src/config/spec-fields.json` 的 `library`（正则）。实现见 `src/struct-spec.js` + `src/classify.js`(`chooseTokens`)，`src/dedup.js` 在聚类时为每个成员附加 `params`。前端查重簇对比表动态生成**参数列**（等宽居中、首行为参考、差异红字）。
 - **局限与扩展**：品牌系列代号（如 `NSX100F MA100`、`3RT`、`6ES7…`）的额定电流常内嵌于型号且无单位，需按品牌追加规则；端子间距(3.81mm)、部分简写仍待补充。新增品类参数只需在两份配置中追加条目。
 
 ## Web 可视化前端
@@ -291,3 +294,25 @@ npm run server                  # 端口取 .env 的 PORT（默认 3000），被
 - **乘号强制统一 `*`（待定）**：当前 `checkSpec()` 只发 `warn`（`multiplyMsg`），`suggestSpec()` 已能算出 `3*25` 的规范写法，但**不自动改写、也不阻断保存**。
   待确认：`LAY3x2` 里的 `x` 是乘号还是型号分隔符（正确写法可能是 `LAY3-2` 而非 `LAY3*2`）。
   结论明确前不改规则；涉及 `src/material-rules.js` 的乘号判定与 `src/config/material-rules.json` 的 `multiplyChars` / `multiplyMsg`。
+
+## 相关文档
+
+| 文档 | 内容 |
+|---|---|
+| `docs/规格字符标准.md` | 规格型号字符统一：GBK/CP936 兼容底线、must/should 替换表、`mm^2` 决策与国标依据 |
+| `docs/待修正清单-字符集.xlsx` | 存量待修正物料（must 157 条 / should 220 条），按字符分类，供批量处理 |
+| `docs/分类治理记录-批次4.md` | 四个杂类（120404/120405/101808/101912）的归属判定方法与可执行清单 |
+| `docs/编码纠正清单-批次5.md` | 5 条无效小类码的纠正建议（含目标小类同类证据） |
+
+### 配置生效方式（重要）
+
+| 配置 | 读取方式 | 改后需重启？ |
+|---|---|---|
+| `spec-fields.json`（参数取值正则） | `struct-spec.js` 的 hotJson（mtime + 1 秒节流） | 否 |
+| `brand-decode.json` / `model-semantics.json` | 同上 | 否 |
+| `name-synonyms.json`（同义词） | `name-synonyms.js` 按 mtime 重载 | 否 |
+| `naming-guide.json`（范式库） | `guide-fields.js` 的 readJsonCached（mtime） | 否 |
+| `guide-field-map.json`（字段映射） | 同上 | 否 |
+| `material-rules.json`（书写规则 / unitCase） | `material-rules.js` 的 `rules()` 按 mtime | 否 |
+| **`dedup-rules.json`**（heuristics / subOverrides / normalize / tokensPolicy） | `spec.js` 模块级常量（启动读一次） | **是** |
+| **`spec-symbols.json`**（字符统一表） | `spec.js` 模块级常量（启动读一次） | **是** |

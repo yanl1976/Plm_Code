@@ -1527,6 +1527,80 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { ok: true, sub, total: Object.keys(j.subs).length })
     }
 
+    /**
+     * 导出物料分类归属（大类 → 中类 → 小类）
+     * 一个 sheet 平铺「小类级」明细，另一个 sheet 汇总「中类下的小类数」，
+     * 便于现场按归属关系筛选、统计。
+     */
+    if (p === '/api/classification/export' && req.method === 'GET') {
+      const cls = readConfigJson('classification.json') || {}
+      const cats = Array.isArray(cls.categories) ? cls.categories : []
+
+      const detail = [[
+        '大类编码', '大类名称', '中类编码', '中类名称',
+        '小类编码', '小类名称', '编码规则', '默认单位', '存放库',
+      ]]
+      const summary = [['大类编码', '大类名称', '中类编码', '中类名称', '小类数']]
+      let subTotal = 0
+      let midTotal = 0
+
+      for (const cat of cats) {
+        const cCode = String(cat.code || '')
+        const cName = String(cat.name || '')
+        for (const mid of (cat.mid || [])) {
+          const mCode = cCode + String(mid.code || '')
+          const mName = String(mid.name || '')
+          const subs = Array.isArray(mid.sub) ? mid.sub : []
+          midTotal++
+          subTotal += subs.length
+          summary.push([cCode, cName, mCode, mName, subs.length])
+          for (const sub of subs) {
+            detail.push([
+              cCode, cName, mCode, mName,
+              String(sub.code || ''), String(sub.name || ''),
+              String(sub.pattern || ''), String(sub.unit || ''), String(sub.wh || ''),
+            ])
+          }
+        }
+      }
+
+      const ws1 = XLSX.utils.aoa_to_sheet(detail)
+      ws1['!cols'] = [
+        { wch: 10 }, { wch: 16 }, { wch: 12 }, { wch: 20 },
+        { wch: 12 }, { wch: 26 }, { wch: 16 }, { wch: 10 }, { wch: 12 },
+      ]
+      ws1['!freeze'] = { xSplit: 0, ySplit: 1 }
+
+      const ws2 = XLSX.utils.aoa_to_sheet(summary)
+      ws2['!cols'] = [{ wch: 10 }, { wch: 16 }, { wch: 12 }, { wch: 20 }, { wch: 10 }]
+      ws2['!freeze'] = { xSplit: 0, ySplit: 1 }
+
+      const ws3 = XLSX.utils.aoa_to_sheet([
+        ['统计项', '数量'],
+        ['大类', cats.length],
+        ['中类', midTotal],
+        ['小类', subTotal],
+        ['导出时间', new Date().toLocaleString('zh-CN')],
+      ])
+      ws3['!cols'] = [{ wch: 14 }, { wch: 24 }]
+
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws1, '小类明细')
+      XLSX.utils.book_append_sheet(wb, ws2, '中类汇总')
+      XLSX.utils.book_append_sheet(wb, ws3, '统计')
+      const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+
+      const fname = 'classification-' + new Date().toISOString().slice(0, 10) + '.xlsx'
+      res.writeHead(200, {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': 'attachment; filename="' + fname + '"',
+        'Content-Length': buf.length,
+        'Cache-Control': 'no-store',
+      })
+      res.end(buf)
+      return
+    }
+
     if (p === '/api/naming-guide/export' && req.method === 'GET') {
       const j = readConfigJson('naming-guide.json') || { subs: {} }
       const aoa = [['小类号', '小类名', '依据', '置信度', '条款依据', '名称规则', '常见错叫', '规格结构', '示例', '避免', '字段(JSON)']]

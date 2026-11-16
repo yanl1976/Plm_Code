@@ -632,3 +632,8 @@ tr.saving { opacity:.45; }
 .bk-btn.danger { color:#d9534f; border-color:rgba(217,83,79,.4); }
 .bk-btn.danger:hover { background:rgba(217,83,79,.12); }
 .bk-tag { display:inline-block; padding:1px 7px; border-radius:9px; font-size:11px; background:rgba(255,193,7,.18); color:#8a6d3b; }
+
+/* ---------- 分类树工具栏 ---------- */
+.cls-bar { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.cls-bar button { background:var(--panel2); color:var(--text); border:1px solid var(--line); padding:6px 14px; border-radius:6px; cursor:pointer; font-size:13px; }
+.cls-bar button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }

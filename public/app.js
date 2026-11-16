@@ -422,6 +422,17 @@ async function loadTree() {
   const d = await api('/api/classification')
   const el = $('#tree'); el.innerHTML = ''
   const cats = Object.values(d.tree.categories || {})
+
+  // 顶部统计：大类 / 中类 / 小类总数，便于和导出的 Excel 对照
+  let midN = 0
+  let subN = 0
+  cats.forEach((b) => {
+    const ms = Object.values(b.mid || {})
+    midN += ms.length
+    ms.forEach((m) => { subN += (m.sub || []).length })
+  })
+  const metaEl = $('#clsMeta')
+  if (metaEl) metaEl.textContent = `共 ${cats.length} 个大类 / ${midN} 个中类 / ${subN} 个小类`
   cats.forEach((big) => {
     const h = document.createElement('div'); h.className = 'big'; h.textContent = `${big.code} ${big.name}`
     el.appendChild(h)
@@ -434,6 +445,13 @@ async function loadTree() {
         el.appendChild(s2)
       })
     })
+  })
+}
+
+// 导出分类归属 Excel（大类 → 中类 → 小类）
+if ($('#btnExportClassify')) {
+  $('#btnExportClassify').addEventListener('click', () => {
+    window.location.href = '/api/classification/export'
   })
 }
 

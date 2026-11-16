@@ -18,7 +18,7 @@ import { fullwidthToHalf, unifySymbols, symbolIssues } from './spec.js'
 import { getCategory, chooseTokens, MAP } from './classify.js'
 import { extractParams } from './struct-spec.js'
 import { suggestName } from './name-synonyms.js'
-import { matchSystemWord, allUnitNames, ACCESSORY_SUFFIX } from './guide-units.js'
+import { matchSystemWord, matchExcludeHint, allUnitNames, ACCESSORY_SUFFIX } from './guide-units.js'
 
 // ---- 「名称 → 主导小类」索引（由 dedup 生成，见 src/dedup.js）----
 // 用途：跨小类检测。名称若在别的小类有 ≥3 条同类记录、且占该名称 ≥80%，
@@ -181,12 +181,11 @@ export function detectSubMismatch(rawName, sub) {
       best: { sub: idxHit.sub, subName: idxHit.subName, midName: '', score: idxHit.purity },
       candidates: [{ sub: idxHit.sub, subName: idxHit.subName, midName: '', score: idxHit.purity }],
       msg: `名称「${name}」与所选小类「${info.subName}」不匹配，更像 ${idxHit.sub} ${idxHit.subName}（存量同类 ${idxHit.count} 条），请确认小类是否选错`,
-      // 级别固定 error（红 + 阻断保存），与「单元名精确命中」保持同一颜色。
-      // 不能拿 purity 去套 Dice 的 blockBest(0.9)：两者语义不同 ——
-      //   purity 是「该名称在别的小类的占比」（存量证据），blockBest 是「字符串相似度」（形态证据）。
-      // 混用会导致同类提示两种颜色：实测「电线」purity 0.86 显示琥珀、「电话线」score 1.0 显示红色。
-      // 进入本索引的门槛已是「≥3 条 + 占比≥80%」，属明确归属，故一律 error。
-      level: 'error',
+      // 级别按证据强度分两档（不再套 Dice 的 blockBest，两者语义不同）：
+      //   count ≥3 且纯度 ≥80% → 强证据，error（红 + 阻断）
+      //   count =2 且纯度 ≥80% → 弱证据，warn（琥珀，只提示，避免误挡录入）
+      // 例：「电缆」802 条 → error；「电源线」在 110302 只有 2 条 → warn，但仍能提示方向。
+      level: idxHit.count >= 3 ? 'error' : 'warn',
     }
   }
 
@@ -574,6 +573,13 @@ export function checkName(raw, spec, sub, opts = {}) {
   // 「门禁」「监控」「消防系统」这类上位词无法对应某一件可采购的物，
   // 硬给它一个 std 就会得出「监控 → 安防设备」这种错（已踩过）。
   // 未声明 nameUnits 的小类，matchSystemWord 返回 null —— 一律不介入。
+  // 边界词：业务上明确不属于本小类的名称（配置在各小类的 excludeHints）。
+  // 用于兜住「存量数据没有明确归属、索引判不出来」的情况，如「电源线」在通讯线类。
+  const exWord = sub ? matchExcludeHint(s, sub) : null
+  if (exWord) {
+    warnings.push(`名称「${s}」不属于本小类：${exWord.hint}`)
+  }
+
   const sysWord = sub ? matchSystemWord(s, sub) : null
   if (sysWord) {
     // 引导语由各小类的 refineHint 决定（安防：部件或设备；通讯线：具体用途的线缆）

@@ -71,6 +71,25 @@ export function allUnitNames() {
 }
 
 /**
+ * 边界词：明确不属于本小类的名称（业务规则，配置在各小类的 excludeHints）。
+ *
+ * 为什么需要它：存量索引（名称→主导小类）只能覆盖「库里已有明确归属」的名称。
+ * 若某名称在库内本身就散在多个小类（例「电源线」8 条散在 5 个类、纯度 0.38），
+ * 索引会把它排除，判定就落空 —— 但业务上「电源线不是通讯线」是确定的。
+ * 这类只能由业务给出词表，不能靠数据推断。
+ * @returns {{word:string, hint:string} | null}
+ */
+export function matchExcludeHint(name, sub) {
+  const n = norm(name)
+  if (!n) return null
+  const s = String(sub || '').trim().slice(0, 6)
+  const it = (loadGuide().subs || {})[s] || null
+  const hints = (it && it.excludeHints) || {}
+  const hit = hints[n]
+  return hit ? { word: n, hint: String(hit) } : null
+}
+
+/**
  * 是否泛称（上位词）。命中即表示「该名称无法对应一件可采购的物，必须细分」。
  * @returns {{word:string, hint:string} | null} hint = 该泛称词对应的细分建议
  */

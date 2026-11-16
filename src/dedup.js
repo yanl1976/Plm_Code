@@ -66,6 +66,10 @@ export async function runDedup({ fuzzy = false, limit = 0 } = {}) {
 
   // sub -> sig -> [members]
   const bySub = new Map()
+  // 名称 -> { 小类: 次数 }：供「名称→主导小类」索引使用。
+  // 必须独立收集，不能复用 bySub —— 规格为空的物料不会生成签名（下方 if (!sig) return），
+  // 但它们的名称归属同样有参考价值（实测「电源线」因规格为空被漏掉）。
+  const nameSub = new Map()
   // fNumber -> [members]  (一号多物)
   const byNumber = new Map()
   let total = 0, classified = 0, unclassified = 0
@@ -86,6 +90,13 @@ export async function runDedup({ fuzzy = false, limit = 0 } = {}) {
       return
     }
     classified++
+    // 名称归属统计（必须在 sig 判空之前）
+    const nm = String(rec.FNAME || '').trim()
+    if (nm) {
+      if (!nameSub.has(nm)) nameSub.set(nm, new Map())
+      const nmMap = nameSub.get(nm)
+      nmMap.set(subKey, (nmMap.get(subKey) || 0) + 1)
+    }
     const attrs = chooseAttrs(info)
     const tokens = chooseTokens(info)
     // 名称归一：若名称命中该小类的「品类单元」别名，用单元名参与签名。
@@ -243,22 +254,14 @@ export async function runDedup({ fuzzy = false, limit = 0 } = {}) {
   // 为什么不靠 nameUnits：209 个小类里只有 3 个建了品类单元，靠人工标注永远覆盖不全；
   // 存量数据本身就记录了「每个名称实际落在哪个小类」，用它做参照可自动覆盖全库。
   try {
-    const nameSub = new Map()
-    for (const [sub, subMap] of bySub) {
-      for (const members of subMap.values()) {
-        for (const m of members) {
-          const n = String(m.fName || '').trim()
-          if (!n) continue
-          if (!nameSub.has(n)) nameSub.set(n, new Map())
-          const mm = nameSub.get(n)
-          mm.set(sub, (mm.get(sub) || 0) + 1)
-        }
-      }
-    }
+    // 直接使用流式采集的 nameSub：它覆盖全部已分类物料（含规格为空、无法构成签名的）
     const index = {}
     for (const [n, mm] of nameSub) {
       const total = [...mm.values()].reduce((s, v) => s + v, 0)
-      if (total < 3) continue                       // 频次太低，不足以当参照
+      // 门槛 2（原为 3）：本意是「至少两条同类记录」。
+      // 3 会把「电源线」（110302 只有 2 条）漏掉，导致它在通讯线类里填不出提示；
+      // 证据强度由使用方按 count 分档：≥3 强证据（红+阻断），2 条弱证据（只提示）。
+      if (total < 2) continue
       const [sub, cnt] = [...mm.entries()].sort((a, b) => b[1] - a[1])[0]
       if (cnt / total < 0.8) continue               // 该名称跨多个小类，不宜当参照
       const info = getCategory(sub)

@@ -18,7 +18,7 @@ import { fullwidthToHalf } from './spec.js'
 import { getCategory, chooseTokens, MAP } from './classify.js'
 import { extractParams } from './struct-spec.js'
 import { suggestName } from './name-synonyms.js'
-import { matchSystemWord, allUnitNames } from './guide-units.js'
+import { matchSystemWord, allUnitNames, ACCESSORY_SUFFIX } from './guide-units.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const RULE_FILE = path.join(ROOT, 'src', 'config', 'material-rules.json')
@@ -137,6 +137,11 @@ export function detectSubMismatch(rawName, sub) {
   // 导致明明填错小类却不提示；而型号本来就不承载类别信息。
   const pure = name.replace(/[A-Za-z0-9\-*./_]+/g, ' ').replace(/\s+/g, ' ').trim()
   const cmpName = (pure && pure.length >= 2) ? pure : name
+
+  // 配件/箱体/设备类后缀不做跨小类判定：
+  //   「接线端子箱」含「接线端子」但它是箱类（属 120206），不是端子；
+  //   「网线水晶头」「光缆组件」同理。与 matchUnit 用同一份后缀清单，避免两处判断口径不一致。
+  if (ACCESSORY_SUFFIX.some((w) => name.includes(w))) return null
 
   const gq = bigramsOf(cmpName)
   if (!gq.size) return null

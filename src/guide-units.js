@@ -21,12 +21,14 @@ import { loadGuide } from './guide-fields.js'
  * 例：「交换机壳体」含「交换机」，但它是壳体配件，不是交换机；
  *     「枪机电源」含「枪机」，但它是电源适配器（这类仍可靠 exact 别名命中正确的单元）。
  */
-const ACCESSORY_SUFFIX = [
+export const ACCESSORY_SUFFIX = [
   '壳体', '配件', '支架', '电源', '标签', '线缆', '胶水', '箱', '桩', '雨棚', '模块配件',
   // 设备/端件：名称里含线缆词但本身是设备（如「单网线延长器发射端」不是网线）
   '延长器', '发射端', '接收端', '转换器',
   // 组件：名称里含「插座/插头」但整体是组件（如「插座光缆组件」属 110303，不是插座）
   '光缆组件',
+  // 工具：网线钳/压线钳 是工具，不是它所修饰的物料
+  '钳',
 ]
 
 const norm = (s) => String(s == null ? '' : s).replace(/\u3000/g, ' ').replace(/\s+/g, '').trim()
@@ -49,11 +51,20 @@ export function hasUnits(sub) {
   return unitsOf(sub).units.length > 0
 }
 
-/** 全部小类的单元名（供跨小类检测、同义词引用校验） */
+/**
+ * 参与「跨小类检测」的单元名（只有显式标了 crossSub: true 的才算）。
+ *
+ * 为什么默认不参与：单元名里有大量通用词（机柜/支架/显示屏/硬盘/电源适配器/锁），
+ * 把它们加入跨小类参照表会把「机柜」判到 120407 安防、「支架」判到摄像机支架，
+ * 实测在「其它/其它器件」四个杂类里造成约 38 条误判。
+ * 只有能唯一定位到某小类的词（网络摄像机、门禁控制器、插针、网线…）才标 crossSub。
+ */
 export function allUnitNames() {
   const out = new Map()
   for (const [sub, it] of Object.entries(loadGuide().subs || {})) {
-    const names = (Array.isArray(it.nameUnits) ? it.nameUnits : []).map((u) => u.name).filter(Boolean)
+    const names = (Array.isArray(it.nameUnits) ? it.nameUnits : [])
+      .filter((u) => u && u.name && u.crossSub === true)
+      .map((u) => u.name)
     if (names.length) out.set(sub, names)
   }
   return out

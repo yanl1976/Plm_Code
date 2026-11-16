@@ -4869,7 +4869,8 @@
           "traits": [
             "芯数",
             "间距"
-          ]
+          ],
+          "crossSub": true
         },
         {
           "name": "插孔",
@@ -4883,7 +4884,8 @@
           "traits": [
             "芯数",
             "间距"
-          ]
+          ],
+          "crossSub": true
         },
         {
           "name": "插头座",
@@ -4897,7 +4899,8 @@
           "traits": [
             "芯数",
             "防爆等级"
-          ]
+          ],
+          "crossSub": true
         },
         {
           "name": "插头",
@@ -4910,7 +4913,8 @@
           "traits": [
             "芯数",
             "防爆等级"
-          ]
+          ],
+          "crossSub": false
         },
         {
           "name": "插座",
@@ -4920,7 +4924,8 @@
           "traits": [
             "芯数",
             "防爆等级"
-          ]
+          ],
+          "crossSub": false
         },
         {
           "name": "接线端子",
@@ -4942,7 +4947,8 @@
           "traits": [
             "截面",
             "位数"
-          ]
+          ],
+          "crossSub": true
         },
         {
           "name": "短联片/桥接件",
@@ -4954,7 +4960,8 @@
           ],
           "traits": [
             "位数"
-          ]
+          ],
+          "crossSub": true
         },
         {
           "name": "汇流排",
@@ -4965,7 +4972,8 @@
           ],
           "traits": [
             "极数"
-          ]
+          ],
+          "crossSub": true
         },
         {
           "name": "连接器配件",
@@ -4984,7 +4992,8 @@
             "端到板插片",
             "光功率计适配器"
           ],
-          "traits": []
+          "traits": [],
+          "crossSub": false
         }
       ],
       "systemWords": [],
@@ -6799,7 +6808,8 @@
           "traits": [
             "类别",
             "屏蔽"
-          ]
+          ],
+          "crossSub": true
         },
         {
           "name": "光缆",
@@ -6816,7 +6826,8 @@
           "traits": [
             "芯数",
             "单模/多模"
-          ]
+          ],
+          "crossSub": true
         },
         {
           "name": "光纤跳线",
@@ -6831,7 +6842,8 @@
           "traits": [
             "接口",
             "长度"
-          ]
+          ],
+          "crossSub": true
         },
         {
           "name": "光缆组件",
@@ -6842,7 +6854,8 @@
           ],
           "traits": [
             "接口"
-          ]
+          ],
+          "crossSub": false
         },
         {
           "name": "通讯电缆",
@@ -6865,7 +6878,8 @@
           "traits": [
             "芯数",
             "屏蔽"
-          ]
+          ],
+          "crossSub": true
         },
         {
           "name": "视频线",
@@ -6883,7 +6897,8 @@
           "traits": [
             "接口",
             "长度"
-          ]
+          ],
+          "crossSub": true
         },
         {
           "name": "数据线",
@@ -6899,7 +6914,8 @@
           "traits": [
             "接口",
             "长度"
-          ]
+          ],
+          "crossSub": false
         },
         {
           "name": "电话线",
@@ -6908,7 +6924,8 @@
           ],
           "traits": [
             "芯数"
-          ]
+          ],
+          "crossSub": false
         },
         {
           "name": "排线",
@@ -6920,7 +6937,8 @@
           "traits": [
             "位数",
             "间距"
-          ]
+          ],
+          "crossSub": false
         }
       ],
       "systemWords": [
@@ -8449,7 +8467,8 @@
             "形态",
             "像素",
             "供电"
-          ]
+          ],
+          "crossSub": true
         },
         {
           "name": "网络交换机",
@@ -8465,7 +8484,8 @@
             "端口数",
             "POE",
             "管理型"
-          ]
+          ],
+          "crossSub": true
         },
         {
           "name": "硬盘",
@@ -8476,7 +8496,8 @@
           "traits": [
             "容量",
             "接口"
-          ]
+          ],
+          "crossSub": true
         },
         {
           "name": "硬盘录像机",
@@ -8488,7 +8509,8 @@
           "traits": [
             "路数",
             "盘位"
-          ]
+          ],
+          "crossSub": true
         },
         {
           "name": "光纤熔接盒",
@@ -8499,7 +8521,8 @@
           ],
           "traits": [
             "芯数"
-          ]
+          ],
+          "crossSub": false
         },
         {
           "name": "光纤跳线",
@@ -8510,7 +8533,8 @@
           "traits": [
             "接口",
             "长度"
-          ]
+          ],
+          "crossSub": false
         },
         {
           "name": "光模块/转换器",
@@ -8520,7 +8544,8 @@
           ],
           "traits": [
             "接口"
-          ]
+          ],
+          "crossSub": false
         },
         {
           "name": "门禁控制器",
@@ -8530,7 +8555,8 @@
           ],
           "traits": [
             "门数"
-          ]
+          ],
+          "crossSub": true
         },
         {
           "name": "读卡器",
@@ -8541,7 +8567,8 @@
           ],
           "traits": [
             "识别方式"
-          ]
+          ],
+          "crossSub": false
         },
         {
           "name": "出门按钮",
@@ -8553,7 +8580,8 @@
           ],
           "traits": [
             "类型"
-          ]
+          ],
+          "crossSub": false
         },
         {
           "name": "磁力锁",
@@ -8565,7 +8593,8 @@
           "traits": [
             "门数",
             "拉力"
-          ]
+          ],
+          "crossSub": false
         },
         {
           "name": "人脸门禁一体机",
@@ -8573,7 +8602,8 @@
             "人脸门禁一体机",
             "人脸识别终端"
           ],
-          "traits": []
+          "traits": [],
+          "crossSub": true
         },
         {
           "name": "声光报警器",
@@ -8583,7 +8613,8 @@
           ],
           "traits": [
             "电压"
-          ]
+          ],
+          "crossSub": false
         },
         {
           "name": "独立式感烟探测器",
@@ -8592,7 +8623,8 @@
             "烟雾报警器",
             "感烟探测器"
           ],
-          "traits": []
+          "traits": [],
+          "crossSub": true
         },
         {
           "name": "灭火器",
@@ -8602,7 +8634,8 @@
           ],
           "traits": [
             "容量"
-          ]
+          ],
+          "crossSub": false
         },
         {
           "name": "应急灯",
@@ -8616,7 +8649,8 @@
           ],
           "traits": [
             "方向"
-          ]
+          ],
+          "crossSub": false
         },
         {
           "name": "机柜",
@@ -8626,7 +8660,8 @@
           ],
           "traits": [
             "尺寸"
-          ]
+          ],
+          "crossSub": false
         },
         {
           "name": "机柜配件",
@@ -8634,7 +8669,8 @@
             "机柜配件",
             "柜机配件"
           ],
-          "traits": []
+          "traits": [],
+          "crossSub": false
         },
         {
           "name": "支架",
@@ -8647,7 +8683,8 @@
           ],
           "traits": [
             "适配机型"
-          ]
+          ],
+          "crossSub": false
         },
         {
           "name": "电源适配器",
@@ -8658,7 +8695,8 @@
           ],
           "traits": [
             "输出"
-          ]
+          ],
+          "crossSub": false
         },
         {
           "name": "显示屏",
@@ -8668,7 +8706,8 @@
           ],
           "traits": [
             "尺寸"
-          ]
+          ],
+          "crossSub": false
         }
       ],
       "systemWords": [

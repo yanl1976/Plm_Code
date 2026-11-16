@@ -930,8 +930,8 @@
         {
           "key": "安装孔径",
           "regex": "(?:AD11|AD16|ND16|AD17)-?(\\d{2})\\b",
-          "valueTemplate": "φ{{1}}mm",
-          "meaning": "安装孔径 φ{{1}}mm（AD11-22=φ22mm，常见 22/25）"
+          "valueTemplate": "Φ{{1}}mm",
+          "meaning": "安装孔径 Φ{{1}}mm（AD11-22=Φ22mm，常见 22/25）"
         }
       ]
     },
@@ -1084,8 +1084,8 @@
         {
           "key": "窗口尺寸",
           "regex": "[ФΦ]\\s*(\\d+)",
-          "valueTemplate": "φ{{1}}mm",
-          "meaning": "穿心孔/窗口尺寸 φ{{1}}mm"
+          "valueTemplate": "Φ{{1}}mm",
+          "meaning": "穿心孔/窗口尺寸 Φ{{1}}mm"
         },
         {
           "key": "额定输出",
@@ -1350,8 +1350,8 @@
         {
           "key": "直径",
           "regex": "[Φφ]\\s*(\\d+(?:\\.\\d+)?)",
-          "valueTemplate": "φ{{1}}mm",
-          "meaning": "直径/孔径 φ{{1}}mm"
+          "valueTemplate": "Φ{{1}}mm",
+          "meaning": "直径/孔径 Φ{{1}}mm"
         },
         {
           "key": "外径内径",

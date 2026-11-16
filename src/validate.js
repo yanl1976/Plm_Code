@@ -57,7 +57,8 @@ const FORMAT_CONTRACT = {
   '线圈电压': (v) => /\d/.test(v) ? null : '电压值不含数字',
   '额定电流': (v) => /\d/.test(v) ? null : '电流值不含数字',
   '分断能力': (v) => /\d/.test(v) ? null : '分断能力值不含数字',
-  '截面':     (v) => /^[\d.]+(?:mm²|mm)?(?:\+[\d.]+(?:mm²|mm)?)*$/i.test(v) ? null : '截面应为 数字(可带mm²/mm，多芯用+连接)',
+  // 面积单位统一为 mm^2（上标 ² 不在 GBK/CP936，CAD SHX 也显示不出）；仍兼容历史值 mm²
+  '截面':     (v) => /^[\d.]+(?:mm\^2|mm²|mm)?(?:\+[\d.]+(?:mm\^2|mm²|mm)?)*$/i.test(v) ? null : '截面应为 数字(可带 mm^2 / mm，多芯用 + 连接)',
   '芯数':     (v) => /^[\d.]+(\+[\d.]+)*$/.test(v) ? null : '芯数应为 数字(用+连接多芯)',
   '功率':     (v) => /^[0-9./]+[kK]?[Ww](\/[0-9./]+[kK]?[Ww])*$/.test(v) ? null : '功率应为 数字(+/数字)+W/kW（含 / 连接的多段功率，如电阻箱 460kW/10kW/5kW）',
   '阻值':     (v) => /(Ω|OHM|K|M)$/i.test(v) ? null : '阻值应以 Ω/K/M/OHM 结尾',
@@ -80,7 +81,7 @@ const FORMAT_CONTRACT = {
 const LEADING_BOUNDARY = /^[\s\-+/（(，、；;：:·）)]/u
 
 // 完整性覆盖率：语义段原文位置 + 参数值回查原文，合并覆盖区间，返回未被覆盖的字母数字片段
-const COV_UNIT_SUF = ['mm²', 'mm', 'kA', 'kW', 'OHM', 'KΩ', 'MΩ', 'Ω', 'μF', 'nF', 'pF', 'mF', 'uF', 'KV', 'kV', '芯', '位', '级', 'V', 'A', 'W', 'K', '%']
+const COV_UNIT_SUF = ['mm^2', 'mm²', 'mm', 'kA', 'kW', 'OHM', 'KΩ', 'MΩ', 'Ω', 'μF', 'nF', 'pF', 'mF', 'uF', 'KV', 'kV', '芯', '位', '级', 'V', 'A', 'W', 'K', '%']
 // 片段是否算「参数遗漏」：ASCII 字母数字须占非空白字符的一半以上（中文描述性文字不算）
 function isGappy(frag) {
   const ascii = (frag.match(/[A-Za-z0-9]/g) || []).length

@@ -139,9 +139,9 @@
       "join": "+",
       "normalizeUnit": true,
       "patterns": [
-        "(?<!-)(?:UT|MC|SAKAP|GMSTBVA|ST|UK|JH1A|JH|SAK|RSP|VF|WDU|ZDU|JXB|UKN|DT|TBH|JF|CL|TBC|TD|TB|DI|SI|AB|AI|DF|HQ)\\s*[-]?\\s*(\\d+\\.?\\d*\\s*(?:mm²|mm2|mm|²|平方\\s*(?:mm|MM|²)?|MM\\^2|MM\\^|㎜2|MM\\s*2|\\^2\\s*mm?|²\\s*mm?)?)",
-        "(?:^|[\\s/+\\-\\uFF08\\uFF09\\uFF0C\\u3001\\uFF1B;()])\\d+\\s*[*×xX]\\s*(\\d+\\.?\\d*\\s*(?:mm²|mm2|mm|²|平方\\s*(?:mm|MM|²)?|MM\\^2|MM\\^|㎜2|MM\\s*2|\\^2\\s*mm?|²\\s*mm?)?)",
-        "(?<![\\^])(\\d+\\.?\\d*\\s*(?:mm²|mm2|mm|²\\s*m*|平方|MM\\^2|MM\\^|㎜2|MM\\s*2|\\^2\\s*m*|²\\s*m*))(?![A-Za-z])"
+        "(?<!-)(?:UT|MC|SAKAP|GMSTBVA|ST|UK|JH1A|JH|SAK|RSP|VF|WDU|ZDU|JXB|UKN|DT|TBH|JF|CL|TBC|TD|TB|DI|SI|AB|AI|DF|HQ)\\s*[-]?\\s*(\\d+\\.?\\d*\\s*(?:mm²|mm\\s*平方(?:毫米)?|mm\\^2|MM\\^2|㎜2|mm2|MM\\s*2|\\^2\\s*mm?|²\\s*mm?|平方\\s*(?:mm|MM|²)?|mm|²)?)",
+        "(?:^|[\\s/+\\-\\uFF08\\uFF09\\uFF0C\\u3001\\uFF1B;()])\\d+\\s*[*×xX]\\s*(\\d+\\.?\\d*\\s*(?:mm²|mm\\s*平方(?:毫米)?|mm\\^2|MM\\^2|㎜2|mm2|MM\\s*2|\\^2\\s*mm?|²\\s*mm?|平方\\s*(?:mm|MM|²)?|mm|²)?)",
+        "(?<![\\^])(\\d+\\.?\\d*\\s*(?:mm²|mm\\s*平方(?:毫米)?|mm\\^2|MM\\^2|㎜2|mm2|MM\\s*2|\\^2\\s*m*|²\\s*m*|平方|mm|²\\s*m*))(?![A-Za-z])"
       ]
     },
     "材质": {

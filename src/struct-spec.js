@@ -139,17 +139,20 @@ export function decodeSemantics(spec, tokens = [], out = null) {
   return null
 }
 
-// 单位归一化：把各种平方毫米写法规范成 mm²，普通毫米写成 mm；原文无单位则返回空（绝不补）。
+// 单位归一化：把各种平方毫米写法规范成 mm^2，普通毫米写成 mm；原文无单位则返回空（绝不补）。
+// 用 mm^2 而非 mm²：上标 ² 不在 GBK/CP936 中，CAD 的 SHX 字形也显示不出（详见 docs/规格字符标准.md）
 function normUnit(u) {
   if (!u) return ''
   const s = String(u).replace(/\s+/g, '')
-  if (/[²平方]|mm2|㎜2|\^2|2\s*mm|mm\s*2|MM\^2|MM\s*2/i.test(s)) return 'mm²'
+  if (/[²平方]|mm2|㎜2|\^2|2\s*mm|mm\s*2|MM\^2|MM\s*2/i.test(s)) return 'mm^2'
   if (/mm/i.test(s)) return 'mm'
   return s
 }
 // 截面值尾部单位归一化（保留原文单位，只规范写法，不补原文没有的）
 function normCrossSection(v) {
-  return String(v).replace(/\s*(mm²|mm2|㎜2|平方|MM\^2|MM\^|MM\s*2|\^2\s*m*|²\s*m*|mm)\s*$/i, (m) => normUnit(m))
+  // 交替顺序按「长匹配优先」：mm平方 / mm² 必须排在裸 mm、裸 平方 之前，
+  // 否则 "1mm平方" 会被拆成 1mm + 平方 两段，结果变成 1mmmm^2
+  return String(v).replace(/\s*(mm\s*平方(?:毫米)?|mm²|mm2|㎜2|平方|MM\^2|MM\^|MM\s*2|\^2\s*m*|²\s*m*|mm)\s*$/i, (m) => normUnit(m))
 }
 
 // 从一条规格文本里按参数定义提取值；多捕获组用 join 连接，多匹配去重后用 join 连接。

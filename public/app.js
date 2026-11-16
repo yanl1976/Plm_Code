@@ -293,7 +293,7 @@ async function loadMaterials(page = 1) {
   $('#matMeta').innerHTML = '<h3>物料特征数据（策略提取 · 全量校验）</h3><ul><li>'
     + `提取规则版本 <b>${escapeHtml(d.meta.ruleVersion || '-')}</b> · 规则校验结论 `
     + `<span class="tag ${d.meta.validationPass === true ? 'ok' : d.meta.validationPass === false ? 'err' : 'amber'}">${d.meta.validationPass === true ? 'PASS' : d.meta.validationPass === false ? 'FAIL' : '未运行'}</span>`
-    + ` · 物料 <b>${fmt(d.meta.total)}</b> 条：通过 <b class="green">${fmt(sc.ok)}</b> / 有缺项 <b class="amber">${fmt(sc.missing)}</b>（策略期望但原文未提供，可筛选核查）/ 有缺陷 <b class="red">${fmt(sc.error)}</b> / 规则待完善 <b>${fmt(sc.pending || 0)}</b>（该小类暂无特征参数规则，未做提取与校验）/ 待核查 <b class="amber">${fmt(d.meta.warnCount || 0)}</b> ⚠（型号首词存疑等，不阻断）`
+    + ` · 物料 <b>${fmt(d.meta.total)}</b> 条：通过 <b class="green">${fmt(sc.ok)}</b> / 有缺项 <b class="amber">${fmt(sc.missing)}</b>（策略期望但原文未提供，可筛选核查）/ 有缺陷 <b class="red">${fmt(sc.error)}</b> / 规则待完善 <b>${fmt(sc.pending || 0)}</b>（未做提取与校验）/ 待核查 <b class="amber">${fmt(d.meta.warnCount || 0)}</b> ⚠（型号首词存疑等，不阻断）`
     + '</li><li>每条物料的特征参数均在<strong>规格原文</strong>中黄底标注来源片段，可逐条核对「没有编造、没有丢失原文」；规格原文始终完整展示。ERP 原始参数字段（主要/技术参数）一并列出对照。</li></ul>'
   const dl = $('#subList'); dl.innerHTML = ''
   d.subs.slice(0, 300).forEach((s) => { const o = document.createElement('option'); o.value = s.name; dl.appendChild(o) })
@@ -2483,12 +2483,13 @@ function renderNmRule(r) {
     }
     html += '</div>'
   }
-  // 该小类暂无特征参数规则：必须显式说清「只校验了书写格式，没校验参数」。
-  // 否则无提示时会走到下面那句绿色「符合」上，被误读成参数也合规。
+  // 该小类暂无特征参数规则：一句话说清即可。
+  // 作用只是「别让无提示走到下面那句绿色『符合』上被误读成参数也合规」，
+  // 不必再解释校验了什么、何时生效（用户明确要求删掉这些补充说明）。
   const pendingHtml = r.rulePending
     ? '<div class="nm-hint" style="color:var(--muted)">'
       + '<span class="nm-hint-icon">i</span>'
-      + '<span class="nm-hint-text">校验规则待完善：该小类暂无特征参数规则，本次只校验书写格式，未校验参数是否齐全（补齐规则后自动生效）</span></div>'
+      + '<span class="nm-hint-text">校验规则待完善：该小类暂无特征参数规则</span></div>'
     : ''
   if (!html) {
     // 措辞明确限定在「书写格式」：避免把「没查出问题」读成「参数齐全」

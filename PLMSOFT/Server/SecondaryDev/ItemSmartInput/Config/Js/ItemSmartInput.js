@@ -1344,6 +1344,10 @@
       applied.push('规格型号');
     }
 
+    // 记下本次的跨类结论：名称浮层的「存量已有名称」要据此只列目标小类内的写法
+    // （否则会把其它小类的错类记录一并列出，与「应归 101101」的结论自相矛盾）
+    state.lastSubMismatch = r.subMismatch || null;
+
     var dup = (r.duplicates || []).filter(function (x) { return x.level === 'exact' || x.level === 'sep'; });
     var parts = [applied.length ? ('已回填' + applied.join('、')) : '无需回填'];
     if (r.subMismatch) parts.push('分类疑似不符');
@@ -2045,6 +2049,15 @@
         }
         if (!dup) rest.push(stock[i]);
       }
+      // 已有明确跨类结论时，只保留「目标小类」内的同类写法。
+      // 理由：其它小类的同名记录多半是错类（如 101808「其它器件」、120405「其它」里的「指示灯」），
+      // 把它们和「应归 101101 指示灯」的结论并列，会暗示"这些类也能放"，反而误导。
+      var mmHit = state.lastSubMismatch;
+      if (mmHit && mmHit.best && mmHit.best.sub) {
+        var keep = [];
+        for (i = 0; i < rest.length; i++) if (rest[i].sub === mmHit.best.sub) keep.push(rest[i]);
+        rest = keep;
+      }
       if (!recs.length && !rest.length) return;
 
       nameSugBox.innerHTML = '';
@@ -2071,7 +2084,9 @@
       }
       if (rest.length) {
         var sHead = dlgEl('div', 'font-size:12px;margin:4px 0 2px;opacity:.75;');
-        sHead.appendChild(dlgEl('span', '', '存量已有名称（仅供参考，不可点）'));
+        sHead.appendChild(dlgEl('span', '', (mmHit && mmHit.best && mmHit.best.sub)
+          ? '该小类内的同类写法（仅供参考）'
+          : '存量已有名称（仅供参考，不可点）'));
         sHead.appendChild(dlgEl('span', 'opacity:.8;font-size:11px;margin-left:8px;', '来源：治理库'));
         nameSugBox.appendChild(sHead);
         for (i = 0; i < rest.length && i < 5; i++) {

@@ -152,6 +152,15 @@ export function indexStatus() {
 }
 
 /**
+ * 某小类已加载的物料列表（供规格联想统计参数取值，避免二次读盘）。
+ * 未就绪或该小类无数据时返回 []。
+ */
+export function bucketItems(sub) {
+  const b = state.subs.get(String(sub || '').slice(0, 6))
+  return b ? b.items : []
+}
+
+/**
  * 载入/重建索引。并发调用会复用同一次加载。
  * @param {{force?: boolean}} opts force=true 时忽略 mtime 强制重建
  */

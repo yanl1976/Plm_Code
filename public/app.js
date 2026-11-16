@@ -2078,6 +2078,21 @@ function bindNmEvents() {
   $('#nmName').addEventListener('focus', () => { if (($('#nmName').value || '').trim()) nmNameSuggest() })
   $('#nmName').addEventListener('keydown', (e) => { if (e.key === 'Escape') hideNmNameTip() })
   $('#nmSpec').addEventListener('focus', () => { if (($('#nmSpec').value || '').trim()) nmSpecInput() })
+  // 分段补全：Tab 采用首个候选（不能用 Enter——PLM/表单一栏里 Enter 常触发提交）
+  $('#nmSpec').addEventListener('keydown', (e) => {
+    if (e.isComposing) return                    // 中文输入法组字中，不拦截
+    const box = $('#nmSuggest')
+    const open = box && box.classList.contains('show')
+    if (e.key === 'Tab' && !e.shiftKey && open && nm.complete && (nm.complete.options || []).length) {
+      e.preventDefault()
+      applySpecComplete(nm.complete.options[0].value)
+      return
+    }
+    if (e.key === 'Escape' && open) {
+      nm.sugSeq++                                // 作废在途响应，避免又被弹回来
+      box.classList.remove('show'); box.innerHTML = ''
+    }
+  })
   document.addEventListener('click', (e) => {
     const box = $('#nmSuggest'), inp = $('#nmSpec')
     if (box && inp && !box.contains(e.target) && e.target !== inp) {
@@ -2286,11 +2301,22 @@ function nmSpecInput() {
   }
   const sub = encodeURIComponent(nm.cur.sub)
   const seq = ++nm.sugSeq
+  nm.complete = null
+  // ① 分段补全（参数级）：推断"当前在填哪一段"，给该段的取值候选
+  api('/api/new-material/spec-complete?sub=' + sub + '&q=' + encodeURIComponent(q))
+    .then((c) => {
+      if (seq !== nm.sugSeq) return
+      nm.complete = (c && c.ok) ? c : null
+      renderNmSuggest(q, nm.lastItems || [], nm.lastSummary)
+    })
+  // ② 整条规格联想（存量写法）：与①并发，各自渲染时都会带上补全区
   api('/api/new-material/spec-suggest?sub=' + sub + '&q=' + encodeURIComponent(q))
     .then((r) => {
       // 期间已选中某项/已失焦/已改输入 → 在途结果作废，不能把下拉又弹回来
       if (seq !== nm.sugSeq) return
-      renderNmSuggest(q, (r && r.items) || [], r && r.modelSummary)
+      nm.lastItems = (r && r.items) || []
+      nm.lastSummary = (r && r.modelSummary) || null
+      renderNmSuggest(q, nm.lastItems, nm.lastSummary)
     })
   api('/api/new-material/spec-check?sub=' + sub + '&spec=' + encodeURIComponent(q))
     .then((r) => { if (seq !== nm.sugSeq) return; renderNmSpecCheck(r || {}) }) // 与联想同seq：旧响应不得覆盖新输入
@@ -2545,19 +2571,57 @@ function nmSpecCheckOnly() {
   renderNmInv()
 }
 
+/**
+ * 规格分段补全的 HTML：显示"当前在填哪一段"与该段的取值候选（带频次）。
+ * 只对模板能对齐参数库的段出现；对齐不上或自由输入的段返回空串（不打扰）。
+ */
+function nmCompleteHtml(r) {
+  if (!r || !r.ok || !r.options || !r.options.length) return ''
+  const unit = r.unit ? '（单位 ' + escapeHtml(r.unit) + '）' : ''
+  const opts = r.options.map((o, i) => {
+    const tag = o.kind === 'unit' ? '补单位' : (o.count ? String(o.count) : '')
+    return '<div class="nm-copt' + (i === 0 ? ' on' : '') + '" data-cv="' + escapeHtml(o.value) + '">'
+      + escapeHtml(o.value) + '<span class="nm-cnt">' + tag + '</span></div>'
+  }).join('')
+  return '<div class="nm-complete">'
+    + '<div class="nm-complete-head">当前段：<b>' + escapeHtml(r.param) + '</b>' + unit
+    + '<span class="nm-complete-step">第 ' + (r.index + 1) + '/' + r.total + ' 段</span>'
+    + '<span class="nm-complete-key">Tab 采用首个</span></div>'
+    + opts + '</div>'
+}
+
+/** 采用某个补全候选：替换当前段的已输入片段，不足一段时补空格 */
+function applySpecComplete(value) {
+  const inp = $('#nmSpec')
+  if (!inp) return
+  const r = nm.complete || {}
+  const cur = inp.value || ''
+  const tail = r.prefix && cur.endsWith(r.prefix) ? r.prefix : ''
+  const head = tail ? cur.slice(0, cur.length - tail.length) : cur
+  const base = head.replace(/\s+$/, '')
+  inp.value = base ? base + ' ' + value : value
+  clearTimeout(nm.timer)
+  nm.sugSeq++
+  nmSpecCheckOnly()
+  nmRuleTick()
+  const unit = $('#nmUnit')
+  if (unit) unit.focus()
+}
+
 function renderNmSuggest(q, items, summary) {
   const el = $('#nmSuggest')
   // 输入框里已经是完整规格时，不再把它自己当"联想项"重复列出
   const qn = String(q || '').trim().toLowerCase()
   const list = (items || []).filter((it) => String(it.spec || '').trim().toLowerCase() !== qn)
-  if (!list.length) { el.innerHTML = ''; el.classList.remove('show'); return }
+  const cHtml = nmCompleteHtml(nm.complete)
+  if (!list.length && !cHtml) { el.innerHTML = ''; el.classList.remove('show'); return }
   const ql = q.toLowerCase()
   // 输入正好是一个型号段时，先说明"这个型号已有多少规格"，避免一条条翻候选
   const head = summary
     ? '<div class="nm-series">ℹ 同型号系列 <b class="mono">' + escapeHtml(summary.model) + '</b>（含变体）：同小类已有 <b>'
       + summary.specCount + '</b> 条规格 / <b>' + summary.itemCount + '</b> 个物料，挑最接近的即可</div>'
     : ''
-  el.innerHTML = head + list.map((it) => {
+  el.innerHTML = cHtml + head + list.map((it) => {
     const s = String(it.spec || '')
     const idx = s.toLowerCase().indexOf(ql)
     const html = idx >= 0
@@ -2569,6 +2633,8 @@ function renderNmSuggest(q, items, summary) {
     return `<div data-v="${escapeHtml(s)}">${html}<span class="nm-cnt">${cnt}</span></div>`
   }).join('')
   el.classList.add('show')
+  // 分段补全候选：点击即采用（与下面"整条规格"候选分开绑定，避免互相干扰）
+  el.querySelectorAll('[data-cv]').forEach((d) => { d.onclick = () => applySpecComplete(d.dataset.cv) })
   el.querySelectorAll('div[data-v]').forEach((d) => d.onclick = () => {
     const v = d.dataset.v
     clearTimeout(nm.timer)   // 作废还在等待的防抖查询

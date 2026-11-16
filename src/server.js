@@ -19,6 +19,7 @@ import { inspectRow } from './validate.js'
 import { applyAiOverlay } from './ai/overlay.js'
 import { getCategory, chooseTokens } from './classify.js'
 import * as guideFields from './guide-fields.js'
+import { complete as specComplete } from './spec-complete.js'
 import { matchUnit, matchSystemWord } from './guide-units.js'
 import { loadTemplates, buildTree, rebuildMid, addCustomParam, removeCustomParam, saveTemplates } from './feature-templates.js'
 import { getOverride, saveOverride, deleteOverride, bulkPrefill, overrideMtime, countParamUsage } from './feature-store.js'
@@ -1206,6 +1207,19 @@ const server = http.createServer(async (req, res) => {
     }
 
     // 型号规格联想：返回同小类历史规格中包含输入内容的完整规格，并带出该规格现有库存数量
+    // 规格分段补全：按范式模板推断"当前在填哪个参数"，给出该参数的取值候选（带频次）。
+    // 只对模板能对齐到参数库的段给候选；对不上（如 设备类型/关键参数）返回 ok:false，前端不弹。
+    if (p === '/api/new-material/spec-complete') {
+      const sub = (url.searchParams.get('sub') || '').trim().slice(0, 6)
+      const q = url.searchParams.get('q') || ''
+      if (!sub) return sendJson(res, 200, { ok: false, options: [] })
+      try {
+        return sendJson(res, 200, specComplete(sub, q, allDocs()))
+      } catch (e) {
+        return sendJson(res, 200, { ok: false, reason: String((e && e.message) || e), options: [] })
+      }
+    }
+
     if (p === '/api/new-material/spec-suggest') {
       const sub = (url.searchParams.get('sub') || '').trim()
       const q = (url.searchParams.get('q') || '').trim()

@@ -11,6 +11,7 @@ import readline from 'readline'
 import path from 'path'
 import { fileURLToPath, pathToFileURL } from 'url'
 import { buildSignature, tokenize, jaccard, normalize, looseSignature, RULES } from './spec.js'
+import { matchUnit } from './guide-units.js'
 
 // 带重试的文件写入：规避 Windows 下防病毒/索引服务偶发占用文件导致的 EBUSY/EPERM
 function safeWrite(file, data) {
@@ -87,7 +88,18 @@ export async function runDedup({ fuzzy = false, limit = 0 } = {}) {
     classified++
     const attrs = chooseAttrs(info)
     const tokens = chooseTokens(info)
-    const sig = buildSignature(rec, attrs)
+    // 名称归一：若名称命中该小类的「品类单元」别名，用单元名参与签名。
+    // 目的：让「监控硬盘 8TB」与「硬盘 8TB」、「枪机 X」与「枪型网络摄像机 X」在查重中视为同物，
+    // 而不是只停留在录入提示层（此前归一不影响签名，一物多号仍认不出）。
+    // 只在名称命中时替换；未声明单元的小类行为完全不变。
+    let sigRec = rec
+    if (rec.FNAME) {
+      try {
+        const u = matchUnit(rec.FNAME, subKey)
+        if (u && u.unit && u.unit !== rec.FNAME) sigRec = Object.assign({}, rec, { FNAME: u.unit })
+      } catch (e) { /* 单元表异常时退回原名 */ }
+    }
+    const sig = buildSignature(sigRec, attrs)
     if (!sig) return // 名称与规格都空，无法构成签名
     const m = minimal(rec)
     m.params = applyAiOverlay(extractParams(rec.FSPECIFICATION, tokens), rec.FNUMBER)

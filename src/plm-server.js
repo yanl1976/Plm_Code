@@ -44,7 +44,32 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const SELECT_DIR = path.join(ROOT, 'data', 'selection')
 const PORT = envPort('PLM_API_PORT', 3100)
 const HOST = env('PLM_API_HOST', '0.0.0.0')
-const VERSION = '1.4.0'
+// 版本号必须随「影响接口返回结构/判定逻辑」的改动递增 ——
+// 否则现场无法从返回里判断进程跑的是新代码还是旧代码（曾因此排查了半天：
+// 生产 3100 缺 subMismatch 字段，但 version 一直是 1.4.0，看不出差异）。
+const VERSION = '1.5.0'
+
+/**
+ * 构建自检：返回本进程实际具备的能力与索引状态。
+ * 现场 curl /api/plm/health 即可判断「有没有部署到位」，不用再猜。
+ */
+function buildFeatures() {
+  const f = {
+    subMismatch: true,        // 含「名称 ↔ 小类」一致性校验，并把结果放进 check 返回
+    subMismatchLayers: 4,     // 单元名 / 主导小类 / 本小类无先例 / 双归属豁免
+    specSymbols: true,        // 规格字符集统一（mm^2、Φ、Ω…）
+    nameIndex: 0,
+    nameDist: 0,
+    indexAt: '',
+  }
+  try {
+    const j = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'name-sub-index.json'), 'utf8'))
+    f.nameIndex = Object.keys(j.index || {}).length
+    f.nameDist = Object.keys(j.dist || {}).length
+    f.indexAt = j.generatedAt || ''
+  } catch (e) { /* 索引缺失：nameIndex/nameDist 为 0，第 4 层自动降级 */ }
+  return f
+}
 
 /**
  * 内网地址判定与优先级。
@@ -1034,6 +1059,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, {
         ok: true,
         version: VERSION,
+        features: buildFeatures(),   // 部署自检：subMismatch / nameDist / indexAt
         ...st,
         listen: {
           host: HOST,

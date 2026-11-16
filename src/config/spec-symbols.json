@@ -1,0 +1,238 @@
+{
+  "version": "1.0.0",
+  "updatedAt": "2026-11-16",
+  "policy": {
+    "baseline": "GBK / CP936 —— Windows 中文版、Excel 默认编码、金蝶 PLM 接口、CAD SHX 字形的共同交集",
+    "rule": "规格只允许 ASCII + whitelist 符号；其余按下表转换。must=CP936 无法表示（跨系统必乱码）；should=能显示但语义错或同义混用，应统一",
+    "note": "²（平方）与 ∅（空集）实测不在 CP936 中（往返变 ?），是导出/接口环节最容易丢失的两个字符"
+  },
+  "replace": [
+    {
+      "from": "∅",
+      "to": "Φ",
+      "level": "must",
+      "group": "直径",
+      "name": "空集符号",
+      "reason": "U+2205 空集符号，CP936 无；应为 Φ",
+      "hits": 111
+    },
+    {
+      "from": "²",
+      "to": "2",
+      "level": "must",
+      "group": "平方",
+      "name": "上标2",
+      "reason": "U+00B2 上标 2，CP936 无（mm² → mm2）",
+      "hits": 95
+    },
+    {
+      "from": "º",
+      "to": "°",
+      "level": "must",
+      "group": "度",
+      "name": "阳性序数符",
+      "reason": "U+00BA 阳性序数符，CP936 无；应为度数 °",
+      "hits": 24
+    },
+    {
+      "from": "µ",
+      "to": "μ",
+      "level": "must",
+      "group": "微",
+      "name": "微符号",
+      "reason": "U+00B5 微符号，CP936 无；应用希腊字母 μ（U+03BC）",
+      "hits": 3
+    },
+    {
+      "from": "Ω",
+      "to": "Ω",
+      "level": "must",
+      "group": "欧姆",
+      "name": "欧姆符号",
+      "reason": "U+2126 欧姆符号，CP936 无；应用希腊字母 Ω（U+03A9）",
+      "hits": 3
+    },
+    {
+      "from": "Ø",
+      "to": "Φ",
+      "level": "must",
+      "group": "直径",
+      "name": "拉丁大写O",
+      "reason": "U+00D8 拉丁大写 O，CP936 无；语义为直径",
+      "hits": 2
+    },
+    {
+      "from": "ø",
+      "to": "Φ",
+      "level": "must",
+      "group": "直径",
+      "name": "拉丁小写o",
+      "reason": "U+00F8 拉丁小写 o，CP936 无；语义为直径",
+      "hits": 1
+    },
+    {
+      "from": " ",
+      "to": " ",
+      "level": "must",
+      "group": "空格",
+      "name": "不换行空格",
+      "reason": "U+00A0 不换行空格，CP936 无；应改半角空格",
+      "hits": 17
+    },
+    {
+      "from": "‑",
+      "to": "-",
+      "level": "must",
+      "group": "连接符",
+      "name": "不换行连字符",
+      "reason": "U+2011 不换行连字符，CP936 无",
+      "hits": 5
+    },
+    {
+      "from": "､",
+      "to": "，",
+      "level": "must",
+      "group": "标点",
+      "name": "半角顿号",
+      "reason": "U+FF64 半角顿号，CP936 无",
+      "hits": 2
+    },
+    {
+      "from": "↔",
+      "to": "-",
+      "level": "must",
+      "group": "标点",
+      "name": "双向箭头",
+      "reason": "U+2194 双向箭头，CP936 无",
+      "hits": 1
+    },
+    {
+      "from": "‌",
+      "to": "",
+      "level": "must",
+      "group": "空格",
+      "name": "零宽非连接符",
+      "reason": "U+200C 零宽非连接符，CP936 无（不可见字符）",
+      "hits": 1
+    }
+  ],
+  "alias": [
+    {
+      "from": "φ",
+      "to": "Φ",
+      "level": "should",
+      "group": "直径",
+      "name": "希腊小写phi",
+      "reason": "与 Φ 混用，统一为大写 Φ",
+      "hits": 50
+    },
+    {
+      "from": "￠",
+      "to": "Φ",
+      "level": "should",
+      "group": "直径",
+      "name": "全角分符号",
+      "reason": "全角美分符号，被误用作直径",
+      "hits": 38
+    },
+    {
+      "from": "Ф",
+      "to": "Φ",
+      "level": "should",
+      "group": "直径",
+      "name": "西里尔Ef",
+      "reason": "西里尔字母 Ef，被误用作直径",
+      "hits": 19
+    },
+    {
+      "from": "∮",
+      "to": "Φ",
+      "level": "should",
+      "group": "直径",
+      "name": "围道积分",
+      "reason": "围道积分符号，被误用作直径",
+      "hits": 1
+    },
+    {
+      "from": "∨",
+      "to": "V",
+      "level": "should",
+      "group": "电压",
+      "name": "逻辑或",
+      "reason": "逻辑或符号，被误用作 volts（如 耐压1140∨）",
+      "hits": 26
+    },
+    {
+      "from": "㎜",
+      "to": "mm",
+      "level": "should",
+      "group": "长度",
+      "name": "兼容字符毫米",
+      "reason": "CJK 兼容单字符「毫米」，CAD/老系统兼容性差",
+      "hits": 20
+    },
+    {
+      "from": "㎡",
+      "to": "m2",
+      "level": "should",
+      "group": "面积",
+      "name": "兼容字符平方米",
+      "reason": "CJK 兼容单字符「平方米」，应用 m2",
+      "hits": 4
+    },
+    {
+      "from": "Δ",
+      "to": "△",
+      "level": "should",
+      "group": "接法",
+      "name": "希腊Delta",
+      "reason": "与 △ 混用（三相接法统一用 △）",
+      "hits": 1
+    }
+  ],
+  "whitelist": [
+    "Φ",
+    "Ω",
+    "μ",
+    "×",
+    "±",
+    "√",
+    "≥",
+    "≤",
+    "△",
+    "℃",
+    "°",
+    "Ⅱ",
+    "Ⅰ",
+    "Ⅲ",
+    "Ⅴ",
+    "Ⅸ",
+    "①",
+    "（",
+    "）",
+    "【",
+    "】",
+    "，",
+    "。",
+    "、",
+    "：",
+    "；",
+    "～",
+    "＜",
+    "＞",
+    "＝",
+    "＋",
+    "％",
+    "／",
+    "－",
+    "‘",
+    "’",
+    "“",
+    "”",
+    "…",
+    "″",
+    "—",
+    "–",
+    "―"
+  ]
+}

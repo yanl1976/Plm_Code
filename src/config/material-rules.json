@@ -248,15 +248,15 @@
       "HZ": "Hz",
       "mhz": "MHz",
       "MHZ": "MHz",
-      "mm2": "mm²",
-      "MM2": "mm²",
-      "mm²": "mm²",
+      "mm²": "mm2",
+      "MM2": "mm2",
+      "mm2": "mm2",
+      "mm^2": "mm2",
+      "m㎡": "mm2",
+      "mm^": "mm2",
       "ohm": "Ω",
       "OHM": "Ω",
-      "ω": "Ω",
-      "mm^2": "mm²",
-      "m㎡": "mm²",
-      "mm^": "mm²"
+      "ω": "Ω"
     },
     "requireParamHit": 1,
     "requireParamMsg": "该小类的关键参数一个都没识别到（{tokens}），请按“参数+数值”补全，否则无法与相似物料区分"

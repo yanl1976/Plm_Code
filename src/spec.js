@@ -14,6 +14,48 @@ const N = RULES.normalize
 const FW = '０１２３４５６７８９ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ．，／－（）：；'
 const HW = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,/-():;'
 
+// ---- 规格符号字符集 ----
+// 兼容底线 GBK/CP936（Windows 中文版、Excel 默认编码、金蝶 PLM 接口、CAD SHX 字形的共同交集）。
+// 表见 config/spec-symbols.json：must=CP936 无法表示（跨系统必乱码）；should=能显示但语义错或同义混用。
+const SYMBOLS = (() => {
+  try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/spec-symbols.json'), 'utf8')) }
+  catch { return { replace: [], alias: [], whitelist: [] } }
+})()
+const SYM_RULES = [...(SYMBOLS.replace || []), ...(SYMBOLS.alias || [])]
+const SYM_MAP = new Map(SYM_RULES.map((r) => [r.from, r]))
+
+/** 规格符号统一：把 CP936 不支持、或语义错误/混用的字符替换为标准写法 */
+export function unifySymbols(s) {
+  if (s == null) return ''
+  let out = ''
+  for (const ch of String(s)) {
+    const r = SYM_MAP.get(ch)
+    out += r ? (r.to || '') : ch
+  }
+  return out
+}
+
+/** 规格中发现的字符问题，供校验提示用：[{char,to,level,group,reason,count}] */
+export function symbolIssues(s) {
+  if (s == null) return []
+  const hit = new Map()
+  for (const ch of String(s)) {
+    const r = SYM_MAP.get(ch)
+    if (!r) continue
+    const e = hit.get(ch) || { char: ch, to: r.to || '', level: r.level, group: r.group, reason: r.reason, count: 0 }
+    e.count++
+    hit.set(ch, e)
+  }
+  return [...hit.values()]
+}
+
+/** 该字符是否在「允许保留」白名单或为 ASCII */
+export function isAllowedSymbol(ch) {
+  const cp = ch.codePointAt(0)
+  if (cp < 0x80) return true
+  return (SYMBOLS.whitelist || []).includes(ch)
+}
+
 export function fullwidthToHalf(s) {
   let out = ''
   for (const ch of s) {

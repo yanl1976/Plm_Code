@@ -14,7 +14,7 @@
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { fullwidthToHalf } from './spec.js'
+import { fullwidthToHalf, unifySymbols, symbolIssues } from './spec.js'
 import { getCategory, chooseTokens, MAP } from './classify.js'
 import { extractParams } from './struct-spec.js'
 import { suggestName } from './name-synonyms.js'
@@ -226,6 +226,9 @@ export function suggestSpec(raw) {
   const R = rules().spec
   let s = fullwidthToHalf(String(raw == null ? '' : raw))
   s = s.replace(/[\u3000]/g, ' ')
+  // 字符集统一（config/spec-symbols.json）：∅→Φ、²→2、Ω(U+2126)→Ω、µ→μ、㎜→mm、∨→V…
+  // 目的是让规格在 Windows / Excel / PLM / CAD 之间传输时字符不丢失
+  s = unifySymbols(s)
   s = s.replace(/\s+/g, ' ').trim()
   if (!s) return ''
   // 乘号：数字之间的 x/X/× → *
@@ -280,6 +283,20 @@ export function checkSpec(raw, sub) {
   // 只把「数字之间的 x/X/×」当乘号；型号里的 X 不算（NXB-63、NSX100F、CJX4 曾全部误报）
   const mult = (R.multiplyChars || []).filter((c) => new RegExp('\\d\\s*' + esc(c) + '\\s*(?=\\d)').test(s))
   if (mult.length) warnings.push(R.multiplyMsg || '乘号统一用 *')
+  // 字符集检查：CP936 无法表示的字符在 Excel/PLM/CAD 之间传输会变问号；
+  // 语义错或同义混用的字符（φ/￠/Ф 当直径、∨ 当 V）应统一
+  const sym = symbolIssues(s)
+  if (sym.length) {
+    const must = sym.filter((x) => x.level === 'must')
+    const should = sym.filter((x) => x.level === 'should')
+    if (must.length) {
+      warnings.push('含 GBK/CP936 不支持的字符（Excel/PLM/CAD 间会乱码）：'
+        + must.map((x) => x.char + '→' + (x.to || '删除')).join('、'))
+    }
+    if (should.length) {
+      warnings.push('字符写法应统一：' + should.map((x) => x.char + '→' + x.to).join('、'))
+    }
+  }
   // 规格里允许中文括号（附件描述常用），由 bracketToHalf 控制是否提示
   const cnBracket = /[（）]/.test(s)
   if (R.bracketToHalf && cnBracket) warnings.push('括号请使用半角 ()')

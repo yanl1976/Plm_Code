@@ -62,9 +62,9 @@ function entries(sub) {
   const list = []
   const s = norm(sub)
   if (s && d.bySub[s]) {
-    for (const [alias, std] of Object.entries(d.bySub[s])) list.push({ alias, std, scope: 'sub', sub: s })
+    for (const [alias, std] of Object.entries(d.bySub[s])) list.push({ alias, std, scope: 'sub', sub: s, wild: alias.startsWith('*') })
   }
-  for (const [alias, std] of Object.entries(d.global)) list.push({ alias, std, scope: 'global', sub: '' })
+  for (const [alias, std] of Object.entries(d.global)) list.push({ alias, std, scope: 'global', sub: '', wild: alias.startsWith('*') })
   return list
 }
 
@@ -116,9 +116,25 @@ export function findAllSuggestions(raw, sub, limit = 5, opts = {}) {
 
   // 1) 完全一致：bySub 先于 global（entries 顺序），只取第一条
   for (const e of list) {
+    if (e.wild) continue
     if (e.alias === name && e.std && e.std !== name) {
       return [toHit(e, e.std, true, 'exact')]
     }
+  }
+
+  // 1.5) 通用后缀词（小类级通配，如 *硬盘 → 硬盘）：
+  //      输入里任何「修饰词 + 通配词」都归一为通配词 ——
+  //      监控硬盘 / 视频监控专用硬盘 / 监控级硬盘 → 硬盘
+  //      只认小类级通配（全局通配会跨小类乱改）；通配词后不能再接汉字，
+  //      所以「硬盘录像机」这类整机名不会被拆开。
+  const suffix = []
+  for (const e of list) {
+    if (!e.wild || !e.std) continue
+    const word = e.alias.slice(1)
+    if (!word || word.length < 2) continue
+    const re = new RegExp('([\\u4e00-\\u9fa5]+)' + word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\u4e00-\\u9fa5])', 'g')
+    const replaced = name.replace(re, () => e.std)
+    if (replaced && replaced !== name) suffix.push(toHit(e, replaced, false, 'suffix'))
   }
 
   // 2) 包含完整叫法：最长 alias 优先
@@ -130,7 +146,7 @@ export function findAllSuggestions(raw, sub, limit = 5, opts = {}) {
   const contains = []
   for (const e of list) {
     if (!e.std || e.std === e.alias || e.alias.length < 2) continue
-    if (e.scope === 'sub') continue
+    if (e.scope === 'sub' || e.wild) continue
     if (!name.includes(e.alias)) continue
     if (name.includes(e.std) && e.std.includes(e.alias)) continue
     const replaced = name.replace(e.alias, e.std)
@@ -141,7 +157,7 @@ export function findAllSuggestions(raw, sub, limit = 5, opts = {}) {
   // 3) 打字中：输入末尾对上叫法开头（至少 2 字）→ 替换末尾该片段
   const prefix = []
   if (!skipPrefix) for (const e of list) {
-    if (!e.std || e.std === e.alias) continue
+    if (e.wild || !e.std || e.std === e.alias) continue
     const k = headOverlap(name, e.alias)
     if (!k) continue
     const replaced = name.slice(0, name.length - k) + e.std
@@ -171,7 +187,7 @@ export function findAllSuggestions(raw, sub, limit = 5, opts = {}) {
   const maxOverlap = prefix.reduce((m, p) => Math.max(m, p.overlap || 0), 0)
   const kept = maxOverlap ? contains.filter((c) => c.alias.length > maxOverlap) : contains
 
-  return [...kept, ...prefix].slice(0, limit)
+  return [...suffix, ...kept, ...prefix].slice(0, limit)
 }
 
 /**
@@ -248,6 +264,14 @@ export function setSynonym({ alias, std, sub } = {}) {
   if (a === s) throw new Error('非标准叫法与标准名称不能相同')
   if (a.length > 24) throw new Error('非标准叫法过长（最多 24 字）')
   if (s.length > 24) throw new Error('标准名称过长（最多 24 字）')
+  // 通配写法：非标准叫法以 * 开头，表示「任何以该词结尾的叫法」（如 *硬盘 → 硬盘）。
+  // 只允许小类级：各小类各自独立配置、互不影响（隔离），不会跨小类乱改。
+  if (a.includes('*')) {
+    if (!a.startsWith('*')) throw new Error('通配符 * 只能写在非标准叫法的开头（如 *硬盘）')
+    if (!sb) throw new Error('通配写法只能用于小类级同义词（不同小类各自独立，互不影响）')
+    if (a.length < 3) throw new Error('通配写法至少要有一个通配词（如 *硬盘）')
+  }
+  if (s.includes('*')) throw new Error('标准名称不能包含通配符 *')
   // 「标准名包含叫法」仅在全局生效时才危险：全局条目参与片段替换（contains），
   // 如 断路器→塑壳断路器 作用在「框架断路器」上会拼出「框架塑壳断路器」。
   // 小类(bySub)条目只参与「完全一致/打字中」，不参与片段替换，故允许「短叫法 → 本小类更完整的标准名」，
@@ -290,6 +314,14 @@ export function updateSynonym({ oldAlias, oldSub, alias, std, sub } = {}) {
   if (a === s) throw new Error('非标准叫法与标准名称不能相同')
   if (a.length > 24) throw new Error('非标准叫法过长（最多 24 字）')
   if (s.length > 24) throw new Error('标准名称过长（最多 24 字）')
+  // 通配写法：非标准叫法以 * 开头，表示「任何以该词结尾的叫法」（如 *硬盘 → 硬盘）。
+  // 只允许小类级：各小类各自独立配置、互不影响（隔离），不会跨小类乱改。
+  if (a.includes('*')) {
+    if (!a.startsWith('*')) throw new Error('通配符 * 只能写在非标准叫法的开头（如 *硬盘）')
+    if (!sb) throw new Error('通配写法只能用于小类级同义词（不同小类各自独立，互不影响）')
+    if (a.length < 3) throw new Error('通配写法至少要有一个通配词（如 *硬盘）')
+  }
+  if (s.includes('*')) throw new Error('标准名称不能包含通配符 *')
   // 「标准名包含叫法」仅在全局生效时才危险：全局条目参与片段替换（contains），
   // 如 断路器→塑壳断路器 作用在「框架断路器」上会拼出「框架塑壳断路器」。
   // 小类(bySub)条目只参与「完全一致/打字中」，不参与片段替换，故允许「短叫法 → 本小类更完整的标准名」，

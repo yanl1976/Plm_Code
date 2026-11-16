@@ -181,7 +181,12 @@ export function detectSubMismatch(rawName, sub) {
       best: { sub: idxHit.sub, subName: idxHit.subName, midName: '', score: idxHit.purity },
       candidates: [{ sub: idxHit.sub, subName: idxHit.subName, midName: '', score: idxHit.purity }],
       msg: `名称「${name}」与所选小类「${info.subName}」不匹配，更像 ${idxHit.sub} ${idxHit.subName}（存量同类 ${idxHit.count} 条），请确认小类是否选错`,
-      level: idxHit.purity >= num(R, 'blockBest', 0.9) ? 'error' : (R.level || 'warn'),
+      // 级别固定 error（红 + 阻断保存），与「单元名精确命中」保持同一颜色。
+      // 不能拿 purity 去套 Dice 的 blockBest(0.9)：两者语义不同 ——
+      //   purity 是「该名称在别的小类的占比」（存量证据），blockBest 是「字符串相似度」（形态证据）。
+      // 混用会导致同类提示两种颜色：实测「电线」purity 0.86 显示琥珀、「电话线」score 1.0 显示红色。
+      // 进入本索引的门槛已是「≥3 条 + 占比≥80%」，属明确归属，故一律 error。
+      level: 'error',
     }
   }
 
@@ -595,10 +600,14 @@ export function checkName(raw, spec, sub, opts = {}) {
     // 两档处理：名称与别的小类标准名几乎完全一致（>= blockBest）才硬阻断；
     // 其余仅提示 —— 交界情况（熔芯座/熔座、插头座/接插件）不该挡人录入。
     const conf = R.subMismatch || {}
-    const lv = subMismatch.best.score >= num(conf, 'blockBest', 0.9)
-      ? 'error'
-      : (conf.level || 'warn')
-    subMismatch.level = lv
+    // 只补缺、不覆盖：detectSubMismatch 的「存量索引」分支已把 level 定为 error
+    // （存量证据不适用 Dice 的 blockBest 阈值），这里若强行按 score 重算会把红色降回琥珀。
+    if (!subMismatch.level) {
+      subMismatch.level = subMismatch.best.score >= num(conf, 'blockBest', 0.9)
+        ? 'error'
+        : (conf.level || 'warn')
+    }
+    const lv = subMismatch.level
     if (lv === 'error') errors.push(subMismatch.msg)
     else warnings.push(subMismatch.msg)
   }

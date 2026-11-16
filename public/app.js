@@ -335,7 +335,7 @@ async function loadMaterials(page = 1) {
       ? `<i class="warn" title="${escapeHtml(m.warns.map((w) => w.param + ': ' + w.reason).join('；'))}"> ⚠待核查${m.warns.length}</i>` : ''
     const tag = m.status === 'pending'
       // 该小类没有特征参数声明 → 本次未提取、未校验。必须区别于「通过」，否则等于虚假合规结论
-      ? '<span class="tag pending" title="该小类在「命名与查重规则」中还没有特征参数声明：本次不提取参数、不判缺项/缺陷。补齐该小类规则后自动生效">校验规则待完善</span>'
+      ? '<span class="tag pending">校验规则待完善</span>'
       : m.status === 'error'
         ? `<span class="tag err" title="${escapeHtml(m.errors.map((e) => e.param + ': ' + e.reason).join('；'))}">缺陷${m.errors.length}</span>`
         : m.status === 'missing'
@@ -376,9 +376,7 @@ async function openCluster(index) {
     paramKeys = paramKeys.filter(hasVal)
   }
   const pHead = paramKeys.map((k) => `<th class="param">${escapeHtml(k)}</th>`).join('')
-  const pHint = paramKeys.length
-    ? ' ；特征参数列红色=与首行差异'
-    : ' ；该小类暂无特征参数规则（校验规则待完善），仅比对名称与规格原文'
+  const pHint = paramKeys.length ? ' ；特征参数列红色=与首行差异' : ''
   const semLine = semM?.sem
     ? `<div class="sem-line">🏷 <b>${escapeHtml(semM.sem.brand)}</b> · ${escapeHtml(semM.sem.series)}：`
       + semM.sem.features.map((f) => `<span class="pv semf" title="${escapeHtml(f.meaning)}">${escapeHtml(f.key)} <b>${escapeHtml(f.value)}</b></span>`).join(' ')

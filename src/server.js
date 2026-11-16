@@ -1449,6 +1449,19 @@ const server = http.createServer(async (req, res) => {
         const hints = cableSpecHints(m.spec, m.sub)
         if (hints.length) verdict.warnings = (verdict.warnings || []).concat(hints)
       } catch (e) { /* 提示失败不影响主校验 */ }
+      // 该小类有没有特征参数规则：没有规则时必须显式告知「校验规则待完善」，
+      // 否则「无提示」会被那句绿色「符合录入规则」误读成「参数也合规」
+      // （2026-11-16 起：无声明的小类一律不提取参数、不判缺项）
+      if (m.sub) {
+        try {
+          const info = getCategory(m.sub)
+          verdict.tokens = info ? chooseTokens(info) : []
+          verdict.rulePending = !!(info && !verdict.tokens.length)
+        } catch (e) {
+          verdict.tokens = []
+          verdict.rulePending = false
+        }
+      }
       return sendJson(res, 200, verdict)
     }
 

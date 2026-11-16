@@ -2483,10 +2483,20 @@ function renderNmRule(r) {
     }
     html += '</div>'
   }
+  // 该小类暂无特征参数规则：必须显式说清「只校验了书写格式，没校验参数」。
+  // 否则无提示时会走到下面那句绿色「符合」上，被误读成参数也合规。
+  const pendingHtml = r.rulePending
+    ? '<div class="nm-hint" style="color:var(--muted)">'
+      + '<span class="nm-hint-icon">i</span>'
+      + '<span class="nm-hint-text">校验规则待完善：该小类暂无特征参数规则，本次只校验书写格式，未校验参数是否齐全（补齐规则后自动生效）</span></div>'
+    : ''
   if (!html) {
-    html = '<div class="nm-hint" style="color:var(--green)">'
+    // 措辞明确限定在「书写格式」：避免把「没查出问题」读成「参数齐全」
+    html = pendingHtml || ('<div class="nm-hint" style="color:var(--green)">'
       + '<span class="nm-hint-icon">✓</span>'
-      + '<span class="nm-hint-text">名称与规格符合录入规则</span></div>'
+      + '<span class="nm-hint-text">名称与规格的书写格式符合规范</span></div>')
+  } else if (pendingHtml) {
+    html += pendingHtml
   }
   el.innerHTML = html
 }

@@ -607,6 +607,7 @@ tr.saving { opacity:.45; }
 .ng-grade{font-size:10px;padding:0 4px;border-radius:3px;border:1px solid currentColor;white-space:nowrap}
 .g-A{color:var(--green)}
 .g-B{color:var(--amber)}
+.g-C{color:var(--muted)}
 .g-C{color:var(--red);opacity:.85}
 .g-none{color:var(--muted)}
 

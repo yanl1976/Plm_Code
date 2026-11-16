@@ -17,7 +17,8 @@ import * as backup from './backup.js'
 import { executeQuery } from './db.js'
 import { inspectRow } from './validate.js'
 import { applyAiOverlay } from './ai/overlay.js'
-import { getCategory } from './classify.js'
+import { getCategory, chooseTokens } from './classify.js'
+import * as guideFields from './guide-fields.js'
 import { loadTemplates, buildTree, rebuildMid, addCustomParam, removeCustomParam, saveTemplates } from './feature-templates.js'
 import { getOverride, saveOverride, deleteOverride, bulkPrefill, overrideMtime, countParamUsage } from './feature-store.js'
 import XLSX from 'xlsx'
@@ -1456,25 +1457,42 @@ const server = http.createServer(async (req, res) => {
       const j = readConfigJson('naming-guide.json') || { subs: {} }
       const clsMap = readConfigJson('classification-map.json') || {}
       const kw = (url.searchParams.get('kw') || '').trim().toLowerCase()
-      let items = Object.entries(j.subs || {}).map(([sub, g]) => ({
-        sub,
-        subName: g.subName || (clsMap[sub] || {}).subName || '',
-        source: g.source || '',
-        specPattern: g.specPattern || '',
-        example: g.example || '',
-        nameRule: g.nameRule || '',
-        avoid: g.avoid || '',
-        fieldCount: (g.fields || []).length,
-        hasStd: !/^无对应国标/.test(g.source || ''),
-        // 置信度：A=有国标可追溯 / B=无国标按行业惯例 / C=推定需复核
-        confidence: g.confidence || '',
-        sourceRef: g.sourceRef || '',
-      }))
+      let items = Object.entries(j.subs || {}).map(([sub, g]) => {
+        // 参数规则完备度：范式库声明的字段 → 参数库参数的落地情况（只读翻译，不改范式库）
+        const gf = guideFields.paramsOfSub(sub)
+        const tokens = chooseTokens(clsMap[sub])
+        return {
+          sub,
+          subName: g.subName || (clsMap[sub] || {}).subName || '',
+          source: g.source || '',
+          specPattern: g.specPattern || '',
+          example: g.example || '',
+          nameRule: g.nameRule || '',
+          avoid: g.avoid || '',
+          fieldCount: (g.fields || []).length,
+          hasStd: !/^无对应国标/.test(g.source || ''),
+          // 置信度：A=有国标可追溯 / B=无国标按行业惯例 / C=推定需复核
+          confidence: g.confidence || '',
+          sourceRef: g.sourceRef || '',
+          paramsMapped: gf.params,      // 范式字段里已能落到参数库参数的
+          paramsPending: gf.pending,    // 范式要求但参数库尚无对应参数（需新增参数）
+          nameOnlyCount: gf.nameOnly.length,
+          tokens,                       // 当前实际生效的特征参数（heuristics / subOverrides）
+          // on=已启用校验；ready=字段都能落地但还没声明 tokens；partial=还有待新增参数
+          ruleState: tokens.length ? 'on' : (gf.pending.length ? 'partial' : 'ready'),
+        }
+      })
       if (kw) {
         items = items.filter((x) => (x.sub + ' ' + x.subName + ' ' + x.source + ' ' + x.specPattern + ' ' + x.example).toLowerCase().indexOf(kw) >= 0)
       }
       items.sort((a, b) => a.sub.localeCompare(b.sub))
-      return sendJson(res, 200, { ok: true, items, total: Object.keys(j.subs || {}).length })
+      const summary = {
+        total: items.length,
+        on: items.filter((x) => x.ruleState === 'on').length,
+        ready: items.filter((x) => x.ruleState === 'ready').length,
+        partial: items.filter((x) => x.ruleState === 'partial').length,
+      }
+      return sendJson(res, 200, { ok: true, items, total: Object.keys(j.subs || {}).length, summary })
     }
 
     if (p === '/api/naming-guide' && (req.method === 'PUT' || req.method === 'POST')) {

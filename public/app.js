@@ -1043,12 +1043,24 @@ async function loadGuideList() {
     const r = await api('/api/naming-guide/list' + (ngKw ? '?kw=' + encodeURIComponent(ngKw) : ''))
     ngItems = (r && r.items) || []
     const st = $('#ngStats')
-    if (st) st.textContent = '共 ' + ((r && r.total) || 0) + ' 个小类' + (ngKw ? '，筛选 ' + ngItems.length + ' 条' : '')
+    const sm = (r && r.summary) || null
+    if (st) {
+      st.textContent = '共 ' + ((r && r.total) || 0) + ' 个小类'
+        + (sm ? '（参数规则：已启用 ' + sm.on + ' · 可启用 ' + sm.ready + ' · 待补参数 ' + sm.partial + '）' : '')
+        + (ngKw ? '，筛选 ' + ngItems.length + ' 条' : '')
+    }
     renderGuideList()
   } catch (e) {
     const m = $('#ngMsg')
     if (m) { m.className = 'syn-msg err'; m.textContent = '加载失败：' + (e && e.message ? e.message : e) }
   }
+}
+
+// 参数规则状态：on=已启用校验 / ready=范式字段都能落到参数库但还没启用 / partial=还有待新增参数
+function ruleCell(it) {
+  if (it.ruleState === 'on') return '<span class="ng-grade g-A">已启用 ' + ((it.tokens || []).length) + '</span>'
+  if (it.ruleState === 'ready') return '<span class="ng-grade g-B">可启用</span>'
+  return '<span class="ng-grade g-C">缺 ' + ((it.paramsPending || []).length) + '</span>'
 }
 
 function renderGuideList() {
@@ -1064,10 +1076,10 @@ function renderGuideList() {
     + '<th style="width:9%">小类名</th>'
     + '<th style="width:6%">置信度</th>'
     + '<th style="width:6%">条款依据</th>'
-    + '<th style="width:27%">依据</th>'
-    + '<th style="width:17%">规格结构</th>'
-    + '<th style="width:14%">示例</th>'
-    + '<th style="width:4%">字段</th>'
+    + '<th style="width:24%">依据</th>'
+    + '<th style="width:16%">规格结构</th>'
+    + '<th style="width:13%">示例</th>'
+    + '<th style="width:9%">参数规则</th>'
     + '<th style="width:12%">操作</th>'
     + '</tr></thead><tbody>'
   const GRADE = {
@@ -1085,7 +1097,12 @@ function renderGuideList() {
       + '<td class="ng-src" title="' + escapeHtml(it.source) + '">' + escapeHtml(it.source) + '</td>'
       + '<td class="mono ng-clip" title="' + escapeHtml(it.specPattern) + '">' + escapeHtml(it.specPattern) + '</td>'
       + '<td class="mono ng-clip" title="' + escapeHtml(it.example) + '">' + escapeHtml(it.example) + '</td>'
-      + '<td style="text-align:center">' + it.fieldCount + '</td>'
+      + '<td style="text-align:center" title="' + escapeHtml(
+        '范式字段 ' + it.fieldCount + ' 个'
+        + (it.paramsMapped && it.paramsMapped.length ? '；可落地参数：' + it.paramsMapped.join('、') : '')
+        + (it.paramsPending && it.paramsPending.length ? '；待新增参数：' + it.paramsPending.join('、') : '')
+        + (it.tokens && it.tokens.length ? '；已启用：' + it.tokens.join('、') : '')
+      ) + '">' + ruleCell(it) + '</td>'
       + '<td class="ng-ops"><button class="ghost ng-edit" data-sub="' + it.sub + '">编辑</button>'
       + '<button class="ghost ng-del" data-sub="' + it.sub + '">删除</button></td>'
       + '</tr>'

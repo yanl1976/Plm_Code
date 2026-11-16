@@ -16,6 +16,8 @@
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { MAP } from './classify.js'
+import { unitsOf } from './guide-units.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const FILE = path.join(ROOT, 'src', 'config', 'name-synonyms.json')
@@ -231,6 +233,27 @@ export function stats() {
   }
 }
 
+/**
+ * 引用完整性：小类已声明「品类单元」时，同义词的标准名必须是该小类的单元名
+ * （或小类标准名），不允许自创 —— 历史上曾写出「入侵报警器」这种库里根本不存在的
+ * 标准名，导致提示把人往一个不存在的写法上引。
+ * 未声明 nameUnits 的小类不做限制（保持既有 122 条条目的可维护性）。
+ */
+function assertStdInUnits(std, sub) {
+  if (!sub) return                       // 全局条目不受某小类的单元约束
+  const { units } = unitsOf(sub)
+  if (!units.length) return              // 该小类还没建单元 → 不介入
+  // 只认「品类单元名」。不把小类标准名当兜底：像 120407 的小类名就是「安防设备」，
+  // 而它本身是泛称 —— 放行就会重现「监控设备 → 安防设备」那种错误映射。
+  const allowed = new Set(units.map((u) => u.name).filter(Boolean))
+  if (allowed.has(std)) return
+  const list = [...allowed].slice(0, 8).join(' / ')
+  throw new Error(
+    `标准名「${std}」不是小类 ${sub} 的品类单元。可选：${list}${allowed.size > 8 ? ' 等' : ''}`
+    + '（如确需新标准名，请先在范式库补该小类的 nameUnits，而不是在字典里另起一个）'
+  )
+}
+
 /** 成环检测：a → b 后，沿 b 的别名链继续走，若回到 a 则成环 */
 function wouldCycle(d, alias, std, sub) {
   const step = (from, sb) => {
@@ -272,6 +295,7 @@ export function setSynonym({ alias, std, sub } = {}) {
     if (a.length < 3) throw new Error('通配写法至少要有一个通配词（如 *硬盘）')
   }
   if (s.includes('*')) throw new Error('标准名称不能包含通配符 *')
+  assertStdInUnits(s, sb)
   // 「标准名包含叫法」仅在全局生效时才危险：全局条目参与片段替换（contains），
   // 如 断路器→塑壳断路器 作用在「框架断路器」上会拼出「框架塑壳断路器」。
   // 小类(bySub)条目只参与「完全一致/打字中」，不参与片段替换，故允许「短叫法 → 本小类更完整的标准名」，
@@ -322,6 +346,7 @@ export function updateSynonym({ oldAlias, oldSub, alias, std, sub } = {}) {
     if (a.length < 3) throw new Error('通配写法至少要有一个通配词（如 *硬盘）')
   }
   if (s.includes('*')) throw new Error('标准名称不能包含通配符 *')
+  assertStdInUnits(s, sb)
   // 「标准名包含叫法」仅在全局生效时才危险：全局条目参与片段替换（contains），
   // 如 断路器→塑壳断路器 作用在「框架断路器」上会拼出「框架塑壳断路器」。
   // 小类(bySub)条目只参与「完全一致/打字中」，不参与片段替换，故允许「短叫法 → 本小类更完整的标准名」，

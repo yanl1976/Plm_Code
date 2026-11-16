@@ -2113,7 +2113,9 @@ async function nmNameSuggest() {
   const stockMatches = (r && r.nameMatches) || []
   const synMatches = (r && r.matches) || []
   const fallback = (r && r.subFallback) || null
-  if (!stockMatches.length && !synMatches.length && !fallback && !modelTip) { hideNmNameTip(); return }
+  // 泛称（门禁/监控/消防系统）：后端只回 refine（细分建议），不给候选
+  const refine = (r && r.refine) || null
+  if (!stockMatches.length && !synMatches.length && !fallback && !modelTip && !refine) { hideNmNameTip(); return }
   const key = (s) => String(s || '').replace(/\s+/g, '').toUpperCase()
   const keyRaw = key(raw)
 
@@ -2143,6 +2145,14 @@ async function nmNameSuggest() {
   const stockList = stockMatches
     .filter((m) => !recs.some((x) => key(x.name) === key(m.name)))
     .slice(0, 5)
+
+  // 泛称且没有其它候选：只给一条不可点选的提示，不给「建议采用」（泛称不能直接填）
+  if (refine && !recs.length && !stockList.length) {
+    box.innerHTML = '<div class="nm-name-tip-sub" style="color:var(--amber)">「' + escapeHtml(raw.trim())
+      + '」是泛称，请写具体部件或设备：' + escapeHtml(refine.hint) + '</div>'
+    box.classList.add('show')
+    return
+  }
 
   if (!recs.length && !stockList.length) { hideNmNameTip(); return }
 

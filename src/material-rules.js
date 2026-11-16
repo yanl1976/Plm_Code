@@ -18,7 +18,7 @@ import { fullwidthToHalf } from './spec.js'
 import { getCategory, chooseTokens, MAP } from './classify.js'
 import { extractParams } from './struct-spec.js'
 import { suggestName } from './name-synonyms.js'
-import { matchSystemWord } from './guide-units.js'
+import { matchSystemWord, allUnitNames } from './guide-units.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const RULE_FILE = path.join(ROOT, 'src', 'config', 'material-rules.json')
@@ -75,13 +75,40 @@ function diceOf(ga, gb) {
   return (2 * inter) / (ta + tb)
 }
 
-// 模块加载时把小类名称的二元组算好，避免每次按键校验都重算 200 多次
-const SUB_GRAMS = Object.entries(MAP).map(([sub, it]) => ({
-  sub,
-  subName: it.subName || '',
-  midName: it.midName || '',
-  grams: bigramsOf(it.subName || ''),
-}))
+// 跨小类判定用的「名称 → 小类」参照表：小类标准名 + 各小类的品类单元名。
+// 只认小类标准名时，「门禁控制器」填错小类指不出来 —— 因为 120407 的小类名是
+// 「安防设备」这种最泛的词，Dice 相似度极低；单元名是具体物，才能对上。
+function buildSubGrams() {
+  const list = Object.entries(MAP).map(([sub, it]) => ({
+    sub,
+    subName: it.subName || '',
+    midName: it.midName || '',
+    grams: bigramsOf(it.subName || ''),
+    kind: 'sub',
+  }))
+  try {
+    for (const [sub, names] of allUnitNames()) {
+      const info = MAP[sub]
+      if (!info) continue
+      for (const n of names) {
+        if (!n) continue
+        list.push({ sub, subName: n, midName: info.midName || '', grams: bigramsOf(n), kind: 'unit' })
+      }
+    }
+  } catch (e) { /* 单元表缺失不影响原有判定 */ }
+  return list
+}
+
+let _subGrams = null
+let _subGramsAt = 0
+// 5 秒缓存：改范式库里的 nameUnits 后无需重启，也不会每次按键都重建 200+ 小类
+function subGrams() {
+  const now = Date.now()
+  if (_subGrams && now - _subGramsAt < 5000) return _subGrams
+  _subGrams = buildSubGrams()
+  _subGramsAt = now
+  return _subGrams
+}
 
 /**
  * 名称与所选小类是否明显不符（如小类「三相电抗器」却把名称写成「断路器」）。
@@ -99,6 +126,7 @@ const SUB_GRAMS = Object.entries(MAP).map(([sub, it]) => ({
 export function detectSubMismatch(rawName, sub) {
   const R = (rules().name || {}).subMismatch || {}
   if (R.enabled === false) return null
+  const SUB_GRAMS = subGrams()
   const name = String(rawName == null ? '' : rawName).trim()
   if (!name || !sub) return null
   const info = getCategory(sub)

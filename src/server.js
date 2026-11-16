@@ -19,6 +19,7 @@ import { inspectRow } from './validate.js'
 import { applyAiOverlay } from './ai/overlay.js'
 import { getCategory, chooseTokens } from './classify.js'
 import * as guideFields from './guide-fields.js'
+import { matchUnit, matchSystemWord } from './guide-units.js'
 import { loadTemplates, buildTree, rebuildMid, addCustomParam, removeCustomParam, saveTemplates } from './feature-templates.js'
 import { getOverride, saveOverride, deleteOverride, bulkPrefill, overrideMtime, countParamUsage } from './feature-store.js'
 import XLSX from 'xlsx'
@@ -1807,6 +1808,7 @@ const server = http.createServer(async (req, res) => {
       let subFallback = null
       let nameFormat = null
       let nameModel = null
+      let refine = null   // 泛称提示（门禁/监控）：不给候选，只提示"写具体"
       try {
         knownCount = nameCountInSub(sub, qname)
 
@@ -1874,11 +1876,28 @@ const server = http.createServer(async (req, res) => {
           const sn = (clsMap1[sub] || {}).subName
           if (sn && sn !== qname) subFallback = { name: sn, sub }
         }
+
+        // ④ 品类单元：别名（枪机/球机/网络硬盘录像机…）→ 单元名（网络摄像机/硬盘录像机）。
+        //    只在同义词字典没给出同一目标时补，避免出现两条一样的候选。
+        //    泛称（门禁/监控）不产生候选，只回传 refine 供前端提示「写具体」。
+        try {
+          if (qname && sub) {
+            const sys = matchSystemWord(qname, sub)
+            if (sys) refine = { word: sys.word, hint: sys.hint }
+            const u = sys ? null : matchUnit(qname, sub)
+            if (u && u.unit !== qname && !matches.some((m) => m.std === u.unit)) {
+              matches = [...matches, {
+                std: u.unit, stdName: u.unit, alias: u.alias, scope: 'unit', sub,
+                exact: u.exact, from: 'unit',
+              }].slice(0, 6)
+            }
+          }
+        } catch (e) { /* 单元表异常不影响联想 */ }
       } catch (e) { matches = [] }
       return sendJson(res, 200, {
         name: qname, sub, knownCount,
         nameMatches, subFallback, nameModel,
-        matches, nameFormat, suggestion: matches[0] || null,
+        matches, nameFormat, suggestion: matches[0] || null, refine,
         // 兼容旧字段：frequentMatches 现为「存量名称联想」的简表
         frequentMatches: nameMatches.map((x) => ({ name: x.name, count: x.count })),
       })

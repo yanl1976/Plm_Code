@@ -21,6 +21,7 @@ import { getCategory, chooseAttrs, chooseTokens } from './classify.js'
 import { buildSignature, looseSignature, normalize, tokenize, jaccard, modelOf } from './spec.js'
 import { extractParams } from './struct-spec.js'
 import { findAllSuggestions } from './name-synonyms.js'
+import { matchUnit } from './guide-units.js'
 import { plmSnapshotFile, erpEnabled } from './datasource.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -332,6 +333,18 @@ export function suggestNames(q) {
   const limit = Math.max(1, Math.min(Number(q.limit) || 8, 20))
   const out = []
   const seen = new Set()
+
+  // 0) 品类单元：别名（枪机/球机）→ 单元名（网络摄像机），比同义词字典更权威
+  //    泛称（门禁/监控）不给候选，前端由校验结果的 warning 提示"写具体"
+  try {
+    if (raw && sub) {
+      const u = matchUnit(raw, sub)
+      if (u && u.unit !== raw && !seen.has(u.unit)) {
+        seen.add(u.unit)
+        out.push({ value: u.unit, from: 'unit', match: 'unit', alias: u.alias, score: u.exact ? 1 : 0.95 })
+      }
+    }
+  } catch (e) { /* 单元表异常不影响联想 */ }
 
   // 1) 同义词三级匹配（exact / contains / prefix —— 支持"边打字边提示"）
   try {

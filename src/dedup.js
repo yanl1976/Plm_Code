@@ -238,6 +238,42 @@ export async function runDedup({ fuzzy = false, limit = 0 } = {}) {
   console.log(`  [一物多号·仅分隔符差异] 候选簇: ${sepClusters.length}  涉及物料: ${sepMemberCount}（/ 与空格、- 与空格等写法差异，未计入上方 exact）`)
   console.log(`  [一号多物] 同编码多副本簇: ${sameNumber.length}  副本数: ${sameNumber.reduce((s, c) => s + c.copies, 0)}（通常为多组织分发，非冗余）`)
   if (fuzzy) console.log(`  [近重] 候选簇: ${fuzzyClusters.length}`)
+  // 生成「名称 → 主导小类」索引，供跨小类检测使用。
+  // 规则：该名称在某小类 ≥3 条，且占该名称全部出现次数 ≥80%（纯度）。
+  // 为什么不靠 nameUnits：209 个小类里只有 3 个建了品类单元，靠人工标注永远覆盖不全；
+  // 存量数据本身就记录了「每个名称实际落在哪个小类」，用它做参照可自动覆盖全库。
+  try {
+    const nameSub = new Map()
+    for (const [sub, subMap] of bySub) {
+      for (const members of subMap.values()) {
+        for (const m of members) {
+          const n = String(m.fName || '').trim()
+          if (!n) continue
+          if (!nameSub.has(n)) nameSub.set(n, new Map())
+          const mm = nameSub.get(n)
+          mm.set(sub, (mm.get(sub) || 0) + 1)
+        }
+      }
+    }
+    const index = {}
+    for (const [n, mm] of nameSub) {
+      const total = [...mm.values()].reduce((s, v) => s + v, 0)
+      if (total < 3) continue                       // 频次太低，不足以当参照
+      const [sub, cnt] = [...mm.entries()].sort((a, b) => b[1] - a[1])[0]
+      if (cnt / total < 0.8) continue               // 该名称跨多个小类，不宜当参照
+      const info = getCategory(sub)
+      index[n] = { sub, subName: (info && info.subName) || '', count: cnt, purity: +(cnt / total).toFixed(2) }
+    }
+    safeWrite(path.join(DATA_DIR, 'name-sub-index.json'), JSON.stringify({
+      generatedAt: new Date().toISOString(),
+      rule: '在某小类≥3条，且占该名称全部出现次数≥80%',
+      index,
+    }, null, 2))
+    console.log(`  [名称索引] ${Object.keys(index).length} 个名称 → 主导小类（供跨类检测）`)
+  } catch (e) {
+    console.warn('  [名称索引] 生成失败（不影响查重）：' + e.message)
+  }
+
   console.log(`  输出: ${exactPath}\n        ${samePath}\n        ${sepPath}\n        ${reportPath}\n        ${exactCsv}`)
   return { exactClusters, sameNumber, sepClusters, fuzzyClusters }
 }

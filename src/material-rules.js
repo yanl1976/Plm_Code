@@ -20,6 +20,26 @@ import { extractParams } from './struct-spec.js'
 import { suggestName } from './name-synonyms.js'
 import { matchSystemWord, allUnitNames, ACCESSORY_SUFFIX } from './guide-units.js'
 
+// ---- 「名称 → 主导小类」索引（由 dedup 生成，见 src/dedup.js）----
+// 用途：跨小类检测。名称若在别的小类有 ≥3 条同类记录、且占该名称 ≥80%，
+// 就是比 Dice 相似度更可靠的证据；且它覆盖全部小类，不依赖 nameUnits
+// （209 个小类里只有 3 个建了品类单元）。
+// 文件不存在或损坏时返回空表 —— 退化为原有的「标准名 + 单元名」判定，不影响主流程。
+let _nameIdx = null
+let _nameIdxAt = 0
+function nameIndex() {
+  const now = Date.now()
+  if (_nameIdx && now - _nameIdxAt < 5000) return _nameIdx   // 5 秒缓存，避免每次按键读盘
+  _nameIdxAt = now
+  try {
+    const j = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'name-sub-index.json'), 'utf8'))
+    _nameIdx = new Map(Object.entries(j.index || {}))
+  } catch (e) {
+    _nameIdx = new Map()
+  }
+  return _nameIdx
+}
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const RULE_FILE = path.join(ROOT, 'src', 'config', 'material-rules.json')
 
@@ -150,6 +170,20 @@ export function detectSubMismatch(rawName, sub) {
   // 「微型断路器 NXB-63 C16」与「微型断路器」的相似度只有 0.5 左右）。
   // 反向不成立：「断路器」包含于「微型断路器」，但它是泛称，应该继续判断。
   if (cmpName.indexOf(info.subName) >= 0) return null
+
+  // 存量参照：该名称在别的小类有 ≥3 条同类记录、且占该名称 ≥80%（纯度）。
+  // 比 Dice 相似度更可靠，且不依赖是否给该小类建了 nameUnits。
+  const idxHit = nameIndex().get(cmpName)
+  if (idxHit && idxHit.sub !== sub && idxHit.subName) {
+    return {
+      name,
+      current: { sub, subName: info.subName, score: 0 },
+      best: { sub: idxHit.sub, subName: idxHit.subName, midName: '', score: idxHit.purity },
+      candidates: [{ sub: idxHit.sub, subName: idxHit.subName, midName: '', score: idxHit.purity }],
+      msg: `名称「${name}」与所选小类「${info.subName}」不匹配，更像 ${idxHit.sub} ${idxHit.subName}（存量同类 ${idxHit.count} 条），请确认小类是否选错`,
+      level: idxHit.purity >= num(R, 'blockBest', 0.9) ? 'error' : (R.level || 'warn'),
+    }
+  }
 
   const curScore = diceOf(gq, bigramsOf(info.subName))
   // 阈值 0.4 → 0.7：中文「XX断路器」共享「断路/路器」两个 bigram，

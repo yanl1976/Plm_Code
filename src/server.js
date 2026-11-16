@@ -1883,7 +1883,7 @@ const server = http.createServer(async (req, res) => {
         try {
           if (qname && sub) {
             const sys = matchSystemWord(qname, sub)
-            if (sys) refine = { word: sys.word, hint: sys.hint }
+            if (sys) refine = { word: sys.word, hint: sys.hint, lead: sys.lead }
             const u = sys ? null : matchUnit(qname, sub)
             if (u && u.unit !== qname && !matches.some((m) => m.std === u.unit)) {
               matches = [...matches, {

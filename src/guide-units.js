@@ -67,8 +67,9 @@ export function matchSystemWord(name, sub) {
   const cfg = unitsOf(sub)
   for (const w of cfg.systemWords) {
     if (n === norm(w)) {
-      const hint = cfg.refineHints[w] || cfg.refineHint || `请把「${w}」细分为具体部件或设备`
-      return { word: w, hint }
+      // lead = 引导语（各小类自定：安防「请写具体部件或设备」/ 通讯线「请写具体用途的线缆」）
+      // hint = 该泛称词对应的可选写法清单
+      return { word: w, hint: cfg.refineHints[w] || '', lead: cfg.refineHint || '请写具体部件或设备' }
     }
   }
   return null

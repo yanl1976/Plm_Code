@@ -2148,8 +2148,10 @@ async function nmNameSuggest() {
 
   // 泛称且没有其它候选：只给一条不可点选的提示，不给「建议采用」（泛称不能直接填）
   if (refine && !recs.length && !stockList.length) {
+    // 引导语由该小类的 refineHint 决定（安防：部件或设备；通讯线：具体用途的线缆）
     box.innerHTML = '<div class="nm-name-tip-sub" style="color:var(--amber)">「' + escapeHtml(raw.trim())
-      + '」是泛称，请写具体部件或设备：' + escapeHtml(refine.hint) + '</div>'
+      + '」是泛称，' + escapeHtml(refine.lead || '请写具体部件或设备')
+      + (refine.hint ? '：' + escapeHtml(refine.hint) : '') + '</div>'
     box.classList.add('show')
     return
   }

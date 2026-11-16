@@ -515,7 +515,8 @@ export function checkName(raw, spec, sub, opts = {}) {
   // 未声明 nameUnits 的小类，matchSystemWord 返回 null —— 一律不介入。
   const sysWord = sub ? matchSystemWord(s, sub) : null
   if (sysWord) {
-    warnings.push(`名称「${s}」是泛称，请写具体部件或设备：${sysWord.hint}`)
+    // 引导语由各小类的 refineHint 决定（安防：部件或设备；通讯线：具体用途的线缆）
+    warnings.push(`名称「${s}」是泛称，${sysWord.lead}${sysWord.hint ? '：' + sysWord.hint : ''}`)
   }
 
   // 同义词规范化：字典见 src/config/name-synonyms.json（可在「系统设置」页维护）

@@ -4,7 +4,7 @@
   "policy": {
     "baseline": "GBK / CP936 —— Windows 中文版、Excel 默认编码、金蝶 PLM 接口、CAD SHX 字形的共同交集",
     "rule": "规格只允许 ASCII + whitelist 符号；其余按下表转换。must=CP936 无法表示（跨系统必乱码）；should=能显示但语义错或同义混用，应统一",
-    "note": "²（平方）与 ∅（空集）实测不在 CP936 中（往返变 ?），是导出/接口环节最容易丢失的两个字符"
+    "note": "平方/立方统一写成幂记号 ^2/^3：GB 3101 规范写法是上标（mm²），但 CAD 的 SHX 字形与 GBK(CP936) 都不含上标字符，而 CAD、PLM 里现行写法就是 mm^2，故以 ^2 为统一形式（ASCII，四端全通，语义不变）"
   },
   "replace": [
     {
@@ -15,15 +15,6 @@
       "name": "空集符号",
       "reason": "U+2205 空集符号，CP936 无；应为 Φ",
       "hits": 111
-    },
-    {
-      "from": "²",
-      "to": "2",
-      "level": "must",
-      "group": "平方",
-      "name": "上标2",
-      "reason": "U+00B2 上标 2，CP936 无（mm² → mm2）",
-      "hits": 95
     },
     {
       "from": "º",
@@ -114,6 +105,24 @@
       "name": "零宽非连接符",
       "reason": "U+200C 零宽非连接符，CP936 无（不可见字符）",
       "hits": 1
+    },
+    {
+      "from": "²",
+      "to": "^2",
+      "level": "should",
+      "group": "平方",
+      "name": "上标2",
+      "reason": "上标在 CAD SHX 字形与 CSV/GBK 环节不可用，统一为幂记号 ^2（CAD/PLM 现行写法）",
+      "hits": 95
+    },
+    {
+      "from": "³",
+      "to": "^3",
+      "level": "should",
+      "group": "立方",
+      "name": "上标3",
+      "reason": "同上，统一为幂记号 ^3",
+      "hits": 0
     }
   ],
   "alias": [

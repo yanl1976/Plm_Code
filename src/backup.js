@@ -40,10 +40,21 @@ export const LIBS = [
   {
     key: 'classify', name: '分类体系', desc: '大类/中类/小类树与映射',
     kind: 'files', paths: ['src/config/classification.json', 'src/config/classification-map.json'],
+    // classification-map 的顶层键就是小类编码，一个小类算一条（不能把小类内的 name/mid 等字段拆开累加）
+    count: (files) => Object.keys(files['classification-map.json'] || {}).length,
   },
   {
     key: 'feature', name: '特征模板与字段语义', desc: '规格参数字段定义、型号语义解析',
     kind: 'files', paths: ['src/config/feature-templates.json', 'src/config/spec-fields.json', 'src/config/model-semantics.json'],
+    // templates 的键是中类，一个中类算一套模板；canonicalOrder 是字段顺序表，不算业务条目
+    count: (files) => {
+      const ft = files['feature-templates.json'] || {}
+      const sf = files['spec-fields.json'] || {}
+      const ms = files['model-semantics.json'] || {}
+      return Object.keys(ft.templates || {}).length
+        + Object.keys(sf.library || {}).length
+        + (Array.isArray(ms.decoders) ? ms.decoders.length : 0)
+    },
   },
   { key: 'std', name: '标准查新清单', desc: '国标/行标版本跟踪', kind: 'file', path: 'src/config/std-watch.json' },
   { key: 'selection', name: '选型库', desc: '按小类组织的选型手册与系列数据', kind: 'dir', path: 'data/selection' },
@@ -59,7 +70,7 @@ function libByKey(key) {
 
 /** 各库「一条」的量词：同义词/规则按条，范式库按小类，标准查新按标准 */
 const UNIT = {
-  synonyms: '条', guide: '个小类', rules: '条', classify: '项',
+  synonyms: '条', guide: '个小类', rules: '条', classify: '个小类',
   feature: '项', std: '个标准', selection: '个文件', settings: '项',
 }
 
@@ -103,6 +114,7 @@ export function statLib(lib) {
     }
     rows = files
   } else {
+    const parsed = {}
     for (const abs of filesOf(lib)) {
       try {
         const st = fs.statSync(abs)
@@ -111,11 +123,16 @@ export function statLib(lib) {
         exists = true
         if (/\.json$/i.test(abs)) {
           try {
-            const j = JSON.parse(fs.readFileSync(abs, 'utf8'))
-            rows += countRows(j)
-          } catch (e) { /* 非计数用途，忽略 */ }
+            parsed[path.basename(abs)] = JSON.parse(fs.readFileSync(abs, 'utf8'))
+          } catch (e) { /* 单个文件解析失败不影响其它文件统计 */ }
         }
       } catch (e) { /* 文件不存在 */ }
+    }
+    // 有定制口径就用定制的（如分类体系数小类、特征模板数中类），否则走通用规则
+    if (typeof lib.count === 'function') {
+      try { rows = Number(lib.count(parsed)) || 0 } catch (e) { rows = 0 }
+    } else {
+      for (const k of Object.keys(parsed)) rows += countRows(parsed[k])
     }
   }
   return {

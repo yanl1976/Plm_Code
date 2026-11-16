@@ -9,23 +9,45 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const CFG = (() => {
-  try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/spec-fields.json'), 'utf8')) || {} }
-  catch { return {} }
-})()
-const LIB = CFG.library || {}
-const DECODERS = (() => {
-  try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/brand-decode.json'), 'utf8')).decoders || [] }
-  catch { return [] }
-})()
-const SEMANTICS = (() => {
-  try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/model-semantics.json'), 'utf8')) }
-  catch { return { decoders: [] } }
-})()
+const P_FIELDS = path.join(ROOT, 'src/config/spec-fields.json')
+const P_DECODE = path.join(ROOT, 'src/config/brand-decode.json')
+const P_SEM = path.join(ROOT, 'src/config/model-semantics.json')
+
+// ---- 配置热更新 ----
+// 原先这三份配置在进程启动时各读一次并固化为常量，导致「改了 spec-fields.json 的正则
+// 必须重启服务才生效」（实测踩过：v19/v20 改完正则，常驻服务仍在用旧规则）。
+// 改为按 mtime 热更新：文件一改，下一次调用即生效，无需重启。
+// 加 1 秒节流：全量扫 2.3 万条物料时每秒只 statSync 一次，不随调用次数放大开销。
+const HOT = {
+  fields: { mt: 0, val: null, at: 0 },
+  decode: { mt: 0, val: null, at: 0 },
+  sem: { mt: 0, val: null, at: 0 },
+}
+function hotJson(box, file, pick, fallback) {
+  const now = Date.now()
+  if (box.val && now - box.at < 1000) return box.val
+  box.at = now
+  try {
+    const mt = fs.statSync(file).mtimeMs
+    if (box.val && box.mt === mt) return box.val
+    const val = pick(JSON.parse(fs.readFileSync(file, 'utf8')))
+    box.val = val
+    box.mt = mt
+    return val
+  } catch (e) {
+    if (box.val) return box.val          // 文件损坏/半写入时沿用上次可用配置
+    box.val = fallback
+    return fallback
+  }
+}
+const fieldsCfg = () => hotJson(HOT.fields, P_FIELDS, (j) => j || {}, {})
+const libNow = () => fieldsCfg().library || {}
+const decodersNow = () => hotJson(HOT.decode, P_DECODE, (j) => (j && j.decoders) || [], [])
+const semanticsNow = () => hotJson(HOT.sem, P_SEM, (j) => j || { decoders: [] }, { decoders: [] })
 
 // 型号编码解码：文本正则提取为空时，按品牌前缀识别型号编码并解出参数（fill-when-empty，绝不覆盖文本值）。
 function decodeParams(spec, tokens, out) {
-  for (const dec of DECODERS) {
+  for (const dec of decodersNow()) {
     let det
     try { det = new RegExp(dec.detect, 'i') } catch { continue }
     if (!det.test(spec)) continue
@@ -48,7 +70,7 @@ function decodeParams(spec, tokens, out) {
         }
       }
       if (!val && rule.else) val = rule.else.replace(/\{\{(\d+)\}\}/g, (_, n) => m[+n] || '')
-      if (val && CFG.decoderFill) out[rule.param] = val
+      if (val && fieldsCfg().decoderFill) out[rule.param] = val
     }
   }
 }
@@ -75,7 +97,7 @@ function segMatch(re, s, seg) {
 // 返回 { brand, series, features:[{key,value,meaning}] }；无命中品牌返回 null。
 export function decodeSemantics(spec, tokens = [], out = null) {
   const s = String(spec || '')
-  for (const d of SEMANTICS.decoders || []) {
+  for (const d of semanticsNow().decoders || []) {
     let det
     try { det = new RegExp(d.detect, 'i') } catch { continue }
     if (!det.test(s)) continue
@@ -110,7 +132,7 @@ export function decodeSemantics(spec, tokens = [], out = null) {
       if (seg.literalKey && out && tokens.includes(seg.literalKey) && (out[seg.literalKey] || '') === '') out[seg.literalKey] = String(m[capIdx] ?? m[0])
       seen.add(seg.key)
       feats.push({ key: seg.key, value: String(value), meaning: String(meaning || ''), src })
-      if (CFG.decoderFill && out && tokens.includes(seg.key) && (out[seg.key] || '') === '') out[seg.key] = String(value)
+      if (fieldsCfg().decoderFill && out && tokens.includes(seg.key) && (out[seg.key] || '') === '') out[seg.key] = String(value)
     }
     return { brand: d.brand, series: d.series, features: feats }
   }
@@ -156,12 +178,14 @@ function extractOne(spec, def) {
   return found.join(join)
 }
 
-export function extractParams(spec, tokens = [], lib = LIB) {
+export function extractParams(spec, tokens = [], lib) {
+  // lib 未显式传入时用热更新后的 library（改 spec-fields.json 后无需重启）
+  const L = lib || libNow()
   // 抗干扰：把干扰分隔符 _ \ 归一成空格（型号内部保留 - / . ；/ 参与电压范围与型号，不归一化）
   const s = spec == null ? '' : String(spec).replace(/[_\\]/g, ' ')
   const out = {}
   for (const t of tokens) {
-    if (!lib[t]) { out[t] = ''; continue }
+    if (!L[t]) { out[t] = ''; continue }
     // 型号：取规格首词（多数物料规格以型号/系列代号开头；兼容西门子 3RT、小写 iC65N 等带前缀/小写情形），避免过度捕获
     if (t === '型号') {
       // 跳过前置中文/空格/分隔符，遇 _ \ 或中文标点断词；模型内部保留 - / .（如 BVR-500V、AD11-22/41 整体保留）
@@ -179,13 +203,14 @@ export function extractParams(spec, tokens = [], lib = LIB) {
       out[t] = model
       continue
     }
-    out[t] = extractOne(s, lib[t])
+    out[t] = extractOne(s, L[t])
   }
   decodeParams(s, tokens, out)
   decodeSemantics(s, tokens, out) // 语义段值：decoderFill=false 时仅作校验，不反推回填
   // 参数排列顺序：按全局 order 排序（未知参数保持原插入序追加在末尾）
-  if (CFG.order && CFG.order.length) {
-    const rank = new Map(CFG.order.map((k, i) => [k, i]))
+  const orderNow = fieldsCfg().order || []
+  if (orderNow.length) {
+    const rank = new Map(orderNow.map((k, i) => [k, i]))
     const keys = Object.keys(out)
     keys.sort((a, b) => {
       const ra = rank.has(a) ? rank.get(a) : Infinity
@@ -199,4 +224,8 @@ export function extractParams(spec, tokens = [], lib = LIB) {
   return out
 }
 
-export { LIB }
+/**
+ * 当前生效的参数库快照（供 validate.js 的黄金样例使用）。
+ * 不要再导出常量 LIB —— 那会让调用方拿到启动时的旧正则。
+ */
+export function libSnapshot() { return libNow() }

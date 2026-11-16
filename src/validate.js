@@ -10,7 +10,7 @@
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { extractParams, LIB, decodeSemantics } from './struct-spec.js'
+import { extractParams, libSnapshot, decodeSemantics } from './struct-spec.js'
 import { getCategory, chooseTokens } from './classify.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -25,7 +25,7 @@ function readJson(p) {
 
 /* ---------- 1. 黄金样例（提取契约断言） ---------- */
 
-export function runGoldenCases(lib = LIB) {
+export function runGoldenCases(lib = libSnapshot()) {
   let cases = []
   try { cases = readJson(CASES_PATH).cases || [] } catch (e) {
     return { total: 0, passed: 0, failed: 1, failures: [{ name: '_cases_load', error: String(e) }] }

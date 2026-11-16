@@ -13,6 +13,7 @@ import { runExtract } from './extract.js'
 import { runDedup } from './dedup.js'
 import * as map from './mapping.js'
 import * as settings from './settings.js'
+import * as backup from './backup.js'
 import { executeQuery } from './db.js'
 import { inspectRow } from './validate.js'
 import { applyAiOverlay } from './ai/overlay.js'
@@ -902,6 +903,41 @@ const server = http.createServer(async (req, res) => {
         const s = settings.saveSettings(b)
         return sendJson(res, 200, s)
       }
+    }
+
+    // ---------- 系统数据备份与选择性恢复 ----------
+    if (p === '/api/backup/libs') {
+      return sendJson(res, 200, backup.listLibs())
+    }
+
+    if (p === '/api/backup/list') {
+      return sendJson(res, 200, { items: backup.listBackups() })
+    }
+
+    if (p === '/api/backup/detail') {
+      const id = url.searchParams.get('id') || ''
+      return sendJson(res, 200, backup.backupDetail(id))
+    }
+
+    if (p === '/api/backup/create' && req.method === 'POST') {
+      const b = await readBody(req)
+      const r = backup.createBackup(b && b.keys, { tag: (b && b.tag) || 'manual' })
+      return sendJson(res, r.ok ? 200 : 400, r)
+    }
+
+    if (p === '/api/backup/restore' && req.method === 'POST') {
+      const b = await readBody(req)
+      const r = backup.restore(b && b.id, b && b.keys, {
+        dryRun: !!(b && b.dryRun),
+        snapshot: !(b && b.snapshot === false),
+      })
+      return sendJson(res, r.ok ? 200 : 400, r)
+    }
+
+    if (p === '/api/backup/delete' && req.method === 'POST') {
+      const b = await readBody(req)
+      const r = backup.deleteBackup(b && b.id)
+      return sendJson(res, r.ok ? 200 : 400, r)
     }
 
     // 删除参数定义前：统计某中类下有多少物料已给该参数赋过值（保护物料已录入数据）

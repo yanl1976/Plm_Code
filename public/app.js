@@ -576,6 +576,176 @@ async function loadSettings() {
   curOrg = s.screenOrg || ''
   renderChips()
   await loadOrgs()
+  try { await loadBackup() } catch (e) { /* 备份模块异常不影响设置页其它功能 */ }
+}
+
+// ---------- 系统数据备份与选择性恢复 ----------
+const bkState = { libs: [], selected: new Set(), backups: [] }
+
+function fmtBytes(n) {
+  const v = Number(n) || 0
+  if (v >= 1048576) return (v / 1048576).toFixed(1) + ' MB'
+  if (v >= 1024) return (v / 1024).toFixed(1) + ' KB'
+  return v + ' B'
+}
+
+function fmtTime(iso) {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return iso
+  const p = (x) => String(x).padStart(2, '0')
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
+    + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds())
+}
+
+async function loadBackup() {
+  const r = await api('/api/backup/libs')
+  bkState.libs = (r && r.libs) || []
+  // 默认勾选「同义词字典 / 国标命名范式库 / 命名与查重规则」这三个最常改的
+  if (!bkState.selected.size) {
+    for (const k of ['synonyms', 'guide', 'rules']) {
+      if (bkState.libs.some((x) => x.key === k)) bkState.selected.add(k)
+    }
+  }
+  renderBackupLibs()
+  await loadBackupList()
+}
+
+function renderBackupLibs() {
+  const box = $('#bkLibs')
+  if (!box) return
+  box.innerHTML = bkState.libs.map((x) => {
+    const checked = bkState.selected.has(x.key) ? ' checked' : ''
+    const missing = x.exists ? '' : ' style="opacity:.45"'
+    return `<label class="bk-lib"${missing}>
+      <input type="checkbox" class="bk-chk" data-key="${escapeHtml(x.key)}"${checked} />
+      <span class="bk-name">${escapeHtml(x.name)}</span>
+      <span class="bk-meta">${x.exists ? (x.rows ? x.rows + ' 条 · ' : '') + fmtBytes(x.bytes) : '文件不存在'}</span>
+      <span class="bk-desc">${escapeHtml(x.desc || '')}</span>
+    </label>`
+  }).join('')
+  box.querySelectorAll('.bk-chk').forEach((el) => {
+    el.addEventListener('change', () => {
+      const k = el.dataset.key
+      if (el.checked) bkState.selected.add(k)
+      else bkState.selected.delete(k)
+    })
+  })
+}
+
+async function loadBackupList() {
+  const box = $('#bkList')
+  if (!box) return
+  const r = await api('/api/backup/list')
+  bkState.backups = (r && r.items) || []
+  if (!bkState.backups.length) {
+    box.innerHTML = '<p class="muted">还没有备份。选择上面的库后点「备份选中」即可创建第一份。</p>'
+    return
+  }
+  const rows = bkState.backups.map((b) => {
+    const names = (b.keys || []).map((k) => {
+      const lib = bkState.libs.find((x) => x.key === k)
+      return lib ? lib.name : k
+    }).join('、')
+    return `<tr>
+      <td>${fmtTime(b.at)}</td>
+      <td>${escapeHtml(names)}</td>
+      <td style="text-align:right">${fmtBytes(b.bytes)}</td>
+      <td>${b.tag === 'before-restore' ? '<span class="bk-tag">恢复前快照</span>' : ''}</td>
+      <td style="white-space:nowrap">
+        <button class="bk-btn" data-act="restore" data-id="${escapeHtml(b.id)}">恢复</button>
+        <button class="bk-btn danger" data-act="delete" data-id="${escapeHtml(b.id)}">删除</button>
+      </td>
+    </tr>`
+  }).join('')
+  box.innerHTML = `<table class="bk-table">
+    <thead><tr><th>时间</th><th>包含的库</th><th style="text-align:right">大小</th><th></th><th></th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`
+  box.querySelectorAll('.bk-btn').forEach((el) => {
+    el.addEventListener('click', () => {
+      if (el.dataset.act === 'restore') openRestore(el.dataset.id)
+      else delBackup(el.dataset.id)
+    })
+  })
+}
+
+async function doBackup(keys) {
+  const msg = $('#bkMsg')
+  if (!keys.length) { if (msg) msg.textContent = '请至少选择一个库'; return }
+  const names = keys.map((k) => (bkState.libs.find((x) => x.key === k) || {}).name || k).join('、')
+  if (!confirm('将备份以下库：\n\n' + names + '\n\n继续？')) return
+  if (msg) msg.textContent = '备份中…'
+  const r = await api('/api/backup/create', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keys }),
+  })
+  if (msg) msg.textContent = r && r.ok ? ('已备份 ' + keys.length + ' 个库（' + fmtBytes(r.totalBytes) + '）') : ('备份失败：' + ((r && r.error) || '未知'))
+  await loadBackupList()
+}
+
+async function delBackup(id) {
+  if (!confirm('确定删除这份备份？删除后不可恢复。')) return
+  const r = await api('/api/backup/delete', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id }),
+  })
+  const msg = $('#bkMsg')
+  if (msg) msg.textContent = r && r.ok ? '已删除' : ('删除失败：' + ((r && r.error) || '未知'))
+  await loadBackupList()
+}
+
+async function openRestore(id) {
+  const b = bkState.backups.find((x) => x.id === id)
+  if (!b) return
+  // 让用户选择要恢复哪些库（默认全选该备份内的库）
+  const names = (b.keys || []).map((k) => {
+    const lib = bkState.libs.find((x) => x.key === k)
+    return (lib ? lib.name : k)
+  })
+  const input = prompt(
+    '恢复备份 ' + fmtTime(b.at) + '\n\n该备份包含（可删掉不想恢复的项，逗号分隔）：\n'
+    + names.join(', ') + '\n\n留空 = 恢复全部；输入 cancel 取消',
+    names.join(', ')
+  )
+  if (input == null) return
+  if (/^cancel$/i.test(input.trim())) return
+  let keys = b.keys
+  if (input.trim()) {
+    const want = input.split(/[,，\s]+/).map((s) => s.trim()).filter(Boolean)
+    keys = b.keys.filter((k) => {
+      const lib = bkState.libs.find((x) => x.key === k)
+      const nm = lib ? lib.name : k
+      return want.indexOf(nm) >= 0 || want.indexOf(k) >= 0
+    })
+  }
+  if (!keys.length) { alert('没有匹配的库'); return }
+
+  // 先预览：会覆盖哪些文件
+  const dry = await api('/api/backup/restore', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, keys, dryRun: true }),
+  })
+  if (!dry || !dry.ok) { alert('预览失败：' + ((dry && dry.error) || '未知')); return }
+  const list = (dry.files || []).map((f) => '  ' + f.rel).join('\n')
+  if (!confirm('将覆盖以下 ' + dry.count + ' 个文件：\n\n' + list
+    + '\n\n（恢复前会自动生成「恢复前快照」）\n\n确认恢复？')) return
+
+  const msg = $('#bkMsg')
+  if (msg) msg.textContent = '恢复中…'
+  const r = await api('/api/backup/restore', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, keys }),
+  })
+  if (r && r.ok) {
+    if (msg) msg.textContent = '已恢复 ' + r.count + ' 个文件' + (r.preSnapshot ? ('（恢复前快照：' + r.preSnapshot + '）') : '')
+    await loadBackupList()
+    await loadBackup()
+    // 配置类库恢复后需要重载页面才能看到变化
+    if (confirm('恢复完成。是否立即重新加载页面以应用新配置？')) location.reload()
+  } else {
+    if (msg) msg.textContent = '恢复失败：' + ((r && r.error) || '未知')
+  }
 }
 
 // ---------- 名称同义词字典维护（真源 src/config/name-synonyms.json；列表可直接编辑） ----------
@@ -729,6 +899,22 @@ $('#btnSaveSettings').addEventListener('click', async () => {
   $('#settingsMsg').textContent = '已保存（需重新提取生效）'
   loadOverview()
 })
+
+// 数据备份按钮
+if ($('#btnBackupSel')) {
+  $('#btnBackupSel').addEventListener('click', () => doBackup([...bkState.selected]))
+}
+if ($('#btnBackupAll')) {
+  $('#btnBackupAll').addEventListener('click', () => doBackup(bkState.libs.filter((x) => x.exists).map((x) => x.key)))
+}
+if ($('#btnBkToggleAll')) {
+  $('#btnBkToggleAll').addEventListener('click', () => {
+    const all = bkState.libs.filter((x) => x.exists).map((x) => x.key)
+    if (bkState.selected.size >= all.length) bkState.selected.clear()
+    else for (const k of all) bkState.selected.add(k)
+    renderBackupLibs()
+  })
+}
 async function addSynonym() {
   const alias = ($('#synAlias').value || '').trim()
   const std = ($('#synStd').value || '').trim()

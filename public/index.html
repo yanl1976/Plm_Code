@@ -148,9 +148,32 @@
         </div>
         <button id="btnSaveSettings" class="primary">保存设置</button>
         <span id="settingsMsg" class="muted"></span>
-      </div>
+        </div>
 
-    </section>
+        <!-- 系统数据备份：各类库可选择性备份与恢复 -->
+        <div class="settings-card" id="backupCard">
+        <h3>系统数据备份
+          <span style="font-weight:normal;font-size:12px;opacity:.7">备份各类库，可按库选择性恢复</span>
+        </h3>
+        <p class="muted">
+          备份保存在服务器 <code style="font-family:Consolas,Monaco,monospace">data/backups/</code>，不进入版本库。
+          恢复前会自动再做一次「恢复前快照」，误操作可回退。
+        </p>
+
+        <div id="bkLibs" class="bk-libs"></div>
+
+        <div class="bk-actions">
+          <button id="btnBackupSel" class="primary">备份选中</button>
+          <button id="btnBackupAll">备份全部</button>
+          <button id="btnBkToggleAll">全选 / 反选</button>
+          <span id="bkMsg" class="muted"></span>
+        </div>
+
+        <h3 style="margin-top:24px">备份记录</h3>
+        <div id="bkList" class="bk-list"></div>
+        </div>
+
+        </section>
 
     <!-- 命名规范：名称同义词字典 + 国标命名范式库 -->
     <section class="panel" id="tab-rules">

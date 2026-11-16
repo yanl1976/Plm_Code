@@ -673,6 +673,136 @@
     state.panelOwner = null;
   }
 
+  // ======================= 规格分段补全（IDE 式） =======================
+  // 依据范式模板 + 参数库推断「当前在填哪一段」，给出该段取值候选（频次来自同小类存量）。
+  // 交互：Tab 接受首个 / Alt+1~8 精确选择 / 点击采用 / Esc 关闭。
+  // Tab 只在候选可见时拦截 —— 实测可拦住：document 捕获阶段 defaultPrevented=false，
+  // 说明"切字段"是浏览器默认行为，preventDefault 即可取消，且不影响正常跳字段。
+  var compTimer = null;
+
+  function ensureCompPanel() {
+    if (state.compPanel && document.body && document.body.contains(state.compPanel)) return state.compPanel;
+    state.compPanel = null;
+    if (!document.body) return null;
+    var div = document.createElement('div');
+    div.style.cssText = [
+      'position:absolute', 'z-index:100000', 'min-width:300px', 'max-width:520px',
+      'background:#fff', 'border:1px solid #c8cfd8', 'border-radius:4px',
+      'box-shadow:0 4px 16px rgba(0,0,0,.16)', 'font-size:12px',
+      'display:none', 'overflow:hidden'
+    ].join(';');
+    document.body.appendChild(div);
+    state.compPanel = div;
+    return div;
+  }
+
+  function hideComp() {
+    if (state.compPanel) state.compPanel.style.display = 'none';
+    state.comp = null;
+  }
+
+  function placeCompPanel(ctrl) {
+    var el = domOf(ctrl);
+    var p = state.compPanel;
+    if (!el || !p) return;
+    try {
+      var r = el.getBoundingClientRect();
+      var oy = window.pageYOffset || document.documentElement.scrollTop || 0;
+      var ox = window.pageXOffset || document.documentElement.scrollLeft || 0;
+      p.style.left = (r.left + ox) + 'px';
+      p.style.top = (r.bottom + oy + 2) + 'px';
+      p.style.width = Math.max(300, r.width) + 'px';
+    } catch (e) { }
+  }
+
+  function renderComp(r) {
+    var p = ensureCompPanel();
+    if (!p) return;
+    var seg = r.unit ? r.param + '（' + r.unit + '）' : r.param;
+    var pf = String(r.prefix || '').toLowerCase();
+    var cells = (r.options || []).slice(0, 8).map(function (o, i) {
+      var v = String(o.value || '');
+      var txt = esc(v);
+      if (pf && v.toLowerCase().indexOf(pf) === 0) {
+        txt = '<b>' + esc(v.slice(0, pf.length)) + '</b>' + esc(v.slice(pf.length));
+      }
+      var on = (i === 0);
+      return '<div data-cv="' + esc(v) + '" title="' + esc(v) + '" style="cursor:pointer;padding:1px 6px;'
+        + 'border:1px solid ' + (on ? '#2f8cff' : '#d8dee6') + ';border-radius:3px;'
+        + 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'
+        + (on ? 'background:#eef5ff;color:#1a6fd4' : '') + '">' + txt + '</div>';
+    }).join('');
+    p.innerHTML = '<div style="padding:4px 8px;border-bottom:1px dashed #e2e6ea;font-size:11px;color:#8a939e">'
+      + esc(seg) + '<span style="float:right">Tab 补全 / Alt+序号</span></div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:5px">' + cells + '</div>';
+    p.style.display = 'block';
+    placeCompPanel(state.ggxh);
+    var items = p.querySelectorAll('[data-cv]');
+    for (var i = 0; i < items.length; i++) {
+      (function (el, idx) { el.onclick = function () { applyComp(idx); }; })(items[i], i);
+    }
+  }
+
+  function applyComp(i) {
+    var r = state.comp;
+    if (!r || !r.options || !r.options[i]) return;
+    var v = String(r.options[i].value || '');
+    var cur = readText(state.ggxh) || '';
+    var tail = (r.prefix && cur.slice(cur.length - r.prefix.length) === r.prefix) ? r.prefix : '';
+    var head = tail ? cur.slice(0, cur.length - tail.length) : cur;
+    var base = head.replace(/\s+$/, '');
+    var next = base ? base + ' ' + v : v;
+    if (!writeText(state.ggxh, next)) return;
+    hideComp();
+    fireBlur(state.ggxh);
+    checkNow();
+    try { var el = domOf(state.ggxh); if (el && el.focus) el.focus(); } catch (e) { }
+  }
+
+  function loadComp() {
+    var v = readText(state.ggxh) || '';
+    var sub = currentSub();
+    if (!v.replace(/\s/g, '') || !sub) { hideComp(); return; }
+    apiAsync('/api/plm/spec-complete', { sub: sub, q: v }, function (r) {
+      if (!r || !r.ok || !(r.options || []).length) { hideComp(); return; }
+      state.comp = r;
+      renderComp(r);
+    });
+  }
+
+  function onCompInput() {
+    clearTimeout(compTimer);
+    compTimer = setTimeout(loadComp, 180);
+  }
+
+  function onCompKey(e) {
+    if (e.isComposing) return;
+    var vis = state.compPanel && state.compPanel.style.display !== 'none';
+    if (e.key === 'Escape' && vis) { hideComp(); return; }
+    if (!vis) return;
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault(); e.stopPropagation();
+      applyComp(0);
+      return;
+    }
+    if (e.altKey && /^[1-8]$/.test(e.key)) {
+      e.preventDefault(); e.stopPropagation();
+      applyComp(parseInt(e.key, 10) - 1);
+      return;
+    }
+  }
+
+  function bindSpecComplete() {
+    var el = domOf(state.ggxh);
+    if (!el || el.__compBound) return;
+    el.__compBound = true;
+    try {
+      el.addEventListener('input', onCompInput, false);
+      el.addEventListener('keydown', onCompKey, true);   // 捕获阶段，先于平台
+      log('规格补全已绑定：' + (el.id || el.tagName));
+    } catch (e) { }
+  }
+
   function placePanel(ctrl) {
     var el = domOf(ctrl);
     if (!el || !state.panel) return;
@@ -2963,6 +3093,8 @@
 
     var lastCheckedKey = '';
     function checkNow() {
+    // 兜底绑定：控件 DOM 可能在 state.ggxh 赋值之后才挂上页面（幂等）
+    try { bindSpecComplete(); } catch (e) { }
       var nm = nameIn.value;
       var sp = specIn.value;
       // 内容没变就不重复发请求（防抖 + 失焦 + keyup 可能重复触发）
@@ -3199,6 +3331,7 @@
 
       state.ename = o.GetControl(CFG.ctlEname);
       state.ggxh = o.GetControl(CFG.ctlGgxh);
+    try { bindSpecComplete(); } catch (e) { /* 控件 DOM 未就绪时，checkNow 会再试 */ }
       state.zycs = o.GetControl(CFG.ctlZycs);
       state.ecode = o.GetControl(CFG.ctlEcode);
       state.itemtype = o.GetControl(CFG.ctlItemType);

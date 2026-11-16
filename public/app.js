@@ -2457,7 +2457,11 @@ function renderNmRule(r) {
   const fmt = r.specFormat
   // 空格类问题合并成一条「会自动整理成什么」，比逐条列「有空格」更有用。
   // 注意：规格再长也不能省略「规范写法」，否则用户看不到完整型号。
+  // 跨类提示（subMismatch）在下方单独渲染，这里把同一句从 errors/warnings 里剔掉，
+  // 否则同一条会显示两次（后端 material-rules 会把 msg 同时 push 进 errors，以便阻断保存）
+  const mmMsg = (r.subMismatch && r.subMismatch.msg) || ''
   const otherWarns = warns.filter((w) => {
+    if (mmMsg && w === mmMsg) return false
     if (/空格/.test(w) && !/名称/.test(w)) return false
     if (fmt && fmt.fixed && w === '规范写法：' + fmt.fixed) return false  // 与整理结果重复
     return true
@@ -2471,7 +2475,7 @@ function renderNmRule(r) {
     if (!buckets[t.group]) buckets[t.group] = []
     buckets[t.group].push({ text, level: forceLevel || t.level })
   }
-  errs.forEach((e) => pushHint(e, 'error'))
+  errs.forEach((e) => { if (mmMsg && e === mmMsg) return; pushHint(e, 'error') })
   if (fmt && fmt.fixed) {
     pushHint('保存时会自动整理规格空格（' + fmt.reasons.join('、') + '）→ ' + fmt.fixed, 'warn')
   }

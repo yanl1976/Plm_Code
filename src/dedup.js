@@ -267,10 +267,21 @@ export async function runDedup({ fuzzy = false, limit = 0 } = {}) {
       const info = getCategory(sub)
       index[n] = { sub, subName: (info && info.subName) || '', count: cnt, purity: +(cnt / total).toFixed(2) }
     }
+    // 全量分布（不受纯度限制）：供「当前小类无先例」判定用。
+    // 例「电源线」散在 5 个小类、纯度 0.38 进不了 index，
+    // 但它从没在「微型断路器」出现过 —— 这本身就是很强的信号。
+    const dist = {}
+    for (const [n, mm] of nameSub) {
+      const o = {}
+      for (const [s, c] of mm) o[s] = c
+      dist[n] = o
+    }
+
     safeWrite(path.join(DATA_DIR, 'name-sub-index.json'), JSON.stringify({
       generatedAt: new Date().toISOString(),
-      rule: '在某小类≥3条，且占该名称全部出现次数≥80%',
+      rule: 'index=在某小类≥2条且占该名称≥80%；dist=全量分布（含低频/跨类）',
       index,
+      dist,
     }, null, 2))
     console.log(`  [名称索引] ${Object.keys(index).length} 个名称 → 主导小类（供跨类检测）`)
   } catch (e) {

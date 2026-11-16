@@ -33,9 +33,12 @@ function nameIndex() {
   _nameIdxAt = now
   try {
     const j = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'name-sub-index.json'), 'utf8'))
-    _nameIdx = new Map(Object.entries(j.index || {}))
+    _nameIdx = {
+      index: new Map(Object.entries(j.index || {})),   // 名称 → 主导小类（强证据）
+      dist: new Map(Object.entries(j.dist || {})),     // 名称 → 全量分布（弱证据）
+    }
   } catch (e) {
-    _nameIdx = new Map()
+    _nameIdx = { index: new Map(), dist: new Map() }
   }
   return _nameIdx
 }
@@ -160,8 +163,12 @@ export function detectSubMismatch(rawName, sub) {
 
   // 配件/箱体/设备类后缀不做跨小类判定：
   //   「接线端子箱」含「接线端子」但它是箱类（属 120206），不是端子；
-  //   「网线水晶头」「光缆组件」同理。与 matchUnit 用同一份后缀清单，避免两处判断口径不一致。
-  if (ACCESSORY_SUFFIX.some((w) => name.includes(w))) return null
+  //   「网线水晶头」「光缆组件」同理。
+  // 注意：这里比 matchUnit 用的清单更窄 —— 去掉「电源」「线缆」这类会误伤正常名称的词
+  //（「电源线」曾因含「电源」被整条排除，导致填在断路器类也不提示）。
+  const SUB_MISMATCH_EXCLUDE = ['壳体', '配件', '支架', '标签', '胶水', '箱', '桩', '雨棚',
+    '延长器', '发射端', '接收端', '转换器', '光缆组件', '钳']
+  if (SUB_MISMATCH_EXCLUDE.some((w) => name.includes(w))) return null
 
   const gq = bigramsOf(cmpName)
   if (!gq.size) return null
@@ -171,9 +178,18 @@ export function detectSubMismatch(rawName, sub) {
   // 反向不成立：「断路器」包含于「微型断路器」，但它是泛称，应该继续判断。
   if (cmpName.indexOf(info.subName) >= 0) return null
 
+  // 合法分支：同一名称在多个小类都有可观记录（当前类 ≥ 主导类的 20%），属双归属，不做提示。
+  // 例「热缩管」在 101706 热缩管 与 110404 辅料 各 120 条，两边都合法；
+  // 而「电缆」在 110301 电线只有 10 条、110302 电缆有 802 条（1.2%），属填错。
+  const distAll = nameIndex().dist.get(cmpName)
+  if (distAll && distAll[sub]) {
+    const topCnt = Math.max(...Object.values(distAll))
+    if (topCnt > 0 && distAll[sub] / topCnt >= 0.2) return null
+  }
+
   // 存量参照：该名称在别的小类有 ≥3 条同类记录、且占该名称 ≥80%（纯度）。
   // 比 Dice 相似度更可靠，且不依赖是否给该小类建了 nameUnits。
-  const idxHit = nameIndex().get(cmpName)
+  const idxHit = nameIndex().index.get(cmpName)
   if (idxHit && idxHit.sub !== sub && idxHit.subName) {
     return {
       name,
@@ -186,6 +202,32 @@ export function detectSubMismatch(rawName, sub) {
       //   count =2 且纯度 ≥80% → 弱证据，warn（琥珀，只提示，避免误挡录入）
       // 例：「电缆」802 条 → error；「电源线」在 110302 只有 2 条 → warn，但仍能提示方向。
       level: idxHit.count >= 3 ? 'error' : 'warn',
+    }
+  }
+
+  // 第 4 层：该名称在当前小类一条先例都没有，但在别的小类有 ≥2 条记录。
+  // 比「主导小类」宽松（不要求某类占 80%），专门兜住散乱的名称：
+  //   例「电源线」散在 5 个小类（纯度 0.38 进不了主导表），
+  //   但它从没在「微型断路器」出现过 —— 填在断路器类就该提醒。
+  // 只在「当前小类无记录」时触发，因此正确小类里不会误报。
+  const dist = nameIndex().dist.get(cmpName)
+  if (dist && !dist[sub]) {
+    // 列前 3 个去向：单个去向容易误导（如「电源线」存量最多在 101604 插头 3 条，
+    // 但业务上更可能是 110302 电缆），给出多选项让人自己判断
+    const top = Object.entries(dist).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1]).slice(0, 3)
+    if (top.length) {
+      const cands = top.map(([s, c]) => ({
+        sub: s, subName: (MAP[s] || {}).subName || '', midName: '', score: 0.8, count: c,
+      }))
+      const list = cands.map((x) => x.sub + ' ' + x.subName + '（' + x.count + ' 条）').join(' / ')
+      return {
+        name,
+        current: { sub, subName: info.subName, score: 0 },
+        best: cands[0],
+        candidates: cands,
+        msg: `名称「${name}」在本小类无先例，存量同类在 ${list}，请确认小类是否选错`,
+        level: 'warn',
+      }
     }
   }
 

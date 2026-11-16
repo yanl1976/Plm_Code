@@ -2587,17 +2587,19 @@ function nmCompleteHtml(r) {
   if (!r || !r.ok || !r.options || !r.options.length) return ''
   const seg = r.unit ? r.param + '（' + r.unit + '）' : r.param
   const pf = String(r.prefix || '').toLowerCase()
-  // 横向一行：候选按已输入前缀高亮，Tab 是首个
-  const opts = r.options.slice(0, 5).map((o, i) => {
+  // 两列网格：长型号单行省略（title 显示完整），候选多时自动向下多排
+  const opts = r.options.slice(0, 8).map((o, i) => {
     const v = String(o.value || '')
     const hit = pf && v.toLowerCase().startsWith(pf)
     const html = hit
       ? '<b>' + escapeHtml(v.slice(0, pf.length)) + '</b>' + escapeHtml(v.slice(pf.length))
       : escapeHtml(v)
-    return '<span class="nm-copt' + (i === 0 ? ' on' : '') + '" data-cv="' + escapeHtml(v) + '">' + html + '</span>'
+    return '<span class="nm-copt' + (i === 0 ? ' on' : '') + '" data-cv="' + escapeHtml(v) + '" title="' + escapeHtml(v) + '">' + html + '</span>'
   }).join('')
-  return '<div class="nm-complete"><span class="nm-cseg">' + escapeHtml(seg) + '</span>'
-    + opts + '<span class="nm-ckey">Tab 补全</span></div>'
+  return '<div class="nm-complete">'
+    + '<span class="nm-cseg" title="' + escapeHtml(seg) + '">' + escapeHtml(seg) + '</span>'
+    + '<span class="nm-cgrid">' + opts + '</span>'
+    + '<span class="nm-ckey">Tab 补全</span></div>'
 }
 
 /**

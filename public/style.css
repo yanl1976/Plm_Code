@@ -352,16 +352,21 @@ table.ptab td.brand { color:var(--accent); font-weight:700; }
   color:transparent; }
 .nm-ghost .gr { color:var(--muted); opacity:.75; }
 
-.nm-suggest > .nm-complete { display:flex; flex-wrap:wrap; align-items:center; gap:4px;
-  padding:5px 8px; font-family:ui-monospace, Consolas, monospace; font-size:12px;
+.nm-suggest > .nm-complete { display:flex; align-items:flex-start; gap:8px;
+  padding:6px 8px; font-family:ui-monospace, Consolas, monospace; font-size:12px;
   border-bottom:1px dashed rgba(255,255,255,.14); justify-content:flex-start; cursor:default; }
 .nm-suggest > .nm-complete:hover { background:none; color:inherit; }
-.nm-cseg { color:var(--muted); font-size:11px; margin-right:2px; }
-.nm-copt { padding:1px 7px; border-radius:4px; border:1px solid var(--line); cursor:pointer; }
+/* 左侧参数名：固定不换行，过长省略 */
+.nm-cseg { flex:none; max-width:74px; color:var(--muted); font-size:11px; line-height:20px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* 候选区：两列网格，多排向下展开 */
+.nm-cgrid { flex:1; min-width:0; display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:4px; }
+.nm-copt { min-width:0; padding:1px 7px; border-radius:4px; border:1px solid var(--line);
+  cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:18px; }
 .nm-copt:hover { border-color:var(--accent); color:var(--accent); }
 .nm-copt.on { border-color:var(--accent); background:rgba(62,166,255,.14); color:var(--accent); }
 .nm-copt b { font-weight:600; }
-.nm-ckey { margin-left:auto; color:var(--muted); font-size:11px; opacity:.75; }
+.nm-ckey { flex:none; align-self:center; color:var(--muted); font-size:11px; opacity:.75; }
 
 .nm-series b { color:var(--accent); }
 .nm-hit-series { padding-left:2px; }

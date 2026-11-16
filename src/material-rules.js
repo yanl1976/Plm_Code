@@ -18,6 +18,7 @@ import { fullwidthToHalf } from './spec.js'
 import { getCategory, chooseTokens, MAP } from './classify.js'
 import { extractParams } from './struct-spec.js'
 import { suggestName } from './name-synonyms.js'
+import { matchSystemWord } from './guide-units.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const RULE_FILE = path.join(ROOT, 'src', 'config', 'material-rules.json')
@@ -479,6 +480,15 @@ export function checkName(raw, spec, sub, opts = {}) {
   if (mat.length) warnings.push((R.materialMsg || '材质/表面处理请写入规格') + `（检测到：${mat.join('、')}）`)
   const brand = (R.brandWords || []).filter((w) => s.includes(w))
   if (brand.length) warnings.push((R.brandMsg || '品牌请写入品牌字段') + `（检测到：${brand.join('、')}）`)
+
+  // 品类单元（范式库 nameUnits）：泛称只提示"写具体"，绝不映射成某个标准名。
+  // 「门禁」「监控」「消防系统」这类上位词无法对应某一件可采购的物，
+  // 硬给它一个 std 就会得出「监控 → 安防设备」这种错（已踩过）。
+  // 未声明 nameUnits 的小类，matchSystemWord 返回 null —— 一律不介入。
+  const sysWord = sub ? matchSystemWord(s, sub) : null
+  if (sysWord) {
+    warnings.push(`名称「${s}」是泛称，请写具体部件或设备：${sysWord.hint}`)
+  }
 
   // 同义词规范化：字典见 src/config/name-synonyms.json（可在「系统设置」页维护）
   // 只提示不阻断 —— 真正的重复新增由保存链路的「同小类+同规格」409 拦截。

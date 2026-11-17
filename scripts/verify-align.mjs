@@ -63,10 +63,17 @@ const subs = STD_SUBS.filter((s) => (only ? s.startsWith(only) : true)).sort()
 for (const sub of subs) {
   const info = getCategory(sub) || {}
   const subName = (STD.subs[sub] || {}).subName || info.subName || ''
-  // 与实际提取口径一致：基础 tokens + 该小类的 subAddTokens（dedup-rules 里的增量）。
-  // 只取 chooseTokens 会漏掉后补的参数，导致「明明配了却报未进 tokens」。
+  // 与 build.mjs 完全同口径：
+  //   有范式库 fields 以 fields 为权威，否则回落中类通用；再叠加 subAddTokens、减去 subRemoveTokens
+  const gx = (GUIDE.subs || {})[sub] || {}
+  const tplFields = (Array.isArray(gx.fields) ? gx.fields : [])
+    .map((f) => ALIAS[String(f.key || '').trim()] || String(f.key || '').trim())
+    .filter((k) => k && LIB[k])
   const extra = ((DEDUP.subAddTokens || {})[sub]) || []
-  const tokens = [...new Set([...chooseTokens(info), ...extra])]
+  const removed = ((DEDUP.subRemoveTokens || {})[sub]) || []
+  const tokens = (tplFields.length
+    ? [...new Set([...tplFields, ...extra])]
+    : [...new Set([...chooseTokens(info), ...extra])]).filter((t) => !removed.includes(t))
   const phs = placeholderOf(sub)
   const segOk = { total: phs.length, usable: 0 }
 

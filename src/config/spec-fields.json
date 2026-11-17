@@ -1783,6 +1783,30 @@
         "(GCS|GCK|GGD|MNS|MNX|KYN\\d*|HXGN\\d*|XGN\\d*|JYN\\d*|KGN\\d*)"
       ],
       "note": "开关柜的柜型系列"
+    },
+    "高": {
+      "unit": "mm",
+      "firstOnly": true,
+      "patterns": [
+        "(?:^|[\\s（(])(\\d+(?:\\.\\d+)?)\\s*[×xX*]"
+      ],
+      "note": "柜体/箱体的高度（规范写法 高*宽*深，GB/T 20641）"
+    },
+    "宽": {
+      "unit": "mm",
+      "firstOnly": true,
+      "patterns": [
+        "[×xX*]\\s*(\\d+(?:\\.\\d+)?)\\s*[×xX*]"
+      ],
+      "note": "柜体/箱体的宽度（高*宽*深 的中间段）"
+    },
+    "深": {
+      "unit": "mm",
+      "firstOnly": true,
+      "patterns": [
+        "[\\s\\S]*[×xX*]\\s*(\\d+(?:\\.\\d+)?)\\s*(?:mm)?"
+      ],
+      "note": "柜体/箱体的深度（高*宽*深 的最后一段，用贪婪匹配取最后一个乘号后）"
     }
   },
   "meta": {

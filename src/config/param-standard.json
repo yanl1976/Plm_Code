@@ -525,6 +525,116 @@
               "count": 1
             }
           ]
+        },
+        "脱扣器": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 13,
+          "normCount": 13,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "ETU35WT",
+              "count": 26,
+              "source": "stock"
+            },
+            {
+              "value": "MIC",
+              "count": 16,
+              "source": "stock"
+            },
+            {
+              "value": "EA35",
+              "count": 13,
+              "source": "stock"
+            },
+            {
+              "value": "LSI",
+              "count": 13,
+              "source": "stock"
+            },
+            {
+              "value": "iTR326A",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "PR121/LSI",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "ETU45B",
+              "count": 1
+            },
+            {
+              "value": "LS/I",
+              "count": 1
+            },
+            {
+              "value": "PR121",
+              "count": 1
+            },
+            {
+              "value": "EA354",
+              "count": 1
+            },
+            {
+              "value": "ETU35WTF",
+              "count": 1
+            },
+            {
+              "value": "TM400D3P",
+              "count": 1
+            },
+            {
+              "value": "TM250D3P",
+              "count": 1
+            }
+          ]
+        },
+        "脱扣曲线": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 2,
+          "normCount": 2,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "C",
+              "count": 1
+            },
+            {
+              "value": "D",
+              "count": 1
+            }
+          ]
+        },
+        "分断等级": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 2,
+          "normCount": 2,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "N",
+              "count": 14,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "F",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -1030,6 +1140,67 @@
               "count": 1
             }
           ]
+        },
+        "脱扣器": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 11,
+          "normCount": 11,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "LSI",
+              "count": 20,
+              "source": "stock"
+            },
+            {
+              "value": "MIC",
+              "count": 10,
+              "source": "stock"
+            },
+            {
+              "value": "ETU35WT",
+              "count": 9,
+              "source": "stock"
+            },
+            {
+              "value": "ETU35WT/LSI",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "EA35",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "LSIG",
+              "count": 1
+            },
+            {
+              "value": "MIC2.0",
+              "count": 1
+            },
+            {
+              "value": "Micrologic",
+              "count": 1
+            },
+            {
+              "value": "iTR326A",
+              "count": 1
+            },
+            {
+              "value": "MIC5.0E",
+              "count": 1
+            },
+            {
+              "value": "LS/I",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -1068,6 +1239,25 @@
             }
           ],
           "note": "取值过多，不推荐值；仅保留 Top5 作\"本小类常见写法\"参考"
+        },
+        "壳架": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 2,
+          "normCount": 2,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "250",
+              "count": 1
+            },
+            {
+              "value": "400",
+              "count": 1
+            }
+          ]
         },
         "额定电流": {
           "type": "series",
@@ -1633,24 +1823,82 @@
             }
           ]
         },
-        "壳架": {
+        "脱扣器": {
+          "type": "free",
+          "series": "",
+          "rawCount": 82,
+          "normCount": 82,
+          "aliases": {},
+          "reference": [
+            {
+              "value": "TMD",
+              "count": 125
+            },
+            {
+              "value": "MA",
+              "count": 38
+            },
+            {
+              "value": "TM",
+              "count": 20
+            },
+            {
+              "value": "TMM",
+              "count": 10
+            },
+            {
+              "value": "MIC2.3",
+              "count": 9
+            }
+          ],
+          "note": "取值过多，不推荐值；仅保留 Top5 作\"本小类常见写法\"参考"
+        },
+        "脱扣曲线": {
           "type": "enum",
           "series": "",
           "rawCount": 2,
           "normCount": 2,
           "aliases": {},
-          "accepted": [],
-          "pending": [],
-          "suspected": [
+          "accepted": [
             {
-              "value": "250",
-              "count": 1
+              "value": "D",
+              "count": 7,
+              "source": "stock"
             },
             {
-              "value": "400",
-              "count": 1
+              "value": "C",
+              "count": 3,
+              "source": "stock"
             }
-          ]
+          ],
+          "pending": [],
+          "suspected": []
+        },
+        "分断等级": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 3,
+          "normCount": 3,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "N",
+              "count": 89,
+              "source": "stock"
+            },
+            {
+              "value": "F",
+              "count": 54,
+              "source": "stock"
+            },
+            {
+              "value": "H",
+              "count": 28,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": []
         }
       }
     },
@@ -27138,35 +27386,15 @@
             }
           ]
         },
-        "宽度": {
+        "宽": {
           "type": "enum",
           "series": "",
-          "rawCount": 6,
-          "normCount": 6,
+          "rawCount": 7,
+          "normCount": 7,
           "aliases": {},
           "accepted": [
             {
-              "value": "5",
-              "count": 5,
-              "source": "stock"
-            },
-            {
-              "value": "0.6",
-              "count": 2,
-              "source": "stock"
-            },
-            {
-              "value": "1.0",
-              "count": 2,
-              "source": "stock"
-            },
-            {
-              "value": "2",
-              "count": 2,
-              "source": "stock"
-            },
-            {
-              "value": "10",
+              "value": "175",
               "count": 2,
               "source": "stock"
             }
@@ -27174,7 +27402,27 @@
           "pending": [],
           "suspected": [
             {
-              "value": "2.0",
+              "value": "75",
+              "count": 1
+            },
+            {
+              "value": "85",
+              "count": 1
+            },
+            {
+              "value": "1250",
+              "count": 1
+            },
+            {
+              "value": "2",
+              "count": 1
+            },
+            {
+              "value": "40",
+              "count": 1
+            },
+            {
+              "value": "50",
               "count": 1
             }
           ]
@@ -28712,33 +28960,65 @@
       "rowCount": 22,
       "droppedCount": 0,
       "params": {
-        "玻璃类型": {
-          "type": "free",
-          "accepted": [],
+        "宽": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 11,
+          "normCount": 11,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "30",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "28",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "45",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "32",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
           "pending": [],
-          "suspected": [],
-          "note": "模板声明但暂无取值（该小类存量样本不足）"
-        },
-        "厚度": {
-          "type": "free",
-          "accepted": [],
-          "pending": [],
-          "suspected": [],
-          "note": "模板声明但暂无取值（该小类存量样本不足）"
-        },
-        "长度": {
-          "type": "free",
-          "accepted": [],
-          "pending": [],
-          "suspected": [],
-          "note": "模板声明但暂无取值（该小类存量样本不足）"
-        },
-        "宽度": {
-          "type": "free",
-          "accepted": [],
-          "pending": [],
-          "suspected": [],
-          "note": "模板声明但暂无取值（该小类存量样本不足）"
+          "suspected": [
+            {
+              "value": "214",
+              "count": 1
+            },
+            {
+              "value": "35",
+              "count": 1
+            },
+            {
+              "value": "100",
+              "count": 1
+            },
+            {
+              "value": "450",
+              "count": 1
+            },
+            {
+              "value": "80",
+              "count": 1
+            },
+            {
+              "value": "50",
+              "count": 1
+            },
+            {
+              "value": "24",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -28839,55 +29119,35 @@
             }
           ]
         },
-        "宽度": {
+        "宽": {
           "type": "enum",
           "series": "",
-          "rawCount": 10,
-          "normCount": 10,
+          "rawCount": 5,
+          "normCount": 5,
           "aliases": {},
           "accepted": [
             {
-              "value": "18",
-              "count": 5,
+              "value": "1000",
+              "count": 2,
               "source": "stock"
             }
           ],
           "pending": [],
           "suspected": [
             {
-              "value": "20",
+              "value": "25",
               "count": 1
             },
             {
-              "value": "1.0",
-              "count": 1
-            },
-            {
-              "value": "0.38",
-              "count": 1
-            },
-            {
-              "value": "1.6",
-              "count": 1
-            },
-            {
-              "value": "35",
-              "count": 1
-            },
-            {
-              "value": "140",
-              "count": 1
-            },
-            {
-              "value": "0.43",
-              "count": 1
-            },
-            {
-              "value": "30",
+              "value": "80",
               "count": 1
             },
             {
               "value": "50",
+              "count": 1
+            },
+            {
+              "value": "40",
               "count": 1
             }
           ]
@@ -29841,6 +30101,27 @@
           ],
           "pending": [],
           "suspected": []
+        },
+        "材质": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 2,
+          "normCount": 2,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "不锈钢",
+              "count": 6,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "铝",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -29896,25 +30177,115 @@
       "rowCount": 347,
       "droppedCount": 0,
       "params": {
-        "宽度": {
-          "type": "enum",
+        "高": {
+          "type": "semi",
           "series": "",
-          "rawCount": 11,
-          "normCount": 11,
+          "rawCount": 37,
+          "normCount": 37,
           "aliases": {},
           "accepted": [
             {
-              "value": "1800",
-              "count": 3,
+              "value": "800",
+              "count": 38,
               "source": "stock"
             },
             {
               "value": "600",
+              "count": 36,
+              "source": "stock"
+            },
+            {
+              "value": "400",
+              "count": 22,
+              "source": "stock"
+            },
+            {
+              "value": "500",
+              "count": 22,
+              "source": "stock"
+            },
+            {
+              "value": "1000",
+              "count": 15,
+              "source": "stock"
+            },
+            {
+              "value": "300",
+              "count": 13,
+              "source": "stock"
+            },
+            {
+              "value": "1200",
+              "count": 9,
+              "source": "stock"
+            },
+            {
+              "value": "700",
+              "count": 7,
+              "source": "stock"
+            },
+            {
+              "value": "200",
+              "count": 7,
+              "source": "stock"
+            },
+            {
+              "value": "2200",
+              "count": 6,
+              "source": "stock"
+            },
+            {
+              "value": "2000",
+              "count": 5,
+              "source": "stock"
+            },
+            {
+              "value": "450",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "560",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "650",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "900",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "1300",
               "count": 2,
               "source": "stock"
             },
             {
-              "value": "1.0",
+              "value": "150",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "350",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "1800",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "240",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "6000",
               "count": 2,
               "source": "stock"
             }
@@ -29922,7 +30293,200 @@
           "pending": [],
           "suspected": [
             {
+              "value": "1600",
+              "count": 1
+            },
+            {
+              "value": "1900",
+              "count": 1
+            },
+            {
+              "value": "780",
+              "count": 1
+            },
+            {
+              "value": "1650",
+              "count": 1
+            },
+            {
+              "value": "250",
+              "count": 1
+            },
+            {
+              "value": "750",
+              "count": 1
+            },
+            {
+              "value": "860",
+              "count": 1
+            },
+            {
+              "value": "460",
+              "count": 1
+            },
+            {
+              "value": "580",
+              "count": 1
+            },
+            {
+              "value": "850",
+              "count": 1
+            },
+            {
+              "value": "740",
+              "count": 1
+            },
+            {
+              "value": "100",
+              "count": 1
+            },
+            {
+              "value": "385",
+              "count": 1
+            },
+            {
+              "value": "550",
+              "count": 1
+            },
+            {
+              "value": "2",
+              "count": 1
+            },
+            {
+              "value": "520",
+              "count": 1
+            }
+          ]
+        },
+        "宽": {
+          "type": "semi",
+          "series": "",
+          "rawCount": 41,
+          "normCount": 41,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "800",
+              "count": 40,
+              "source": "stock"
+            },
+            {
+              "value": "1000",
+              "count": 35,
+              "source": "stock"
+            },
+            {
+              "value": "600",
+              "count": 31,
+              "source": "stock"
+            },
+            {
+              "value": "400",
+              "count": 23,
+              "source": "stock"
+            },
+            {
+              "value": "500",
+              "count": 13,
+              "source": "stock"
+            },
+            {
+              "value": "300",
+              "count": 10,
+              "source": "stock"
+            },
+            {
+              "value": "200",
+              "count": 10,
+              "source": "stock"
+            },
+            {
+              "value": "1200",
+              "count": 7,
+              "source": "stock"
+            },
+            {
+              "value": "700",
+              "count": 6,
+              "source": "stock"
+            },
+            {
+              "value": "250",
+              "count": 6,
+              "source": "stock"
+            },
+            {
+              "value": "1500",
+              "count": 5,
+              "source": "stock"
+            },
+            {
               "value": "2200",
+              "count": 5,
+              "source": "stock"
+            },
+            {
+              "value": "900",
+              "count": 5,
+              "source": "stock"
+            },
+            {
+              "value": "3",
+              "count": 5,
+              "source": "stock"
+            },
+            {
+              "value": "150",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "350",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "1800",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "280",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "230",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "950",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "650",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "805",
+              "count": 1
+            },
+            {
+              "value": "470",
+              "count": 1
+            },
+            {
+              "value": "550",
+              "count": 1
+            },
+            {
+              "value": "480",
               "count": 1
             },
             {
@@ -29930,27 +30494,281 @@
               "count": 1
             },
             {
-              "value": "160",
+              "value": "905",
               "count": 1
             },
             {
-              "value": "1200",
+              "value": "1100",
               "count": 1
             },
             {
-              "value": "1386",
+              "value": "100",
               "count": 1
+            },
+            {
+              "value": "8000",
+              "count": 1
+            },
+            {
+              "value": "1320",
+              "count": 1
+            },
+            {
+              "value": "810",
+              "count": 1
+            },
+            {
+              "value": "910",
+              "count": 1
+            },
+            {
+              "value": "2",
+              "count": 1
+            },
+            {
+              "value": "140",
+              "count": 1
+            },
+            {
+              "value": "180",
+              "count": 1
+            },
+            {
+              "value": "1400",
+              "count": 1
+            },
+            {
+              "value": "92",
+              "count": 1
+            },
+            {
+              "value": "3000",
+              "count": 1
+            },
+            {
+              "value": "2800",
+              "count": 1
+            },
+            {
+              "value": "520",
+              "count": 1
+            }
+          ]
+        },
+        "深": {
+          "type": "semi",
+          "series": "",
+          "rawCount": 45,
+          "normCount": 45,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "2200",
+              "count": 49,
+              "source": "stock"
+            },
+            {
+              "value": "200",
+              "count": 28,
+              "source": "stock"
+            },
+            {
+              "value": "250",
+              "count": 28,
+              "source": "stock"
             },
             {
               "value": "150",
-              "count": 1
+              "count": 13,
+              "source": "stock"
+            },
+            {
+              "value": "2000",
+              "count": 12,
+              "source": "stock"
+            },
+            {
+              "value": "600",
+              "count": 10,
+              "source": "stock"
+            },
+            {
+              "value": "1800",
+              "count": 10,
+              "source": "stock"
+            },
+            {
+              "value": "300",
+              "count": 8,
+              "source": "stock"
             },
             {
               "value": "800",
-              "count": 1
+              "count": 8,
+              "source": "stock"
+            },
+            {
+              "value": "180",
+              "count": 8,
+              "source": "stock"
+            },
+            {
+              "value": "400",
+              "count": 7,
+              "source": "stock"
+            },
+            {
+              "value": "10",
+              "count": 6,
+              "source": "stock"
+            },
+            {
+              "value": "350",
+              "count": 6,
+              "source": "stock"
+            },
+            {
+              "value": "120",
+              "count": 6,
+              "source": "stock"
+            },
+            {
+              "value": "260",
+              "count": 5,
+              "source": "stock"
+            },
+            {
+              "value": "500",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "140",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "160",
+              "count": 4,
+              "source": "stock"
             },
             {
               "value": "1000",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "1900",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "2300",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "100",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "450",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "700",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "750",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "1300",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "2320",
+              "count": 1
+            },
+            {
+              "value": "1210",
+              "count": 1
+            },
+            {
+              "value": "125",
+              "count": 1
+            },
+            {
+              "value": "825",
+              "count": 1
+            },
+            {
+              "value": "650",
+              "count": 1
+            },
+            {
+              "value": "1700",
+              "count": 1
+            },
+            {
+              "value": "1980",
+              "count": 1
+            },
+            {
+              "value": "2160",
+              "count": 1
+            },
+            {
+              "value": "430",
+              "count": 1
+            },
+            {
+              "value": "843",
+              "count": 1
+            },
+            {
+              "value": "900",
+              "count": 1
+            },
+            {
+              "value": "950",
+              "count": 1
+            },
+            {
+              "value": "6.3",
+              "count": 1
+            },
+            {
+              "value": "280",
+              "count": 1
+            },
+            {
+              "value": "90",
+              "count": 1
+            },
+            {
+              "value": "840",
+              "count": 1
+            },
+            {
+              "value": "86",
+              "count": 1
+            },
+            {
+              "value": "3100",
+              "count": 1
+            },
+            {
+              "value": "3000",
               "count": 1
             }
           ]
@@ -30021,36 +30839,6 @@
           ],
           "pending": [],
           "suspected": []
-        },
-        "尺寸(宽*深*高)": {
-          "type": "free",
-          "series": "",
-          "rawCount": 178,
-          "normCount": 178,
-          "aliases": {},
-          "reference": [
-            {
-              "value": "800/800/2200",
-              "count": 9
-            },
-            {
-              "value": "800/1000/2200",
-              "count": 6
-            },
-            {
-              "value": "600/1000/2200",
-              "count": 5
-            },
-            {
-              "value": "1000/1000/2200",
-              "count": 5
-            },
-            {
-              "value": "1000/800/2200",
-              "count": 4
-            }
-          ],
-          "note": "取值过多，不推荐值；仅保留 Top5 作\"本小类常见写法\"参考"
         }
       }
     },
@@ -30544,20 +31332,55 @@
       "rowCount": 196,
       "droppedCount": 0,
       "params": {
-        "宽度": {
+        "高": {
           "type": "semi",
           "series": "",
-          "rawCount": 21,
-          "normCount": 21,
+          "rawCount": 44,
+          "normCount": 44,
           "aliases": {},
           "accepted": [
             {
-              "value": "5000",
+              "value": "800",
+              "count": 6,
+              "source": "stock"
+            },
+            {
+              "value": "600",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "650",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "12000",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "400",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "350",
               "count": 2,
               "source": "stock"
             },
             {
-              "value": "9500",
+              "value": "433",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "8000",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "500",
               "count": 2,
               "source": "stock"
             },
@@ -30567,12 +31390,356 @@
               "source": "stock"
             },
             {
-              "value": "2970",
+              "value": "2000",
               "count": 2,
               "source": "stock"
             },
             {
-              "value": "9000",
+              "value": "38",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "10000",
+              "count": 1
+            },
+            {
+              "value": "450",
+              "count": 1
+            },
+            {
+              "value": "5600",
+              "count": 1
+            },
+            {
+              "value": "10500",
+              "count": 1
+            },
+            {
+              "value": "365",
+              "count": 1
+            },
+            {
+              "value": "219",
+              "count": 1
+            },
+            {
+              "value": "437",
+              "count": 1
+            },
+            {
+              "value": "64",
+              "count": 1
+            },
+            {
+              "value": "132",
+              "count": 1
+            },
+            {
+              "value": "4500",
+              "count": 1
+            },
+            {
+              "value": "300",
+              "count": 1
+            },
+            {
+              "value": "3920",
+              "count": 1
+            },
+            {
+              "value": "4300",
+              "count": 1
+            },
+            {
+              "value": "4630",
+              "count": 1
+            },
+            {
+              "value": "330",
+              "count": 1
+            },
+            {
+              "value": "5000",
+              "count": 1
+            },
+            {
+              "value": "14000",
+              "count": 1
+            },
+            {
+              "value": "1200",
+              "count": 1
+            },
+            {
+              "value": "4440",
+              "count": 1
+            },
+            {
+              "value": "8820",
+              "count": 1
+            }
+          ]
+        },
+        "宽": {
+          "type": "semi",
+          "series": "",
+          "rawCount": 36,
+          "normCount": 36,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "2800",
+              "count": 12,
+              "source": "stock"
+            },
+            {
+              "value": "800",
+              "count": 8,
+              "source": "stock"
+            },
+            {
+              "value": "600",
+              "count": 7,
+              "source": "stock"
+            },
+            {
+              "value": "1000",
+              "count": 7,
+              "source": "stock"
+            },
+            {
+              "value": "350",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "550",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "300",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "400",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "245",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "30",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "2900",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "500",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "3700",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "16",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "2862",
+              "count": 1
+            },
+            {
+              "value": "2330",
+              "count": 1
+            },
+            {
+              "value": "2408",
+              "count": 1
+            },
+            {
+              "value": "150",
+              "count": 1
+            },
+            {
+              "value": "70",
+              "count": 1
+            },
+            {
+              "value": "157",
+              "count": 1
+            },
+            {
+              "value": "64",
+              "count": 1
+            },
+            {
+              "value": "75",
+              "count": 1
+            },
+            {
+              "value": "2350",
+              "count": 1
+            },
+            {
+              "value": "1800",
+              "count": 1
+            },
+            {
+              "value": "1600",
+              "count": 1
+            },
+            {
+              "value": "530",
+              "count": 1
+            },
+            {
+              "value": "2808",
+              "count": 1
+            },
+            {
+              "value": "1400",
+              "count": 1
+            },
+            {
+              "value": "2438",
+              "count": 1
+            },
+            {
+              "value": "950",
+              "count": 1
+            },
+            {
+              "value": "1100",
+              "count": 1
+            },
+            {
+              "value": "15",
+              "count": 1
+            },
+            {
+              "value": "2630",
+              "count": 1
+            },
+            {
+              "value": "1260",
+              "count": 1
+            }
+          ]
+        },
+        "深": {
+          "type": "semi",
+          "series": "",
+          "rawCount": 46,
+          "normCount": 46,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "3000",
+              "count": 15,
+              "source": "stock"
+            },
+            {
+              "value": "250",
+              "count": 14,
+              "source": "stock"
+            },
+            {
+              "value": "200",
+              "count": 7,
+              "source": "stock"
+            },
+            {
+              "value": "2970",
+              "count": 7,
+              "source": "stock"
+            },
+            {
+              "value": "300",
+              "count": 5,
+              "source": "stock"
+            },
+            {
+              "value": "30",
+              "count": 5,
+              "source": "stock"
+            },
+            {
+              "value": "1800",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "120",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "800",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "3120",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "400",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "337",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "227",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "48",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "150",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "3050",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "100",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "47",
               "count": 2,
               "source": "stock"
             }
@@ -30584,7 +31751,19 @@
               "count": 1
             },
             {
-              "value": "1200",
+              "value": "2800",
+              "count": 1
+            },
+            {
+              "value": "240",
+              "count": 1
+            },
+            {
+              "value": "2670",
+              "count": 1
+            },
+            {
+              "value": "3080",
               "count": 1
             },
             {
@@ -30592,55 +31771,59 @@
               "count": 1
             },
             {
-              "value": "400",
+              "value": "495",
               "count": 1
             },
             {
-              "value": "10000",
+              "value": "40",
               "count": 1
             },
             {
-              "value": "120",
+              "value": "2700",
               "count": 1
             },
             {
-              "value": "4800",
+              "value": "175",
               "count": 1
             },
             {
-              "value": "11000",
+              "value": "3400",
               "count": 1
             },
             {
-              "value": "5500",
+              "value": "3100",
               "count": 1
             },
             {
-              "value": "6000",
+              "value": "2900",
               "count": 1
             },
             {
-              "value": "7400",
+              "value": "2000",
               "count": 1
             },
             {
-              "value": "8800",
+              "value": "350",
               "count": 1
             },
             {
-              "value": "8700",
+              "value": "5",
               "count": 1
             },
             {
-              "value": "500",
+              "value": "2600",
               "count": 1
             },
             {
-              "value": "300",
+              "value": "3150",
               "count": 1
             },
             {
-              "value": "6058",
+              "value": "3084",
+              "count": 1
+            },
+            {
+              "value": "34",
               "count": 1
             }
           ]
@@ -30695,36 +31878,6 @@
               "count": 1
             }
           ]
-        },
-        "尺寸(宽*深*高)": {
-          "type": "free",
-          "series": "",
-          "rawCount": 74,
-          "normCount": 74,
-          "aliases": {},
-          "reference": [
-            {
-              "value": "600/600/200",
-              "count": 4
-            },
-            {
-              "value": "350/350/120",
-              "count": 2
-            },
-            {
-              "value": "433/245/227",
-              "count": 2
-            },
-            {
-              "value": "1000/800/400",
-              "count": 2
-            },
-            {
-              "value": "38/16/47",
-              "count": 2
-            }
-          ],
-          "note": "取值过多，不推荐值；仅保留 Top5 作\"本小类常见写法\"参考"
         }
       }
     },
@@ -30734,23 +31887,48 @@
       "rowCount": 118,
       "droppedCount": 0,
       "params": {
-        "宽度": {
-          "type": "enum",
+        "高": {
+          "type": "semi",
           "series": "",
-          "rawCount": 10,
-          "normCount": 10,
+          "rawCount": 21,
+          "normCount": 21,
           "aliases": {},
           "accepted": [
             {
+              "value": "800",
+              "count": 12,
+              "source": "stock"
+            },
+            {
+              "value": "1000",
+              "count": 8,
+              "source": "stock"
+            },
+            {
               "value": "600",
               "count": 5,
+              "source": "stock"
+            },
+            {
+              "value": "2200",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "1850",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "3600",
+              "count": 2,
               "source": "stock"
             }
           ],
           "pending": [],
           "suspected": [
             {
-              "value": "650",
+              "value": "240",
               "count": 1
             },
             {
@@ -30758,69 +31936,103 @@
               "count": 1
             },
             {
-              "value": "365",
+              "value": "720",
               "count": 1
             },
             {
-              "value": "740",
+              "value": "500",
               "count": 1
             },
             {
-              "value": "540",
+              "value": "900",
               "count": 1
             },
             {
-              "value": "98",
+              "value": "220",
               "count": 1
             },
             {
-              "value": "1200",
+              "value": "148",
               "count": 1
             },
             {
-              "value": "2960",
+              "value": "1300",
               "count": 1
             },
             {
-              "value": "2000",
+              "value": "750",
+              "count": 1
+            },
+            {
+              "value": "1800",
+              "count": 1
+            },
+            {
+              "value": "5000",
+              "count": 1
+            },
+            {
+              "value": "80",
+              "count": 1
+            },
+            {
+              "value": "2260",
+              "count": 1
+            },
+            {
+              "value": "550",
+              "count": 1
+            },
+            {
+              "value": "400",
               "count": 1
             }
           ]
         },
-        "尺寸(宽*深*高)": {
+        "宽": {
           "type": "semi",
           "series": "",
-          "rawCount": 50,
-          "normCount": 50,
+          "rawCount": 21,
+          "normCount": 21,
           "aliases": {},
           "accepted": [
             {
-              "value": "800/600/2200",
+              "value": "1000",
+              "count": 13,
+              "source": "stock"
+            },
+            {
+              "value": "800",
+              "count": 9,
+              "source": "stock"
+            },
+            {
+              "value": "600",
+              "count": 9,
+              "source": "stock"
+            },
+            {
+              "value": "1200",
               "count": 4,
               "source": "stock"
             },
             {
-              "value": "2200/800/600",
+              "value": "1500",
               "count": 3,
               "source": "stock"
             },
             {
-              "value": "1000/1400/2200",
-              "count": 2,
+              "value": "1400",
+              "count": 3,
               "source": "stock"
             },
             {
-              "value": "800/1000/2200",
-              "count": 2,
+              "value": "400",
+              "count": 3,
               "source": "stock"
             },
             {
-              "value": "800/1000/2000",
-              "count": 2,
-              "source": "stock"
-            },
-            {
-              "value": "1850/1000/650",
+              "value": "2000",
               "count": 2,
               "source": "stock"
             }
@@ -30828,83 +32040,198 @@
           "pending": [],
           "suspected": [
             {
-              "value": "240/140/130",
+              "value": "140",
               "count": 1
             },
             {
-              "value": "3600/1500/800",
+              "value": "200",
               "count": 1
             },
             {
-              "value": "3600/1200/800",
+              "value": "495",
               "count": 1
             },
             {
-              "value": "350/200/450",
+              "value": "650",
               "count": 1
             },
             {
-              "value": "720/495/300",
+              "value": "130",
               "count": 1
             },
             {
-              "value": "500/2000/900",
+              "value": "128",
               "count": 1
             },
             {
-              "value": "900/2000/900",
+              "value": "350",
               "count": 1
             },
             {
-              "value": "800/1000/300",
+              "value": "445",
               "count": 1
             },
             {
-              "value": "1280/650/513.6",
+              "value": "329",
               "count": 1
             },
             {
-              "value": "220/130/90",
+              "value": "680",
               "count": 1
             },
             {
-              "value": "148/128/70",
+              "value": "1600",
               "count": 1
             },
             {
-              "value": "800/800/2200",
+              "value": "1700",
               "count": 1
             },
             {
-              "value": "650/350/260",
+              "value": "1100",
+              "count": 1
+            }
+          ]
+        },
+        "深": {
+          "type": "semi",
+          "series": "",
+          "rawCount": 30,
+          "normCount": 30,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "2200",
+              "count": 20,
+              "source": "stock"
+            },
+            {
+              "value": "2000",
+              "count": 7,
+              "source": "stock"
+            },
+            {
+              "value": "450",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "2300",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "650",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "600",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "300",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "800",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "900",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "260",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "1000",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "2002",
               "count": 1
             },
             {
-              "value": "550/445/350",
+              "value": "130",
               "count": 1
             },
             {
-              "value": "840/329/260",
+              "value": "513.6",
               "count": 1
             },
             {
-              "value": "250/400/150",
+              "value": "90",
               "count": 1
             },
             {
-              "value": "1300/680/400",
+              "value": "70",
               "count": 1
             },
             {
-              "value": "600/400/300",
+              "value": "350",
               "count": 1
             },
             {
-              "value": "2200/800/1000",
+              "value": "150",
               "count": 1
             },
             {
-              "value": "1000/1600/2300",
+              "value": "400",
+              "count": 1
+            },
+            {
+              "value": "3200",
+              "count": 1
+            },
+            {
+              "value": "2260",
+              "count": 1
+            },
+            {
+              "value": "2100",
+              "count": 1
+            },
+            {
+              "value": "80",
+              "count": 1
+            },
+            {
+              "value": "2400",
+              "count": 1
+            },
+            {
+              "value": "1500",
+              "count": 1
+            },
+            {
+              "value": "760",
+              "count": 1
+            },
+            {
+              "value": "6",
+              "count": 1
+            },
+            {
+              "value": "1600",
+              "count": 1
+            },
+            {
+              "value": "1800",
+              "count": 1
+            },
+            {
+              "value": "250",
               "count": 1
             }
           ]
@@ -31856,7 +33183,7 @@
   },
   "meta": {
     "version": "0.2.0",
-    "generatedAt": "2026-11-17T14:58:40.604Z",
+    "generatedAt": "2026-11-17T15:08:35.481Z",
     "draft": true,
     "structure": "subs[小类] → params[参数] → {type, accepted, pending, suspected, aliases}",
     "principle": "参数值按小类隔离：某小类的候选只来自该小类的存量，不跨小类共用",

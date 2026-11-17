@@ -1752,6 +1752,42 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { ok: true, sub, param, accepted: (d.accepted || []).length, pending: (d.pending || []).length })
     }
 
+    // 批量保存某小类的多个参数（抽屉"保存全部"用）。
+    // 单参数接口要调 N 次，中途失败会留下半套数据；这里一次写完。
+    if (p === '/api/param-lib/batch' && req.method === 'POST') {
+      const b = await readBody(req, 8 * 1024 * 1024)
+      const sub = String(b.sub || '').trim().slice(0, 6)
+      if (!/^\d{6}$/.test(sub)) return sendJson(res, 400, { ok: false, error: '小类号必须是 6 位数字' })
+      const j = JSON.parse(JSON.stringify(readConfigJson('param-standard.json') || { subs: {} }))
+      const node = (j.subs || {})[sub]
+      if (!node) return sendJson(res, 404, { ok: false, error: '该小类不在参数库中' })
+      const list = Array.isArray(b.items) ? b.items : []
+      const normList = (arr) => (Array.isArray(arr) ? arr : [])
+        .map((x) => (typeof x === 'string'
+          ? { value: String(x).trim(), count: 0 }
+          : { value: String(x.value || '').trim(), count: Number(x.count) || 0, source: x.source || 'manual' }))
+        .filter((x) => x.value)
+      let updated = 0
+      const skipped = []
+      for (const it of list) {
+        const name = String(it.param || '').trim()
+        const d = (node.params || {})[name]
+        if (!d) { skipped.push(name); continue }
+        const seen = new Set()
+        d.accepted = normList(it.accepted).filter((v) => {
+          if (seen.has(v.value)) return false
+          seen.add(v.value)
+          return true
+        })
+        updated++
+      }
+      j.meta = j.meta || {}
+      j.meta.updatedAt = new Date().toISOString()
+      j.meta.editedAt = j.meta.updatedAt
+      saveConfigJson('param-standard.json', j)
+      return sendJson(res, 200, { ok: true, sub, updated, skipped })
+    }
+
     if (p === '/api/param-lib/config' && req.method === 'POST') {
       const b = await readBody(req)
       const cfg = readConfigJson('param-lib-rules.json') || {}

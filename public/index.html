@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ERP 物料主数据治理 · 一物多号清洗</title>
-  <link rel="stylesheet" href="/style.css?v=20261117e" />
+  <link rel="stylesheet" href="/style.css?v=20261117f" />
 </head>
 <body>
   <header class="topbar">
@@ -215,6 +215,7 @@
           <h3>参数标准库 <span class="cfg-ver" data-ver="paramLib"></span> <span class="syn-tip">按小类隔离 · 录入补全与值校验的取值来源 · 改完即时生效</span></h3>
           <div class="syn-bar">
             <label class="pl-switch"><input type="checkbox" id="plEnabled" /> 启用</label>
+
             <label class="pl-switch"><input type="checkbox" id="plShadow" /> 影子模式</label>
             <input id="plSearch" placeholder="搜索小类号 / 名称" autocomplete="off" />
             <button id="btnPlExport" class="ghost" title="导出为 Excel：一行一个值，可在 Excel 里筛选/排序/批量改，再导入回来">导出 Excel</button>
@@ -362,6 +363,25 @@
     </div>
   </div>
 
-  <script src="/app.js?v=20261117e"></script>
+  <!-- 参数标准库：整类编辑抽屉（方案 D） -->
+  <div id="plDrawerMask" class="pl-drawer-mask"></div>
+  <div id="plDrawer" class="pl-drawer">
+    <div class="pl-drawer-head">
+      <div class="pl-dh-title">
+        <b id="plDhSub"></b> <span id="plDhName"></span>
+      </div>
+      <div class="pl-dh-meta" id="plDhMeta"></div>
+      <button id="plDhClose" class="ghost pl-dh-close" title="关闭">×</button>
+    </div>
+    <div class="pl-drawer-body" id="plDrawerBody"></div>
+    <div class="pl-drawer-foot">
+      <span class="pl-df-tip" id="plDfTip"></span>
+      <button id="plDhReset" class="ghost">还原</button>
+      <button id="plDhCancel" class="ghost">取消</button>
+      <button id="plDhSave" class="primary">保存全部</button>
+    </div>
+  </div>
+
+  <script src="/app.js?v=20261117f"></script>
 </body>
 </html>

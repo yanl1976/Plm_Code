@@ -1509,102 +1509,159 @@ function renderParamList() {
     d.onclick = () => { PL.opened[d.dataset.sub] = !PL.opened[d.dataset.sub]; renderParamList() }
   })
   list.querySelectorAll('[data-edit]').forEach((b) => {
-    b.onclick = (e) => { e.stopPropagation(); editParam(b.dataset.sub, b.dataset.param) }
+    b.onclick = (e) => { e.stopPropagation(); openPlEdit(b.dataset.sub, b.dataset.param) }
   })
 }
 
 /**
- * 就地编辑某参数的值清单 —— 标签式（chip）编辑，而不是"整段文本"。
+ * 整类编辑抽屉（方案 D）
  *
- * 为什么不给 textarea：值清单本质是「标签集合」，用逗号文本编辑时看不到频次、
- * 无法单独删一个、22 个值挤在一起容易改错。标签式更贴近它的真实形态：
- *   · 点 × 删除单个
- *   · 输入后回车添加（可一次粘贴多个，逗号/换行/分号都认）
- *   · 每个标签仍显示存量频次，便于判断该值是否常用
+ * 为什么放弃行内 chip 编辑：一个参数一行、值最多 28 个，点开窄行逐个增删
+ * 既看不到该小类的全貌，也容易改错。抽屉一次列出全部参数，值用多行文本框
+ * （自动换行、可从 Excel 整列粘贴），并对新增/删除标色，保存前就能确认改了什么。
  */
-function editParam(sub, param) {
-  const box = document.getElementById('plv-' + sub + '-' + encodeURIComponent(param))
-  if (!box) return
-  const item = (PL.data.items || []).find((x) => x.sub === sub)
-  const p = item && (item.params || []).find((y) => y.name === param)
-  if (!p) return
-  PL.editing = {
-    sub,
-    param,
-    values: (p.values || []).map((v) => ({ value: String(v.value), count: v.count || 0, source: v.source || 'stock' })),
-    box,
-  }
-  renderEditChips()
+const PLED = { sub: '', item: null, orig: {}, cur: {} }
+
+/** 对比原值与当前值，得出新增/删除 */
+function plDiff(name) {
+  const o = PLED.orig[name] || []
+  const c = PLED.cur[name] || []
+  const added = c.filter((v) => !o.includes(v))
+  const removed = o.filter((v) => !c.includes(v))
+  const changed = added.length || removed.length || o.join('\u0001') !== c.join('\u0001')
+  return { added, removed, changed }
 }
 
-function renderEditChips() {
-  const ed = PL.editing
-  if (!ed) return
-  const box = ed.box
-  if (!box) return
-  const chips = ed.values.map((v, i) => {
-    const cls = v.source === 'series' ? ' series' : (v.source === 'manual' ? ' manual' : '')
-    return '<span class="pl-chip' + cls + '" data-i="' + i + '" title="存量 ' + (v.count || 0) + ' 条">'
-      + escapeHtml(v.value) + (v.count ? '<i>' + v.count + '</i>' : '')
-      + '<b class="pl-x" data-del="' + i + '" title="删除">×</b></span>'
-  }).join('')
-  box.innerHTML = '<div class="pl-chip-edit">' + chips
-    + '<input class="pl-add" placeholder="+ 添加值，回车确认（可粘贴多个）" autocomplete="off" /></div>'
-    + '<div class="pl-edit-bar">'
-    + '<span class="pl-tip">点 × 删除 · 回车添加 · 保存后立即生效</span>'
-    + '<button class="primary pl-save">保存</button><button class="ghost pl-cancel">取消</button>'
-    + '</div>'
+function plDiffHtml(name) {
+  const d = plDiff(name)
+  if (!d.changed) return '<span class="none">无改动</span>'
+  const bits = []
+  if (d.added.length) {
+    bits.push('<span class="add">+' + d.added.length + ' 新增：'
+      + escapeHtml(d.added.slice(0, 4).join('、')) + (d.added.length > 4 ? '…' : '') + '</span>')
+  }
+  if (d.removed.length) {
+    bits.push('<span class="del">−' + d.removed.length + ' 删除：'
+      + escapeHtml(d.removed.slice(0, 4).join('、')) + (d.removed.length > 4 ? '…' : '') + '</span>')
+  }
+  if (!d.added.length && !d.removed.length) bits.push('<span class="mod">~ 内容已修改</span>')
+  return bits.join('')
+}
 
-  // 删除单个
-  box.querySelectorAll('[data-del]').forEach((b) => {
-    b.onclick = (e) => {
-      e.stopPropagation()
-      PL.editing.values.splice(Number(b.dataset.del), 1)
-      renderEditChips()
+function openPlEdit(sub, focusParam) {
+  const item = (PL.data.items || []).find((x) => x.sub === sub)
+  if (!item) return
+  PLED.sub = sub
+  PLED.item = item
+  PLED.orig = {}
+  PLED.cur = {}
+  for (const p of item.params || []) {
+    const vals = (p.values || []).map((v) => String(v.value))
+    PLED.orig[p.name] = vals.slice()
+    PLED.cur[p.name] = vals.slice()
+  }
+  if ($('#plDhSub')) $('#plDhSub').textContent = sub
+  if ($('#plDhName')) $('#plDhName').textContent = item.subName || ''
+  if ($('#plDhMeta')) {
+    $('#plDhMeta').textContent = (item.paramCount || 0) + ' 个参数 · 存量 '
+      + (item.rowCount || 0) + ' 条 · 值 ' + (item.valueCount || 0) + ' 个'
+  }
+  renderPlDrawer()
+  $('#plDrawerMask').classList.add('open')
+  $('#plDrawer').classList.add('open')
+  if (focusParam) {
+    setTimeout(() => {
+      const ta = document.querySelector('#plDrawerBody textarea[data-p="' + focusParam.replace(/"/g, '\\"') + '"]')
+      if (ta) { ta.focus(); ta.scrollIntoView({ block: 'center' }) }
+    }, 80)
+  }
+}
+
+function closePlDrawer() {
+  $('#plDrawer').classList.remove('open')
+  $('#plDrawerMask').classList.remove('open')
+  PLED.item = null
+}
+
+function renderPlDrawer() {
+  const box = $('#plDrawerBody')
+  if (!box || !PLED.item) return
+  box.innerHTML = (PLED.item.params || []).map((p) => {
+    const vals = PLED.cur[p.name] || []
+    const d = plDiff(p.name)
+    const cls = !d.changed ? '' : (d.added.length && !d.removed.length ? ' add'
+      : (!d.added.length && d.removed.length ? ' del' : ' mod'))
+    const rows = Math.min(10, Math.max(2, vals.length))
+    return '<div class="pl-row' + cls + '" data-prow="' + escapeHtml(p.name) + '">'
+      + '<div class="pl-row-name">' + escapeHtml(p.name) + '</div>'
+      + '<div class="pl-row-type">' + escapeHtml(p.type || '') + '</div>'
+      + '<div class="pl-row-cnt">' + vals.length + '</div>'
+      + '<div><div class="pl-edit-area"><textarea data-p="' + escapeHtml(p.name)
+      + '" rows="' + rows + '" spellcheck="false">' + escapeHtml(vals.join('\n')) + '</textarea></div>'
+      + '<div class="pl-diff">' + plDiffHtml(p.name) + '</div></div>'
+      + '</div>'
+  }).join('')
+
+  box.querySelectorAll('textarea[data-p]').forEach((ta) => {
+    ta.oninput = () => {
+      const name = ta.dataset.p
+      PLED.cur[name] = ta.value.split(/[\n,，;；]/).map((s) => s.trim()).filter(Boolean)
+      refreshPlRow(name)
     }
   })
+  refreshPlFoot()
+}
 
-  // 回车/粘贴添加：支持一次加多个
-  const inp = box.querySelector('.pl-add')
-  const addFrom = (txt) => {
-    const parts = String(txt || '').split(/[,\n，;；\t]+/).map((s) => s.trim()).filter(Boolean)
-    let added = 0
-    for (const v of parts) {
-      if (PL.editing.values.some((x) => x.value === v)) continue
-      PL.editing.values.push({ value: v, count: 0, source: 'manual' })
-      added++
-    }
-    inp.value = ''
-    if (added) renderEditChips()
-    const again = box.querySelector('.pl-add')
-    if (again) again.focus()
+/** 只刷新该行的标记，不重绘文本框（否则输入会丢焦点） */
+function refreshPlRow(name) {
+  const row = document.querySelector('#plDrawerBody .pl-row[data-prow="' + name.replace(/"/g, '\\"') + '"]')
+  if (!row) return
+  const d = plDiff(name)
+  row.classList.remove('add', 'del', 'mod')
+  if (d.changed) {
+    row.classList.add(d.added.length && !d.removed.length ? 'add'
+      : (!d.added.length && d.removed.length ? 'del' : 'mod'))
   }
-  inp.onkeydown = (e) => {
-    if (e.key !== 'Enter' || e.isComposing) return
-    e.preventDefault()
-    addFrom(inp.value)
-  }
-  inp.onpaste = () => {
-    // 粘贴后由 input 值接管，回车时才提交（避免粘贴即写入造成意外）
-  }
+  const cnt = row.querySelector('.pl-row-cnt')
+  if (cnt) cnt.textContent = (PLED.cur[name] || []).length
+  const diff = row.querySelector('.pl-diff')
+  if (diff) diff.innerHTML = plDiffHtml(name)
+  refreshPlFoot()
+}
 
-  box.querySelector('.pl-cancel').onclick = () => { PL.editing = null; renderParamList() }
-  box.querySelector('.pl-save').onclick = async () => {
-    const r = await api('/api/param-lib', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sub: ed.sub, param: ed.param, accepted: ed.values }),
-    }).catch(() => null)
-    const msg = $('#plMsg')
-    if (r && r.ok) {
-      if (msg) { msg.className = 'syn-msg ok'; msg.textContent = '已保存：' + ed.sub + ' · ' + ed.param + ' 共 ' + r.accepted + ' 个值' }
-      PL.editing = null
-      await loadParamLib()
-    } else if (msg) {
-      msg.className = 'syn-msg err'; msg.textContent = (r && r.error) || '保存失败'
-    }
+function refreshPlFoot() {
+  const n = ((PLED.item && PLED.item.params) || []).filter((p) => plDiff(p.name).changed).length
+  if ($('#plDfTip')) $('#plDfTip').textContent = n ? (n + ' 个参数有改动') : '没有改动'
+  if ($('#plDhSave')) $('#plDhSave').disabled = !n
+}
+
+async function savePlDrawer() {
+  const changed = ((PLED.item && PLED.item.params) || []).filter((p) => plDiff(p.name).changed)
+  if (!changed.length) { closePlDrawer(); return }
+  const items = changed.map((p) => ({
+    param: p.name,
+    accepted: (PLED.cur[p.name] || []).map((v) => {
+      const old = (p.values || []).find((x) => String(x.value) === v)
+      return old
+        ? { value: v, count: old.count || 0, source: old.source || 'stock' }
+        : { value: v, count: 0, source: 'manual' }
+    }),
+  }))
+  const r = await api('/api/param-lib/batch', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sub: PLED.sub, items }),
+  }).catch(() => null)
+  const msg = $('#plMsg')
+  if (r && r.ok) {
+    if (msg) { msg.className = 'syn-msg ok'; msg.textContent = '已保存 ' + r.updated + ' 个参数（' + PLED.sub + '）' }
+    closePlDrawer()
+    await loadParamLib()
+  } else if (msg) {
+    msg.className = 'syn-msg err'; msg.textContent = (r && r.error) || '保存失败'
   }
 }
+
 
 /**
  * 四个配置库的版本号标注（取自各自文件的 meta.version）。
@@ -1672,6 +1729,23 @@ async function savePlConfig(patch) {
 }
 if ($('#plEnabled')) $('#plEnabled').onchange = (e) => savePlConfig({ enabled: e.target.checked })
 if ($('#plShadow')) $('#plShadow').onchange = (e) => savePlConfig({ shadow: e.target.checked })
+// ---------- 整类编辑抽屉：关闭 / 取消 / 还原 / 保存 ----------
+if ($('#plDhClose')) $('#plDhClose').onclick = closePlDrawer
+if ($('#plDhCancel')) $('#plDhCancel').onclick = closePlDrawer
+if ($('#plDrawerMask')) $('#plDrawerMask').onclick = closePlDrawer
+if ($('#plDhReset')) {
+  $('#plDhReset').onclick = () => {
+    if (!PLED.item) return
+    for (const p of PLED.item.params || []) PLED.cur[p.name] = (PLED.orig[p.name] || []).slice()
+    renderPlDrawer()
+  }
+}
+if ($('#plDhSave')) $('#plDhSave').onclick = savePlDrawer
+document.addEventListener('keydown', (e) => {
+  const d = $('#plDrawer')
+  if (e.key === 'Escape' && d && d.classList.contains('open')) closePlDrawer()
+})
+
 if ($('#btnPlExport')) $('#btnPlExport').onclick = () => { location.href = '/api/param-lib/export-xlsx' }
 if ($('#btnPlExportJson')) $('#btnPlExportJson').onclick = () => { location.href = '/api/param-lib/export' }
 // 导入模式：upsert=补充（默认，安全）｜replace=覆盖（表里没有的值会被删除）

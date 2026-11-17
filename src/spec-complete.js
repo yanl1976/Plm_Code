@@ -310,6 +310,16 @@ export function complete(sub, q, items) {
     opts = kk ? all.filter((x) => x.value.toLowerCase().startsWith(kk)) : all
   }
 
+  // —— 剔除「已出现在规格前面部分」的候选 ——
+  // 型号本身常内嵌参数：GSW3-3200/3P 的 /3P 已经表示三极，再推荐 3P 只会诱导用户重复书写。
+  // 边界允许 / - （ ( 这类分隔符，但不允许字母数字 —— 否则 C10A 里的 10A 会被误判为已写。
+  if (headStr) {
+    opts = opts.filter((x) => {
+      const esc = String(x.value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      return !new RegExp('(^|[\\s/\\-（(])' + esc + '(?=$|[\\s/\\-）)])', 'i').test(String(headStr))
+    })
+  }
+
   // —— 剔除「与已输入内容完全相同」的候选 ——
   // 用户已经把这一段写完了，再把它推荐给自己毫无意义；更糟的是按 Tab 会把同一值再插一遍，
   // 表现为「候选里重复显示自己」（实测 101001 型号段把 LA38-11/203 推荐给它自己）。

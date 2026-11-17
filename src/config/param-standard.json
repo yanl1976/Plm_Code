@@ -47854,80 +47854,6 @@
             }
           ]
         },
-        "头型": {
-          "type": "enum",
-          "series": "",
-          "rawCount": 13,
-          "normCount": 13,
-          "aliases": {},
-          "accepted": [
-            {
-              "value": "圆头/十字",
-              "count": 45,
-              "source": "stock"
-            },
-            {
-              "value": "十字",
-              "count": 33,
-              "source": "stock"
-            },
-            {
-              "value": "沉头/十字",
-              "count": 20,
-              "source": "stock"
-            },
-            {
-              "value": "内六角",
-              "count": 20,
-              "source": "stock"
-            },
-            {
-              "value": "沉头",
-              "count": 9,
-              "source": "stock"
-            },
-            {
-              "value": "十字/圆头",
-              "count": 8,
-              "source": "stock"
-            },
-            {
-              "value": "圆头",
-              "count": 6,
-              "source": "stock"
-            },
-            {
-              "value": "盘头",
-              "count": 3,
-              "source": "stock"
-            },
-            {
-              "value": "外六角",
-              "count": 2,
-              "source": "stock"
-            },
-            {
-              "value": "十字/盘头",
-              "count": 2,
-              "source": "stock"
-            }
-          ],
-          "pending": [],
-          "suspected": [
-            {
-              "value": "十字/沉头",
-              "count": 1
-            },
-            {
-              "value": "六角",
-              "count": 1
-            },
-            {
-              "value": "盘头/十字",
-              "count": 1
-            }
-          ]
-        },
         "表面处理": {
           "type": "enum",
           "series": "",
@@ -47960,10 +47886,10 @@
           "suspected": []
         },
         "标准": {
-          "type": "enum",
+          "type": "semi",
           "series": "",
-          "rawCount": 11,
-          "normCount": 11,
+          "rawCount": 19,
+          "normCount": 19,
           "aliases": {},
           "accepted": [
             {
@@ -47977,7 +47903,22 @@
               "source": "stock"
             },
             {
+              "value": "GB/T 2672",
+              "count": 6,
+              "source": "stock"
+            },
+            {
+              "value": "GB/T 70.1",
+              "count": 5,
+              "source": "stock"
+            },
+            {
               "value": "GB 67",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "GB/T 80",
               "count": 3,
               "source": "stock"
             },
@@ -47988,6 +47929,16 @@
             },
             {
               "value": "GB67",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "GB/T 878",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "DIN933",
               "count": 2,
               "source": "stock"
             }
@@ -48003,7 +47954,7 @@
               "count": 1
             },
             {
-              "value": "GB 70",
+              "value": "GB 70.1",
               "count": 1
             },
             {
@@ -48011,11 +47962,23 @@
               "count": 1
             },
             {
-              "value": "GB861",
+              "value": "GB861.2",
+              "count": 1
+            },
+            {
+              "value": "GB/T  80",
+              "count": 1
+            },
+            {
+              "value": "GB/T  819",
               "count": 1
             },
             {
               "value": "GB70",
+              "count": 1
+            },
+            {
+              "value": "GB/T 818",
               "count": 1
             }
           ]
@@ -48209,10 +48172,15 @@
         "性能等级": {
           "type": "enum",
           "series": "",
-          "rawCount": 2,
-          "normCount": 2,
+          "rawCount": 3,
+          "normCount": 3,
           "aliases": {},
           "accepted": [
+            {
+              "value": "A2-70",
+              "count": 5,
+              "source": "stock"
+            },
             {
               "value": "8.8",
               "count": 2,
@@ -48441,8 +48409,8 @@
         "标准": {
           "type": "enum",
           "series": "",
-          "rawCount": 3,
-          "normCount": 3,
+          "rawCount": 4,
+          "normCount": 4,
           "aliases": {},
           "accepted": [
             {
@@ -48455,6 +48423,10 @@
           "suspected": [
             {
               "value": "GB6170",
+              "count": 1
+            },
+            {
+              "value": "GB/T 6173",
               "count": 1
             },
             {
@@ -48500,16 +48472,10 @@
         "标准": {
           "type": "enum",
           "series": "",
-          "rawCount": 3,
-          "normCount": 3,
+          "rawCount": 4,
+          "normCount": 4,
           "aliases": {},
-          "accepted": [
-            {
-              "value": "GB97",
-              "count": 2,
-              "source": "stock"
-            }
-          ],
+          "accepted": [],
           "pending": [],
           "suspected": [
             {
@@ -48517,7 +48483,15 @@
               "count": 1
             },
             {
+              "value": "GB97.1",
+              "count": 1
+            },
+            {
               "value": "GB93",
+              "count": 1
+            },
+            {
+              "value": "GB97",
               "count": 1
             }
           ]
@@ -48678,18 +48652,19 @@
       "droppedCount": 0,
       "params": {
         "标准": {
-          "type": "free",
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
           "accepted": [],
           "pending": [],
-          "suspected": [],
-          "note": "模板声明但暂无取值（该小类存量样本不足）"
-        },
-        "材质": {
-          "type": "free",
-          "accepted": [],
-          "pending": [],
-          "suspected": [],
-          "note": "模板声明但暂无取值（该小类存量样本不足）"
+          "suspected": [
+            {
+              "value": "GB/T 896",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -50618,7 +50593,7 @@
   },
   "meta": {
     "version": "0.2.0",
-    "generatedAt": "2026-11-17T14:52:24.305Z",
+    "generatedAt": "2026-11-17T14:56:03.278Z",
     "draft": true,
     "structure": "subs[小类] → params[参数] → {type, accepted, pending, suspected, aliases}",
     "principle": "参数值按小类隔离：某小类的候选只来自该小类的存量，不跨小类共用",

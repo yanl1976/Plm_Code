@@ -1788,10 +1788,19 @@ const server = http.createServer(async (req, res) => {
       const rows = [['小类号', '小类名', '参数', '类型', '标准序列', '值', '频次', '来源', '状态', '备注']]
       const subsSorted = Object.entries(j.subs || {}).sort((a, b) => a[0].localeCompare(b[0]))
       for (const [sub, x] of subsSorted) {
-        const params = Object.entries(x.params || {}).sort((a, b) => a[0].localeCompare(b[0], 'zh'))
+        // 参数排序：常规参数按名称；通过「参数清单」手工新增的排在该小类末尾。
+        // 否则新增参数（如 "111"）按字典序会跳到最前面，用户"在末尾加了一个"却找不到。
+        const params = Object.entries(x.params || {}).sort((a, b) => {
+          const na = /由「参数清单」新增/.test((a[1] || {}).note || '')
+          const nb = /由「参数清单」新增/.test((b[1] || {}).note || '')
+          if (na !== nb) return na ? 1 : -1
+          return a[0].localeCompare(b[0], 'zh')
+        })
         for (const [name, d] of params) {
+          let hasRow = false
           const add = (list, status) => {
             for (const v of sortByValue(name, list || [])) {
+              hasRow = true
               // 备注列：写明「为什么它不是标准值、该怎么处理」，便于在表里直接决策
               let note = ''
               if (status === 'pending') {
@@ -1818,6 +1827,16 @@ const server = http.createServer(async (req, res) => {
           add(d.accepted, 'accepted')
           add(d.pending, 'pending')
           add(d.suspected, 'suspected')
+          // 无取值的参数也输出一行占位 —— 否则「参数清单」里新增的参数
+          // 在导入后虽然进了库，但「参数值」表永远看不到它的行，无法填值。
+          // 值是空的，导入时会被跳过（不写入空值），只是给用户一个可填的位置。
+          if (!hasRow) {
+            rows.push([
+              sub, x.subName || '', name,
+              TYPE_CN[d.type] || d.type || '', d.series || '',
+              '', 0, '存量', '标准值', '该参数尚无取值，可在本行填写',
+            ])
+          }
         }
       }
       const guide = [
@@ -1894,7 +1913,14 @@ const server = http.createServer(async (req, res) => {
       const listRows = [['小类（编号 名称）', '参数', '类型', '已有值数']]
       const merges = []
       for (const [sub, x] of subsSorted) {
-        const params = Object.entries(x.params || {}).sort((a, b) => a[0].localeCompare(b[0], 'zh'))
+        // 参数排序：常规参数按名称；通过「参数清单」手工新增的排在该小类末尾。
+        // 否则新增参数（如 "111"）按字典序会跳到最前面，用户"在末尾加了一个"却找不到。
+        const params = Object.entries(x.params || {}).sort((a, b) => {
+          const na = /由「参数清单」新增/.test((a[1] || {}).note || '')
+          const nb = /由「参数清单」新增/.test((b[1] || {}).note || '')
+          if (na !== nb) return na ? 1 : -1
+          return a[0].localeCompare(b[0], 'zh')
+        })
         if (!params.length) continue
         const start = listRows.length
         for (const [name, d] of params) {

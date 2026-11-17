@@ -810,3 +810,13 @@ button:disabled { opacity:.45; cursor:not-allowed; }
 .pl-pchip:hover { background:rgba(79,195,247,.2); border-color:#4FC3F7; }
 .pl-pchip i { font-style:normal; font-size:10px; opacity:.7; }
 .pl-view { margin-left:auto; padding:2px 12px; font-size:11.5px; border-radius:11px; }
+
+/* 只读抽屉：底部只留「关闭」 */
+.pl-drawer-foot.readonly #plDhReset,
+.pl-drawer-foot.readonly #plDhSave { display:none; }
+
+/* 「查看 / 编辑」并排（查看的 margin-left:auto 把它推到右侧） */
+.pl-editbtn { padding:2px 12px; font-size:11.5px; border-radius:11px; margin-left:6px; }
+
+/* 值行可双击复制；保留文本选中能力，复制失败时用户仍能手动选 */
+.pl-val { cursor:default; }

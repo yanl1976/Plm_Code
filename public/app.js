@@ -1470,32 +1470,32 @@ function renderParamList() {
   const r = PL.data
   if (!list || !r) return
   if (!r.items || !r.items.length) { list.innerHTML = '<div class="syn-empty">没有匹配的小类</div>'; return }
+  // 不做折叠：所有小类全部展开，参数以横向 chip 呈现。
+  // 折叠虽省空间，但每次看参数都要多点一次，反而慢；
+  // 值不铺开，所以全部展开也不会太长。
   list.innerHTML = r.items.map((x) => {
-    const open = !!PL.opened[x.sub]
-    // 展开后只**横向列出参数名**，不再把每个参数的值铺开 ——
-    // 值属于细节（单个参数最多 28 个），铺开后一屏看不了几个小类；
-    // 需要改值时点参数 chip 或右侧「查看」，进抽屉处理。
     const chips = (x.params || []).map((p) => {
       const n = p.type === 'free' ? (p.values || []).length : p.acceptedCount
-      const tip = (p.type || '') + (n ? ' · ' + n + ' 值' : ' · 无值')
+      const tip = (p.type || '') + (n ? ' · ' + n + ' 值' : ' · 无值') + '（点击编辑）'
       return '<span class="pl-pchip" data-sub="' + x.sub + '" data-param="' + escapeHtml(p.name)
         + '" title="' + escapeHtml(tip) + '">' + escapeHtml(p.name)
         + (n ? '<i>' + n + '</i>' : '') + '</span>'
     }).join('')
-    return '<div class="pl-sub' + (open ? ' open' : '') + '">'
-      + '<div class="pl-sub-head" data-sub="' + x.sub + '">'
-      + '<span class="pl-caret">' + (open ? '▾' : '▸') + '</span>'
+    return '<div class="pl-sub open">'
+      + '<div class="pl-sub-head">'
       + '<b class="mono">' + x.sub + '</b><span class="pl-name">' + escapeHtml(x.subName) + '</span>'
       + '<span class="pl-meta">' + x.paramCount + ' 参数 · ' + x.valueCount + ' 值 · 存量 ' + x.rowCount + ' 条</span>'
+      + '<button class="ghost pl-view" data-sub="' + x.sub + '">查看</button>'
+      + '<button class="ghost pl-editbtn" data-sub="' + x.sub + '">编辑</button>'
       + '</div>'
-      + (open ? '<div class="pl-pchips">' + chips
-        + '<button class="ghost pl-view" data-sub="' + x.sub + '">查看</button></div>' : '')
+      + '<div class="pl-pchips">' + chips + '</div>'
       + '</div>'
   }).join('')
-  list.querySelectorAll('.pl-sub-head').forEach((d) => {
-    d.onclick = () => { PL.opened[d.dataset.sub] = !PL.opened[d.dataset.sub]; renderParamList() }
-  })
+
   list.querySelectorAll('.pl-view').forEach((b) => {
+    b.onclick = (e) => { e.stopPropagation(); openPlEdit(b.dataset.sub, null, true) }
+  })
+  list.querySelectorAll('.pl-editbtn').forEach((b) => {
     b.onclick = (e) => { e.stopPropagation(); openPlEdit(b.dataset.sub) }
   })
   list.querySelectorAll('.pl-pchip').forEach((c) => {
@@ -1510,7 +1510,7 @@ function renderParamList() {
  * 既看不到该小类的全貌，也容易改错。抽屉一次列出全部参数，值用多行文本框
  * （自动换行、可从 Excel 整列粘贴），并对新增/删除标色，保存前就能确认改了什么。
  */
-const PLED = { sub: '', item: null, orig: {}, cur: {} }
+const PLED = { sub: '', item: null, orig: {}, cur: {}, readonly: false }
 
 /** 对比原值与当前值，得出新增/删除 */
 function plDiff(name) {
@@ -1538,11 +1538,12 @@ function plDiffHtml(name) {
   return bits.join('')
 }
 
-function openPlEdit(sub, focusParam) {
+function openPlEdit(sub, focusParam, readonly) {
   const item = (PL.data.items || []).find((x) => x.sub === sub)
   if (!item) return
   PLED.sub = sub
   PLED.item = item
+  PLED.readonly = !!readonly
   PLED.orig = {}
   PLED.cur = {}
   for (const p of item.params || []) {
@@ -1555,7 +1556,11 @@ function openPlEdit(sub, focusParam) {
   if ($('#plDhMeta')) {
     $('#plDhMeta').textContent = (item.paramCount || 0) + ' 个参数 · 存量 '
       + (item.rowCount || 0) + ' 条 · 值 ' + (item.valueCount || 0) + ' 个'
+      + (PLED.readonly ? ' · 只读' : '')
   }
+  // 只读模式：隐藏「还原 / 保存全部」，只留关闭
+  const foot = $('#plDrawerFoot')
+  if (foot) foot.classList.toggle('readonly', PLED.readonly)
   renderPlDrawer()
   $('#plDrawerMask').classList.add('open')
   $('#plDrawer').classList.add('open')
@@ -1589,16 +1594,29 @@ function renderPlDrawer() {
   refreshPlFoot()
 }
 
+/** 粘贴清洗：换行 / 逗号 / 分号 / Tab 都当分隔；全角转半角；连续空格合并成一个 */
+function plSplitValues(text) {
+  return String(text || '')
+    .replace(/\u3000/g, ' ')          // 全角空格
+    .replace(/[，；、]/g, ',')         // 全角标点 → 半角逗号
+    .split(/[\r\n,;\t]+/)
+    .map((s) => s.replace(/\s+/g, ' ').trim())   // 合并连续空格、去首尾
+    .filter(Boolean)
+}
+
 function renderPlCol(p, pi) {
+  const ro = PLED.readonly
   const vals = PLED.cur[p.name] || []
-  const d = plDiff(p.name)
+  const d = ro ? { added: [], removed: [], changed: false } : plDiff(p.name)
   const cls = !d.changed ? '' : (d.added.length && !d.removed.length ? ' add'
     : (!d.added.length && d.removed.length ? ' del' : ' mod'))
   const name = escapeHtml(p.name)
-  const rows = vals.map((v, i) => '<div class="pl-val" title="' + escapeHtml(v) + '">'
-    + escapeHtml(v) + '<i class="pl-x" data-pi="' + pi + '" data-del="' + i + '" title="删除">×</i></div>').join('')
-  // 被删掉的值也留在原位，加删除线，便于确认「删了什么」
-  const gone = d.removed.map((v) => '<div class="pl-val gone" title="已删除：' + escapeHtml(v) + '">'
+  const rows = vals.map((v, i) => '<div class="pl-val" title="' + escapeHtml(v) + '（双击复制）">'
+    + escapeHtml(v)
+    + (ro ? '' : '<i class="pl-x" data-pi="' + pi + '" data-del="' + i + '" title="删除">×</i>')
+    + '</div>').join('')
+  // 被删掉的值留在原位加删除线，便于确认「删了什么」
+  const gone = ro ? '' : d.removed.map((v) => '<div class="pl-val gone" title="已删除：' + escapeHtml(v) + '">'
     + escapeHtml(v) + '</div>').join('')
   return '<div class="pl-col' + cls + '" data-pi="' + pi + '">'
     + '<div class="pl-col-head">'
@@ -1607,12 +1625,27 @@ function renderPlCol(p, pi) {
     + escapeHtml(p.type || '') + '</span> · <span>' + vals.length + ' 值</span></div>'
     + '</div>'
     + '<div class="pl-col-list">' + (rows || '<div class="pl-empty">（无值）</div>') + gone + '</div>'
-    + '<div class="pl-add-row"><input data-pi="' + pi + '" placeholder="+ 添加" /></div>'
-    + '<div class="pl-col-diff pl-diff">' + plDiffHtml(p.name) + '</div>'
+    + (ro ? '' : '<div class="pl-add-row"><input data-pi="' + pi + '" placeholder="+ 添加 / 粘贴" /></div>')
+    + (ro ? '' : '<div class="pl-col-diff pl-diff">' + plDiffHtml(p.name) + '</div>')
     + '</div>'
 }
 
 function bindPlColEvents(scope) {
+  // 双击值 → 复制到剪贴板（只读模式下同样可用）
+  scope.querySelectorAll('.pl-val').forEach((el) => {
+    el.ondblclick = () => {
+      const t = String(el.textContent || '').replace(/×\s*$/, '').trim()
+      if (!t) return
+      const tip = $('#plDfTip')
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(t).then(() => {
+          if (tip) tip.textContent = '已复制：' + t
+        }).catch(() => { if (tip) tip.textContent = '复制失败（浏览器限制，可手动选中）' })
+      }
+    }
+  })
+  if (PLED.readonly) return
+
   scope.querySelectorAll('.pl-x[data-del]').forEach((b) => {
     b.onclick = (e) => {
       e.stopPropagation()
@@ -1623,15 +1656,13 @@ function bindPlColEvents(scope) {
       refreshPlCol(pi)
     }
   })
+
   scope.querySelectorAll('input[data-pi]').forEach((inp) => {
-    inp.onkeydown = (e) => {
-      if (e.key !== 'Enter' || e.isComposing) return
-      e.preventDefault()
+    const addFrom = (text) => {
       const pi = Number(inp.dataset.pi)
       const p = (PLED.item.params || [])[pi]
       if (!p) return
-      // 支持一次粘贴多个（逗号 / 换行 / 分号 / Tab 分隔）
-      const parts = String(inp.value || '').split(/[,\n，;；\t]+/).map((s) => s.trim()).filter(Boolean)
+      const parts = plSplitValues(text)
       let n = 0
       for (const v of parts) {
         if (PLED.cur[p.name].includes(v)) continue
@@ -1640,6 +1671,20 @@ function bindPlColEvents(scope) {
       }
       inp.value = ''
       if (n) refreshPlCol(pi)
+    }
+    inp.onkeydown = (e) => {
+      if (e.key !== 'Enter' || e.isComposing) return
+      e.preventDefault()
+      addFrom(inp.value)
+    }
+    // 粘贴多个值（含换行/逗号/多余空格）直接入列；单个值走默认粘贴，便于再修改
+    inp.onpaste = (e) => {
+      const cb = e.clipboardData || window.clipboardData
+      const txt = cb ? cb.getData('text') : ''
+      if (plSplitValues(txt).length > 1) {
+        e.preventDefault()
+        addFrom(txt)
+      }
     }
   })
 }

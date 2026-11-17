@@ -44,8 +44,18 @@ export const LIBS = [
     count: (files) => Object.keys(files['classification-map.json'] || {}).length,
   },
   {
-    key: 'feature', name: '特征模板与字段语义', desc: '规格参数字段定义、型号语义解析',
-    kind: 'files', paths: ['src/config/feature-templates.json', 'src/config/spec-fields.json', 'src/config/model-semantics.json'],
+    key: 'feature', name: '特征模板与字段语义', desc: '规格参数字段定义、型号语义解析、字段映射与黄金样例',
+    kind: 'files', paths: [
+      'src/config/feature-templates.json',
+      'src/config/spec-fields.json',
+      'src/config/model-semantics.json',
+      // 以下原先漏收录：换机/恢复后会缺型号解码、字段映射与回归样例
+      'src/config/brand-decode.json',
+      'src/config/cable-codes.json',
+      'src/config/guide-field-map.json',
+      'src/config/extract-cases.json',
+      'src/config/select-field-alias.json',
+    ],
     // templates 的键是中类，一个中类算一套模板；canonicalOrder 是字段顺序表，不算业务条目
     count: (files) => {
       const ft = files['feature-templates.json'] || {}
@@ -57,6 +67,11 @@ export const LIBS = [
     },
   },
   { key: 'std', name: '标准查新清单', desc: '国标/行标版本跟踪', kind: 'file', path: 'src/config/std-watch.json' },
+  {
+    key: 'symbols', name: '字符与单位符号规范',
+    desc: '规格中的单位符号统一表（GBK/CP936 兼容，含 must/should 两级替换）',
+    kind: 'file', path: 'src/config/spec-symbols.json',
+  },
   { key: 'selection', name: '选型库', desc: '按小类组织的选型手册与系列数据', kind: 'dir', path: 'data/selection' },
   {
     key: 'settings', name: '系统设置', desc: '提取范围、筛查组织、数据源开关',

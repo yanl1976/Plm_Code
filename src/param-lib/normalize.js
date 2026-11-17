@@ -42,6 +42,16 @@ export const NORMALIZERS = {
     return isFinite(n) && n > 0 ? String(n) : null
   },
   // 必须带单位 V/KV —— 否则 "0.66" 会被补成 "0.66V"（曾产生 347 条假值）
+  额定二次电流: (v) => {
+    const m = /^(\d+(?:\.\d+)?)\s*A?$/i.exec(String(v || '').trim())
+    return m ? m[1] + 'A' : null
+  },
+
+  频率: (v) => {
+    const m = /^(\d+(?:\.\d+)?)\s*hz$/i.exec(String(v || '').trim())
+    return m ? m[1] + 'Hz' : null
+  },
+
   额定电压: (v) => {
     const s = toHalf(v).toUpperCase().replace(/\s/g, '').replace(/^(AC|DC|～|~)/, '')
     if (!/^\d/.test(s)) return null

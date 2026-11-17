@@ -4353,22 +4353,19 @@
           "type": "enum",
           "series": "",
           "rawCount": 3,
-          "normCount": 3,
-          "aliases": {},
+          "normCount": 2,
+          "aliases": {
+            "60HZ": "60Hz"
+          },
           "accepted": [
             {
               "value": "60Hz",
-              "count": 42,
+              "count": 44,
               "source": "stock"
             },
             {
               "value": "50Hz",
               "count": 38,
-              "source": "stock"
-            },
-            {
-              "value": "60HZ",
-              "count": 2,
               "source": "stock"
             }
           ],
@@ -10652,6 +10649,30 @@
               "count": 1
             }
           ]
+        },
+        "额定二次电流": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 2,
+          "normCount": 2,
+          "aliases": {
+            "1": "1A",
+            "5": "5A"
+          },
+          "accepted": [
+            {
+              "value": "5A",
+              "count": 469,
+              "source": "stock"
+            },
+            {
+              "value": "1A",
+              "count": 50,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": []
         }
       }
     },
@@ -11482,6 +11503,30 @@
               "count": 1
             }
           ]
+        },
+        "额定二次电流": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 2,
+          "normCount": 2,
+          "aliases": {
+            "1": "1A",
+            "5": "5A"
+          },
+          "accepted": [
+            {
+              "value": "1A",
+              "count": 12,
+              "source": "stock"
+            },
+            {
+              "value": "5A",
+              "count": 9,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": []
         }
       }
     },
@@ -14734,22 +14779,19 @@
           "type": "enum",
           "series": "",
           "rawCount": 3,
-          "normCount": 3,
-          "aliases": {},
+          "normCount": 2,
+          "aliases": {
+            "50HZ": "50Hz"
+          },
           "accepted": [
             {
               "value": "50Hz",
-              "count": 19,
+              "count": 22,
               "source": "stock"
             },
             {
               "value": "60Hz",
               "count": 6,
-              "source": "stock"
-            },
-            {
-              "value": "50HZ",
-              "count": 3,
               "source": "stock"
             }
           ],
@@ -15388,22 +15430,19 @@
           "type": "enum",
           "series": "",
           "rawCount": 3,
-          "normCount": 3,
-          "aliases": {},
+          "normCount": 2,
+          "aliases": {
+            "50HZ": "50Hz"
+          },
           "accepted": [
             {
               "value": "50Hz",
-              "count": 41,
+              "count": 44,
               "source": "stock"
             },
             {
               "value": "60Hz",
               "count": 9,
-              "source": "stock"
-            },
-            {
-              "value": "50HZ",
-              "count": 3,
               "source": "stock"
             }
           ],
@@ -25929,16 +25968,19 @@
           "series": "",
           "rawCount": 2,
           "normCount": 2,
-          "aliases": {},
+          "aliases": {
+            "60HZ": "60Hz",
+            "50HZ": "50Hz"
+          },
           "accepted": [],
           "pending": [],
           "suspected": [
             {
-              "value": "60HZ",
+              "value": "60Hz",
               "count": 1
             },
             {
-              "value": "50HZ",
+              "value": "50Hz",
               "count": 1
             }
           ]
@@ -30700,7 +30742,7 @@
   },
   "meta": {
     "version": "0.2.0",
-    "generatedAt": "2026-11-17T14:19:18.859Z",
+    "generatedAt": "2026-11-17T14:23:25.473Z",
     "draft": true,
     "structure": "subs[小类] → params[参数] → {type, accepted, pending, suspected, aliases}",
     "principle": "参数值按小类隔离：某小类的候选只来自该小类的存量，不跨小类共用",

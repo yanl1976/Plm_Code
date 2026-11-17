@@ -708,3 +708,10 @@ tr.saving { opacity:.45; }
 
 /* free 型（型号/阻值/容值）的 Top5 参考值：只是"常见写法"，不是标准，样式上要弱化 */
 .pl-chip.reference { border-style:dotted; opacity:.55; }
+
+/* 配置库版本号（标题旁的小徽标，取自文件 meta.version） */
+.cfg-ver { display:inline-block; margin-left:6px; padding:0 5px; border-radius:3px;
+  font-size:10px; font-weight:400; line-height:16px; vertical-align:middle;
+  color:var(--muted); background:rgba(255,255,255,.06); border:1px solid var(--line);
+  font-family:ui-monospace,Consolas,monospace; }
+.cfg-ver:empty { display:none; }

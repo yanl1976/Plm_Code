@@ -1647,6 +1647,26 @@ const server = http.createServer(async (req, res) => {
     // 开关：src/config/param-lib-rules.json（enabled / shadow / subs 白名单）
     // 注意：本组接口只改「值清单」，不改 type/series —— 那些由 src/param-lib/build.mjs 从规格模板推导。
 
+    // 四个配置库的版本号（取自各自文件的 meta.version），用于在页面上标注当前版本。
+    // 聚合返回，避免为「显示版本」改动 4 个业务接口。
+    if (p === '/api/config-versions') {
+      const ver = (f) => {
+        try {
+          const j = readConfigJson(f) || {}
+          return (j.meta && j.meta.version) || ''
+        } catch (e) { return '' }
+      }
+      return sendJson(res, 200, {
+        ok: true,
+        versions: {
+          synonyms: ver('name-synonyms.json'),
+          guide: ver('naming-guide.json'),
+          paramLib: ver('param-standard.json'),
+          std: ver('std-watch.json'),
+        },
+      })
+    }
+
     if (p === '/api/param-lib/list') {
       const j = readConfigJson('param-standard.json') || { subs: {} }
       const cfg = readConfigJson('param-lib-rules.json') || {}

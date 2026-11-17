@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ERP 物料主数据治理 · 一物多号清洗</title>
-  <link rel="stylesheet" href="/style.css?v=20261117b" />
+  <link rel="stylesheet" href="/style.css?v=20261117c" />
 </head>
 <body>
   <header class="topbar">
@@ -192,7 +192,7 @@
 
       <div class="sub-panel active" id="sub-syn">
         <div class="settings-card">
-          <h3>名称同义词字典 <span class="syn-tip">只提示不阻断保存 · 列表可直接编辑</span></h3>
+          <h3>名称同义词字典 <span class="cfg-ver" data-ver="synonyms"></span> <span class="syn-tip">只提示不阻断保存 · 列表可直接编辑</span></h3>
           <div class="syn-bar">
             <input id="synAlias" placeholder="非标准叫法" autocomplete="off" />
             <span class="syn-arrow">→</span>
@@ -212,7 +212,7 @@
 
       <div class="sub-panel" id="sub-param">
         <div class="settings-card">
-          <h3>参数标准库 <span class="syn-tip">按小类隔离 · 录入补全与值校验的取值来源 · 改完即时生效</span></h3>
+          <h3>参数标准库 <span class="cfg-ver" data-ver="paramLib"></span> <span class="syn-tip">按小类隔离 · 录入补全与值校验的取值来源 · 改完即时生效</span></h3>
           <div class="syn-bar">
             <label class="pl-switch"><input type="checkbox" id="plEnabled" /> 启用</label>
             <label class="pl-switch"><input type="checkbox" id="plShadow" /> 影子模式</label>
@@ -235,7 +235,7 @@
 
       <div class="sub-panel" id="sub-guide">
         <div class="settings-card">
-          <h3>国标命名范式库 <span class="syn-tip">按小类给出国标名称与规格写法 · 录入时提示</span></h3>
+          <h3>国标命名范式库 <span class="cfg-ver" data-ver="guide"></span> <span class="syn-tip">按小类给出国标名称与规格写法 · 录入时提示</span></h3>
           <div class="syn-bar">
             <input id="ngSearch" placeholder="搜索小类号 / 名称 / 规格结构" autocomplete="off" />
             <button id="btnAddNg" class="primary">新增</button>
@@ -251,7 +251,7 @@
 
       <div class="sub-panel" id="sub-std">
         <div class="settings-card">
-          <h3>标准查新 <span class="syn-tip">定期核查范式库引用的国标是否仍为现行版本 · 只提醒，改动需人工确认</span></h3>
+          <h3>标准查新 <span class="cfg-ver" data-ver="std"></span> <span class="syn-tip">定期核查范式库引用的国标是否仍为现行版本 · 只提醒，改动需人工确认</span></h3>
           <div class="syn-bar">
             <label class="std-label">核查周期</label>
             <select id="stdPeriod">
@@ -362,6 +362,6 @@
     </div>
   </div>
 
-  <script src="/app.js?v=20261117b"></script>
+  <script src="/app.js?v=20261117c"></script>
 </body>
 </html>

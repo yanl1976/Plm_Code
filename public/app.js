@@ -1606,9 +1606,24 @@ function renderEditChips() {
   }
 }
 
+/**
+ * 四个配置库的版本号标注（取自各自文件的 meta.version）。
+ * 聚合接口一次取回，避免为「显示版本」改动四个业务接口。
+ */
+async function loadConfigVersions() {
+  const r = await api('/api/config-versions').catch(() => null)
+  const vs = (r && r.versions) || {}
+  document.querySelectorAll('.cfg-ver[data-ver]').forEach((el) => {
+    const v = vs[el.dataset.ver]
+    el.textContent = v ? 'v' + v : ''
+    el.title = v ? '当前库版本（取自文件 meta.version）' : '该文件未标注版本'
+  })
+}
+
 async function loadRules() {
   const cur = document.querySelector('.sub-tab.active')
   const name = cur ? cur.dataset.subtab : 'syn'
+  loadConfigVersions()
   if (name === 'guide') { rulesLoaded.guide = true; await loadGuideList() }
   else if (name === 'param') { rulesLoaded.param = true; await loadParamLib() }
   else if (name === 'std') { rulesLoaded.std = true; await loadStdWatch() }

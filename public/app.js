@@ -2920,6 +2920,20 @@ function applySpecComplete(value) {
   const tail = r.prefix && cur.endsWith(r.prefix) ? r.prefix : ''
   const head = tail ? cur.slice(0, cur.length - tail.length) : cur
   const base = head.replace(/\s+$/, '')
+
+  // 防重复：该值若已作为独立词存在于规格中，且当前没有待替换的前缀，就不再追加。
+  // 触发场景：输入 "GSW3-3200/3P 3P" 后按 Tab —— 后端判断这一段已完整、自动推进到下一段并返回
+  // prefix=''，前端于是把它当"新段"再追加一次，结果变成 "… 3P 3P"。
+  // 注意只在 tail 为空时判断：有前缀时是"替换"语义（3 → 3P），不是重复。
+  if (!tail) {
+    const esc = String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    if (new RegExp('(^|\\s)' + esc + '(\\s|$)', 'i').test(cur)) {
+      nm.complete = null
+      updateNmGhost()
+      return
+    }
+  }
+
   inp.value = base ? base + ' ' + value : value
   clearTimeout(nm.timer)
   nm.sugSeq++

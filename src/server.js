@@ -1749,25 +1749,54 @@ const server = http.createServer(async (req, res) => {
     //       看起来是 3P/1250/800/4/630/2… 这种乱的顺序，维护时很难扫视。
     if (p === '/api/param-lib/export-xlsx' && req.method === 'GET') {
       const j = readConfigJson('param-standard.json') || { subs: {} }
-      const rows = [['小类号', '小类名', '参数', '类型', '标准序列', '值', '频次', '来源']]
-      const pend = [['小类号', '小类名', '参数', '值', '频次', '原因']]
+      // 一行一个值，**全部状态都导出**并带「状态」列：
+      //   accepted  = 标准值（推荐/校验采用）
+      //   pending   = 待确认（仅记录）
+      //   suspected = 疑似噪音（不采用，可删行清理）
+      // 放一张表是为了人工维护时能在一个视图里完成「转正 / 删除 / 新增」，
+      // 不用在两张表之间来回切（此前 accepted 与 pending 是分开的两个 sheet）。
+      const rows = [['小类号', '小类名', '参数', '类型', '标准序列', '值', '频次', '来源', '状态']]
       const subsSorted = Object.entries(j.subs || {}).sort((a, b) => a[0].localeCompare(b[0]))
       for (const [sub, x] of subsSorted) {
         const params = Object.entries(x.params || {}).sort((a, b) => a[0].localeCompare(b[0], 'zh'))
         for (const [name, d] of params) {
-          const acc = sortByValue(name, d.accepted || [])
-          for (const v of acc) {
-            rows.push([sub, x.subName || '', name, d.type || '', d.series || '', v.value, v.count || 0, v.source || 'stock'])
+          const add = (list, status) => {
+            for (const v of sortByValue(name, list || [])) {
+              rows.push([sub, x.subName || '', name, d.type || '', d.series || '', v.value, v.count || 0, v.source || 'stock', status])
+            }
           }
-          const pv = sortByValue(name, d.pending || [])
-          for (const v of pv) {
-            pend.push([sub, x.subName || '', name, v.value, v.count || 0, v.reason || ''])
-          }
+          add(d.accepted, 'accepted')
+          add(d.pending, 'pending')
+          add(d.suspected, 'suspected')
         }
       }
+      const guide = [
+        ['参数标准库 · 维护说明'],
+        [''],
+        ['一、表格结构（一行一个值）'],
+        ['  小类号   6 位小类编码，用于定位到具体小类（必填，不可乱改）'],
+        ['  参数     参数名（必填，须与库中已有参数名一致）'],
+        ['  值       参数取值（必填）'],
+        ['  状态     决定导入后的归类：accepted / pending / suspected'],
+        ['  其余列（小类名/类型/标准序列/频次/来源）仅供阅读，导入时按小类号+参数+值重新计算'],
+        [''],
+        ['二、常见维护动作'],
+        ['  把疑似值转正   → 把该行「状态」改成 accepted'],
+        ['  删除某个值     → 直接删掉该行（导入时选「覆盖」才生效）'],
+        ['  新增一个值     → 在对应「小类号+参数」下插入一行，状态填 accepted'],
+        ['  批量清理噪音   → 按「状态」列筛选 suspected，整行删除'],
+        [''],
+        ['三、导入模式（导出时看到的表，导入时二选一）'],
+        ['  补充（推荐）  只新增/更新表里出现的值，不删除库中已有但表里没有的值'],
+        ['  覆盖          表里出现的每个「小类号+参数」整组替换，表里没有的值会被删除'],
+        [''],
+        ['四、注意'],
+        ['  · 导入前会先做一次预检，显示 新增/更新/删除 的数量，确认后才写入'],
+        ['  · 导入会自动备份当前库到 src/config/_backup/'],
+      ]
       const wb = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '参数值')
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(pend), '待确认')
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(guide), '维护说明')
       const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
       res.writeHead(200, {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -1779,7 +1808,14 @@ const server = http.createServer(async (req, res) => {
     }
 
     // 导入 Excel：按 (小类号, 参数) 分组重建值清单；表头之外的行即「该参数应收录的值」
+    // 导入 Excel
+    //   mode=upsert（默认，补充）：只新增/更新表里出现的值，不删除库中已有但表里没有的值
+    //   mode=replace（覆盖）：表里出现的每个「小类号+参数」整组替换，表里没有的值会被删除
+    //   dryRun=1：只统计「新增/更新/删除」数量，不写盘（前端先预检再确认）
+    // 支持「状态」列：accepted / pending / suspected，缺省视为 accepted
     if (p === '/api/param-lib/import-xlsx' && req.method === 'POST') {
+      const mode = url.searchParams.get('mode') === 'replace' ? 'replace' : 'upsert'
+      const dryRun = url.searchParams.get('dryRun') === '1'
       const chunks = []
       for await (const c of req) chunks.push(c)
       let wb = null
@@ -1791,6 +1827,7 @@ const server = http.createServer(async (req, res) => {
       const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' })
       if (!rows.length) return sendJson(res, 400, { ok: false, error: '工作表为空' })
 
+      const STATUS = new Set(['accepted', 'pending', 'suspected'])
       const groups = new Map()
       for (let i = 1; i < rows.length; i++) {
         const r = rows[i] || []
@@ -1798,36 +1835,77 @@ const server = http.createServer(async (req, res) => {
         const param = String(r[2] || '').trim()
         const val = String(r[5] || '').trim()
         if (!/^\d{6}$/.test(sub) || !param || !val) continue
+        const st = String(r[8] || 'accepted').trim().toLowerCase()
         const k = sub + '|' + param
         if (!groups.has(k)) groups.set(k, { sub, param, list: [] })
         groups.get(k).list.push({
           value: val,
           count: Number(r[6]) || 0,
           source: String(r[7] || 'stock').trim() || 'stock',
+          status: STATUS.has(st) ? st : 'accepted',
         })
       }
-      if (!groups.size) return sendJson(res, 400, { ok: false, error: '没有可导入的行（检查前 6 列：小类号/小类名/参数/类型/序列/值）' })
+      if (!groups.size) return sendJson(res, 400, { ok: false, error: '没有可导入的行（检查 小类号 / 参数 / 值 三列）' })
 
       const j = readConfigJson('param-standard.json') || { subs: {} }
-      let updated = 0
+      let added = 0, touched = 0, removed = 0
       const skipped = []
       for (const g of groups.values()) {
         const node = (j.subs || {})[g.sub]
         const d = node && (node.params || {})[g.param]
         if (!d) { skipped.push(g.sub + ' ' + g.param); continue }
-        const seen = new Set()
-        d.accepted = g.list.filter((v) => {
-          if (seen.has(v.value)) return false
-          seen.add(v.value)
-          return true
-        })
-        updated++
+
+        if (mode === 'replace') {
+          const bucket = { accepted: [], pending: [], suspected: [] }
+          const seen = new Set()
+          for (const v of g.list) {
+            const key = v.status + '|' + v.value
+            if (seen.has(key)) continue
+            seen.add(key)
+            bucket[v.status].push({ value: v.value, count: v.count, source: v.source })
+          }
+          const oldVals = new Set([...(d.accepted || []), ...(d.pending || []), ...(d.suspected || [])].map((x) => String(x.value)))
+          const newVals = new Set([...bucket.accepted, ...bucket.pending, ...bucket.suspected].map((x) => String(x.value)))
+          for (const v of newVals) { if (oldVals.has(v)) touched++; else added++ }
+          for (const v of oldVals) { if (!newVals.has(v)) removed++ }
+          if (!dryRun) {
+            d.accepted = bucket.accepted
+            d.pending = bucket.pending
+            d.suspected = bucket.suspected
+          }
+        } else {
+          for (const v of g.list) {
+            if (!Array.isArray(d[v.status])) d[v.status] = []
+            const hit = d[v.status].find((x) => String(x.value) === v.value)
+            if (hit) { hit.count = v.count; touched++ }
+            else { d[v.status].push({ value: v.value, count: v.count, source: v.source }); added++ }
+          }
+        }
       }
+
+      if (dryRun) {
+        return sendJson(res, 200, {
+          ok: true, dryRun: true, mode, added, updated: touched, removed,
+          groups: groups.size, skipped: skipped.slice(0, 10),
+        })
+      }
+
+      // 导入前自动备份（失败不阻断）
+      try {
+        const bakDir = path.join(CONFIG, '_backup')
+        fs.mkdirSync(bakDir, { recursive: true })
+        const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+        fs.copyFileSync(path.join(CONFIG, 'param-standard.json'), path.join(bakDir, 'param-standard-' + stamp + '.json'))
+      } catch (e) { /* 备份失败不阻断导入 */ }
+
       j.meta = j.meta || {}
       j.meta.updatedAt = new Date().toISOString()
       j.meta.editedAt = j.meta.updatedAt
       saveConfigJson('param-standard.json', j)
-      return sendJson(res, 200, { ok: true, updated, skipped: skipped.slice(0, 10), subs: Object.keys(j.subs || {}).length })
+      return sendJson(res, 200, {
+        ok: true, mode, added, updated: touched, removed,
+        groups: groups.size, skipped: skipped.slice(0, 10), subs: Object.keys(j.subs || {}).length,
+      })
     }
 
     if (p === '/api/param-lib/export' && req.method === 'GET') {

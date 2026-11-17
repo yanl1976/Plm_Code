@@ -219,7 +219,8 @@
             <input id="plSearch" placeholder="搜索小类号 / 名称" autocomplete="off" />
             <button id="btnPlExport" class="ghost" title="导出为 Excel：一行一个值，可在 Excel 里筛选/排序/批量改，再导入回来">导出 Excel</button>
             <button id="btnPlExportJson" class="ghost" title="导出为 JSON，便于程序处理或迁移">导出 JSON</button>
-            <button id="btnPlImport" class="ghost" title="导入 Excel 或 JSON（Excel 按「小类号+参数」整组覆盖）">导入</button>
+            <button id="btnPlImport" class="ghost" title="补充模式：只新增/更新表里出现的值，不删除库中已有的值（推荐）">导入·补充</button>
+            <button id="btnPlImportReplace" class="ghost" title="覆盖模式：表里出现的「小类号+参数」整组替换，表里没有的值会被删除">导入·覆盖</button>
             <input type="file" id="plFile" accept=".json,.xlsx,.xls,application/json" style="display:none" />
             <span id="plStats" class="syn-stats"></span>
           </div>

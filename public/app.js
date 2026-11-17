@@ -1659,7 +1659,10 @@ if ($('#plEnabled')) $('#plEnabled').onchange = (e) => savePlConfig({ enabled: e
 if ($('#plShadow')) $('#plShadow').onchange = (e) => savePlConfig({ shadow: e.target.checked })
 if ($('#btnPlExport')) $('#btnPlExport').onclick = () => { location.href = '/api/param-lib/export-xlsx' }
 if ($('#btnPlExportJson')) $('#btnPlExportJson').onclick = () => { location.href = '/api/param-lib/export' }
-if ($('#btnPlImport')) $('#btnPlImport').onclick = () => $('#plFile').click()
+// 导入模式：upsert=补充（默认，安全）｜replace=覆盖（表里没有的值会被删除）
+let plImportMode = 'upsert'
+if ($('#btnPlImport')) $('#btnPlImport').onclick = () => { plImportMode = 'upsert'; $('#plFile').click() }
+if ($('#btnPlImportReplace')) $('#btnPlImportReplace').onclick = () => { plImportMode = 'replace'; $('#plFile').click() }
 if ($('#plFile')) {
   $('#plFile').onchange = async (e) => {
     const f = e.target.files && e.target.files[0]
@@ -1667,21 +1670,41 @@ if ($('#plFile')) {
     const m = $('#plMsg')
     const setMsg = (ok, text) => { if (m) { m.className = 'syn-msg ' + (ok ? 'ok' : 'err'); m.textContent = text } }
     try {
-      let r = null
       if (/\.xlsx?$/i.test(f.name)) {
-        // Excel：一行一个值，按「小类号 + 参数」整组覆盖
-        const resp = await fetch('/api/param-lib/import-xlsx', { method: 'POST', body: f })
-        r = await resp.json()
-        if (r && r.ok) setMsg(true, 'Excel 导入成功：更新 ' + r.updated + ' 个参数组' + (r.skipped && r.skipped.length ? '，跳过 ' + r.skipped.length + ' 个（库中无此小类/参数）' : ''))
+        // ① 预检：先算「新增/更新/删除」数量，让用户确认后再写盘
+        const qs = '?dryRun=1&mode=' + plImportMode
+        const dry = await (await fetch('/api/param-lib/import-xlsx' + qs, { method: 'POST', body: f })).json()
+        if (!dry || !dry.ok) { setMsg(false, (dry && dry.error) || '预检失败'); return }
+        const label = plImportMode === 'replace' ? '覆盖' : '补充'
+        const lines = [
+          '即将导入（' + label + '）：',
+          '  新增 ' + dry.added + ' 个值',
+          '  更新 ' + dry.updated + ' 个值',
+          dry.removed ? '  删除 ' + dry.removed + ' 个值（表里没有的）' : '  删除 0 个值',
+          '  涉及 ' + (dry.groups || 0) + ' 个「小类+参数」组',
+          dry.skipped && dry.skipped.length ? '  跳过 ' + dry.skipped.length + ' 组（库中无此小类/参数）' : '',
+          '',
+          '确定继续？',
+        ].filter(Boolean).join('\n')
+        if (!window.confirm(lines)) { setMsg(true, '已取消导入（未写入任何数据）'); return }
+        // ② 正式导入（后端会先自动备份）
+        const r = await (await fetch('/api/param-lib/import-xlsx?mode=' + plImportMode, { method: 'POST', body: f })).json()
+        if (r && r.ok) {
+          setMsg(true, '导入成功（' + label + '）：新增 ' + r.added + ' / 更新 ' + r.updated + ' / 删除 ' + r.removed
+            + (r.skipped && r.skipped.length ? '，跳过 ' + r.skipped.length + ' 组' : ''))
+          await loadParamLib()
+        } else {
+          setMsg(false, (r && r.error) || '导入失败')
+        }
       } else {
         const data = JSON.parse(await f.text())
-        r = await api('/api/param-lib/import', {
+        const r = await api('/api/param-lib/import', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ data, mode: 'merge' }),
         })
-        if (r && r.ok) setMsg(true, 'JSON 导入成功：共 ' + r.subs + ' 个小类（同小类已覆盖）')
+        if (r && r.ok) { setMsg(true, 'JSON 导入成功：共 ' + r.subs + ' 个小类（同小类已覆盖）'); await loadParamLib() }
+        else { setMsg(false, (r && r.error) || '导入失败') }
       }
-      if (r && r.ok) { await loadParamLib() } else { setMsg(false, (r && r.error) || '导入失败') }
     } catch (err) {
       setMsg(false, '导入失败：' + err.message)
     } finally {

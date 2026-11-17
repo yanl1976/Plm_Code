@@ -835,3 +835,13 @@ button:disabled { opacity:.45; cursor:not-allowed; }
 .pl-pchip:hover { background:rgba(79,195,247,.2); border-color:#4FC3F7; }
 .pl-pchip i { font-style:normal; font-size:10px; opacity:.7; }
 .pl-view, .pl-editbtn { padding:2px 11px; font-size:11.5px; border-radius:11px; }
+
+/* 只读抽屉不显示「+ 参数」 */
+.pl-drawer-foot.readonly #plAddParam { display:none; }
+
+/* 已删除值的「↺ 恢复」按钮：用主题蓝，与删除的 ×（红）区分 */
+.pl-val .pl-restore { color:#4FC3F7; }
+.pl-val .pl-restore:hover { color:#81d4fa; }
+
+/* 新增的参数列：标题前加一个小标记，提示「这是本次新建的」 */
+.pl-col.add .pl-col-name::after { content:' 新'; font-size:9px; color:#43a047; font-weight:400; }

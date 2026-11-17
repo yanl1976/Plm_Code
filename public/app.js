@@ -1551,10 +1551,15 @@ function openPlEdit(sub, focusParam, readonly) {
   PLED.readonly = !!readonly
   PLED.orig = {}
   PLED.cur = {}
-  for (const p of item.params || []) {
+  PLED.removed = {}
+  // 参数列表用副本：抽屉里可能新增参数列，不能直接改 PL.data 里的共享对象
+  PLED.params = (item.params || []).map((p) => ({ ...p }))
+  for (const p of PLED.params) {
     const vals = (p.values || []).map((v) => String(v.value))
     PLED.orig[p.name] = vals.slice()
     PLED.cur[p.name] = vals.slice()
+    // 历史删除记录（库里的 removed）一并带出来，可恢复
+    PLED.removed[p.name] = (p.removed || []).map((v) => String(v.value))
   }
   if ($('#plDhSub')) $('#plDhSub').textContent = sub
   if ($('#plDhName')) $('#plDhName').textContent = item.subName || ''
@@ -1572,7 +1577,7 @@ function openPlEdit(sub, focusParam, readonly) {
   if (focusParam) {
     setTimeout(() => {
       // 横向排列：把目标参数所在的那一列横向滚进视野，纵向保持不动
-      const pi = (PLED.item.params || []).findIndex((x) => x.name === focusParam)
+      const pi = (PLED.params || []).findIndex((x) => x.name === focusParam)
       if (pi < 0) return
       const col = document.querySelector('#plDrawerBody .pl-col[data-pi="' + pi + '"]')
       if (col) col.scrollIntoView({ block: 'nearest', inline: 'center' })
@@ -1593,7 +1598,7 @@ function renderPlDrawer() {
   // 值必须单行显示（不换行）——列宽只有 124px，长值换行会把列撑乱；
   // 超出部分裁成省略号，鼠标悬停用 title 看全文。textarea 做不到这点，故改用文本行。
   box.innerHTML = '<div class="pl-cols">'
-    + (PLED.item.params || []).map((p, pi) => renderPlCol(p, pi)).join('')
+    + (PLED.params || []).map((p, pi) => renderPlCol(p, pi)).join('')
     + '</div>'
   bindPlColEvents(box)
   refreshPlFoot()
@@ -1620,9 +1625,10 @@ function renderPlCol(p, pi) {
     + escapeHtml(v)
     + (ro ? '' : '<i class="pl-x" data-pi="' + pi + '" data-del="' + i + '" title="删除">×</i>')
     + '</div>').join('')
-  // 被删掉的值留在原位加删除线，便于确认「删了什么」
-  const gone = ro ? '' : d.removed.map((v) => '<div class="pl-val gone" title="已删除：' + escapeHtml(v) + '">'
-    + escapeHtml(v) + '</div>').join('')
+  // 已删除的值保留在底部（含历史删除记录），点 ↺ 可恢复 —— 防止误删找不回
+  const goneVals = ro ? [] : (PLED.removed[p.name] || [])
+  const gone = goneVals.map((v, i) => '<div class="pl-val gone" title="已删除，点 ↺ 恢复：' + escapeHtml(v) + '">'
+    + escapeHtml(v) + '<i class="pl-x pl-restore" data-pi="' + pi + '" data-ri="' + i + '" title="恢复">↺</i></div>').join('')
   return '<div class="pl-col' + cls + '" data-pi="' + pi + '">'
     + '<div class="pl-col-head">'
     + '<div class="pl-col-name" title="' + name + '">' + name + '</div>'
@@ -1657,9 +1663,28 @@ function bindPlColEvents(scope) {
     b.onclick = (e) => {
       e.stopPropagation()
       const pi = Number(b.dataset.pi)
-      const p = (PLED.item.params || [])[pi]
+      const p = (PLED.params || [])[pi]
       if (!p) return
-      PLED.cur[p.name].splice(Number(b.dataset.del), 1)
+      const i = Number(b.dataset.del)
+      const v = PLED.cur[p.name][i]
+      PLED.cur[p.name].splice(i, 1)
+      // 软删除：值不丢弃，移入 removed 保留在底部（可恢复）
+      if (v && !PLED.removed[p.name].includes(v)) PLED.removed[p.name].push(v)
+      refreshPlCol(pi)
+    }
+  })
+
+  // 恢复：把 removed 里的值放回 accepted
+  scope.querySelectorAll('.pl-restore[data-ri]').forEach((b) => {
+    b.onclick = (e) => {
+      e.stopPropagation()
+      const pi = Number(b.dataset.pi)
+      const p = (PLED.params || [])[pi]
+      if (!p) return
+      const ri = Number(b.dataset.ri)
+      const v = PLED.removed[p.name][ri]
+      PLED.removed[p.name].splice(ri, 1)
+      if (v && !PLED.cur[p.name].includes(v)) PLED.cur[p.name].push(v)
       refreshPlCol(pi)
     }
   })
@@ -1667,7 +1692,7 @@ function bindPlColEvents(scope) {
   scope.querySelectorAll('input[data-pi]').forEach((inp) => {
     const addFrom = (text) => {
       const pi = Number(inp.dataset.pi)
-      const p = (PLED.item.params || [])[pi]
+      const p = (PLED.params || [])[pi]
       if (!p) return
       const parts = plSplitValues(text)
       let n = 0
@@ -1699,7 +1724,7 @@ function bindPlColEvents(scope) {
 /** 重渲染单列（删除/添加后调用），不影响其它列的输入状态 */
 function refreshPlCol(pi) {
   const col = document.querySelector('#plDrawerBody .pl-col[data-pi="' + pi + '"]')
-  const p = (PLED.item.params || [])[pi]
+  const p = (PLED.params || [])[pi]
   if (!col || !p) return
   const tmp = document.createElement('div')
   tmp.innerHTML = renderPlCol(p, pi)
@@ -1710,22 +1735,26 @@ function refreshPlCol(pi) {
 }
 
 function refreshPlFoot() {
-  const n = ((PLED.item && PLED.item.params) || []).filter((p) => plDiff(p.name).changed).length
+  const n = (PLED.params || []).filter((p) => p.isNew || plDiff(p.name).changed).length
   if ($('#plDfTip')) $('#plDfTip').textContent = n ? (n + ' 个参数有改动') : '没有改动'
   if ($('#plDhSave')) $('#plDhSave').disabled = !n
 }
 
 async function savePlDrawer() {
-  const changed = ((PLED.item && PLED.item.params) || []).filter((p) => plDiff(p.name).changed)
+  // isNew：抽屉里新增的参数列（即使还没填值也要提交，否则不会被创建）
+  const changed = (PLED.params || []).filter((p) => p.isNew || plDiff(p.name).changed)
   if (!changed.length) { closePlDrawer(); return }
   const items = changed.map((p) => ({
     param: p.name,
+    type: p.type || 'free',
     accepted: (PLED.cur[p.name] || []).map((v) => {
       const old = (p.values || []).find((x) => String(x.value) === v)
       return old
         ? { value: v, count: old.count || 0, source: old.source || 'stock' }
         : { value: v, count: 0, source: 'manual' }
     }),
+    // 软删除：把「已删除」清单一并提交，后端存进 removed，下次打开还能恢复
+    removed: (PLED.removed[p.name] || []).map((v) => ({ value: v, count: 0 })),
   }))
   const r = await api('/api/param-lib/batch', {
     method: 'POST',
@@ -1734,7 +1763,11 @@ async function savePlDrawer() {
   }).catch(() => null)
   const msg = $('#plMsg')
   if (r && r.ok) {
-    if (msg) { msg.className = 'syn-msg ok'; msg.textContent = '已保存 ' + r.updated + ' 个参数（' + PLED.sub + '）' }
+    if (msg) {
+      msg.className = 'syn-msg ok'
+      msg.textContent = '已保存 ' + r.updated + ' 个参数（' + PLED.sub + '）'
+        + (r.created ? '，其中新建 ' + r.created + ' 个' : '')
+    }
     closePlDrawer()
     await loadParamLib()
   } else if (msg) {
@@ -1816,11 +1849,35 @@ if ($('#plDrawerMask')) $('#plDrawerMask').onclick = closePlDrawer
 if ($('#plDhReset')) {
   $('#plDhReset').onclick = () => {
     if (!PLED.item) return
-    for (const p of PLED.item.params || []) PLED.cur[p.name] = (PLED.orig[p.name] || []).slice()
+    for (const p of PLED.params || []) PLED.cur[p.name] = (PLED.orig[p.name] || []).slice()
     renderPlDrawer()
   }
 }
 if ($('#plDhSave')) $('#plDhSave').onclick = savePlDrawer
+
+// 抽屉里新增参数列（该小类原本没有这个参数）
+if ($('#plAddParam')) {
+  $('#plAddParam').onclick = () => {
+    if (PLED.readonly) return
+    const nm = String(prompt('新参数名（例：脱扣器 / 额定频率）') || '').trim()
+    if (!nm) return
+    if ((PLED.params || []).some((p) => p.name === nm)) {
+      alert('该小类下已有参数「' + nm + '」')
+      return
+    }
+    const t = String(prompt('类型：free=自由文本 / enum=枚举 / semi=半枚举 / series=数值序列', 'free') || 'free').trim()
+    const type = ['free', 'enum', 'semi', 'series'].includes(t) ? t : 'free'
+    PLED.params.push({
+      name: nm, type, series: '', values: [],
+      acceptedCount: 0, pendingCount: 0, removedCount: 0, isNew: true,
+    })
+    PLED.orig[nm] = []
+    PLED.cur[nm] = []
+    PLED.removed[nm] = []
+    renderPlDrawer()
+    if ($('#plDfTip')) $('#plDfTip').textContent = '已新增参数「' + nm + '」，填值后点「保存全部」'
+  }
+}
 document.addEventListener('keydown', (e) => {
   const d = $('#plDrawer')
   if (e.key === 'Escape' && d && d.classList.contains('open')) closePlDrawer()

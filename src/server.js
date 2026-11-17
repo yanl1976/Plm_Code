@@ -1686,6 +1686,9 @@ const server = http.createServer(async (req, res) => {
             acceptedCount: (d.accepted || []).length,
             pendingCount: (d.pending || []).length,
             suspectedCount: (d.suspected || []).length,
+            // 软删除记录：被移出的值留在这里，界面上可恢复（避免误删找不回）
+            removedCount: (d.removed || []).length,
+            removed: (d.removed || []).slice(0, 100).map((v) => ({ value: v.value, count: v.count || 0 })),
             // 只回传前 60 个供界面展示（单参数超过这个量说明它本该是 free 型）
             values: sorted.slice(0, 60).map((v) => ({
               value: v.value,
@@ -1768,24 +1771,42 @@ const server = http.createServer(async (req, res) => {
           : { value: String(x.value || '').trim(), count: Number(x.count) || 0, source: x.source || 'manual' }))
         .filter((x) => x.value)
       let updated = 0
+      let created = 0
       const skipped = []
+      node.params = node.params || {}
       for (const it of list) {
         const name = String(it.param || '').trim()
-        const d = (node.params || {})[name]
-        if (!d) { skipped.push(name); continue }
-        const seen = new Set()
-        d.accepted = normList(it.accepted).filter((v) => {
-          if (seen.has(v.value)) return false
-          seen.add(v.value)
-          return true
-        })
+        if (!name) continue
+        let d = node.params[name]
+        if (!d) {
+          // 抽屉里「+ 参数」新增的列：库里没有就建一个空参数。
+          // 类型由调用方给（默认自由文本），避免把未知参数硬判成枚举。
+          d = node.params[name] = {
+            type: String(it.type || 'free'),
+            accepted: [], pending: [], suspected: [], removed: [],
+            note: '由编辑抽屉新增',
+          }
+          created++
+        }
+        const dedupe = (arr) => {
+          const seen = new Set()
+          return normList(arr).filter((v) => {
+            if (seen.has(v.value)) return false
+            seen.add(v.value)
+            return true
+          })
+        }
+        if (Array.isArray(it.accepted)) d.accepted = dedupe(it.accepted)
+        // 软删除：被移除的值保留在 removed 里（界面上可恢复），不是直接抹掉，
+        // 以防误删后无法找回。
+        if (Array.isArray(it.removed)) d.removed = dedupe(it.removed)
         updated++
       }
       j.meta = j.meta || {}
       j.meta.updatedAt = new Date().toISOString()
       j.meta.editedAt = j.meta.updatedAt
       saveConfigJson('param-standard.json', j)
-      return sendJson(res, 200, { ok: true, sub, updated, skipped })
+      return sendJson(res, 200, { ok: true, sub, updated, created, skipped })
     }
 
     if (p === '/api/param-lib/config' && req.method === 'POST') {

@@ -737,30 +737,31 @@ tr.saving { opacity:.45; }
 .pl-drawer-body { flex:1 1 auto; min-height:0; overflow-x:auto; overflow-y:hidden; }
 .pl-cols { display:flex; height:100%; align-items:stretch; }
 
-.pl-col { flex:0 0 124px; display:flex; flex-direction:column; min-height:0; box-sizing:border-box;
-  border-right:1px solid var(--line); padding:8px 7px 6px; position:relative; }
+.pl-col { flex:0 0 auto; width:max-content; min-width:78px; max-width:168px;
+  display:flex; flex-direction:column; min-height:0; box-sizing:border-box;
+  border-right:1px solid var(--line); padding:7px 7px 5px; position:relative; }
 .pl-col:last-child { border-right:0; }
 .pl-col::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:transparent; }
 .pl-col.add::before { background:#2e7d32; }
 .pl-col.del::before { background:#c62828; }
 .pl-col.mod::before { background:#b26b00; }
 
-.pl-col-head { flex:0 0 auto; margin-bottom:5px; }
+.pl-col-head { flex:0 0 auto; margin-bottom:3px; }
 /* 参数名一律单行 + 省略号，悬停看全名 */
-.pl-col-name { font-weight:600; font-size:12px; white-space:nowrap; overflow:hidden;
-  text-overflow:ellipsis; }
-.pl-col-meta { font-size:10px; color:var(--muted); margin-top:1px; white-space:nowrap;
+.pl-col-name { font-weight:600; font-size:11.5px; line-height:1.35; white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis; }
+.pl-col-meta { font-size:9.5px; color:var(--muted); margin-top:0; white-space:nowrap;
   overflow:hidden; text-overflow:ellipsis; }
 
 /* 值的列表：一行一个值，不换行，超出裁剪；悬停用 title 看全文 */
 .pl-col-list { flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; }
-.pl-val { position:relative; padding:0 14px 0 2px; font-size:11.5px; line-height:1.7;
+.pl-val { position:relative; padding:0 13px 0 1px; font-size:11px; line-height:1.55;
   font-family:ui-monospace,Consolas,monospace; white-space:nowrap; overflow:hidden;
   text-overflow:ellipsis; cursor:default; border-radius:3px; }
 .pl-val:hover { background:rgba(255,255,255,.06); }
 .pl-val.new { color:#43a047; }
 .pl-val.gone { color:#e53935; text-decoration:line-through; opacity:.75; }
-.pl-val .pl-x { position:absolute; right:0; top:0; bottom:0; width:13px; display:flex;
+.pl-val .pl-x { position:absolute; right:0; top:0; bottom:0; width:12px; display:flex;
   align-items:center; justify-content:center; font-style:normal; font-size:12px;
   color:var(--muted); opacity:0; cursor:pointer; }
 .pl-val:hover .pl-x { opacity:1; }

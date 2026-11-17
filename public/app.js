@@ -1667,25 +1667,59 @@ function renderPlCol(p, pi) {
     + '</div>'
 }
 
+/**
+ * 就地编辑某个值：把该行替换成输入框（回车/失焦确认，Esc 取消）。
+ * 确认时：原值进 removed（变红色删除线，可恢复），新值标 manual（绿色）。
+ * 两者都会随「保存全部」落盘，重开抽屉仍能看出哪些是人工改过的。
+ */
+function startEditPlValue(el) {
+  if (!el || el.dataset.editing) return
+  const pi = Number(el.dataset.pi)
+  const i = Number(el.dataset.i)
+  const p = (PLED.params || [])[pi]
+  const cur = p && (PLED.cur[p.name] || [])[i]
+  if (!cur) return
+  el.dataset.editing = '1'
+  el.innerHTML = ''
+  const inp = document.createElement('input')
+  inp.className = 'pl-val-edit'
+  inp.value = cur.value
+  inp.spellcheck = false
+  el.appendChild(inp)
+  inp.focus()
+  inp.select()
+
+  let done = false
+  const finish = (ok) => {
+    if (done) return
+    done = true
+    if (ok) {
+      const nv = String(inp.value || '').trim()
+      if (nv && nv !== cur.value) {
+        if (!PLED.removed[p.name].includes(cur.value)) PLED.removed[p.name].push(cur.value)
+        PLED.cur[p.name][i] = { value: nv, count: cur.count || 0, source: 'manual' }
+        if ($('#plDfTip')) $('#plDfTip').textContent = '已修改：' + cur.value + ' → ' + nv
+      }
+    }
+    refreshPlCol(pi)
+  }
+  inp.onkeydown = (e) => {
+    if (e.isComposing) return
+    if (e.key === 'Enter') { e.preventDefault(); finish(true) }
+    else if (e.key === 'Escape') { e.preventDefault(); finish(false) }
+  }
+  // 失焦也确认：用户点到别处（或直接点保存）时，改动不会丢
+  inp.onblur = () => finish(true)
+}
+
 function bindPlColEvents(scope) {
-  // 双击值 → 修改文本。改完：原值进 removed（红删除线），新值标 manual（绿色），
-  // 两者都会随保存持久化，重开抽屉仍能看出"这是改过的"
+  // 单击值 → 就地变成输入框（不再弹 prompt），回车/失焦确认，Esc 取消。
+  // 改完：原值进 removed（红删除线，可恢复），新值标 manual（绿色）；两者随保存持久化。
   scope.querySelectorAll('.pl-val[data-i]').forEach((el) => {
-    el.ondblclick = () => {
+    el.onclick = (e) => {
       if (PLED.readonly) return
-      const pi = Number(el.dataset.pi)
-      const i = Number(el.dataset.i)
-      const p = (PLED.params || [])[pi]
-      const cur = p && (PLED.cur[p.name] || [])[i]
-      if (!cur) return
-      const nv = prompt('修改值（原值会记入「已删除」，可恢复）', cur.value)
-      if (nv == null) return
-      const nv2 = String(nv).trim()
-      if (!nv2 || nv2 === cur.value) return
-      if (!PLED.removed[p.name].includes(cur.value)) PLED.removed[p.name].push(cur.value)
-      PLED.cur[p.name][i] = { value: nv2, count: cur.count || 0, source: 'manual' }
-      refreshPlCol(pi)
-      if ($('#plDfTip')) $('#plDfTip').textContent = '已修改：' + cur.value + ' → ' + nv2
+      if (e.target.classList.contains('pl-x')) return   // 点在 × 上不进入编辑
+      startEditPlValue(el)
     }
   })
   if (PLED.readonly) return

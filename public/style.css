@@ -873,3 +873,11 @@ button:disabled { opacity:.45; cursor:not-allowed; }
 
 /* 底部「恢复」已删除参数 */
 .pl-undel { margin-left:3px; color:#4FC3F7; text-decoration:underline; cursor:pointer; }
+
+/* 值就地编辑：输入框与文本行同高，铺满该列宽度 */
+.pl-val-edit { width:100%; box-sizing:border-box; padding:0 1px; height:18px;
+  border:1px solid #4FC3F7; border-radius:3px; background:#0d1a22;
+  color:#fff; font-size:11px; font-family:ui-monospace,Consolas,monospace;
+  line-height:16px; outline:none; }
+/* 可编辑的值行：悬停给出提示色，提示这里可点 */
+.pl-val[data-i]:hover { background:rgba(79,195,247,.14); border-radius:3px; }

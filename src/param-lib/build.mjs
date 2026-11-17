@@ -39,6 +39,9 @@ const NAMEONLY = new Set(FIELDMAP.nameOnly || [])
 // 典型：1201 紧固件的「型号/材质/头型」、1103 电缆的「颜色」，
 // 都是中类通用 tokens 的副作用（同一中类下不同小类字段需求不同）。
 const DEDUP = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/dedup-rules.json'), 'utf8'))
+// 参数定义库：只用来判断「范式库声明的字段是否真的有提取规则」，
+// 没有定义的字段加进 tokens 也提不出值。
+const SFFIELDS = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/spec-fields.json'), 'utf8').replace(/^\uFEFF/, '')).library || {}
 
 await loadIndex({ force: true })
 
@@ -180,10 +183,25 @@ const stat = { subs: 0, params: 0, accepted: 0, pending: 0, suspected: 0 }
 
 for (const sub of SUBS) {
   const info = getCategory(sub) || {}
-  // 中类通用 tokens + 该小类补充 - 该小类排除
+  // tokens 来源（按优先级合并，最后减去排除项）：
+  //   ① 范式库 fields —— 这是「这个小类应该有哪些参数」的权威定义（国标字段）
+  //   ② 中类通用 chooseTokens —— 兜底（范式库没定义字段时用）
+  //   ③ subAddTokens —— 范式外但确实要提的补充
+  //   ④ subRemoveTokens —— 中类通用带进来、但该小类语义上不该有的
+  // 之前只看 ②③，导致范式库定义了 268 个字段却完全没被提取。
+  const gx = (GUIDE.subs || {})[sub] || {}
+  const tokFields = (Array.isArray(gx.fields) ? gx.fields : [])
+    .map((f) => ALIAS[String(f.key || '').trim()] || String(f.key || '').trim())
+    .filter((k) => k && SFFIELDS[k])
   const tokAdd = (DEDUP.subAddTokens || {})[sub] || []
   const tokDel = (DEDUP.subRemoveTokens || {})[sub] || []
-  const tokens = [...new Set([...chooseTokens(info), ...tokAdd])].filter((t) => !tokDel.includes(t))
+  // 有范式字段就以范式为准（规范驱动）；没有才回落到中类通用 tokens。
+  // 之前把两者叠加，导致 108 个小类凭空多出 224 个规范外的参数 ——
+  // 例如仪表类普遍多出「变比/频率」、传感器多出「额定电压」，
+  // 都是 1009/1005 中类 chooseTokens 的副作用，与这个小类的国标字段无关。
+  const tokens = tokFields.length
+    ? [...new Set([...tokFields, ...tokAdd])].filter((t) => !tokDel.includes(t))
+    : [...new Set([...chooseTokens(info), ...tokAdd])].filter((t) => !tokDel.includes(t))
   if (!tokens.length) continue
   const list = rows.filter((r) => String(r.FNUMBER || '').startsWith(sub) && String(r.FSPECIFICATION || '').trim())
   const clean = list.filter((r) => !suspect.has(r.FNUMBER))

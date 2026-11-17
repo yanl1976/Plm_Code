@@ -143,6 +143,19 @@ const inScope = (sub) => {
 const scopeLabel = RANGE.mids ? RANGE.mids.join(',') : (RANGE.from + '-' + RANGE.to)
 const SUBS = Object.keys(MAP).filter(inScope).sort()
 
+// 人工确认清单：meta.confirmed = { "100101|额定电流": ["3200", ...] }
+// 这些值不在标准序列里，但业务已确认是本小类真实规格（如 3200A、600V）。
+// 判定时直接归 accepted，否则每次重建都会退回 pending。
+let CONFIRMED = {}
+try {
+  const old = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/param-standard.json'), 'utf8'))
+  CONFIRMED = (old.meta && old.meta.confirmed) || {}
+} catch (e) { CONFIRMED = {} }
+const isConfirmed = (sub, param, v) => {
+  const list = CONFIRMED[sub + '|' + param]
+  return Array.isArray(list) && list.map(String).includes(String(v))
+}
+
 // 剔除疑似错类（只算一遍）
 const suspect = new Set()
 for (const r of rows) {
@@ -219,7 +232,8 @@ for (const sub of SUBS) {
     const accepted = [], pending = [], suspected = []
     for (const [v, c] of ranked) {
       const chk = hasSeries ? checkSeries(name, v, sub) : null
-      const inSeries = chk ? chk.ok : true
+      // 序列内，或业务已确认过 → 都算标准值
+      const inSeries = (chk ? chk.ok : true) || isConfirmed(sub, name, v)
       if (inSeries && c >= 2) accepted.push({ value: v, count: c, source: 'stock' })
       else if (!inSeries && c >= 5) {
         pending.push({ value: v, count: c, reason: '不在本小类标准序列但出现 ≥5 次，需确认是否为行业惯例/特殊规格' })
@@ -227,6 +241,17 @@ for (const sub of SUBS) {
       } else {
         suspected.push({ value: v, count: c })
       }
+    }
+
+    // 人工确认过的值：即使这一轮存量里没出现，也保留在 accepted（业务已认可，
+    // 不能因为某批数据缺失就丢掉）。source=confirmed 便于和存量值区分。
+    const confList = CONFIRMED[sub + '|' + name] || []
+    for (const cv of confList) {
+      const sv = String(cv)
+      if (accepted.some((x) => String(x.value) === sv)) continue
+      if (pending.some((x) => String(x.value) === sv)) continue
+      if (suspected.some((x) => String(x.value) === sv)) continue
+      accepted.push({ value: sv, count: 0, source: 'confirmed' })
     }
 
     // 方案 B：候选 = 本小类存量（带频次） + 本小类族的标准序列（count=0，标 source=series）
@@ -336,6 +361,9 @@ out.meta = {
   sourceRows: usedRows,
   droppedRows,
   note: '由 src/param-lib/build.mjs 生成。accepted=可推荐；pending=待确认；suspected=疑似笔误/提取错误。人工确认后把 draft 改为 false。',
+  // 保留人工确认清单：这些值不在标准序列里但业务认可，
+  // 下次重建时仍会归 accepted（不能丢，否则一重建就退回 pending）
+  confirmed: CONFIRMED,
 }
 
 fs.writeFileSync(OUT_LIB, JSON.stringify(out, null, 2) + '\n', 'utf8')

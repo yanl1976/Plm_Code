@@ -1630,7 +1630,9 @@ function renderPlCol(p, pi) {
     + escapeHtml(p.type || '') + '</span> · <span>' + vals.length + ' 值</span></div>'
     + '</div>'
     + '<div class="pl-col-list">' + (rows || '<div class="pl-empty">（无值）</div>') + gone + '</div>'
-    + (ro ? '' : '<div class="pl-add-row"><input data-pi="' + pi + '" placeholder="+ 添加 / 粘贴" /></div>')
+    // size="1"：input 的固有宽度（默认约 20 字符）会参与列宽计算，
+    // 不设的话编辑模式下每列都会被撑到 max-width，看起来"没自适应"
+    + (ro ? '' : '<div class="pl-add-row"><input data-pi="' + pi + '" size="1" placeholder="+ 添加 / 粘贴" /></div>')
     + (ro ? '' : '<div class="pl-col-diff pl-diff">' + plDiffHtml(p.name) + '</div>')
     + '</div>'
 }

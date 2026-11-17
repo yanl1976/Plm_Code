@@ -769,13 +769,16 @@ tr.saving { opacity:.45; }
 .pl-empty { font-size:11px; color:var(--muted); padding:2px; }
 
 .pl-add-row { flex:0 0 auto; margin-top:4px; }
-.pl-add-row input { width:100%; box-sizing:border-box; padding:3px 5px; font-size:11px;
+.pl-add-row { min-width:0; }
+.pl-add-row input { width:100%; min-width:0; max-width:100%; box-sizing:border-box;
+  padding:2px 5px; font-size:10.5px;
   border:1px dashed var(--line); border-radius:3px; background:transparent; color:var(--text);
   font-family:ui-monospace,Consolas,monospace; outline:none; }
 .pl-add-row input:focus { border-color:#4a90d9; border-style:solid; }
 
-.pl-col-diff { flex:0 0 auto; margin-top:4px; font-size:10.5px; line-height:1.5;
-  max-height:42px; overflow:hidden; }
+.pl-col-diff { flex:0 0 auto; margin-top:3px; font-size:10px; line-height:1.5;
+  width:100%; contain:inline-size; overflow:hidden; white-space:nowrap;
+  text-overflow:ellipsis; }
 .pl-diff .add { color:#43a047; }
 .pl-diff .del { color:#e53935; }
 .pl-diff .mod { color:#fb8c00; }

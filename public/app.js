@@ -1554,6 +1554,8 @@ function openPlEdit(sub, focusParam, readonly) {
   PLED.removed = {}
   // 参数列表用副本：抽屉里可能新增参数列，不能直接改 PL.data 里的共享对象
   PLED.params = (item.params || []).map((p) => ({ ...p }))
+  // 打开时的顺序快照：用左右箭头调过之后，据此判断是否需要提交 order
+  PLED.origOrder = PLED.params.map((p) => p.name)
   for (const p of PLED.params) {
     const vals = (p.values || []).map((v) => String(v.value))
     PLED.orig[p.name] = vals.slice()
@@ -1629,8 +1631,14 @@ function renderPlCol(p, pi) {
   const goneVals = ro ? [] : (PLED.removed[p.name] || [])
   const gone = goneVals.map((v, i) => '<div class="pl-val gone" title="已删除，点 ↺ 恢复：' + escapeHtml(v) + '">'
     + escapeHtml(v) + '<i class="pl-x pl-restore" data-pi="' + pi + '" data-ri="' + i + '" title="恢复">↺</i></div>').join('')
+  // 列头：上方是左右箭头（调整参数顺序，会同步到物料录入的提示顺序），下面是参数名
+  const mvRow = ro ? '' : '<div class="pl-mv-row">'
+    + '<button class="pl-mv" data-pi="' + pi + '" data-dir="-1" title="左移">◀</button>'
+    + '<button class="pl-mv" data-pi="' + pi + '" data-dir="1" title="右移">▶</button>'
+    + '</div>'
   return '<div class="pl-col' + cls + '" data-pi="' + pi + '">'
     + '<div class="pl-col-head">'
+    + mvRow
     + '<div class="pl-col-name" title="' + name + '">' + name + '</div>'
     + '<div class="pl-col-meta" title="' + escapeHtml(p.type || '') + '"><span>'
     + escapeHtml(p.type || '') + '</span> · <span>' + vals.length + ' 值</span></div>'
@@ -1658,6 +1666,14 @@ function bindPlColEvents(scope) {
     }
   })
   if (PLED.readonly) return
+
+  // 左右箭头：调整参数列顺序
+  scope.querySelectorAll('.pl-mv').forEach((b) => {
+    b.onclick = (e) => {
+      e.stopPropagation()
+      movePlParam(Number(b.dataset.pi), Number(b.dataset.dir))
+    }
+  })
 
   scope.querySelectorAll('.pl-x[data-del]').forEach((b) => {
     b.onclick = (e) => {
@@ -1745,17 +1761,33 @@ function refreshPlCol(pi) {
 
 function refreshPlFoot() {
   const n = (PLED.params || []).filter((p) => p.isNew || plDiff(p.name).changed).length
+  const orderChanged = (PLED.params || []).map((p) => p.name).join('|')
+    !== (PLED.origOrder || []).join('|')
   // 底部提示：有改动报数量；输入框里还有未提交内容时单独提示
   const pending = Array.from(document.querySelectorAll('#plDrawerBody input[data-pi]'))
     .some((inp) => String(inp.value || '').trim())
   if ($('#plDfTip')) {
     $('#plDfTip').textContent = n
-      ? (n + ' 个参数有改动')
-      : (pending ? '输入框里有待添加的值，点「保存全部」会一并保存' : '没有改动')
+      ? (n + ' 个参数有改动' + (orderChanged ? '，顺序已调整' : ''))
+      : (orderChanged
+        ? '参数顺序已调整（保存后同步到物料录入的提示顺序）'
+        : (pending ? '输入框里有待添加的值，点「保存全部」会一并保存' : '没有改动'))
   }
   // 不用 disabled：禁用后点击不会触发 onclick，用户填了值也点不动，
   // 表现出来就是「保存无效」。改为弱化样式，逻辑在 savePlDrawer 里判断。
-  if ($('#plDhSave')) $('#plDhSave').classList.toggle('is-dim', !n && !pending)
+  if ($('#plDhSave')) $('#plDhSave').classList.toggle('is-dim', !n && !pending && !orderChanged)
+}
+
+/** 左右箭头：与相邻列交换位置（顺序会保存下来，并同步到录入提示顺序） */
+function movePlParam(pi, dir) {
+  const arr = PLED.params || []
+  const j = pi + dir
+  if (j < 0 || j >= arr.length) return
+  commitPendingInputs()          // 先收住未提交的输入，重渲染才不会丢
+  const t = arr[pi]
+  arr[pi] = arr[j]
+  arr[j] = t
+  renderPlDrawer()
 }
 
 /** 保存前把各列输入框里还没提交的内容收进来（防止"打了值没回车"被丢掉） */
@@ -1781,7 +1813,9 @@ async function savePlDrawer() {
   commitPendingInputs()
   // isNew：抽屉里新增的参数列（即使还没填值也要提交，否则不会被创建）
   const changed = (PLED.params || []).filter((p) => p.isNew || plDiff(p.name).changed)
-  if (!changed.length) { closePlDrawer(); return }
+  const orderNames = (PLED.params || []).map((p) => p.name)
+  const orderChanged = orderNames.join('|') !== (PLED.origOrder || []).join('|')
+  if (!changed.length && !orderChanged) { closePlDrawer(); return }
   const items = changed.map((p) => ({
     param: p.name,
     type: p.type || 'free',
@@ -1794,10 +1828,13 @@ async function savePlDrawer() {
     // 软删除：把「已删除」清单一并提交，后端存进 removed，下次打开还能恢复
     removed: (PLED.removed[p.name] || []).map((v) => ({ value: v, count: 0 })),
   }))
+  const body = { sub: PLED.sub, items }
+  // 顺序调整单独提交（只调顺序、不改值时也要能保存）
+  if (orderChanged) body.order = orderNames
   const r = await api('/api/param-lib/batch', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sub: PLED.sub, items }),
+    body: JSON.stringify(body),
   }).catch(() => null)
   const msg = $('#plMsg')
   if (r && r.ok) {
@@ -1805,6 +1842,7 @@ async function savePlDrawer() {
       msg.className = 'syn-msg ok'
       msg.textContent = '已保存 ' + r.updated + ' 个参数（' + PLED.sub + '）'
         + (r.created ? '，其中新建 ' + r.created + ' 个' : '')
+        + (orderChanged ? '，参数顺序已更新（录入提示同步）' : '')
     }
     closePlDrawer()
     await loadParamLib()

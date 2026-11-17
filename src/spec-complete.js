@@ -22,7 +22,7 @@ import { fileURLToPath } from 'url'
 import { getCategory, chooseTokens } from './classify.js'
 import { extractParams } from './struct-spec.js'
 import { loadGuide } from './guide-fields.js'
-import { enabled as paramLibEnabled, isShadow as paramLibShadow, checkValue as paramLibCheck, paramDef as paramLibDef, subParams as paramLibSubParams } from './param-lib/store.js'
+import { enabled as paramLibEnabled, isShadow as paramLibShadow, checkValue as paramLibCheck, paramDef as paramLibDef, subParams as paramLibSubParams, subOrder as paramLibOrder } from './param-lib/store.js'
 import { normalize as paramLibNormalize } from './param-lib/normalize.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -130,7 +130,22 @@ function statOf(sub, items) {
     if (!((d.accepted || []).length)) continue
     extra.push({ key: p, params: [p], rawNames: [p], tpl: '{' + p + '}', unit: '', appended: true })
   }
-  const meta = extra.length ? { ...meta0, segments: [...meta0.segments, ...extra] } : meta0
+  let segs = [...meta0.segments, ...extra]
+  // 按人工设定的参数顺序（参数标准库界面用左右箭头调的）重排段序列，
+  // 让"物料录入时的提示顺序"跟界面顺序一致；未列入 order 的保持原相对顺序。
+  const order = paramLibOrder(sub)
+  if (order.length && segs.length) {
+    const oidx = new Map(order.map((n, i) => [n, i]))
+    segs = segs.slice().sort((a, b) => {
+      const ia = oidx.has(a.params[0]) ? oidx.get(a.params[0]) : null
+      const ib = oidx.has(b.params[0]) ? oidx.get(b.params[0]) : null
+      if (ia != null && ib != null) return ia - ib
+      if (ia != null) return -1
+      if (ib != null) return 1
+      return 0
+    })
+  }
+  const meta = { ...meta0, segments: segs }
   const table = new Map()
   for (const it of src) {
     // 调用方可以传"该小类"或"全量"：这里统一按小类过滤

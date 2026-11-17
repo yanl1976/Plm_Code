@@ -17,7 +17,13 @@
           ],
           "pending": [],
           "suspected": [],
-          "removed": [],
+          "removed": [
+            {
+              "value": "2345",
+              "count": 0,
+              "source": "manual"
+            }
+          ],
           "note": "由编辑抽屉新增"
         },
         "型号": {
@@ -30532,7 +30538,7 @@
     "sourceRows": 8345,
     "droppedRows": 271,
     "note": "由 src/param-lib/build.mjs 生成。accepted=可推荐；pending=待确认；suspected=疑似笔误/提取错误。人工确认后把 draft 改为 false。",
-    "updatedAt": "2026-11-17T13:40:37.266Z",
-    "editedAt": "2026-11-17T13:40:37.266Z"
+    "updatedAt": "2026-11-17T13:46:43.745Z",
+    "editedAt": "2026-11-17T13:46:12.554Z"
   }
 }

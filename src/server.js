@@ -1672,15 +1672,23 @@ const server = http.createServer(async (req, res) => {
       const cfg = readConfigJson('param-lib-rules.json') || {}
       const kw = (url.searchParams.get('kw') || '').trim().toLowerCase()
       let items = Object.entries(j.subs || {}).map(([sub, x]) => {
-        // 参数顺序（三级）：型号永远第一 → 常规参数按名称 → 手工新增的排最后。
-        // 与 Excel 导出、抽屉列序保持同一口径：型号是物料身份，必须最靠前。
+        // 参数顺序：优先用人工设定（x.order，界面上用左右箭头调过）；
+        // 未在 order 里的回退到默认三级排序：型号 → 常规(按名称) → 手工新增(末尾)。
+        const order = Array.isArray(x.order) ? x.order : []
+        const orderIdx = new Map(order.map((n, i) => [n, i]))
         const listRank = (name, d) => {
           if (name === '型号') return 0
           if (/新增/.test((d || {}).note || '')) return 2
           return 1
         }
-        const sortedEntries = Object.entries(x.params || {}).sort((a, b) =>
-          (listRank(a[0], a[1]) - listRank(b[0], b[1])) || a[0].localeCompare(b[0], 'zh'))
+        const sortedEntries = Object.entries(x.params || {}).sort((a, b) => {
+          const ia = orderIdx.has(a[0]) ? orderIdx.get(a[0]) : null
+          const ib = orderIdx.has(b[0]) ? orderIdx.get(b[0]) : null
+          if (ia != null && ib != null) return ia - ib
+          if (ia != null) return -1
+          if (ib != null) return 1
+          return (listRank(a[0], a[1]) - listRank(b[0], b[1])) || a[0].localeCompare(b[0], 'zh')
+        })
         const params = sortedEntries.map(([name, d]) => {
           // free 型（型号/阻值/容值）的值有两个来源：
           //   accepted  = 人工在抽屉里加的（保存后写这里）
@@ -1824,11 +1832,17 @@ const server = http.createServer(async (req, res) => {
         if (Array.isArray(it.removed)) d.removed = dedupe(it.removed)
         updated++
       }
+      // 参数顺序（界面左右箭头调整的结果）。只保留仍存在的参数名，避免残留已删参数。
+      if (Array.isArray(b.order)) {
+        const exist = new Set(Object.keys(node.params || {}))
+        node.order = b.order.map((x) => String(x || '').trim()).filter((x) => x && exist.has(x))
+      }
+
       j.meta = j.meta || {}
       j.meta.updatedAt = new Date().toISOString()
       j.meta.editedAt = j.meta.updatedAt
       saveConfigJson('param-standard.json', j)
-      return sendJson(res, 200, { ok: true, sub, updated, created, skipped })
+      return sendJson(res, 200, { ok: true, sub, updated, created, skipped, order: node.order || [] })
     }
 
     if (p === '/api/param-lib/config' && req.method === 'POST') {

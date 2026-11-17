@@ -68,6 +68,16 @@ export function subParams(sub) {
   return (node && node.params) || {}
 }
 
+/**
+ * 某小类的参数显示顺序（人工在界面上用左右箭头调过之后的顺序）。
+ * 未设置返回空数组 —— 调用方回退到默认排序（型号优先 / 按名称 / 新增排末尾）。
+ */
+export function subOrder(sub) {
+  const s6 = String(sub || '').slice(0, 6)
+  const node = (library().subs || {})[s6]
+  return Array.isArray(node && node.order) ? node.order.filter((x) => typeof x === 'string') : []
+}
+
 /** 某小类下某参数的定义（未收录返回 null） */
 export function paramDef(sub, name) {
   return subParams(sub)[name] || null

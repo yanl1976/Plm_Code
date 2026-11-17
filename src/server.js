@@ -1922,7 +1922,21 @@ const server = http.createServer(async (req, res) => {
               ])
             }
           }
-          add(d.accepted, 'accepted')
+          // free 型（型号/自定义参数）的参考值也要导出，否则「型号」在表里是一行空值。
+          // 与 /api/param-lib/list 同口径：accepted（人工）在前，reference（存量参考）在后，按值去重。
+          if (d.type === 'free' && (d.reference || []).length) {
+            const seen = new Set((d.accepted || []).map((v) => String(v.value)))
+            const merged = [...(d.accepted || [])]
+            for (const v of d.reference) {
+              const k = String(v.value)
+              if (seen.has(k)) continue
+              seen.add(k)
+              merged.push({ value: v.value, count: v.count || 0, source: 'reference' })
+            }
+            add(merged, 'accepted')
+          } else {
+            add(d.accepted, 'accepted')
+          }
           add(d.pending, 'pending')
           add(d.suspected, 'suspected')
           // 无取值的参数也输出一行占位 —— 否则「参数清单」里新增的参数

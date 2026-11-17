@@ -857,3 +857,9 @@ button:disabled { opacity:.45; cursor:not-allowed; }
 .pl-mv { flex:0 0 auto; padding:0 3px; font-size:9px; line-height:13px; border-radius:3px;
   background:transparent !important; border:1px solid transparent !important; color:var(--muted) !important; }
 .pl-mv:hover { background:#4FC3F7 !important; color:#0b1a24 !important; border-color:#4FC3F7 !important; }
+
+/* 可编辑的值行用文本光标，提示可双击修改 */
+.pl-val[data-i] { cursor:text; }
+/* 人工新增/修改的值：绿色常驻（source=manual，存库后重开仍显示） */
+.pl-val.new { color:#43a047; }
+.pl-val.new::before { content:'•'; margin-right:2px; opacity:.7; }

@@ -1519,8 +1519,10 @@ const PLED = { sub: '', item: null, orig: {}, cur: {}, readonly: false }
 
 /** 对比原值与当前值，得出新增/删除 */
 function plDiff(name) {
-  const o = PLED.orig[name] || []
-  const c = PLED.cur[name] || []
+  // 值已改为对象数组，比较时只取 value
+  const vals = (arr) => (arr || []).map((x) => String(x && x.value !== undefined ? x.value : x))
+  const o = vals(PLED.orig[name])
+  const c = vals(PLED.cur[name])
   const added = c.filter((v) => !o.includes(v))
   const removed = o.filter((v) => !c.includes(v))
   const changed = added.length || removed.length || o.join('\u0001') !== c.join('\u0001')
@@ -1557,9 +1559,15 @@ function openPlEdit(sub, focusParam, readonly) {
   // 打开时的顺序快照：用左右箭头调过之后，据此判断是否需要提交 order
   PLED.origOrder = PLED.params.map((p) => p.name)
   for (const p of PLED.params) {
-    const vals = (p.values || []).map((v) => String(v.value))
-    PLED.orig[p.name] = vals.slice()
-    PLED.cur[p.name] = vals.slice()
+    // 值保存为对象（value/count/source）：source 决定颜色，且要跟着存回库，
+    // 否则保存后重新打开就分不清"哪些是人工加的"
+    const list = (p.values || []).map((v) => ({
+      value: String(v.value),
+      count: v.count || 0,
+      source: v.source || (p.type === 'free' ? 'reference' : 'stock'),
+    }))
+    PLED.orig[p.name] = list.map((v) => ({ ...v }))
+    PLED.cur[p.name] = list.map((v) => ({ ...v }))
     // 历史删除记录（库里的 removed）一并带出来，可恢复
     PLED.removed[p.name] = (p.removed || []).map((v) => String(v.value))
   }
@@ -1623,10 +1631,16 @@ function renderPlCol(p, pi) {
   const cls = !d.changed ? '' : (d.added.length && !d.removed.length ? ' add'
     : (!d.added.length && d.removed.length ? ' del' : ' mod'))
   const name = escapeHtml(p.name)
-  const rows = vals.map((v, i) => '<div class="pl-val" title="' + escapeHtml(v) + '（双击复制）">'
-    + escapeHtml(v)
-    + (ro ? '' : '<i class="pl-x" data-pi="' + pi + '" data-del="' + i + '" title="删除">×</i>')
-    + '</div>').join('')
+  // 人工新增/修改的值常驻绿色（source=manual 存进库，重开抽屉仍是绿色）
+  const rows = vals.map((v, i) => {
+    const isNew = v.source === 'manual'
+    return '<div class="pl-val' + (isNew ? ' new' : '') + '" data-pi="' + pi + '" data-i="' + i
+      + '" title="' + escapeHtml(v.value) + (isNew ? '（人工录入）' : '')
+      + (ro ? '' : '（双击修改）') + '">'
+      + escapeHtml(v.value)
+      + (ro ? '' : '<i class="pl-x" data-pi="' + pi + '" data-del="' + i + '" title="删除">×</i>')
+      + '</div>'
+  }).join('')
   // 已删除的值保留在底部（含历史删除记录），点 ↺ 可恢复 —— 防止误删找不回
   const goneVals = ro ? [] : (PLED.removed[p.name] || [])
   const gone = goneVals.map((v, i) => '<div class="pl-val gone" title="已删除，点 ↺ 恢复：' + escapeHtml(v) + '">'
@@ -1652,17 +1666,24 @@ function renderPlCol(p, pi) {
 }
 
 function bindPlColEvents(scope) {
-  // 双击值 → 复制到剪贴板（只读模式下同样可用）
-  scope.querySelectorAll('.pl-val').forEach((el) => {
+  // 双击值 → 修改文本。改完：原值进 removed（红删除线），新值标 manual（绿色），
+  // 两者都会随保存持久化，重开抽屉仍能看出"这是改过的"
+  scope.querySelectorAll('.pl-val[data-i]').forEach((el) => {
     el.ondblclick = () => {
-      const t = String(el.textContent || '').replace(/×\s*$/, '').trim()
-      if (!t) return
-      const tip = $('#plDfTip')
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(t).then(() => {
-          if (tip) tip.textContent = '已复制：' + t
-        }).catch(() => { if (tip) tip.textContent = '复制失败（浏览器限制，可手动选中）' })
-      }
+      if (PLED.readonly) return
+      const pi = Number(el.dataset.pi)
+      const i = Number(el.dataset.i)
+      const p = (PLED.params || [])[pi]
+      const cur = p && (PLED.cur[p.name] || [])[i]
+      if (!cur) return
+      const nv = prompt('修改值（原值会记入「已删除」，可恢复）', cur.value)
+      if (nv == null) return
+      const nv2 = String(nv).trim()
+      if (!nv2 || nv2 === cur.value) return
+      if (!PLED.removed[p.name].includes(cur.value)) PLED.removed[p.name].push(cur.value)
+      PLED.cur[p.name][i] = { value: nv2, count: cur.count || 0, source: 'manual' }
+      refreshPlCol(pi)
+      if ($('#plDfTip')) $('#plDfTip').textContent = '已修改：' + cur.value + ' → ' + nv2
     }
   })
   if (PLED.readonly) return
@@ -1685,7 +1706,7 @@ function bindPlColEvents(scope) {
       const v = PLED.cur[p.name][i]
       PLED.cur[p.name].splice(i, 1)
       // 软删除：值不丢弃，移入 removed 保留在底部（可恢复）
-      if (v && !PLED.removed[p.name].includes(v)) PLED.removed[p.name].push(v)
+      if (v && !PLED.removed[p.name].includes(v.value)) PLED.removed[p.name].push(v.value)
       refreshPlCol(pi)
     }
   })
@@ -1700,7 +1721,10 @@ function bindPlColEvents(scope) {
       const ri = Number(b.dataset.ri)
       const v = PLED.removed[p.name][ri]
       PLED.removed[p.name].splice(ri, 1)
-      if (v && !PLED.cur[p.name].includes(v)) PLED.cur[p.name].push(v)
+      // 恢复的值标记为人工确认，显示为绿色
+      if (v && !PLED.cur[p.name].some((x) => x.value === v)) {
+        PLED.cur[p.name].push({ value: v, count: 0, source: 'manual' })
+      }
       refreshPlCol(pi)
     }
   })
@@ -1713,8 +1737,9 @@ function bindPlColEvents(scope) {
       const parts = plSplitValues(text)
       let n = 0
       for (const v of parts) {
-        if (PLED.cur[p.name].includes(v)) continue
-        PLED.cur[p.name].push(v)
+        if (PLED.cur[p.name].some((x) => x.value === v)) continue
+        // source=manual：人工新增，绿色且持久化
+        PLED.cur[p.name].push({ value: v, count: 0, source: 'manual' })
         n++
       }
       inp.value = ''
@@ -1801,7 +1826,10 @@ function commitPendingInputs() {
     const p = (PLED.params || [])[pi]
     if (!p) return
     for (const v of plSplitValues(txt)) {
-      if (!PLED.cur[p.name].includes(v)) { PLED.cur[p.name].push(v); touched = true }
+      if (!PLED.cur[p.name].some((x) => x.value === v)) {
+        PLED.cur[p.name].push({ value: v, count: 0, source: 'manual' })
+        touched = true
+      }
     }
     inp.value = ''
   })
@@ -1819,12 +1847,12 @@ async function savePlDrawer() {
   const items = changed.map((p) => ({
     param: p.name,
     type: p.type || 'free',
-    accepted: (PLED.cur[p.name] || []).map((v) => {
-      const old = (p.values || []).find((x) => String(x.value) === v)
-      return old
-        ? { value: v, count: old.count || 0, source: old.source || 'stock' }
-        : { value: v, count: 0, source: 'manual' }
-    }),
+    // 值已是对象，source 直接带回去（manual 会让前端重新打开时仍显示绿色）
+    accepted: (PLED.cur[p.name] || []).map((v) => ({
+      value: v.value,
+      count: v.count || 0,
+      source: v.source || 'manual',
+    })),
     // 软删除：把「已删除」清单一并提交，后端存进 removed，下次打开还能恢复
     removed: (PLED.removed[p.name] || []).map((v) => ({ value: v, count: 0 })),
   }))

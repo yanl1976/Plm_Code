@@ -22,6 +22,11 @@
               "value": "2345",
               "count": 0,
               "source": "manual"
+            },
+            {
+              "value": "1234",
+              "count": 0,
+              "source": "manual"
             }
           ],
           "note": "由编辑抽屉新增"
@@ -619,23 +624,7 @@
           "rawCount": 2,
           "normCount": 2,
           "aliases": {},
-          "accepted": [
-            {
-              "value": "A",
-              "count": 0,
-              "source": "manual"
-            },
-            {
-              "value": "B",
-              "count": 0,
-              "source": "manual"
-            },
-            {
-              "value": "C",
-              "count": 0,
-              "source": "manual"
-            }
-          ],
+          "accepted": [],
           "pending": [],
           "suspected": [
             {
@@ -645,6 +634,23 @@
             {
               "value": "D",
               "count": 1
+            }
+          ],
+          "removed": [
+            {
+              "value": "C",
+              "count": 0,
+              "source": "manual"
+            },
+            {
+              "value": "B",
+              "count": 0,
+              "source": "manual"
+            },
+            {
+              "value": "A",
+              "count": 0,
+              "source": "manual"
             }
           ]
         },
@@ -30538,7 +30544,7 @@
     "sourceRows": 8345,
     "droppedRows": 271,
     "note": "由 src/param-lib/build.mjs 生成。accepted=可推荐；pending=待确认；suspected=疑似笔误/提取错误。人工确认后把 draft 改为 false。",
-    "updatedAt": "2026-11-17T13:46:43.745Z",
-    "editedAt": "2026-11-17T13:46:12.554Z"
+    "updatedAt": "2026-11-17T13:53:38.565Z",
+    "editedAt": "2026-11-17T13:53:38.565Z"
   }
 }

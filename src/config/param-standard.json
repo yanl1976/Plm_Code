@@ -6,31 +6,6 @@
       "rowCount": 191,
       "droppedCount": 14,
       "params": {
-        "11": {
-          "type": "free",
-          "accepted": [
-            {
-              "value": "1234",
-              "count": 0,
-              "source": "manual"
-            }
-          ],
-          "pending": [],
-          "suspected": [],
-          "removed": [
-            {
-              "value": "2345",
-              "count": 0,
-              "source": "manual"
-            },
-            {
-              "value": "1234",
-              "count": 0,
-              "source": "manual"
-            }
-          ],
-          "note": "由编辑抽屉新增"
-        },
         "型号": {
           "type": "free",
           "series": "",
@@ -675,7 +650,40 @@
             }
           ]
         }
-      }
+      },
+      "removedParams": {
+        "11": {
+          "type": "free",
+          "accepted": [
+            {
+              "value": "2345",
+              "count": 0,
+              "source": "manual"
+            }
+          ],
+          "pending": [],
+          "suspected": [],
+          "removed": [
+            {
+              "value": "1234",
+              "count": 0,
+              "source": "manual"
+            }
+          ],
+          "note": "由编辑抽屉新增",
+          "removedAt": "2026-11-17T13:59:59.842Z"
+        }
+      },
+      "order": [
+        "型号",
+        "额定电流",
+        "额定电压",
+        "分断等级",
+        "分断能力",
+        "极数",
+        "脱扣器",
+        "脱扣曲线"
+      ]
     },
     "100102": {
       "subName": "抽出式框架断路器",
@@ -30544,7 +30552,7 @@
     "sourceRows": 8345,
     "droppedRows": 271,
     "note": "由 src/param-lib/build.mjs 生成。accepted=可推荐；pending=待确认；suspected=疑似笔误/提取错误。人工确认后把 draft 改为 false。",
-    "updatedAt": "2026-11-17T13:53:38.565Z",
-    "editedAt": "2026-11-17T13:53:38.565Z"
+    "updatedAt": "2026-11-17T14:01:47.869Z",
+    "editedAt": "2026-11-17T13:59:59.843Z"
   }
 }

@@ -863,3 +863,13 @@ button:disabled { opacity:.45; cursor:not-allowed; }
 /* 人工新增/修改的值：绿色常驻（source=manual，存库后重开仍显示） */
 .pl-val.new { color:#43a047; }
 .pl-val.new::before { content:'•'; margin-right:2px; opacity:.7; }
+
+/* 删除整个参数列：列头最右侧的小 ×，平时淡出，悬停列时才明显 */
+.pl-col-del { flex:0 0 auto; margin-left:auto; padding:0 4px; font-size:11px; line-height:13px;
+  border-radius:3px; background:transparent !important; border:1px solid transparent !important;
+  color:var(--muted) !important; cursor:pointer; }
+.pl-col-del:hover { background:#c62828 !important; color:#fff !important; border-color:#c62828 !important; }
+.pl-mv-row { align-items:center; }
+
+/* 底部「恢复」已删除参数 */
+.pl-undel { margin-left:3px; color:#4FC3F7; text-decoration:underline; cursor:pointer; }

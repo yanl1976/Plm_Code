@@ -1515,7 +1515,7 @@ function renderParamList() {
  * 既看不到该小类的全貌，也容易改错。抽屉一次列出全部参数，值用多行文本框
  * （自动换行、可从 Excel 整列粘贴），并对新增/删除标色，保存前就能确认改了什么。
  */
-const PLED = { sub: '', item: null, orig: {}, cur: {}, readonly: false }
+const PLED = { sub: '', item: null, orig: {}, cur: {}, readonly: false, deleted: [] }
 
 /** 对比原值与当前值，得出新增/删除 */
 function plDiff(name) {
@@ -1554,6 +1554,7 @@ function openPlEdit(sub, focusParam, readonly) {
   PLED.orig = {}
   PLED.cur = {}
   PLED.removed = {}
+  PLED.deleted = []
   // 参数列表用副本：抽屉里可能新增参数列，不能直接改 PL.data 里的共享对象
   PLED.params = (item.params || []).map((p) => ({ ...p }))
   // 打开时的顺序快照：用左右箭头调过之后，据此判断是否需要提交 order
@@ -1645,10 +1646,11 @@ function renderPlCol(p, pi) {
   const goneVals = ro ? [] : (PLED.removed[p.name] || [])
   const gone = goneVals.map((v, i) => '<div class="pl-val gone" title="已删除，点 ↺ 恢复：' + escapeHtml(v) + '">'
     + escapeHtml(v) + '<i class="pl-x pl-restore" data-pi="' + pi + '" data-ri="' + i + '" title="恢复">↺</i></div>').join('')
-  // 列头：上方是左右箭头（调整参数顺序，会同步到物料录入的提示顺序），下面是参数名
+  // 列头：上方是左右箭头（调整参数顺序）+ 删除本参数；下面是参数名
   const mvRow = ro ? '' : '<div class="pl-mv-row">'
     + '<button class="pl-mv" data-pi="' + pi + '" data-dir="-1" title="左移">◀</button>'
     + '<button class="pl-mv" data-pi="' + pi + '" data-dir="1" title="右移">▶</button>'
+    + '<button class="pl-col-del" data-pi="' + pi + '" title="删除整个参数">×</button>'
     + '</div>'
   return '<div class="pl-col' + cls + '" data-pi="' + pi + '">'
     + '<div class="pl-col-head">'
@@ -1693,6 +1695,23 @@ function bindPlColEvents(scope) {
     b.onclick = (e) => {
       e.stopPropagation()
       movePlParam(Number(b.dataset.pi), Number(b.dataset.dir))
+    }
+  })
+
+  // 删除整个参数列（连同它的所有值）。不直接抹掉：记入 PLED.deleted，
+  // 保存前可在底部恢复；保存时后端移到 removedParams（软删除，数据不丢）。
+  scope.querySelectorAll('.pl-col-del').forEach((b) => {
+    b.onclick = (e) => {
+      e.stopPropagation()
+      const pi = Number(b.dataset.pi)
+      const p = (PLED.params || [])[pi]
+      if (!p) return
+      const n = (PLED.cur[p.name] || []).length
+      if (!window.confirm('删除参数「' + p.name + '」？\n该参数下的 ' + n + ' 个值会一并移除。\n（保存前可在底部恢复）')) return
+      commitPendingInputs()
+      PLED.params.splice(pi, 1)
+      if (!PLED.deleted.includes(p.name)) PLED.deleted.push(p.name)
+      renderPlDrawer()
     }
   })
 
@@ -1791,16 +1810,48 @@ function refreshPlFoot() {
   // 底部提示：有改动报数量；输入框里还有未提交内容时单独提示
   const pending = Array.from(document.querySelectorAll('#plDrawerBody input[data-pi]'))
     .some((inp) => String(inp.value || '').trim())
-  if ($('#plDfTip')) {
-    $('#plDfTip').textContent = n
-      ? (n + ' 个参数有改动' + (orderChanged ? '，顺序已调整' : ''))
-      : (orderChanged
-        ? '参数顺序已调整（保存后同步到物料录入的提示顺序）'
-        : (pending ? '输入框里有待添加的值，点「保存全部」会一并保存' : '没有改动'))
+  const del = PLED.deleted || []
+  const tip = $('#plDfTip')
+  if (tip) {
+    const bits = []
+    if (n) bits.push(n + ' 个参数有改动')
+    if (orderChanged) bits.push('顺序已调整')
+    if (del.length) {
+      // 已删除的参数可点「恢复」，保存前撤销
+      bits.push('已删除参数：' + del.map((nm) =>
+        escapeHtml(nm) + '<a href="javascript:void(0)" class="pl-undel" data-name="'
+        + escapeHtml(nm) + '">恢复</a>').join('、'))
+    }
+    if (bits.length) {
+      tip.innerHTML = bits.join('；')
+      tip.querySelectorAll('.pl-undel').forEach((a) => {
+        a.onclick = () => {
+          const nm = a.dataset.name
+          PLED.deleted = (PLED.deleted || []).filter((x) => x !== nm)
+          // 用打开时的快照恢复该列（值与顺序都还原）
+          const src = (PLED.item.params || []).find((x) => x.name === nm)
+          if (src && !PLED.params.some((x) => x.name === nm)) {
+            PLED.params.push({ ...src })
+            const vals = (src.values || []).map((v) => ({
+              value: String(v.value), count: v.count || 0,
+              source: v.source || (src.type === 'free' ? 'reference' : 'stock'),
+            }))
+            PLED.orig[nm] = vals.map((v) => ({ ...v }))
+            PLED.cur[nm] = vals.map((v) => ({ ...v }))
+            PLED.removed[nm] = (src.removed || []).map((v) => String(v.value))
+          }
+          renderPlDrawer()
+        }
+      })
+    } else {
+      tip.textContent = pending
+        ? '输入框里有待添加的值，点「保存全部」会一并保存'
+        : '没有改动'
+    }
   }
   // 不用 disabled：禁用后点击不会触发 onclick，用户填了值也点不动，
   // 表现出来就是「保存无效」。改为弱化样式，逻辑在 savePlDrawer 里判断。
-  if ($('#plDhSave')) $('#plDhSave').classList.toggle('is-dim', !n && !pending && !orderChanged)
+  if ($('#plDhSave')) $('#plDhSave').classList.toggle('is-dim', !n && !pending && !orderChanged && !del.length)
 }
 
 /** 左右箭头：与相邻列交换位置（顺序会保存下来，并同步到录入提示顺序） */
@@ -1843,7 +1894,8 @@ async function savePlDrawer() {
   const changed = (PLED.params || []).filter((p) => p.isNew || plDiff(p.name).changed)
   const orderNames = (PLED.params || []).map((p) => p.name)
   const orderChanged = orderNames.join('|') !== (PLED.origOrder || []).join('|')
-  if (!changed.length && !orderChanged) { closePlDrawer(); return }
+  const deleted = PLED.deleted || []
+  if (!changed.length && !orderChanged && !deleted.length) { closePlDrawer(); return }
   const items = changed.map((p) => ({
     param: p.name,
     type: p.type || 'free',
@@ -1859,6 +1911,8 @@ async function savePlDrawer() {
   const body = { sub: PLED.sub, items }
   // 顺序调整单独提交（只调顺序、不改值时也要能保存）
   if (orderChanged) body.order = orderNames
+  // 删除的参数：后端移到 removedParams（软删除，数据和值都留着，可人工恢复）
+  if (deleted.length) body.deleted = deleted
   const r = await api('/api/param-lib/batch', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1869,7 +1923,8 @@ async function savePlDrawer() {
     if (msg) {
       msg.className = 'syn-msg ok'
       msg.textContent = '已保存 ' + r.updated + ' 个参数（' + PLED.sub + '）'
-        + (r.created ? '，其中新建 ' + r.created + ' 个' : '')
+        + (r.created ? '，新建 ' + r.created + ' 个' : '')
+        + (r.deleted ? '，删除 ' + r.deleted + ' 个（可在库文件 removedParams 中找回）' : '')
         + (orderChanged ? '，参数顺序已更新（录入提示同步）' : '')
     }
     closePlDrawer()

@@ -1832,6 +1832,20 @@ const server = http.createServer(async (req, res) => {
         if (Array.isArray(it.removed)) d.removed = dedupe(it.removed)
         updated++
       }
+      // 删除参数：软删除——原定义（含全部取值）整体搬到 removedParams，数据不丢，
+      // 之后可人工恢复；直接抹掉一旦误删就找不回来了。
+      let deletedCount = 0
+      if (Array.isArray(b.deleted)) {
+        node.removedParams = node.removedParams || {}
+        for (const nm of b.deleted) {
+          const k = String(nm || '').trim()
+          if (!k || !node.params[k]) continue
+          node.removedParams[k] = { ...node.params[k], removedAt: new Date().toISOString() }
+          delete node.params[k]
+          deletedCount++
+        }
+      }
+
       // 参数顺序（界面左右箭头调整的结果）。只保留仍存在的参数名，避免残留已删参数。
       if (Array.isArray(b.order)) {
         const exist = new Set(Object.keys(node.params || {}))
@@ -1842,7 +1856,10 @@ const server = http.createServer(async (req, res) => {
       j.meta.updatedAt = new Date().toISOString()
       j.meta.editedAt = j.meta.updatedAt
       saveConfigJson('param-standard.json', j)
-      return sendJson(res, 200, { ok: true, sub, updated, created, skipped, order: node.order || [] })
+      return sendJson(res, 200, {
+        ok: true, sub, updated, created, deleted: deletedCount,
+        skipped, order: node.order || [],
+      })
     }
 
     if (p === '/api/param-lib/config' && req.method === 'POST') {

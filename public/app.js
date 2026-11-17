@@ -1572,7 +1572,8 @@ function openPlEdit(sub, focusParam) {
   if (focusParam) {
     setTimeout(() => {
       const ta = document.querySelector('#plDrawerBody textarea[data-p="' + focusParam.replace(/"/g, '\\"') + '"]')
-      if (ta) { ta.focus(); ta.scrollIntoView({ block: 'center' }) }
+      // 横向排列：要把目标列横向滚进视野（inline），纵向保持不动
+      if (ta) { ta.focus(); ta.scrollIntoView({ block: 'nearest', inline: 'center' }) }
     }, 80)
   }
 }
@@ -1586,45 +1587,49 @@ function closePlDrawer() {
 function renderPlDrawer() {
   const box = $('#plDrawerBody')
   if (!box || !PLED.item) return
-  box.innerHTML = (PLED.item.params || []).map((p) => {
+  // 横向排列：一个参数一列（参数名在上、值在下面）。
+  // 参数多时由外层 .pl-drawer-body 左右滚动，不再纵向堆叠 ——
+  // 纵向排列时 8 个参数要滚很久才能看全，横向一屏能并排比较。
+  box.innerHTML = '<div class="pl-cols">' + (PLED.item.params || []).map((p) => {
     const vals = PLED.cur[p.name] || []
     const d = plDiff(p.name)
     const cls = !d.changed ? '' : (d.added.length && !d.removed.length ? ' add'
       : (!d.added.length && d.removed.length ? ' del' : ' mod'))
-    const rows = Math.min(10, Math.max(2, vals.length))
-    return '<div class="pl-row' + cls + '" data-prow="' + escapeHtml(p.name) + '">'
-      + '<div class="pl-row-name">' + escapeHtml(p.name) + '</div>'
-      + '<div class="pl-row-type">' + escapeHtml(p.type || '') + '</div>'
-      + '<div class="pl-row-cnt">' + vals.length + '</div>'
-      + '<div><div class="pl-edit-area"><textarea data-p="' + escapeHtml(p.name)
-      + '" rows="' + rows + '" spellcheck="false">' + escapeHtml(vals.join('\n')) + '</textarea></div>'
-      + '<div class="pl-diff">' + plDiffHtml(p.name) + '</div></div>'
+    return '<div class="pl-col' + cls + '" data-pcol="' + escapeHtml(p.name) + '">'
+      + '<div class="pl-col-head">'
+      + '<div class="pl-col-name">' + escapeHtml(p.name) + '</div>'
+      + '<div class="pl-col-meta"><span>' + escapeHtml(p.type || '') + '</span><span>'
+      + vals.length + ' 值</span></div>'
       + '</div>'
-  }).join('')
+      + '<div class="pl-col-body"><textarea data-p="' + escapeHtml(p.name) + '" spellcheck="false">'
+      + escapeHtml(vals.join('\n')) + '</textarea></div>'
+      + '<div class="pl-col-diff pl-diff">' + plDiffHtml(p.name) + '</div>'
+      + '</div>'
+  }).join('') + '</div>'
 
   box.querySelectorAll('textarea[data-p]').forEach((ta) => {
     ta.oninput = () => {
       const name = ta.dataset.p
       PLED.cur[name] = ta.value.split(/[\n,，;；]/).map((s) => s.trim()).filter(Boolean)
-      refreshPlRow(name)
+      refreshPlCol(name)
     }
   })
   refreshPlFoot()
 }
 
-/** 只刷新该行的标记，不重绘文本框（否则输入会丢焦点） */
-function refreshPlRow(name) {
-  const row = document.querySelector('#plDrawerBody .pl-row[data-prow="' + name.replace(/"/g, '\\"') + '"]')
-  if (!row) return
+/** 只刷新该列的标记，不重绘文本框（否则输入会丢焦点） */
+function refreshPlCol(name) {
+  const col = document.querySelector('#plDrawerBody .pl-col[data-pcol="' + name.replace(/"/g, '\\"') + '"]')
+  if (!col) return
   const d = plDiff(name)
-  row.classList.remove('add', 'del', 'mod')
+  col.classList.remove('add', 'del', 'mod')
   if (d.changed) {
-    row.classList.add(d.added.length && !d.removed.length ? 'add'
+    col.classList.add(d.added.length && !d.removed.length ? 'add'
       : (!d.added.length && d.removed.length ? 'del' : 'mod'))
   }
-  const cnt = row.querySelector('.pl-row-cnt')
-  if (cnt) cnt.textContent = (PLED.cur[name] || []).length
-  const diff = row.querySelector('.pl-diff')
+  const meta = col.querySelector('.pl-col-meta span:last-child')
+  if (meta) meta.textContent = (PLED.cur[name] || []).length + ' 值'
+  const diff = col.querySelector('.pl-col-diff')
   if (diff) diff.innerHTML = plDiffHtml(name)
   refreshPlFoot()
 }

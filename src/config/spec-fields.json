@@ -1039,6 +1039,160 @@
         "/(1|5)\\s*A?\\b"
       ],
       "note": "互感器二次侧额定电流（常见 5A / 1A），可由变比 200/5 的分母得到"
+    },
+    "防护等级": {
+      "firstOnly": true,
+      "patterns": [
+        "(IP\\d{2}[A-Z]?)"
+      ],
+      "note": "外壳防护等级（GB/T 4208）"
+    },
+    "版本": {
+      "firstOnly": true,
+      "patterns": [
+        "(?:版本|ver|Ver)\\s*[:：]?\\s*v?(\\d+(?:\\.\\d+){1,3})",
+        "\\bv(\\d+(?:\\.\\d+){1,3})\\b"
+      ],
+      "note": "软件/固件版本号"
+    },
+    "服务期限": {
+      "firstOnly": true,
+      "patterns": [
+        "(\\d+\\s*(?:年|个月|月|天))"
+      ],
+      "note": "服务有效期"
+    },
+    "螺栓孔径": {
+      "firstOnly": true,
+      "patterns": [
+        "[Φφ]\\s*(\\d+(?:\\.\\d+)?)\\s*mm?",
+        "\\b(M\\d{1,2})\\b"
+      ],
+      "note": "端头螺栓孔径或螺纹规格"
+    },
+    "制冷量": {
+      "unit": "kW",
+      "firstOnly": true,
+      "patterns": [
+        "(\\d+(?:\\.\\d+)?)\\s*[kK][wW]"
+      ],
+      "note": "空调制冷量（GB/T 7725）"
+    },
+    "电源": {
+      "firstOnly": true,
+      "patterns": [
+        "((?:AC|DC)?\\s*\\d+\\s*V(?:\\s*\\/\\s*\\d+\\s*Hz)?)"
+      ],
+      "note": "供电电源规格"
+    },
+    "规格尺寸": {
+      "firstOnly": true,
+      "patterns": [
+        "(\\d+(?:\\.\\d+)?\\s*[×xX*]\\s*\\d+(?:\\.\\d+)?(?:\\s*[×xX*]\\s*\\d+(?:\\.\\d+)?)?\\s*mm)"
+      ],
+      "note": "安装附件的规格尺寸"
+    },
+    "适配设备": {
+      "firstOnly": true,
+      "patterns": [
+        "适配\\s*[:：]?\\s*([A-Za-z0-9][A-Za-z0-9.\\-\\/]{2,})"
+      ],
+      "note": "适配的设备型号（引用型）"
+    },
+    "柜体类型": {
+      "firstOnly": true,
+      "patterns": [],
+      "note": "柜体形式（如 固定式/抽屉式/仿威图）"
+    },
+    "箱体类型": {
+      "firstOnly": true,
+      "patterns": [],
+      "note": "箱体形式（如 明装/暗装/挂墙）"
+    },
+    "五金类型": {
+      "firstOnly": true,
+      "patterns": [],
+      "note": "五金件类别（锁/铰链/弹簧等）"
+    },
+    "端头类型": {
+      "firstOnly": true,
+      "patterns": [],
+      "note": "端头形式（如 管型/针型/叉型）"
+    },
+    "材料类型": {
+      "firstOnly": true,
+      "patterns": [],
+      "note": "焊接材料类别（焊条/焊丝/焊剂）"
+    },
+    "授权方式": {
+      "firstOnly": true,
+      "patterns": [],
+      "note": "软件授权形式（永久/年度/订阅）"
+    },
+    "能效等级": {
+      "firstOnly": true,
+      "patterns": [],
+      "note": "能效等级（GB 21455）"
+    },
+    "型号或规格": {
+      "firstOnly": true,
+      "patterns": [],
+      "note": "五金的型号或规格描述"
+    },
+    "规格型号": {
+      "firstOnly": true,
+      "patterns": [],
+      "note": "随机工具的规格型号"
+    },
+    "牌号": {
+      "firstOnly": true,
+      "patterns": [],
+      "note": "材料牌号（GB/T 5117 等）"
+    },
+    "图号": {
+      "firstOnly": true,
+      "patterns": [],
+      "note": "非标柜体的图纸编号"
+    },
+    "软件名称": {
+      "firstOnly": true,
+      "patterns": [],
+      "note": "软件产品名称"
+    },
+    "服务名称": {
+      "firstOnly": true,
+      "patterns": [],
+      "note": "服务项目名称"
+    },
+    "服务内容": {
+      "firstOnly": true,
+      "patterns": [],
+      "note": "服务内容说明"
+    },
+    "设备名称": {
+      "firstOnly": true,
+      "patterns": [],
+      "note": "设备名称"
+    },
+    "工具名称": {
+      "firstOnly": true,
+      "patterns": [],
+      "note": "工具名称"
+    },
+    "物件类型": {
+      "firstOnly": true,
+      "patterns": [],
+      "note": "物件类别（如 隔离开关/插座/灯具），用于名称归类"
+    },
+    "设备类型": {
+      "firstOnly": true,
+      "patterns": [],
+      "note": "设备类别（如 摄像机/门禁/报警器）"
+    },
+    "配件类型": {
+      "firstOnly": true,
+      "patterns": [],
+      "note": "配件类别（如 内存/硬盘/键鼠）"
     }
   },
   "meta": {

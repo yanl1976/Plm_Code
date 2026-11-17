@@ -30738,17 +30738,1419 @@
           ]
         }
       }
+    },
+    "120201": {
+      "subName": "空柜（箱、台、屏）体",
+      "midName": "杂品",
+      "rowCount": 347,
+      "droppedCount": 0,
+      "params": {
+        "型号": {
+          "type": "free",
+          "series": "",
+          "rawCount": 77,
+          "normCount": 77,
+          "aliases": {},
+          "reference": [
+            {
+              "value": "MNS",
+              "count": 19
+            },
+            {
+              "value": "GGD",
+              "count": 10
+            },
+            {
+              "value": "XL-21",
+              "count": 7
+            },
+            {
+              "value": "TMY-3",
+              "count": 5
+            },
+            {
+              "value": "8MF",
+              "count": 4
+            }
+          ],
+          "note": "取值过多，不推荐值；仅保留 Top5 作\"本小类常见写法\"参考"
+        },
+        "尺寸(宽*深*高)": {
+          "type": "free",
+          "series": "",
+          "rawCount": 178,
+          "normCount": 178,
+          "aliases": {},
+          "reference": [
+            {
+              "value": "800/800/2200",
+              "count": 9
+            },
+            {
+              "value": "800/1000/2200",
+              "count": 6
+            },
+            {
+              "value": "600/1000/2200",
+              "count": 5
+            },
+            {
+              "value": "1000/1000/2200",
+              "count": 5
+            },
+            {
+              "value": "1000/800/2200",
+              "count": 4
+            }
+          ],
+          "note": "取值过多，不推荐值；仅保留 Top5 作\"本小类常见写法\"参考"
+        },
+        "材质": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 4,
+          "normCount": 4,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "不锈钢",
+              "count": 13,
+              "source": "stock"
+            },
+            {
+              "value": "TMY",
+              "count": 7,
+              "source": "stock"
+            },
+            {
+              "value": "钢",
+              "count": 6,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "铝",
+              "count": 1
+            }
+          ]
+        },
+        "防护等级": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 5,
+          "normCount": 5,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "IP44",
+              "count": 14,
+              "source": "stock"
+            },
+            {
+              "value": "IP55",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "IP53",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "IP54",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "IP55W",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": []
+        }
+      }
+    },
+    "120202": {
+      "subName": "五金（锁/铰链/弹簧等）",
+      "midName": "",
+      "rowCount": 0,
+      "droppedCount": 0,
+      "params": {
+        "五金类型": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "型号或规格": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "材质": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        }
+      }
+    },
+    "120203": {
+      "subName": "端头",
+      "midName": "杂品",
+      "rowCount": 217,
+      "droppedCount": 0,
+      "params": {
+        "型号": {
+          "type": "free",
+          "series": "",
+          "rawCount": 104,
+          "normCount": 104,
+          "aliases": {},
+          "reference": [
+            {
+              "value": "OT",
+              "count": 23
+            },
+            {
+              "value": "VE",
+              "count": 14
+            },
+            {
+              "value": "UT",
+              "count": 14
+            },
+            {
+              "value": "TE",
+              "count": 13
+            },
+            {
+              "value": "OTZ",
+              "count": 9
+            }
+          ],
+          "note": "取值过多，不推荐值；仅保留 Top5 作\"本小类常见写法\"参考"
+        },
+        "截面": {
+          "type": "semi",
+          "series": "",
+          "rawCount": 42,
+          "normCount": 42,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "6mm",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "300",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "1.5mm^2",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "2.5",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "4mm^2",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "120",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "10mm^2",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "1mm^2",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "1.5",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "4",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "0.5mm^2",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "1.0mm^2",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "6",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "400",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "0.3mm^2",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "6mm^2",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "2.5mm^2",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "0.5",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "1",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "150",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "25",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "10",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "70",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "6.3mm",
+              "count": 1
+            },
+            {
+              "value": "240",
+              "count": 1
+            },
+            {
+              "value": "0.75mm^2",
+              "count": 1
+            },
+            {
+              "value": "16mm^2",
+              "count": 1
+            },
+            {
+              "value": "5.08mm",
+              "count": 1
+            },
+            {
+              "value": "50mm",
+              "count": 1
+            },
+            {
+              "value": "7mm",
+              "count": 1
+            },
+            {
+              "value": "12mm",
+              "count": 1
+            },
+            {
+              "value": "10mm",
+              "count": 1
+            },
+            {
+              "value": "8mm",
+              "count": 1
+            },
+            {
+              "value": "14mm",
+              "count": 1
+            },
+            {
+              "value": "9mm",
+              "count": 1
+            },
+            {
+              "value": "13mm",
+              "count": 1
+            },
+            {
+              "value": "11mm",
+              "count": 1
+            },
+            {
+              "value": "50",
+              "count": 1
+            },
+            {
+              "value": "95",
+              "count": 1
+            },
+            {
+              "value": "16",
+              "count": 1
+            },
+            {
+              "value": "35",
+              "count": 1
+            },
+            {
+              "value": "41mm",
+              "count": 1
+            }
+          ]
+        },
+        "螺栓孔径": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 5,
+          "normCount": 5,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "M12",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "M10",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "M4",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "M14",
+              "count": 1
+            },
+            {
+              "value": "M16",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    "120204": {
+      "subName": "焊接材料",
+      "midName": "",
+      "rowCount": 0,
+      "droppedCount": 0,
+      "params": {
+        "牌号": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "材料类型": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "直径": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        }
+      }
+    },
+    "120205": {
+      "subName": "安装附件（导轨等）",
+      "midName": "",
+      "rowCount": 0,
+      "droppedCount": 0,
+      "params": {
+        "规格尺寸": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "材质": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        }
+      }
+    },
+    "120206": {
+      "subName": "标准箱体",
+      "midName": "",
+      "rowCount": 0,
+      "droppedCount": 0,
+      "params": {
+        "箱体类型": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "尺寸(宽*深*高)": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "材质": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "防护等级": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        }
+      }
+    },
+    "120207": {
+      "subName": "非标柜体",
+      "midName": "杂品",
+      "rowCount": 118,
+      "droppedCount": 0,
+      "params": {
+        "型号": {
+          "type": "semi",
+          "series": "",
+          "rawCount": 38,
+          "normCount": 38,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "HXGN15-12",
+              "count": 6,
+              "source": "stock"
+            },
+            {
+              "value": "GGD",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "GKD-1250/380",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "GGD3",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "XGN15-12",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "6SL3730-1TG41-8AA3-Z",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "6SL3700-0LG41-6AA3-Z",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "MNS",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "GKG1",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "KYN28A-12",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "6FX2002-1DC00-1BA0",
+              "count": 1
+            },
+            {
+              "value": "6SL3055-0AA00-3LA0",
+              "count": 1
+            },
+            {
+              "value": "EVD-30-750-Y",
+              "count": 1
+            },
+            {
+              "value": "6SL3720-1TG41-0AA3-Z",
+              "count": 1
+            },
+            {
+              "value": "1250kVA",
+              "count": 1
+            },
+            {
+              "value": "SYNC-400-1600",
+              "count": 1
+            },
+            {
+              "value": "6SL3060-4AJ20-0AA0",
+              "count": 1
+            },
+            {
+              "value": "38Ah",
+              "count": 1
+            },
+            {
+              "value": "HKCZXX-10kV",
+              "count": 1
+            },
+            {
+              "value": "15U",
+              "count": 1
+            },
+            {
+              "value": "GBRQ-A",
+              "count": 1
+            },
+            {
+              "value": "500kVA-10/0.4kV",
+              "count": 1
+            },
+            {
+              "value": "2500kVA-10/0.69kV",
+              "count": 1
+            },
+            {
+              "value": "XKG-GZDW-65AH/220V",
+              "count": 1
+            },
+            {
+              "value": "H1700",
+              "count": 1
+            },
+            {
+              "value": "GKD-2000/1140",
+              "count": 1
+            },
+            {
+              "value": "GKG-1250/10",
+              "count": 1
+            },
+            {
+              "value": "EMC",
+              "count": 1
+            },
+            {
+              "value": "TMY-3",
+              "count": 1
+            },
+            {
+              "value": "GKD-1250/1140",
+              "count": 1
+            }
+          ]
+        },
+        "尺寸(宽*深*高)": {
+          "type": "semi",
+          "series": "",
+          "rawCount": 50,
+          "normCount": 50,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "800/600/2200",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "2200/800/600",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "1000/1400/2200",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "800/1000/2200",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "800/1000/2000",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "1850/1000/650",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "240/140/130",
+              "count": 1
+            },
+            {
+              "value": "3600/1500/800",
+              "count": 1
+            },
+            {
+              "value": "3600/1200/800",
+              "count": 1
+            },
+            {
+              "value": "350/200/450",
+              "count": 1
+            },
+            {
+              "value": "720/495/300",
+              "count": 1
+            },
+            {
+              "value": "500/2000/900",
+              "count": 1
+            },
+            {
+              "value": "900/2000/900",
+              "count": 1
+            },
+            {
+              "value": "800/1000/300",
+              "count": 1
+            },
+            {
+              "value": "1280/650/513.6",
+              "count": 1
+            },
+            {
+              "value": "220/130/90",
+              "count": 1
+            },
+            {
+              "value": "148/128/70",
+              "count": 1
+            },
+            {
+              "value": "800/800/2200",
+              "count": 1
+            },
+            {
+              "value": "650/350/260",
+              "count": 1
+            },
+            {
+              "value": "550/445/350",
+              "count": 1
+            },
+            {
+              "value": "840/329/260",
+              "count": 1
+            },
+            {
+              "value": "250/400/150",
+              "count": 1
+            },
+            {
+              "value": "1300/680/400",
+              "count": 1
+            },
+            {
+              "value": "600/400/300",
+              "count": 1
+            },
+            {
+              "value": "2200/800/1000",
+              "count": 1
+            },
+            {
+              "value": "1000/1600/2300",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    "120208": {
+      "subName": "随机工具",
+      "midName": "",
+      "rowCount": 0,
+      "droppedCount": 0,
+      "params": {
+        "工具名称": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "规格型号": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "适配设备": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        }
+      }
+    },
+    "120401": {
+      "subName": "系统软件",
+      "midName": "",
+      "rowCount": 0,
+      "droppedCount": 0,
+      "params": {
+        "软件名称": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "版本": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "授权方式": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        }
+      }
+    },
+    "120402": {
+      "subName": "服务费",
+      "midName": "",
+      "rowCount": 0,
+      "droppedCount": 0,
+      "params": {
+        "服务名称": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "服务期限": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "服务内容": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        }
+      }
+    },
+    "120403": {
+      "subName": "计算机",
+      "midName": "其它",
+      "rowCount": 64,
+      "droppedCount": 0,
+      "params": {
+        "型号": {
+          "type": "semi",
+          "series": "",
+          "rawCount": 44,
+          "normCount": 44,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "MOXA",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "Precision",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "I5",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "Precision7770",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "Intel",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "IPC-610L",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "DCS",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "DS-VE22S-B",
+              "count": 1
+            },
+            {
+              "value": "P2422H",
+              "count": 1
+            },
+            {
+              "value": "610L",
+              "count": 1
+            },
+            {
+              "value": "6AG4022-0BA31-0CA1",
+              "count": 1
+            },
+            {
+              "value": "P2722H",
+              "count": 1
+            },
+            {
+              "value": "HP",
+              "count": 1
+            },
+            {
+              "value": "P24VG5",
+              "count": 1
+            },
+            {
+              "value": "PPC-3150",
+              "count": 1
+            },
+            {
+              "value": "ARK-3500",
+              "count": 1
+            },
+            {
+              "value": "HMIP63G10N708N3N00",
+              "count": 1
+            },
+            {
+              "value": "PPC-6151/MB-8260",
+              "count": 1
+            },
+            {
+              "value": "ARK3530F/i7-7700/16G/1T",
+              "count": 1
+            },
+            {
+              "value": "DS-AXF142P-W10E",
+              "count": 1
+            },
+            {
+              "value": "ThinkStation",
+              "count": 1
+            },
+            {
+              "value": "Geekpor",
+              "count": 1
+            },
+            {
+              "value": "6AV2",
+              "count": 1
+            },
+            {
+              "value": "TPC1031Nt",
+              "count": 1
+            },
+            {
+              "value": "H10F",
+              "count": 1
+            },
+            {
+              "value": "MPC-3150-E4-T",
+              "count": 1
+            },
+            {
+              "value": "Think",
+              "count": 1
+            }
+          ]
+        },
+        "CPU": {
+          "type": "semi",
+          "series": "",
+          "rawCount": 16,
+          "normCount": 16,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "I5",
+              "count": 5,
+              "source": "stock"
+            },
+            {
+              "value": "i5",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "i5-1135G7",
+              "count": 1
+            },
+            {
+              "value": "Intel Xeon Silver 4210R",
+              "count": 1
+            },
+            {
+              "value": "i7-7700",
+              "count": 1
+            },
+            {
+              "value": "I7-8700",
+              "count": 1
+            },
+            {
+              "value": "i5-7500",
+              "count": 1
+            },
+            {
+              "value": "U9",
+              "count": 1
+            },
+            {
+              "value": "12核4.2GHZ",
+              "count": 1
+            },
+            {
+              "value": "i7",
+              "count": 1
+            },
+            {
+              "value": "I5-13420H",
+              "count": 1
+            },
+            {
+              "value": "i7-14700",
+              "count": 1
+            },
+            {
+              "value": "R7-4700G",
+              "count": 1
+            },
+            {
+              "value": "8核4.3GHz",
+              "count": 1
+            },
+            {
+              "value": "U5-225",
+              "count": 1
+            },
+            {
+              "value": "I714700",
+              "count": 1
+            }
+          ]
+        },
+        "内存": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 4,
+          "normCount": 4,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "16",
+              "count": 15,
+              "source": "stock"
+            },
+            {
+              "value": "32",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "8",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "64",
+              "count": 1
+            }
+          ]
+        },
+        "硬盘": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 7,
+          "normCount": 7,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "1",
+              "count": 14,
+              "source": "stock"
+            },
+            {
+              "value": "512",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "2",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "6",
+              "count": 1
+            },
+            {
+              "value": "128",
+              "count": 1
+            },
+            {
+              "value": "250",
+              "count": 1
+            },
+            {
+              "value": "4",
+              "count": 1
+            }
+          ]
+        },
+        "显示器": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 8,
+          "normCount": 8,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "24",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "27",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "32",
+              "count": 1
+            },
+            {
+              "value": "15.6",
+              "count": 1
+            },
+            {
+              "value": "22",
+              "count": 1
+            },
+            {
+              "value": "29",
+              "count": 1
+            },
+            {
+              "value": "10",
+              "count": 1
+            },
+            {
+              "value": "19",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    "120404": {
+      "subName": "设备",
+      "midName": "",
+      "rowCount": 0,
+      "droppedCount": 0,
+      "params": {
+        "设备名称": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "型号": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        }
+      }
+    },
+    "120405": {
+      "subName": "其它",
+      "midName": "其它",
+      "rowCount": 2123,
+      "droppedCount": 0,
+      "params": {
+        "型号": {
+          "type": "free",
+          "series": "",
+          "rawCount": 959,
+          "normCount": 959,
+          "aliases": {},
+          "reference": [
+            {
+              "value": "DN20",
+              "count": 21
+            },
+            {
+              "value": "DN25",
+              "count": 15
+            },
+            {
+              "value": "DN80",
+              "count": 15
+            },
+            {
+              "value": "DN200",
+              "count": 15
+            },
+            {
+              "value": "DN65",
+              "count": 14
+            }
+          ],
+          "note": "取值过多，不推荐值；仅保留 Top5 作\"本小类常见写法\"参考"
+        }
+      }
+    },
+    "120406": {
+      "subName": "空调",
+      "midName": "",
+      "rowCount": 0,
+      "droppedCount": 0,
+      "params": {
+        "型号": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "制冷量": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "电源": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "能效等级": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        }
+      }
+    },
+    "120407": {
+      "subName": "安防设备",
+      "midName": "其它",
+      "rowCount": 128,
+      "droppedCount": 0,
+      "params": {
+        "型号": {
+          "type": "free",
+          "series": "",
+          "rawCount": 89,
+          "normCount": 89,
+          "aliases": {},
+          "reference": [
+            {
+              "value": "220U",
+              "count": 5
+            },
+            {
+              "value": "JH-1465",
+              "count": 3
+            },
+            {
+              "value": "DS-1292ZJ-K",
+              "count": 2
+            },
+            {
+              "value": "DS",
+              "count": 2
+            },
+            {
+              "value": "RG-ES116G",
+              "count": 1
+            }
+          ],
+          "note": "取值过多，不推荐值；仅保留 Top5 作\"本小类常见写法\"参考"
+        },
+        "供电电压": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 4,
+          "normCount": 4,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "1345",
+              "count": 1
+            },
+            {
+              "value": "POE",
+              "count": 1
+            },
+            {
+              "value": "90",
+              "count": 1
+            },
+            {
+              "value": "12",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    "120408": {
+      "subName": "计算机配件",
+      "midName": "",
+      "rowCount": 0,
+      "droppedCount": 0,
+      "params": {
+        "型号": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "适配设备": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        }
+      }
     }
   },
   "meta": {
     "version": "0.2.0",
-    "generatedAt": "2026-11-17T14:23:25.473Z",
+    "generatedAt": "2026-11-17T14:29:06.271Z",
     "draft": true,
     "structure": "subs[小类] → params[参数] → {type, accepted, pending, suspected, aliases}",
     "principle": "参数值按小类隔离：某小类的候选只来自该小类的存量，不跨小类共用",
-    "scope": "1001-1014 中类",
-    "sourceRows": 8345,
-    "droppedRows": 271,
+    "scope": "1204,1202 中类",
+    "sourceRows": 2997,
+    "droppedRows": 0,
     "note": "由 src/param-lib/build.mjs 生成。accepted=可推荐；pending=待确认；suspected=疑似笔误/提取错误。人工确认后把 draft 改为 false。"
   }
 }

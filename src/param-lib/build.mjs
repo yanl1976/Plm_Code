@@ -125,7 +125,23 @@ function checkSeries(param, value, sub) {
 
 // ============ 主流程 ============
 const rows = fs.readFileSync(NDJSON, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l))
-const SUBS = Object.keys(MAP).filter((s) => { const m = s.slice(0, 4); return m >= '1001' && m <= '1014' }).sort()
+// 构建范围：默认 1001-1014（历史口径），可传参扩大，例如
+//   node src/param-lib/build.mjs 1204,1202    只构建两个中类
+//   node src/param-lib/build.mjs all          全部中类
+const RANGE_ARG = String(process.argv[2] || '').trim()
+const RANGE = (() => {
+  if (!RANGE_ARG) return { from: '1001', to: '1014' }
+  if (RANGE_ARG === 'all') return { from: '0000', to: '9999' }
+  const mids = RANGE_ARG.split(',').map((x) => x.trim()).filter(Boolean)
+  return { mids }
+})()
+const inScope = (sub) => {
+  const m = sub.slice(0, 4)
+  if (RANGE.mids) return RANGE.mids.includes(m)
+  return m >= RANGE.from && m <= RANGE.to
+}
+const scopeLabel = RANGE.mids ? RANGE.mids.join(',') : (RANGE.from + '-' + RANGE.to)
+const SUBS = Object.keys(MAP).filter(inScope).sort()
 
 // 剔除疑似错类（只算一遍）
 const suspect = new Set()
@@ -135,7 +151,7 @@ for (const r of rows) {
   const n = String(r.FNAME || '').trim()
   if (n && detectSubMismatch(n, s)) suspect.add(r.FNUMBER)
 }
-console.log('物料 ' + rows.length + ' 条 ｜ 范围 1001-1014（' + SUBS.length + ' 小类）')
+console.log('物料 ' + rows.length + ' 条 ｜ 范围 ' + scopeLabel + '（' + SUBS.length + ' 小类）')
 console.log('剔除疑似错类 ' + suspect.size + ' 条（全库口径）\n')
 
 const out = { subs: {} }
@@ -274,8 +290,7 @@ for (const sub of SUBS) {
 // 这样「参数内容必须全」——值可以后补，但每个小类该有哪些参数在库里是明确的。
 for (const [sub, g] of Object.entries(GUIDE.subs || {})) {
   if (out.subs[sub]) continue
-  const m = sub.slice(0, 4)
-  if (!(m >= '1001' && m <= '1014')) continue
+  if (!inScope(sub)) continue
   const ph = (String(g.specPattern || '').match(/\{[^}]+\}/g) || []).map((x) => x.slice(1, -1))
   const params = {}
   for (const raw of ph) {
@@ -299,13 +314,25 @@ for (const [sub, g] of Object.entries(GUIDE.subs || {})) {
   stat.paramOnly = (stat.paramOnly || 0) + 1
 }
 
+// 合并：分批构建时只覆盖本次范围内的小类，其余小类保持原样。
+// 否则「只构建 1204」会把整库写成只剩 1204 的内容。
+try {
+  const OUT_FILE = path.join(ROOT, 'src/config/param-standard.json')
+  if (fs.existsSync(OUT_FILE)) {
+    const old = JSON.parse(fs.readFileSync(OUT_FILE, 'utf8')) || {}
+    const merged = { ...(old.subs || {}) }
+    for (const [k, v] of Object.entries(out.subs || {})) merged[k] = v
+    out.subs = merged
+  }
+} catch (e) { console.warn('  合并旧库失败（将只写本次范围）:', e.message) }
+
 out.meta = {
   version: '0.2.0',
   generatedAt: new Date().toISOString(),
   draft: true,
   structure: 'subs[小类] → params[参数] → {type, accepted, pending, suspected, aliases}',
   principle: '参数值按小类隔离：某小类的候选只来自该小类的存量，不跨小类共用',
-  scope: '1001-1014 中类',
+  scope: scopeLabel + ' 中类',
   sourceRows: usedRows,
   droppedRows,
   note: '由 src/param-lib/build.mjs 生成。accepted=可推荐；pending=待确认；suspected=疑似笔误/提取错误。人工确认后把 draft 改为 false。',

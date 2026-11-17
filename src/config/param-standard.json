@@ -12767,6 +12767,21 @@
             {
               "value": "42L6-V",
               "count": 4
+            },
+            {
+              "value": "6L2",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "6C2-V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "6C2",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
@@ -12822,6 +12837,46 @@
               "value": "0~450V",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "15V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "30V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "50V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "100V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "150V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "250V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "450V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "600V",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -12910,7 +12965,13 @@
           "rawCount": 1,
           "normCount": 1,
           "aliases": {},
-          "accepted": [],
+          "accepted": [
+            {
+              "value": "1.5",
+              "count": 0,
+              "source": "manufacturer"
+            }
+          ],
           "pending": [],
           "suspected": [
             {
@@ -12953,6 +13014,21 @@
             {
               "value": "63C2",
               "count": 4
+            },
+            {
+              "value": "6L2",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "6C2-A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "6C2",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
@@ -12973,6 +13049,71 @@
               "value": "0-5V/0-3000A",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "5/5A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "30/5A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "50/5A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "75/5A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "100/5A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "150/5A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "200/5A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "300/5A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "400/5A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "600/5A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "800/5A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "1000/5A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "1200/5A",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -13049,7 +13190,13 @@
           "rawCount": 1,
           "normCount": 1,
           "aliases": {},
-          "accepted": [],
+          "accepted": [
+            {
+              "value": "1.5",
+              "count": 0,
+              "source": "manufacturer"
+            }
+          ],
           "pending": [],
           "suspected": [
             {
@@ -13673,6 +13820,31 @@
             {
               "value": "PKH600",
               "count": 3
+            },
+            {
+              "value": "APM800",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "APM801",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "APM810",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "APM830",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "APM5",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
@@ -13685,7 +13857,23 @@
           "aliases": {
             "0.2": "0.2%"
           },
-          "accepted": [],
+          "accepted": [
+            {
+              "value": "0.2",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "0.5",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "0.5S",
+              "count": 0,
+              "source": "manufacturer"
+            }
+          ],
           "pending": [],
           "suspected": [
             {
@@ -13710,6 +13898,21 @@
               "value": "RS485",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "以太网",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "4G",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "WiFi",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -16496,6 +16699,31 @@
             {
               "value": "1k",
               "count": 3
+            },
+            {
+              "value": "RX24",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "RXG24",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "RXC",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "RXCB",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "RXLG",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
@@ -16680,6 +16908,21 @@
               "value": "330Ω",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "0.2Ω",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "1Ω",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "10Ω",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -16842,6 +17085,41 @@
               "value": "2500W",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "5W",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "10W",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "25W",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "50W",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "75W",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "500W",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "1000W",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -17919,6 +18197,26 @@
               "value": "RX24",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "RXLG",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "RXG24",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "RXCB",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "RXC",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -18018,6 +18316,36 @@
               "value": "10Ω",
               "count": 3,
               "source": "stock"
+            },
+            {
+              "value": "0.2Ω",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "1Ω",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "20Ω",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "75Ω",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "100Ω",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "1kΩ",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -18076,6 +18404,51 @@
               "value": "200W",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "40W",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "300W",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "400W",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "500W",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "600W",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "800W",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "1000W",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "1500W",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "2000W",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -18121,6 +18494,26 @@
               "value": "铝壳",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "梯形",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "黄金",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "超薄",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "船型",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -22700,6 +23093,56 @@
             {
               "value": "JS",
               "count": 11
+            },
+            {
+              "value": "UK 1.5 N",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "UK 2.5 B",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "UK 3 N",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "UK 5 N",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "UK 6 N",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "UK 10 N",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "UK 16 N",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "UK 35 N",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "UKH 50",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "UKH 95",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
@@ -22724,6 +23167,26 @@
               "value": "24V",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "500V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "690V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "800V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "1000V",
+              "count": 0,
+              "source": "manufacturer"
             },
             {
               "value": "36V",
@@ -22766,22 +23229,7 @@
               "source": "series"
             },
             {
-              "value": "500V",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "660V",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "690V",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1000V",
               "count": 0,
               "source": "series"
             },
@@ -22866,6 +23314,46 @@
           },
           "accepted": [
             {
+              "value": "17.5",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "32",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "41",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "57",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "76",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "101",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "150",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "232",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
               "value": "1",
               "count": 0,
               "source": "series"
@@ -22912,11 +23400,6 @@
             },
             {
               "value": "25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -23053,6 +23536,56 @@
               "value": "2.54",
               "count": 7,
               "source": "stock"
+            },
+            {
+              "value": "1.5mm^2",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "2.5mm^2",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "4mm^2",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "6mm^2",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "10mm^2",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "16mm^2",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "25mm^2",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "35mm^2",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "50mm^2",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "95mm^2",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -34408,7 +34941,7 @@
   },
   "meta": {
     "version": "0.2.0",
-    "generatedAt": "2026-11-17T15:37:43.432Z",
+    "generatedAt": "2026-11-17T15:39:45.645Z",
     "draft": true,
     "structure": "subs[小类] → params[参数] → {type, accepted, pending, suspected, aliases}",
     "principle": "参数值按小类隔离：某小类的候选只来自该小类的存量，不跨小类共用",

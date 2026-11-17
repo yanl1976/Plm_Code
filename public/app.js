@@ -1481,14 +1481,19 @@ function renderParamList() {
         + '" title="' + escapeHtml(tip) + '">' + escapeHtml(p.name)
         + (n ? '<i>' + n + '</i>' : '') + '</span>'
     }).join('')
+    // 全部挤在同一行：编号 + 名称 + 统计 + 参数 chips + 按钮。
+    // chips 多了就在它们自己的区域横向滚动，按钮始终贴在右侧可见。
     return '<div class="pl-sub open">'
-      + '<div class="pl-sub-head">'
-      + '<b class="mono">' + x.sub + '</b><span class="pl-name">' + escapeHtml(x.subName) + '</span>'
-      + '<span class="pl-meta">' + x.paramCount + ' 参数 · ' + x.valueCount + ' 值 · 存量 ' + x.rowCount + ' 条</span>'
+      + '<div class="pl-sub-row">'
+      + '<b class="mono pl-sub-code">' + x.sub + '</b>'
+      + '<span class="pl-name" title="' + escapeHtml(x.subName) + '">' + escapeHtml(x.subName) + '</span>'
+      + '<span class="pl-meta">' + x.paramCount + ' 参数 · ' + x.valueCount + ' 值</span>'
+      + '<div class="pl-pchips">' + chips + '</div>'
+      + '<div class="pl-btns">'
       + '<button class="ghost pl-view" data-sub="' + x.sub + '">查看</button>'
       + '<button class="ghost pl-editbtn" data-sub="' + x.sub + '">编辑</button>'
       + '</div>'
-      + '<div class="pl-pchips">' + chips + '</div>'
+      + '</div>'
       + '</div>'
   }).join('')
 

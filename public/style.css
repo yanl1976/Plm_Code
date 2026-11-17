@@ -801,15 +801,6 @@ button.primary:hover:not(:disabled),
 }
 button:disabled { opacity:.45; cursor:not-allowed; }
 
-/* ===== 参数列表：展开后横向列出参数（不铺开值） ===== */
-.pl-pchips { display:flex; flex-wrap:wrap; gap:6px; align-items:center;
-  padding:8px 0 10px 24px; }
-.pl-pchip { display:inline-flex; align-items:center; gap:4px; padding:2px 9px;
-  border-radius:11px; background:rgba(255,255,255,.05); border:1px solid var(--line);
-  font-size:12px; cursor:pointer; white-space:nowrap; }
-.pl-pchip:hover { background:rgba(79,195,247,.2); border-color:#4FC3F7; }
-.pl-pchip i { font-style:normal; font-size:10px; opacity:.7; }
-.pl-view { margin-left:auto; padding:2px 12px; font-size:11.5px; border-radius:11px; }
 
 /* 只读抽屉：底部只留「关闭」 */
 .pl-drawer-foot.readonly #plDhReset,
@@ -820,3 +811,23 @@ button:disabled { opacity:.45; cursor:not-allowed; }
 
 /* 值行可双击复制；保留文本选中能力，复制失败时用户仍能手动选 */
 .pl-val { cursor:default; }
+
+/* ===== 参数列表：每个小类一行（编号 名称 统计 参数chips 按钮） ===== */
+.pl-sub-row { display:flex; align-items:center; gap:8px; padding:7px 0;
+  border-bottom:1px dotted var(--line); min-width:0; }
+.pl-sub-code { flex:0 0 auto; color:var(--accent); font-size:12.5px; }
+.pl-sub-row .pl-name { flex:0 0 auto; font-size:12.5px; max-width:180px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pl-sub-row .pl-meta { flex:0 0 auto; font-size:11px; color:var(--muted); }
+/* chips 占剩余空间，多了自己横向滚，不换行、不撑高 */
+.pl-sub-row .pl-pchips { flex:1 1 auto; min-width:0; display:flex; align-items:center;
+  gap:5px; overflow-x:auto; overflow-y:hidden; padding:1px 0; }
+.pl-sub-row .pl-pchips::-webkit-scrollbar { height:0; }
+.pl-btns { flex:0 0 auto; display:flex; gap:6px; margin-left:auto; }
+
+.pl-pchip { display:inline-flex; align-items:center; gap:4px; padding:1px 8px;
+  border-radius:11px; background:rgba(255,255,255,.05); border:1px solid var(--line);
+  font-size:11.5px; cursor:pointer; white-space:nowrap; flex:0 0 auto; }
+.pl-pchip:hover { background:rgba(79,195,247,.2); border-color:#4FC3F7; }
+.pl-pchip i { font-style:normal; font-size:10px; opacity:.7; }
+.pl-view, .pl-editbtn { padding:2px 11px; font-size:11.5px; border-radius:11px; }

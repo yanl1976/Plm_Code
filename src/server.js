@@ -1682,9 +1682,22 @@ const server = http.createServer(async (req, res) => {
         const sortedEntries = Object.entries(x.params || {}).sort((a, b) =>
           (listRank(a[0], a[1]) - listRank(b[0], b[1])) || a[0].localeCompare(b[0], 'zh'))
         const params = sortedEntries.map(([name, d]) => {
-          // free 型（型号/阻值/容值）没有 accepted，只有 reference（Top5 参考值）——
-          // 之前只读 accepted，导致界面显示「（无收录值）」，看起来像数据缺失。
-          const raw = d.type === 'free' ? (d.reference || []) : (d.accepted || [])
+          // free 型（型号/阻值/容值）的值有两个来源：
+          //   accepted  = 人工在抽屉里加的（保存后写这里）
+          //   reference = 构建时从存量统计的 Top5 参考
+          // 必须合并：只读 reference 会让人工新增的值"保存后看不见"（表现为保存无效）。
+          const mergeFree = () => {
+            const seen = new Set()
+            const out = []
+            for (const v of [...(d.accepted || []), ...(d.reference || [])]) {
+              const k = String(v.value)
+              if (seen.has(k)) continue
+              seen.add(k)
+              out.push(v)
+            }
+            return out
+          }
+          const raw = d.type === 'free' ? mergeFree() : (d.accepted || [])
           // 与 Excel 导出同口径：按值递增（不是按频次）。
           // 之前界面用 JSON 原顺序（= 频次降序），和导出文件顺序不一致，维护时很难对照。
           const sorted = sortByValue(name, raw)

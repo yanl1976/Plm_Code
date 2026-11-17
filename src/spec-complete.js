@@ -23,6 +23,7 @@ import { getCategory, chooseTokens } from './classify.js'
 import { extractParams } from './struct-spec.js'
 import { loadGuide } from './guide-fields.js'
 import { enabled as paramLibEnabled, isShadow as paramLibShadow, checkValue as paramLibCheck, paramDef as paramLibDef } from './param-lib/store.js'
+import { normalize as paramLibNormalize } from './param-lib/normalize.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const MAP_FILE = path.join(ROOT, 'src/config/guide-field-map.json')
@@ -155,6 +156,12 @@ function statOf(sub, items) {
       let v = (u && !filled.toUpperCase().endsWith(u.toUpperCase())) ? filled + u : filled
       // 数量级字母统一小写：10KΩ → 10kΩ（同一参数出现两种写法会让候选重复且难扫视）
       v = v.replace(/(\d)K(?=Ω)/g, '$1k')
+      // 单参数段用统一归一规则收敛写法：三极P/三极 → 3P、AC220V → 220V、10K → 10kΩ。
+      // 统计是在存量原文上做的，不归一就会出现「3P」和「三极P」两个候选（实测 100201）。
+      if (sg.params.length === 1) {
+        const nv = paramLibNormalize(sg.params[0], v)
+        if (nv) v = nv
+      }
       if (!table.has(sg.key)) table.set(sg.key, new Map())
       const m = table.get(sg.key)
       m.set(v, (m.get(v) || 0) + 1)
@@ -301,6 +308,23 @@ export function complete(sub, q, items) {
     if (!opts.length) opts = pre
   } else {
     opts = kk ? all.filter((x) => x.value.toLowerCase().startsWith(kk)) : all
+  }
+
+  // —— 剔除「与已输入内容完全相同」的候选 ——
+  // 用户已经把这一段写完了，再把它推荐给自己毫无意义；更糟的是按 Tab 会把同一值再插一遍，
+  // 表现为「候选里重复显示自己」（实测 101001 型号段把 LA38-11/203 推荐给它自己）。
+  if (prefix) {
+    const k = String(prefix).trim().toLowerCase()
+    opts = opts.filter((x) => String(x.value).trim().toLowerCase() !== k)
+
+    // —— 写完整后自动推进到下一段 ——
+    // prefix 与本小类某个存量值完全一致 → 说明这一段已写完，直接给出下一段的候选。
+    // 这样「输完型号 → 提示电压」「输完电压 → 提示颜色」，不必依赖用户记得打空格。
+    // 继续打字时会重新计算（此时 prefix 不再等于任何完整值，会回到本段补全），风险可控。
+    const isComplete = all.some((x) => String(x.value).trim().toLowerCase() === k)
+    if (isComplete && idx < st.segments.length - 1) {
+      return complete(s6, String(raw).replace(/\s*$/, '') + ' ', items)
+    }
   }
 
   // 单位补全：本段带单位、输入是「数字（可带 k/M/μ 倍率）」→ 优先给「数字+单位」

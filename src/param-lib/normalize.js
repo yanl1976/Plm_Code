@@ -16,10 +16,12 @@ const toHalf = (s) => String(s)
 export const NORMALIZERS = {
   极数: (v) => {
     let s = toHalf(v).replace(/\s/g, '')
-    // 中文写法：单极/双极/两极/三极/四极、4极 → 1P/2P/3P/4P
-    s = s.replace(/^单极$/, '1极').replace(/^双极$/, '2极').replace(/^两极$/, '2极')
-      .replace(/^三极$/, '3极').replace(/^四极$/, '4极')
-      .toUpperCase().replace(/极$/, 'P')
+    // 中文写法：单极/双极/两极/三极/四极 → 1极/2极/3极/4极
+    // 注意不能加 $ 锚：存量里有「三极P」「3极P」这类带尾 P 的写法，
+    // 加了锚就漏掉，归一结果残留成「三极P」，候选里出现脏值（实测 100201）
+    s = s.replace(/^单极/, '1极').replace(/^双极/, '2极').replace(/^两极/, '2极')
+      .replace(/^三极/, '3极').replace(/^四极/, '4极')
+      .toUpperCase().replace(/极P?$/, 'P')
     const m = /^(\d)P?(\+N)?$/.exec(s)
     return m ? m[1] + 'P' + (m[2] || '') : null
   },

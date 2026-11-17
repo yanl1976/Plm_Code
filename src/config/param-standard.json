@@ -1886,6 +1886,25 @@
           ],
           "pending": [],
           "suspected": []
+        },
+        "壳架": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 2,
+          "normCount": 2,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "250",
+              "count": 1
+            },
+            {
+              "value": "400",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -3156,6 +3175,36 @@
           ],
           "pending": [],
           "suspected": []
+        },
+        "IΔn": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 4,
+          "normCount": 4,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "30mA",
+              "count": 57,
+              "source": "stock"
+            },
+            {
+              "value": "500mA",
+              "count": 3,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "300mA",
+              "count": 1
+            },
+            {
+              "value": "100mA",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -3560,6 +3609,25 @@
             },
             {
               "value": "mA-100mA",
+              "count": 1
+            }
+          ]
+        },
+        "附件类型": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 2,
+          "normCount": 2,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "延时单元",
+              "count": 1
+            },
+            {
+              "value": "欠压脱扣器",
               "count": 1
             }
           ]
@@ -4142,6 +4210,56 @@
           ],
           "pending": [],
           "suspected": []
+        },
+        "开断电流": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 8,
+          "normCount": 8,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "31.5kA",
+              "count": 11,
+              "source": "stock"
+            },
+            {
+              "value": "1250A",
+              "count": 11,
+              "source": "stock"
+            },
+            {
+              "value": "630A",
+              "count": 7,
+              "source": "stock"
+            },
+            {
+              "value": "63A",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "3150A",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "2000A",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "25kA",
+              "count": 1
+            },
+            {
+              "value": "1600A",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -4523,6 +4641,36 @@
               "count": 1
             }
           ]
+        },
+        "使用类别": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 4,
+          "normCount": 4,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "AC220",
+              "count": 9,
+              "source": "stock"
+            },
+            {
+              "value": "AC3",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "AC380",
+              "count": 1
+            },
+            {
+              "value": "AC80A",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -4855,6 +5003,21 @@
             },
             {
               "value": "AC220V",
+              "count": 1
+            }
+          ]
+        },
+        "使用类别": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "DC80A",
               "count": 1
             }
           ]
@@ -5237,6 +5400,74 @@
               "count": 1
             }
           ]
+        },
+        "熔断体规格": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 13,
+          "normCount": 13,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "400A",
+              "count": 5,
+              "source": "stock"
+            },
+            {
+              "value": "630A",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "1000A",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "100A",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "50A",
+              "count": 1
+            },
+            {
+              "value": "125A",
+              "count": 1
+            },
+            {
+              "value": "4A",
+              "count": 1
+            },
+            {
+              "value": "63A",
+              "count": 1
+            },
+            {
+              "value": "RT36",
+              "count": 1
+            },
+            {
+              "value": "315A",
+              "count": 1
+            },
+            {
+              "value": "500A",
+              "count": 1
+            },
+            {
+              "value": "200A",
+              "count": 1
+            },
+            {
+              "value": "0A",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -5464,6 +5695,21 @@
             },
             {
               "value": "200",
+              "count": 1
+            }
+          ]
+        },
+        "使用类别": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "AC160A",
               "count": 1
             }
           ]
@@ -5918,6 +6164,22 @@
               "count": 1
             }
           ]
+        },
+        "结构": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "玻板",
+              "count": 5,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": []
         }
       }
     },
@@ -6309,6 +6571,25 @@
           "suspected": [
             {
               "value": "6KV",
+              "count": 1
+            }
+          ]
+        },
+        "结构": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 2,
+          "normCount": 2,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "整体式",
+              "count": 1
+            },
+            {
+              "value": "两开两闭",
               "count": 1
             }
           ]
@@ -7227,6 +7508,127 @@
           ],
           "pending": [],
           "suspected": []
+        },
+        "使用类别": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "AC40A",
+              "count": 1
+            }
+          ]
+        },
+        "分断能力": {
+          "type": "series",
+          "series": "断路器分断值",
+          "rawCount": 4,
+          "normCount": 3,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "100",
+              "count": 5,
+              "source": "stock"
+            },
+            {
+              "value": "50",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "3",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "4.5",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "6",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "8",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "10",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "12.5",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "15",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "16",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "20",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "25",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "31.5",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "35",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "40",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "63",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "65",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "80",
+              "count": 0,
+              "source": "series"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "120",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -7676,6 +8078,27 @@
               "count": 1
             }
           ]
+        },
+        "极数": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 2,
+          "normCount": 2,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "1P",
+              "count": 6,
+              "source": "stock"
+            },
+            {
+              "value": "3P",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": []
         }
       }
     },
@@ -8464,6 +8887,36 @@
               "count": 3
             }
           ]
+        },
+        "标称放电电流": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "40kA",
+              "count": 1
+            }
+          ]
+        },
+        "持续运行电压": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "380V",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -8797,6 +9250,39 @@
               "count": 1
             }
           ]
+        },
+        "极数": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 5,
+          "normCount": 4,
+          "aliases": {
+            "四极": "4P"
+          },
+          "accepted": [
+            {
+              "value": "4P",
+              "count": 43,
+              "source": "stock"
+            },
+            {
+              "value": "3P",
+              "count": 22,
+              "source": "stock"
+            },
+            {
+              "value": "2P",
+              "count": 7,
+              "source": "stock"
+            },
+            {
+              "value": "1P",
+              "count": 4,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": []
         }
       }
     },
@@ -10039,6 +10525,47 @@
             }
           ],
           "note": "取值过多，不推荐值；仅保留 Top5 作\"本小类常见写法\"参考"
+        },
+        "额定输出": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 6,
+          "normCount": 6,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "15VA",
+              "count": 44,
+              "source": "stock"
+            },
+            {
+              "value": "20VA",
+              "count": 32,
+              "source": "stock"
+            },
+            {
+              "value": "30VA",
+              "count": 8,
+              "source": "stock"
+            },
+            {
+              "value": "10VA",
+              "count": 7,
+              "source": "stock"
+            },
+            {
+              "value": "2.5VA",
+              "count": 7,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "5VA",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -10526,6 +11053,64 @@
               "count": 1
             }
           ]
+        },
+        "额定输出": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 10,
+          "normCount": 10,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "15VA",
+              "count": 8,
+              "source": "stock"
+            },
+            {
+              "value": "30VA",
+              "count": 6,
+              "source": "stock"
+            },
+            {
+              "value": "500VA",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "10VA",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "40VA",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "50VA",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "100VA",
+              "count": 1
+            },
+            {
+              "value": "20VA",
+              "count": 1
+            },
+            {
+              "value": "800VA",
+              "count": 1
+            },
+            {
+              "value": "90VA",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -10786,6 +11371,31 @@
               "count": 1
             }
           ]
+        },
+        "直径": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 3,
+          "normCount": 3,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "120",
+              "count": 3,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "300",
+              "count": 1
+            },
+            {
+              "value": "100",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -10816,6 +11426,184 @@
             },
             {
               "value": "40A/75mV",
+              "count": 1
+            }
+          ]
+        },
+        "额定电流": {
+          "type": "series",
+          "series": "开关电器电流档位",
+          "rawCount": 5,
+          "normCount": 5,
+          "aliases": {
+            "25A": "25",
+            "750A": "750",
+            "40A": "40",
+            "100A": "100",
+            "3A": "3"
+          },
+          "accepted": [
+            {
+              "value": "1",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "2",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "3",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "4",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "6",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "10",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "13",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "16",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "20",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "25",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "32",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "40",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "50",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "63",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "80",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "100",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "125",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "160",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "200",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "250",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "315",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "400",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "500",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "630",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "800",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "1000",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "1250",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "1600",
+              "count": 0,
+              "source": "series"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "25",
+              "count": 1
+            },
+            {
+              "value": "750",
+              "count": 1
+            },
+            {
+              "value": "40",
+              "count": 1
+            },
+            {
+              "value": "100",
+              "count": 1
+            },
+            {
+              "value": "3",
               "count": 1
             }
           ]
@@ -10977,6 +11765,198 @@
             },
             {
               "value": "5V",
+              "count": 1
+            }
+          ]
+        },
+        "额定电流": {
+          "type": "series",
+          "series": "开关电器电流档位",
+          "rawCount": 2,
+          "normCount": 2,
+          "aliases": {
+            "200A": "200"
+          },
+          "accepted": [
+            {
+              "value": "1",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "2",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "3",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "4",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "6",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "10",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "13",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "16",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "20",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "25",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "32",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "40",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "50",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "63",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "80",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "100",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "125",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "160",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "200",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "250",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "315",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "400",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "500",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "630",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "800",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "1000",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "1250",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "1600",
+              "count": 0,
+              "source": "series"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "3",
+              "count": 1
+            },
+            {
+              "value": "200",
+              "count": 1
+            }
+          ]
+        },
+        "输出信号": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "0-20mA",
+              "count": 1
+            }
+          ]
+        },
+        "供电电压": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "24",
               "count": 1
             }
           ]
@@ -11410,6 +12390,269 @@
               "count": 1
             }
           ]
+        },
+        "额定电流": {
+          "type": "series",
+          "series": "开关电器电流档位",
+          "rawCount": 8,
+          "normCount": 8,
+          "aliases": {
+            "2000A": "2000",
+            "630A": "630",
+            "250A": "250",
+            "100A": "100",
+            "300A": "300",
+            "4000A": "4000",
+            "600A": "600",
+            "1000A": "1000"
+          },
+          "accepted": [
+            {
+              "value": "1",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "2",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "3",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "4",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "6",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "10",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "13",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "16",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "20",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "25",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "32",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "40",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "50",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "63",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "80",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "100",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "125",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "160",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "200",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "250",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "315",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "400",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "500",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "630",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "800",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "1000",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "1250",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "1600",
+              "count": 0,
+              "source": "series"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "2000",
+              "count": 3
+            },
+            {
+              "value": "630",
+              "count": 1
+            },
+            {
+              "value": "250",
+              "count": 1
+            },
+            {
+              "value": "100",
+              "count": 1
+            },
+            {
+              "value": "300",
+              "count": 1
+            },
+            {
+              "value": "4000",
+              "count": 1
+            },
+            {
+              "value": "600",
+              "count": 1
+            },
+            {
+              "value": "1000",
+              "count": 1
+            }
+          ]
+        },
+        "输出信号": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 8,
+          "normCount": 8,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "2000-10V",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "0-5V",
+              "count": 1
+            },
+            {
+              "value": "4-20MA",
+              "count": 1
+            },
+            {
+              "value": "600-10V",
+              "count": 1
+            },
+            {
+              "value": "4~20mA",
+              "count": 1
+            },
+            {
+              "value": "4000-10V",
+              "count": 1
+            },
+            {
+              "value": "3000-10V",
+              "count": 1
+            },
+            {
+              "value": "1000-10V",
+              "count": 1
+            }
+          ]
+        },
+        "供电电压": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 3,
+          "normCount": 3,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "10",
+              "count": 7,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "300",
+              "count": 1
+            },
+            {
+              "value": "15",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -11586,6 +12829,46 @@
           "suspected": [
             {
               "value": "90V",
+              "count": 1
+            }
+          ]
+        },
+        "输出信号": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 2,
+          "normCount": 2,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "0-20mA",
+              "count": 1
+            },
+            {
+              "value": "0~1000V/0~20mA",
+              "count": 1
+            }
+          ]
+        },
+        "供电电压": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 2,
+          "normCount": 2,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "1000",
+              "count": 3,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "90",
               "count": 1
             }
           ]
@@ -11939,6 +13222,67 @@
               "count": 1
             }
           ]
+        },
+        "量程": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 3,
+          "normCount": 3,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "0-10MPa/4-20m",
+              "count": 1
+            },
+            {
+              "value": "8002-4A",
+              "count": 1
+            },
+            {
+              "value": "8008-2A/02-0A",
+              "count": 1
+            }
+          ]
+        },
+        "输出信号": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 3,
+          "normCount": 3,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "4-20mA",
+              "count": 1
+            },
+            {
+              "value": "8002-4A",
+              "count": 1
+            },
+            {
+              "value": "8008-2A/02-0A",
+              "count": 1
+            }
+          ]
+        },
+        "供电电压": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "250",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -12163,6 +13507,40 @@
           "suspected": [
             {
               "value": "220V",
+              "count": 1
+            }
+          ]
+        },
+        "输出信号": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 2,
+          "normCount": 2,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "7000-0A",
+              "count": 1
+            },
+            {
+              "value": "RS485",
+              "count": 1
+            }
+          ]
+        },
+        "供电电压": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "220",
               "count": 1
             }
           ]
@@ -13811,6 +15189,76 @@
               "count": 1
             }
           ]
+        },
+        "联结组": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 13,
+          "normCount": 13,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "Dyn11",
+              "count": 14,
+              "source": "stock"
+            },
+            {
+              "value": "Y/Y-12",
+              "count": 12,
+              "source": "stock"
+            },
+            {
+              "value": "DYn11",
+              "count": 6,
+              "source": "stock"
+            },
+            {
+              "value": "Yn-11",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "YN/Yn12",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "D11",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "Y-12",
+              "count": 1
+            },
+            {
+              "value": "Y0",
+              "count": 1
+            },
+            {
+              "value": "Yy0",
+              "count": 1
+            },
+            {
+              "value": "Y/Y12",
+              "count": 1
+            },
+            {
+              "value": "dyn11",
+              "count": 1
+            },
+            {
+              "value": "DYN11",
+              "count": 1
+            },
+            {
+              "value": "yn11",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -15059,6 +16507,55 @@
               "count": 1
             }
           ]
+        },
+        "延时范围": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 9,
+          "normCount": 9,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "30S",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "1s",
+              "count": 1
+            },
+            {
+              "value": "5s",
+              "count": 1
+            },
+            {
+              "value": "0.5min",
+              "count": 1
+            },
+            {
+              "value": "1-30s",
+              "count": 1
+            },
+            {
+              "value": "5S",
+              "count": 1
+            },
+            {
+              "value": "0.1~9.9s",
+              "count": 1
+            },
+            {
+              "value": "60s",
+              "count": 1
+            },
+            {
+              "value": "8H",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -15739,6 +17236,60 @@
               "count": 1
             }
           ]
+        },
+        "整定范围": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 2,
+          "normCount": 2,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "200-800V",
+              "count": 1
+            },
+            {
+              "value": "1-240V",
+              "count": 1
+            }
+          ]
+        },
+        "电源电压": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 5,
+          "normCount": 5,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "AC240V",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "DC220V",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "DC24V",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "AC230V",
+              "count": 1
+            },
+            {
+              "value": "DC240V",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -16038,6 +17589,36 @@
               "count": 1
             }
           ]
+        },
+        "整定电流范围": {
+          "type": "free",
+          "series": "",
+          "rawCount": 83,
+          "normCount": 83,
+          "aliases": {},
+          "reference": [
+            {
+              "value": "5.5-8A",
+              "count": 6
+            },
+            {
+              "value": "4-6A",
+              "count": 6
+            },
+            {
+              "value": "9-13A",
+              "count": 5
+            },
+            {
+              "value": "23-32A",
+              "count": 5
+            },
+            {
+              "value": "12-18A",
+              "count": 5
+            }
+          ],
+          "note": "取值过多，不推荐值；仅保留 Top5 作\"本小类常见写法\"参考"
         }
       }
     },
@@ -16411,6 +17992,139 @@
             },
             {
               "value": "150V",
+              "count": 1
+            }
+          ]
+        },
+        "量程": {
+          "type": "semi",
+          "series": "",
+          "rawCount": 28,
+          "normCount": 28,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "0-10V",
+              "count": 9,
+              "source": "stock"
+            },
+            {
+              "value": "0-450V",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "0-750V",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "0-10V/0-1500A",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "0-10V/0-1000V",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "0-1000V",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "0-100V",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "0-50V",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "0~450V",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "0-10V/0-10MPa",
+              "count": 1
+            },
+            {
+              "value": "0-500V",
+              "count": 1
+            },
+            {
+              "value": "0-5V/0-50V",
+              "count": 1
+            },
+            {
+              "value": "0-10V/0-1.6MPa",
+              "count": 1
+            },
+            {
+              "value": "0-10V/0-1MPa",
+              "count": 1
+            },
+            {
+              "value": "0-30V",
+              "count": 1
+            },
+            {
+              "value": "0-10V/0-1500V",
+              "count": 1
+            },
+            {
+              "value": "0~1000V",
+              "count": 1
+            },
+            {
+              "value": "0-10V/0-100%",
+              "count": 1
+            },
+            {
+              "value": "0-600V",
+              "count": 1
+            },
+            {
+              "value": "0-10V/0-3000A",
+              "count": 1
+            },
+            {
+              "value": "72-300V",
+              "count": 1
+            },
+            {
+              "value": "4~20m",
+              "count": 1
+            },
+            {
+              "value": "0-800V",
+              "count": 1
+            },
+            {
+              "value": "0-150V",
+              "count": 1
+            },
+            {
+              "value": "72-1000V",
+              "count": 1
+            },
+            {
+              "value": "0-10V/0-4000A",
+              "count": 1
+            },
+            {
+              "value": "0-20m/0-1000V",
+              "count": 1
+            },
+            {
+              "value": "0-220V/0-600V",
               "count": 1
             }
           ]
@@ -16842,6 +18556,92 @@
               "count": 2
             }
           ]
+        },
+        "量程": {
+          "type": "semi",
+          "series": "",
+          "rawCount": 18,
+          "normCount": 18,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "0-1000A",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "0-5V/0-3000A",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "0-10V/0~2500A",
+              "count": 1
+            },
+            {
+              "value": "0-3000A/0-5A",
+              "count": 1
+            },
+            {
+              "value": "0-5V/0-2000A",
+              "count": 1
+            },
+            {
+              "value": "0-10V",
+              "count": 1
+            },
+            {
+              "value": "0-10V/0-2000A",
+              "count": 1
+            },
+            {
+              "value": "0-5A/0-2500A",
+              "count": 1
+            },
+            {
+              "value": "0-10V/0~3000A",
+              "count": 1
+            },
+            {
+              "value": "0~50A/0~75m",
+              "count": 1
+            },
+            {
+              "value": "0~75m/0~50A",
+              "count": 1
+            },
+            {
+              "value": "0-1A",
+              "count": 1
+            },
+            {
+              "value": "0-20A",
+              "count": 1
+            },
+            {
+              "value": "0-5V/0-600A",
+              "count": 1
+            },
+            {
+              "value": "0-10A",
+              "count": 1
+            },
+            {
+              "value": "0-200A",
+              "count": 1
+            },
+            {
+              "value": "0-15A",
+              "count": 1
+            },
+            {
+              "value": "0-350A",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -17174,6 +18974,21 @@
               "count": 1
             }
           ]
+        },
+        "量程": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "2-10V",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -17377,6 +19192,44 @@
             {
               "value": "100V",
               "count": 3
+            }
+          ]
+        },
+        "下限": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 2,
+          "normCount": 2,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "60Hz",
+              "count": 1
+            },
+            {
+              "value": "70Hz",
+              "count": 1
+            }
+          ]
+        },
+        "上限": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 2,
+          "normCount": 2,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "60Hz",
+              "count": 1
+            },
+            {
+              "value": "70Hz",
+              "count": 1
             }
           ]
         }
@@ -17833,6 +19686,43 @@
               "count": 1
             }
           ]
+        },
+        "相数": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "三相",
+              "count": 3,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": []
+        },
+        "接线方式": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 2,
+          "normCount": 2,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "三相三线",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "三相四线",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -18201,6 +20091,29 @@
               "count": 1
             }
           ]
+        },
+        "量程": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 3,
+          "normCount": 3,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "0-5M",
+              "count": 1
+            },
+            {
+              "value": "0-10M",
+              "count": 1
+            },
+            {
+              "value": "0-10M/4-20m",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -18376,6 +20289,22 @@
               "count": 1
             }
           ]
+        },
+        "供电电压": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "30",
+              "count": 5,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": []
         }
       }
     },
@@ -18721,6 +20650,27 @@
               "count": 1
             }
           ]
+        },
+        "通讯方式": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 2,
+          "normCount": 2,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "Modbus",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "RS485",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": []
         }
       }
     },
@@ -19050,6 +21000,74 @@
           "suspected": [
             {
               "value": "24V",
+              "count": 1
+            }
+          ]
+        },
+        "量程": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 10,
+          "normCount": 10,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "0-1.6MPa",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "0-0.8MPa",
+              "count": 1
+            },
+            {
+              "value": "0-1MPa",
+              "count": 1
+            },
+            {
+              "value": "0-60Pa",
+              "count": 1
+            },
+            {
+              "value": "0-2.5MPa",
+              "count": 1
+            },
+            {
+              "value": "4~20m/0~2.0MPa",
+              "count": 1
+            },
+            {
+              "value": "00-1A",
+              "count": 1
+            },
+            {
+              "value": "0-2.5Mpa",
+              "count": 1
+            },
+            {
+              "value": "0~1.6Mpa/4~20m",
+              "count": 1
+            },
+            {
+              "value": "0-1.6Mpa",
+              "count": 1
+            }
+          ]
+        },
+        "表盘直径": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "100mm",
               "count": 1
             }
           ]
@@ -19714,6 +21732,60 @@
               "count": 1
             }
           ]
+        },
+        "测温范围": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 7,
+          "normCount": 7,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "20-140℃",
+              "count": 1
+            },
+            {
+              "value": "0-900℃",
+              "count": 1
+            },
+            {
+              "value": "0-150℃",
+              "count": 1
+            },
+            {
+              "value": "0~200℃",
+              "count": 1
+            },
+            {
+              "value": "0-300℃",
+              "count": 1
+            },
+            {
+              "value": "20-80℃",
+              "count": 1
+            },
+            {
+              "value": "20~100℃",
+              "count": 1
+            }
+          ]
+        },
+        "测温方式": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "红外",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -19941,6 +22013,27 @@
           "suspected": [
             {
               "value": "22",
+              "count": 1
+            }
+          ]
+        },
+        "触头组合": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 2,
+          "normCount": 2,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "1NO+1NC",
+              "count": 3,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "一常开一常闭",
               "count": 1
             }
           ]
@@ -21768,6 +23861,21 @@
               "count": 1
             }
           ]
+        },
+        "触头组合": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "1常开1常闭",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -22083,6 +24191,94 @@
           ],
           "pending": [],
           "suspected": []
+        },
+        "工作电压": {
+          "type": "semi",
+          "series": "",
+          "rawCount": 16,
+          "normCount": 16,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "AC220V",
+              "count": 75,
+              "source": "stock"
+            },
+            {
+              "value": "DC24V",
+              "count": 37,
+              "source": "stock"
+            },
+            {
+              "value": "DC 220V",
+              "count": 25,
+              "source": "stock"
+            },
+            {
+              "value": "DC220V",
+              "count": 21,
+              "source": "stock"
+            },
+            {
+              "value": "AC 220V",
+              "count": 7,
+              "source": "stock"
+            },
+            {
+              "value": "DC12V",
+              "count": 6,
+              "source": "stock"
+            },
+            {
+              "value": "DC110V",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "DC6V",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "AC110V",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "AC380V",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "AC127V",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "DC 24V",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "AC120V",
+              "count": 1
+            },
+            {
+              "value": "AC 380V",
+              "count": 1
+            },
+            {
+              "value": "DC 380V",
+              "count": 1
+            },
+            {
+              "value": "DC48V",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -22231,6 +24427,21 @@
           "suspected": [
             {
               "value": "220V",
+              "count": 1
+            }
+          ]
+        },
+        "供电电压": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "220",
               "count": 1
             }
           ]
@@ -22418,6 +24629,32 @@
               "count": 1
             }
           ]
+        },
+        "工作电压": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 3,
+          "normCount": 3,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "DC24V",
+              "count": 9,
+              "source": "stock"
+            },
+            {
+              "value": "AC220V",
+              "count": 8,
+              "source": "stock"
+            },
+            {
+              "value": "AC 220V",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": []
         }
       }
     },
@@ -22833,6 +25070,120 @@
               "count": 1
             }
           ]
+        },
+        "输出信号": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 7,
+          "normCount": 7,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "4-20mA",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "0-10V",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "4-20mA/0-10V",
+              "count": 1
+            },
+            {
+              "value": "11-34A/0-500V",
+              "count": 1
+            },
+            {
+              "value": "0-1000V/0-20mA",
+              "count": 1
+            },
+            {
+              "value": "0-20mA",
+              "count": 1
+            },
+            {
+              "value": "1-15A",
+              "count": 1
+            }
+          ]
+        },
+        "供电电压": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 14,
+          "normCount": 14,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "10",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "340",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "220",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "1000",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "500",
+              "count": 1
+            },
+            {
+              "value": "720",
+              "count": 1
+            },
+            {
+              "value": "210",
+              "count": 1
+            },
+            {
+              "value": "1050",
+              "count": 1
+            },
+            {
+              "value": "12",
+              "count": 1
+            },
+            {
+              "value": "55",
+              "count": 1
+            },
+            {
+              "value": "160",
+              "count": 1
+            },
+            {
+              "value": "1000/10",
+              "count": 1
+            },
+            {
+              "value": "800",
+              "count": 1
+            },
+            {
+              "value": "60",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -23240,6 +25591,86 @@
               "count": 1
             }
           ]
+        },
+        "输出信号": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 10,
+          "normCount": 10,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "4-20mA",
+              "count": 12,
+              "source": "stock"
+            },
+            {
+              "value": "0-20mA",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "2-75MV",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "4-20mA/0-10V",
+              "count": 1
+            },
+            {
+              "value": "4~20mA",
+              "count": 1
+            },
+            {
+              "value": "1-55A",
+              "count": 1
+            },
+            {
+              "value": "13-10A",
+              "count": 1
+            },
+            {
+              "value": "29-200A",
+              "count": 1
+            },
+            {
+              "value": "29-350A",
+              "count": 1
+            },
+            {
+              "value": "13-15A",
+              "count": 1
+            }
+          ]
+        },
+        "供电电压": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 3,
+          "normCount": 3,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "10",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "24",
+              "count": 1
+            },
+            {
+              "value": "15",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -23596,6 +26027,57 @@
               "count": 1
             }
           ]
+        },
+        "输出信号": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 3,
+          "normCount": 3,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "0-500V",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "4~20mA",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "CAN",
+              "count": 1
+            }
+          ]
+        },
+        "供电电压": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 3,
+          "normCount": 3,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "90",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "160",
+              "count": 1
+            },
+            {
+              "value": "210/24",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -23643,6 +26125,36 @@
           "suspected": [
             {
               "value": "WS1528",
+              "count": 1
+            }
+          ]
+        },
+        "输出信号": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "0-10V",
+              "count": 1
+            }
+          ]
+        },
+        "供电电压": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "10",
               "count": 1
             }
           ]
@@ -23835,6 +26347,136 @@
             },
             {
               "value": "220V",
+              "count": 1
+            }
+          ]
+        },
+        "输出信号": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 13,
+          "normCount": 13,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "0-10V",
+              "count": 5,
+              "source": "stock"
+            },
+            {
+              "value": "4-20mA",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "4-20mA/0-10V",
+              "count": 3,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "0~10V",
+              "count": 1
+            },
+            {
+              "value": "0-20mA/0-10V",
+              "count": 1
+            },
+            {
+              "value": "6083-5A",
+              "count": 1
+            },
+            {
+              "value": "4~20mA/0~10V",
+              "count": 1
+            },
+            {
+              "value": "6083-10A",
+              "count": 1
+            },
+            {
+              "value": "4-20mA/0-5V",
+              "count": 1
+            },
+            {
+              "value": "RS485",
+              "count": 1
+            },
+            {
+              "value": "0-18V/0-10V",
+              "count": 1
+            },
+            {
+              "value": "0~18V/0~10V",
+              "count": 1
+            },
+            {
+              "value": "6041-3A",
+              "count": 1
+            }
+          ]
+        },
+        "供电电压": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 4,
+          "normCount": 4,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "10",
+              "count": 12,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "58/24",
+              "count": 1
+            },
+            {
+              "value": "911/10",
+              "count": 1
+            },
+            {
+              "value": "220",
+              "count": 1
+            }
+          ]
+        },
+        "输入信号": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 5,
+          "normCount": 5,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "4-20mA",
+              "count": 8,
+              "source": "stock"
+            },
+            {
+              "value": "0-10V",
+              "count": 4,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "0-20mA",
+              "count": 1
+            },
+            {
+              "value": "0-18V",
+              "count": 1
+            },
+            {
+              "value": "PT100",
               "count": 1
             }
           ]
@@ -24784,6 +27426,59 @@
               "count": 1
             }
           ]
+        },
+        "最大阻值": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 10,
+          "normCount": 10,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "3.3KΩ",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "220KΩ",
+              "count": 1
+            },
+            {
+              "value": "3.9KΩ",
+              "count": 1
+            },
+            {
+              "value": "20KΩ",
+              "count": 1
+            },
+            {
+              "value": "220Ω",
+              "count": 1
+            },
+            {
+              "value": "5.1KΩ",
+              "count": 1
+            },
+            {
+              "value": "4.7KΩ",
+              "count": 1
+            },
+            {
+              "value": "150Ω",
+              "count": 1
+            },
+            {
+              "value": "2.9Ω",
+              "count": 1
+            },
+            {
+              "value": "1kΩ",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -24816,6 +27511,29 @@
             },
             {
               "value": "FNR-20K102",
+              "count": 1
+            }
+          ]
+        },
+        "压敏电压": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 3,
+          "normCount": 3,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "440V",
+              "count": 1
+            },
+            {
+              "value": "45V",
+              "count": 1
+            },
+            {
+              "value": "62V",
               "count": 1
             }
           ]
@@ -24860,6 +27578,21 @@
           "suspected": [
             {
               "value": "10kΩ",
+              "count": 1
+            }
+          ]
+        },
+        "标称阻值": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "10KΩ",
               "count": 1
             }
           ]
@@ -25488,6 +28221,22 @@
           ],
           "pending": [],
           "suspected": []
+        },
+        "封装型式": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "铝壳",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": []
         }
       }
     },
@@ -25628,6 +28377,21 @@
           "suspected": [
             {
               "value": "±10%",
+              "count": 1
+            }
+          ]
+        },
+        "圈数": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "10",
               "count": 1
             }
           ]
@@ -25913,6 +28677,37 @@
             },
             {
               "value": "1600V",
+              "count": 1
+            }
+          ]
+        },
+        "容差": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "20",
+              "count": 10,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": []
+        },
+        "尺寸(宽*深*高)": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "410/360/157.8",
               "count": 1
             }
           ]
@@ -26749,6 +29544,31 @@
             },
             {
               "value": "40V",
+              "count": 1
+            }
+          ]
+        },
+        "封装": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 3,
+          "normCount": 3,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "0805",
+              "count": 4,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "1206",
+              "count": 1
+            },
+            {
+              "value": "0603",
               "count": 1
             }
           ]
@@ -27678,7 +30498,7 @@
   },
   "meta": {
     "version": "0.2.0",
-    "generatedAt": "2026-11-17T09:49:08.243Z",
+    "generatedAt": "2026-11-17T10:33:32.993Z",
     "draft": true,
     "structure": "subs[小类] → params[参数] → {type, accepted, pending, suspected, aliases}",
     "principle": "参数值按小类隔离：某小类的候选只来自该小类的存量，不跨小类共用",

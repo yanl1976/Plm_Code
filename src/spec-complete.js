@@ -182,7 +182,7 @@ function statOf(sub, items) {
  * @param {string} q   当前已输入内容
  * @returns 当前段、已填段、候选（带频次）与模板
  */
-export function complete(sub, q, items) {
+export function complete(sub, q, items, depth = 0) {
   const s6 = String(sub || '').slice(0, 6)
   const raw = String(q || '')
   const st = statOf(s6, items)
@@ -224,8 +224,19 @@ export function complete(sub, q, items) {
   let idx = -1
   if (tail) {
     for (let i = start; i < st.segments.length; i++) {
-      const tv = extractParams(tail, st.segments[i].params)
-      if (st.segments[i].params.some((p) => tv[p])) { idx = i; break }
+      const segI = st.segments[i]
+      const tv = extractParams(tail, segI.params)
+      if (!segI.params.some((p) => tv[p])) continue
+      // 型号段让位：若这一段输入里还能解析出别的参数（典型 GSW3-3200/3P 的 /3P），
+      // 说明型号已经写完，不该再被当成"仍在填型号"。否则后续段永远轮不到，
+      // 用户按 Tab 只会得到一个和型号重复的型号串。
+      if (i === 0 && segI.params.length === 1 && segI.params[0] === '型号') {
+        const hasOther = st.segments.slice(1)
+          .some((sg) => sg.params.some((p) => (extractParams(tail, sg.params)[p] || '')))
+        if (hasOther) continue
+      }
+      idx = i
+      break
     }
   }
   if (idx < 0) idx = start < st.segments.length ? start : st.segments.length - 1
@@ -236,13 +247,51 @@ export function complete(sub, q, items) {
   // 只在前缀为空时跳：用户正在输入某段时不跳，避免打断。
   const prefixOf = tail
   if (!prefixOf) {
+    // 跳过条件：没候选 **或** 该段参数已经能从规格里解析出来（如极数已由型号 /3P 表达）。
+    // 只看"有没有候选"会跳回来：GSW3-3200/3P 推进到「壳架+额定电流」（无候选）后，
+    // 又落回「极数」，等于白跳。
+    // 型号段不参与"已填"判断：型号永远有值，否则刚输入型号就被跳过。
     let probe = idx
-    while (probe < st.segments.length && !((st.ranked.get(st.segments[probe].key) || []).length)) probe++
+    while (probe < st.segments.length) {
+      const sg = st.segments[probe]
+      const hasCand = (st.ranked.get(sg.key) || []).length > 0
+      const isModel = sg.params.length === 1 && sg.params[0] === '型号'
+      const filled = !isModel && sg.params.every((p) => (extractParams(raw, sg.params)[p] || ''))
+      if (hasCand && !filled) break
+      probe++
+    }
     if (probe < st.segments.length) idx = probe
   }
 
   const seg = st.segments[idx]
   const prefix = tail
+
+  // 该段参数若已能从规格前面解析出来（典型：型号内嵌 /3P 已表示极数），
+  // 就视为"已填"，直接推进到下一段。
+  //
+  // 为什么不能只在"同值"时拦：极数这类参数在一条规格里只能出现一次，
+  // GSW3-3200/3P 后面再写 4P 同样矛盾（用户明确指出）。
+  // 因此判断依据是"参数是否已解析出值"，而不是"值是否相同"。
+  //
+  // 顺带解决另一个边界：型号后未打空格时整串会被型号正则吞掉，
+  // 这里能识别出内嵌参数，从而正常推进，不会停在型号段。
+  if (depth < 6) {
+    // 用整串判断而不是 headStr：型号后未打空格时 tail 就是整串、headStr 为空，
+    // 只看 headStr 会漏掉"型号里已经写了极数"这种情况。
+    //
+    // 两个必须排除的情况：
+    //  ① 型号段本身：型号永远是"有值"的，推进它等于没输入就跳走（NXB-6 → 直接跳到极数）
+    //  ② 组合段（壳架+额定电流）：只要一个参数有值就推进，会导致该段永远显示不全
+    //     （GSW3-3200 有壳架 3200、但额定电流还没写）
+    const isModelSeg = seg.params.length === 1 && seg.params[0] === '型号'
+    if (!isModelSeg) {
+      const v = extractParams(raw, seg.params)
+      const filledNow = seg.params.every((p) => v[p])
+      if (filledNow && idx < st.segments.length - 1) {
+        return complete(s6, String(raw).replace(/\s*$/, '') + ' ', items, depth + 1)
+      }
+    }
+  }
 
   const all = st.ranked.get(seg.key) || []
   // 过滤按「参数值」而不是「字符串包含」：

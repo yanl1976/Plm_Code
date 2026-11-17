@@ -505,6 +505,11 @@
               "source": "series"
             },
             {
+              "value": "65",
+              "count": 0,
+              "source": "series"
+            },
+            {
               "value": "80",
               "count": 0,
               "source": "series"
@@ -610,23 +615,6 @@
               "value": "D",
               "count": 1
             }
-          ],
-          "removed": [
-            {
-              "value": "C",
-              "count": 0,
-              "source": "manual"
-            },
-            {
-              "value": "B",
-              "count": 0,
-              "source": "manual"
-            },
-            {
-              "value": "A",
-              "count": 0,
-              "source": "manual"
-            }
           ]
         },
         "分断等级": {
@@ -650,40 +638,7 @@
             }
           ]
         }
-      },
-      "removedParams": {
-        "11": {
-          "type": "free",
-          "accepted": [
-            {
-              "value": "2345",
-              "count": 0,
-              "source": "manual"
-            }
-          ],
-          "pending": [],
-          "suspected": [],
-          "removed": [
-            {
-              "value": "1234",
-              "count": 0,
-              "source": "manual"
-            }
-          ],
-          "note": "由编辑抽屉新增",
-          "removedAt": "2026-11-17T13:59:59.842Z"
-        }
-      },
-      "order": [
-        "型号",
-        "额定电流",
-        "额定电压",
-        "分断等级",
-        "分断能力",
-        "极数",
-        "脱扣器",
-        "脱扣曲线"
-      ]
+      }
     },
     "100102": {
       "subName": "抽出式框架断路器",
@@ -1950,6 +1905,56 @@
               "count": 1
             }
           ]
+        }
+      }
+    },
+    "100104": {
+      "subName": "抽出式塑壳断路器",
+      "midName": "",
+      "rowCount": 0,
+      "droppedCount": 0,
+      "params": {
+        "型号": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "壳架": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "额定电流": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "分断能力": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "极数": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "额定电压": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
         }
       }
     },
@@ -5066,6 +5071,42 @@
               "count": 1
             }
           ]
+        }
+      }
+    },
+    "100203": {
+      "subName": "交流接触器线圈",
+      "midName": "",
+      "rowCount": 0,
+      "droppedCount": 0,
+      "params": {
+        "型号": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "适配接触器": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "线圈电压": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "频率": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
         }
       }
     },
@@ -19303,6 +19344,35 @@
         }
       }
     },
+    "100906": {
+      "subName": "同期表",
+      "midName": "",
+      "rowCount": 0,
+      "droppedCount": 0,
+      "params": {
+        "型号": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "电压等级": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "精度": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        }
+      }
+    },
     "100907": {
       "subName": "电度表",
       "midName": "仪器仪表",
@@ -21417,6 +21487,35 @@
               "count": 1
             }
           ]
+        }
+      }
+    },
+    "100913": {
+      "subName": "仿真器",
+      "midName": "",
+      "rowCount": 0,
+      "droppedCount": 0,
+      "params": {
+        "型号": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "目标芯片/协议": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "接口": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
         }
       }
     },
@@ -23963,6 +24062,28 @@
               "count": 1
             }
           ]
+        }
+      }
+    },
+    "101010": {
+      "subName": "附件",
+      "midName": "",
+      "rowCount": 0,
+      "droppedCount": 0,
+      "params": {
+        "型号": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "适配开关": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
         }
       }
     },
@@ -26981,7 +27102,7 @@
             {
               "value": "0.5%",
               "count": 4,
-              "source": "manual"
+              "source": "stock"
             }
           ],
           "pending": [],
@@ -26998,8 +27119,7 @@
               "value": "±0.5%",
               "count": 1
             }
-          ],
-          "removed": []
+          ]
         }
       }
     },
@@ -29347,6 +29467,42 @@
         }
       }
     },
+    "101406": {
+      "subName": "复合介质电容（CH、CZ）",
+      "midName": "",
+      "rowCount": 0,
+      "droppedCount": 0,
+      "params": {
+        "型号": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "容值": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "额定电压": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        },
+        "容差": {
+          "type": "free",
+          "accepted": [],
+          "pending": [],
+          "suspected": [],
+          "note": "模板声明但暂无取值（该小类存量样本不足）"
+        }
+      }
+    },
     "101407": {
       "subName": "瓷片电容（CT）",
       "midName": "电容",
@@ -30544,15 +30700,13 @@
   },
   "meta": {
     "version": "0.2.0",
-    "generatedAt": "2026-11-17T10:33:32.993Z",
+    "generatedAt": "2026-11-17T14:19:18.859Z",
     "draft": true,
     "structure": "subs[小类] → params[参数] → {type, accepted, pending, suspected, aliases}",
     "principle": "参数值按小类隔离：某小类的候选只来自该小类的存量，不跨小类共用",
     "scope": "1001-1014 中类",
     "sourceRows": 8345,
     "droppedRows": 271,
-    "note": "由 src/param-lib/build.mjs 生成。accepted=可推荐；pending=待确认；suspected=疑似笔误/提取错误。人工确认后把 draft 改为 false。",
-    "updatedAt": "2026-11-17T14:01:47.869Z",
-    "editedAt": "2026-11-17T13:59:59.843Z"
+    "note": "由 src/param-lib/build.mjs 生成。accepted=可推荐；pending=待确认；suspected=疑似笔误/提取错误。人工确认后把 draft 改为 false。"
   }
 }

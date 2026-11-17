@@ -28,6 +28,7 @@ const FIELDS = readJson('src/config/spec-fields.json')
 const STD = readJson('src/config/param-standard.json')
 const MAP = readJson('src/config/classification-map.json')
 const ALIAS = readJson('src/config/guide-field-map.json').alias || {}
+const DEDUP = readJson('src/config/dedup-rules.json')
 
 const LIB = FIELDS.library || {}
 const STD_SUBS = Object.keys(STD.subs || {})
@@ -62,7 +63,10 @@ const subs = STD_SUBS.filter((s) => (only ? s.startsWith(only) : true)).sort()
 for (const sub of subs) {
   const info = getCategory(sub) || {}
   const subName = (STD.subs[sub] || {}).subName || info.subName || ''
-  const tokens = chooseTokens(info)
+  // 与实际提取口径一致：基础 tokens + 该小类的 subAddTokens（dedup-rules 里的增量）。
+  // 只取 chooseTokens 会漏掉后补的参数，导致「明明配了却报未进 tokens」。
+  const extra = ((DEDUP.subAddTokens || {})[sub]) || []
+  const tokens = [...new Set([...chooseTokens(info), ...extra])]
   const phs = placeholderOf(sub)
   const segOk = { total: phs.length, usable: 0 }
 

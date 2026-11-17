@@ -28,6 +28,11 @@ const NDJSON = path.join(ROOT, 'data/materials.ndjson')
 const OUT_LIB = path.join(ROOT, 'src/config/param-standard.json')
 const OUT_PENDING = path.join(ROOT, 'data/param-standard-pending.json')
 const MAP = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/classification-map.json'), 'utf8'))
+// 模板与占位符别名：用于给「存量样本不足」的小类按模板补空参数声明
+const GUIDE = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/naming-guide.json'), 'utf8'))
+const FIELDMAP = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/guide-field-map.json'), 'utf8'))
+const ALIAS = FIELDMAP.alias || {}
+const NAMEONLY = new Set(FIELDMAP.nameOnly || [])
 
 await loadIndex({ force: true })
 
@@ -235,6 +240,25 @@ for (const sub of SUBS) {
     }
   }
 
+  // 存量样本不足（物料太少或全是型号）的小类，提取不出任何取值 —— 但按
+  // 「参数内容必须全」的原则，仍要按模板占位符建立参数声明（值为空，后续录入自然填充）。
+  // 否则这些小类在参数标准库里完全不存在，界面上看不到它有哪几个参数。
+  if (!Object.keys(params).length) {
+    const g = (GUIDE.subs || {})[sub] || {}
+    const ph = (String(g.specPattern || '').match(/\{[^}]+\}/g) || []).map((x) => x.slice(1, -1))
+    for (const raw of ph) {
+      if (NAMEONLY.has(raw)) continue
+      const name = ALIAS[raw] || raw
+      if (params[name]) continue
+      params[name] = {
+        type: 'free',
+        accepted: [], pending: [], suspected: [],
+        note: '模板声明但暂无取值（该小类存量样本不足）',
+      }
+    }
+    if (Object.keys(params).length) stat.paramOnly = (stat.paramOnly || 0) + 1
+  }
+
   if (!Object.keys(params).length) continue
   stat.subs++
   out.subs[sub] = {
@@ -244,6 +268,35 @@ for (const sub of SUBS) {
     droppedCount: list.length - clean.length,
     params,
   }
+}
+
+// 收尾：有模板、但因存量样本不足没走到上面的小类，按模板补一份空参数声明。
+// 这样「参数内容必须全」——值可以后补，但每个小类该有哪些参数在库里是明确的。
+for (const [sub, g] of Object.entries(GUIDE.subs || {})) {
+  if (out.subs[sub]) continue
+  const m = sub.slice(0, 4)
+  if (!(m >= '1001' && m <= '1014')) continue
+  const ph = (String(g.specPattern || '').match(/\{[^}]+\}/g) || []).map((x) => x.slice(1, -1))
+  const params = {}
+  for (const raw of ph) {
+    if (NAMEONLY.has(raw)) continue
+    const name = ALIAS[raw] || raw
+    if (params[name]) continue
+    params[name] = {
+      type: 'free', accepted: [], pending: [], suspected: [],
+      note: '模板声明但暂无取值（该小类存量样本不足）',
+    }
+  }
+  if (!Object.keys(params).length) continue
+  out.subs[sub] = {
+    subName: g.subName || '',
+    midName: '',
+    rowCount: 0,
+    droppedCount: 0,
+    params,
+  }
+  stat.subs++
+  stat.paramOnly = (stat.paramOnly || 0) + 1
 }
 
 out.meta = {

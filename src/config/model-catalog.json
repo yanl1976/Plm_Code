@@ -1,0 +1,43 @@
+{
+  "meta": {
+    "desc": "系列级型号目录（不做型号级全集）。用途：录入型号时识别品牌/系列/品类，提示壳架与规格范围；也用于同小类查重时判断是否同族。数据来自厂家公开样本，型号级全量需解析选型手册，暂不纳入。",
+    "collectedAt": "2026-11-17",
+    "note": "frames 里的电流范围是该系列覆盖的壳架/额定电流区间，不是枚举全部型号"
+  },
+  "brands": {
+    "施耐德": {
+      "MasterPacT MTZ1": { "type": "框架断路器", "subs": ["100101", "100102"], "frames": "630~1600A", "levels": "N/H/L", "poles": "3P/4P", "trip": "MicroLogic 2.0/5.0/6.0/7.0、MicroLogic Active" },
+      "MasterPacT MTZ2": { "type": "框架断路器", "subs": ["100101", "100102"], "frames": "2000~3200A", "levels": "N/H/L", "poles": "3P/4P", "trip": "MicroLogic 2.0/5.0/6.0/7.0" },
+      "MasterPacT MTZ3": { "type": "框架断路器", "subs": ["100101", "100102"], "frames": "4000/5000/6300A", "levels": "H/L", "poles": "3P/4P", "trip": "MicroLogic Active" },
+      "ComPacT NSX100": { "type": "塑壳断路器", "subs": ["100103", "100104"], "frames": "16~100A", "levels": "B/N/H/S/L", "poles": "3P/4P", "trip": "TM-D、MA、MicroLogic 2.2/5.2" },
+      "ComPacT NSX160": { "type": "塑壳断路器", "subs": ["100103", "100104"], "frames": "100~160A", "levels": "B/N/H/S/L", "poles": "3P/4P", "trip": "TM-D、MA、MicroLogic 2.2/5.2" },
+      "ComPacT NSX250": { "type": "塑壳断路器", "subs": ["100103", "100104"], "frames": "160~250A", "levels": "B/N/H/S/L", "poles": "3P/4P", "trip": "TM-D、MA、MicroLogic 2.2/5.2/6.2" },
+      "ComPacT NSX630": { "type": "塑壳断路器", "subs": ["100103", "100104"], "frames": "400~630A", "levels": "B/N/H/S/L", "poles": "3P/4P", "trip": "TM-D、MicroLogic 2.3/5.3/6.3" },
+      "iC65N": { "type": "微型断路器", "subs": ["100105"], "frames": "1~63A", "levels": "6kA", "poles": "1P/2P/3P/4P", "trip": "B/C/D" },
+      "iC65H": { "type": "微型断路器", "subs": ["100105"], "frames": "0.5~63A", "levels": "10kA", "poles": "1P/2P/3P/4P", "trip": "B/C/D" },
+      "iC65L": { "type": "微型断路器", "subs": ["100105"], "frames": "0.5~63A", "levels": "15kA", "poles": "1P/2P/3P/4P", "trip": "B/C/D" },
+      "Vigi iC65": { "type": "漏电断路器", "subs": ["100106"], "frames": "1~63A", "levels": "6/10kA", "poles": "1P+N/2P/3P/3P+N/4P", "trip": "30/100/300/500mA" }
+    },
+    "ABB": {
+      "SACE Emax E1.2": { "type": "框架断路器", "subs": ["100101", "100102"], "frames": "630~1600A", "levels": "N/S/H", "poles": "3P/4P", "trip": "Ekip DIP/LSI/Hi" },
+      "SACE Emax E2.2": { "type": "框架断路器", "subs": ["100101", "100102"], "frames": "1000~2500A", "levels": "N/S/H", "poles": "3P/4P", "trip": "Ekip LSI/Hi" },
+      "SACE Emax E4.2": { "type": "框架断路器", "subs": ["100101", "100102"], "frames": "2500~4000A", "levels": "N/S/H", "poles": "3P/4P", "trip": "Ekip LSI/Hi" },
+      "SACE Emax E6.2": { "type": "框架断路器", "subs": ["100101", "100102"], "frames": "4000~6300A", "levels": "H", "poles": "3P/4P", "trip": "Ekip Hi" }
+    },
+    "西门子": {
+      "3VA1": { "type": "塑壳断路器", "subs": ["100103", "100104"], "frames": "16~160A", "levels": "B16/N25/S36/M55/H70", "poles": "3P/4P", "trip": "TM210/TM220/TM240、FTFM/ATFM" },
+      "3VA2": { "type": "塑壳断路器", "subs": ["100103", "100104"], "frames": "100~630A", "levels": "M55/H85/C110/L150", "poles": "3P/4P", "trip": "ETU320(LI)/ETU330(LIG)/ETU350(LSI)/ETU550" }
+    },
+    "正泰": {
+      "NM8": { "type": "塑壳断路器", "subs": ["100103", "100104"], "frames": "100/125/250/630/800/1250A", "levels": "45/50/70/100/125/150kA", "poles": "3P/4P", "trip": "热磁式/电子式" },
+      "NM8N": { "type": "塑壳断路器", "subs": ["100103", "100104"], "frames": "16~1600A", "levels": "最高150kA", "poles": "3P/4P", "trip": "热磁式/电子式" }
+    },
+    "常熟开关": {
+      "CM3": { "type": "塑壳断路器", "subs": ["100103", "100104"], "frames": "6~630A", "levels": "35/45/70kA", "poles": "3P/4P", "trip": "热磁式" },
+      "CM6": { "type": "塑壳断路器", "subs": ["100103", "100104"], "frames": "新一代系列", "levels": "—", "poles": "3P/4P", "trip": "—" }
+    },
+    "德力西": {
+      "CDM3": { "type": "塑壳断路器", "subs": ["100103", "100104"], "frames": "125/160A", "levels": "—", "poles": "2P/3P/4P", "trip": "热磁式" }
+    }
+  }
+}

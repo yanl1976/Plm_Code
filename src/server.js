@@ -1259,6 +1259,29 @@ const server = http.createServer(async (req, res) => {
     // 型号规格联想：返回同小类历史规格中包含输入内容的完整规格，并带出该规格现有库存数量
     // 规格分段补全：按范式模板推断"当前在填哪个参数"，给出该参数的取值候选（带频次）。
     // 只对模板能对齐到参数库的段给候选；对不上（如 设备类型/关键参数）返回 ok:false，前端不弹。
+    // 系列级型号目录查询：录入型号时识别品牌/系列/品类，提示壳架与规格范围。
+    // 只做到系列级（不做型号级全集）—— 型号级需解析厂家选型手册，维护成本高。
+    if (p === '/api/model-catalog') {
+      const q = String(url.searchParams.get('q') || '').toUpperCase().replace(/[\s\-_/]/g, '')
+      const sub = String(url.searchParams.get('sub') || '').slice(0, 6)
+      let cat = {}
+      try { cat = readConfigJson('model-catalog.json') || {} } catch (e) { cat = {} }
+      const items = []
+      for (const [brand, seriesMap] of Object.entries(cat.brands || {})) {
+        for (const [series, info] of Object.entries(seriesMap || {})) {
+          const key = series.toUpperCase().replace(/[\s\-_/]/g, '')
+          // 型号片段匹配系列名；给了小类号就再按适用范围过滤
+          const byName = q ? key.includes(q) : true
+          const bySub = sub ? (info.subs || []).some((x) => String(x).startsWith(sub)) : true
+          if (!byName || !bySub) continue
+          items.push({ brand, series, ...info })
+        }
+      }
+      // 命中越长的系列名越具体，排前面
+      items.sort((a, b) => String(b.series).length - String(a.series).length)
+      return sendJson(res, 200, { ok: true, q, sub, count: items.length, items: items.slice(0, 20) })
+    }
+
     if (p === '/api/new-material/spec-complete') {
       const sub = (url.searchParams.get('sub') || '').trim().slice(0, 6)
       const q = url.searchParams.get('q') || ''

@@ -1,12 +1,17 @@
 /**
- * 参数标准库 · 构建脚本（离线，不参与运行时）
+ * 参数标准库 · 构建脚本（v0.2，按小类隔离）
  *
- * 输入：data/materials.ndjson（23059 条）
- * 输出：
- *   src/config/param-standard.json        草稿（draft=true，含 accepted/pending/suspected）
- *   data/param-standard-pending.json      待人工确认清单
+ * 核心原则（用户明确要求）：
+ *   **参数按小类抽取，只用于该小类 —— 绝不跨小类共用候选。**
+ *   反例：电容的「额定电压」是 63V/100V/250V，断路器的「额定电压」是 220V/380V/690V。
+ *        若全局合并，就会把 63V 推荐给断路器 —— 业务上完全错误。
  *
- * 流程：提取 → 剔除错类 → 值归一 → 频次统计 → 与标准序列比对 → 分类
+ * 因此库结构：subs[小类] → params[参数] → accepted / pending / suspected
+ * 标准序列也按小类族区分（电容耐压 / 电缆电压 / 配电电压 / E 系列）。
+ *
+ * 输入：data/materials.ndjson
+ * 输出：src/config/param-standard.json（草稿 draft=true）
+ *       data/param-standard-pending.json（待人工确认）
  *
  * 与现有库的关系：只读 spec-fields / naming-guide / dedup-rules，不修改任何现有文件。
  */
@@ -25,31 +30,22 @@ const MAP = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/classificatio
 
 await loadIndex({ force: true })
 
-// ---------- 标准序列（内置，来自国标/行业惯例，后续可由业务补充）----------
+// ============ 标准序列（仅用于"是否为标准值"判定，不作为候选来源）============
 const R10 = [1, 1.25, 1.6, 2, 2.5, 3.15, 4, 5, 6.3, 8, 10, 12.5, 16, 20, 25, 31.5, 40, 50, 63, 80,
   100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300]
 const CB_CURRENT = [1, 2, 3, 4, 6, 10, 13, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600]
-// 断路器分断能力常见值（含 4.5kA 行业惯例、31.5 来自 R10）
 const CB_BREAK = [3, 4.5, 6, 8, 10, 12.5, 15, 16, 20, 25, 31.5, 35, 40, 50, 63, 65, 80, 100]
 
-// ---- 标准序列（国标/行业公开序列，仅用于"是否为标准值"的判定）----
-
-// 电流互感器标准变比（GB 1207 / GB/T 20840.2，二次侧 5A）
+// 电压：三套体系，按小类族选择 —— 这是"按类隔离"的关键
+const VOLT_GRID = ['24V', '36V', '48V', '110V', '127V', '220V', '380V', '400V', '415V', '440V', '500V', '660V', '690V', '1000V', '1140V', '6KV', '10KV', '20KV', '35KV', '66KV', '110KV', '220KV']
+const VOLT_CAP = ['6.3V', '10V', '16V', '25V', '35V', '50V', '63V', '100V', '160V', '200V', '250V', '400V', '450V', '630V']  // 电容耐压
+const VOLT_CABLE = ['300/500V', '450/750V', '0.6/1KV', '3.6/6KV', '6/10KV', '8.7/15KV', '12/20KV', '26/35KV']              // 电缆
 const RATIO = ['50/5', '75/5', '100/5', '150/5', '200/5', '250/5', '300/5', '400/5', '500/5', '600/5',
   '750/5', '800/5', '1000/5', '1200/5', '1500/5', '2000/5', '2500/5', '3000/5', '4000/5', '5000/5', '6000/5']
-
-// 标准电压（GB/T 156）—— 低压/高压/电缆常用
-const VOLT = ['9V', '12V', '24V', '36V', '48V', '110V', '127V', '220V', '380V', '400V', '415V', '440V',
-  '500V', '660V', '690V', '1140V',
-  '300/500V', '450/750V', '0.6/1KV', '3.6/6KV', '6/10KV', '8.7/15KV', '12/20KV', '26/35KV',
-  '6KV', '10KV', '20KV', '35KV', '66KV', '110KV', '220KV']
-
-// IEC 60063 优先数系
 const E24 = [1.0, 1.1, 1.2, 1.3, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.7, 3.0, 3.3, 3.6, 3.9, 4.3, 4.7, 5.1, 5.6, 6.2, 6.8, 7.5, 8.2, 9.1]
 const E6 = [1.0, 1.5, 2.2, 3.3, 4.7, 6.8]
 const E12 = [1.0, 1.2, 1.5, 1.8, 2.2, 2.7, 3.3, 3.9, 4.7, 5.6, 6.8, 8.2]
 
-/** 把数值归一到 [1,10) 的基准数，用于比对 E 系列 */
 function mantissa(n) {
   if (!(n > 0)) return 0
   let x = n
@@ -64,16 +60,35 @@ const inE = (set) => (v) => {
   return set.some((e) => Math.abs(e - base) < 0.05)
 }
 
-const SERIES = {
-  额定电流: { test: (v) => R10.includes(parseFloat(v)) || CB_CURRENT.includes(parseFloat(v)), note: 'R10 优先数系 + 断路器常见档位' },
-  分断能力: { test: (v) => CB_BREAK.includes(parseFloat(v)), note: '断路器行业常见分断值（含 4.5kA）' },
-  变比: { test: (v) => RATIO.includes(String(v)), note: 'GB 1207 标准变比（二次 5A）' },
-  额定电压: { test: (v) => VOLT.includes(String(v)), note: 'GB/T 156 标准电压等级' },
-  阻值: { test: inE(E24), note: 'E24 优先数系（IEC 60063）' },
-  容值: { test: (v) => inE(E6)(v) || inE(E12)(v), note: 'E6/E12 优先数系（IEC 60063）' },
+/**
+ * 序列判定。第二个参数 sub 决定用哪套体系 —— 不同小类同一参数可以有完全不同的值域。
+ * @returns {{ok:boolean, series:string}|null} null 表示该参数无标准序列
+ */
+function checkSeries(param, value, sub) {
+  const s6 = String(sub || '').slice(0, 6)
+  switch (param) {
+    case '额定电流':
+      return { ok: R10.includes(parseFloat(value)) || CB_CURRENT.includes(parseFloat(value)), series: 'R10 + 断路器档位' }
+    case '分断能力':
+      return { ok: CB_BREAK.includes(parseFloat(value)), series: '断路器分断值' }
+    case '变比':
+      return { ok: RATIO.includes(String(value)), series: 'GB 1207 变比' }
+    case '额定电压': {
+      // 按小类族选体系
+      if (/^1014/.test(s6)) return { ok: VOLT_CAP.includes(String(value)), series: '电容耐压' }
+      if (/^1103/.test(s6)) return { ok: VOLT_CABLE.includes(String(value)), series: '电缆电压等级' }
+      return { ok: VOLT_GRID.includes(String(value)), series: 'GB/T 156' }
+    }
+    case '阻值':
+      return { ok: inE(E24)(value), series: 'E24' }
+    case '容值':
+      return { ok: inE(E6)(value) || inE(E12)(value), series: 'E6/E12' }
+    default:
+      return null
+  }
 }
 
-// ---------- 值归一（按参数定制；未列出的走默认清洗）----------
+// ============ 值归一（按参数定制）============
 const toHalf = (s) => String(s)
   .replace(/[\uFF01-\uFF5E]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
   .replace(/\u3000/g, ' ')
@@ -101,8 +116,15 @@ const NORMALIZERS = {
     const n = parseFloat(m[1])
     return isFinite(n) && n > 0 ? String(n) : null
   },
+  // 必须带单位 V/KV —— 否则 "0.66" 会被补成 "0.66V"（曾产生 347 条假值）
+  额定电压: (v) => {
+    let s = toHalf(v).toUpperCase().replace(/\s/g, '').replace(/^(AC|DC|～|~)/, '')
+    if (!/^\d/.test(s)) return null
+    if (!/V$/.test(s)) return null
+    return /^\d+(\.\d+)?(\/\d+(\.\d+)?)?K?V$/.test(s) ? s : null
+  },
   精度: (v) => {
-    const s = toHalf(v).replace(/\s/g, '').replace('±', '±')
+    const s = toHalf(v).replace(/\s/g, '')
     const m = /^±?\d+(\.\d+)?%?$/.exec(s)
     return m ? (s.includes('%') ? s : s + '%') : null
   },
@@ -110,21 +132,11 @@ const NORMALIZERS = {
     const s = toHalf(v).toUpperCase().replace(/\s/g, '')
     return /^[A-Z]$/.test(s) ? s : null
   },
-  // 变比：200/5A、200：5、200/5A 0.5级 → 200/5
   变比: (v) => {
     const s = toHalf(v).replace(/\s/g, '')
     const m = /^(\d+(?:\.\d+)?)[\/:：](\d+(?:\.\d+)?)A?$/i.exec(s)
     return m ? m[1] + '/' + m[2] : null
   },
-  // 额定电压：去 AC/DC/~ 前缀，统一大写 V/kV；多值（0.6/1kV）保留
-  // 必须带单位 V/KV —— 否则 "0.66" 会被补成 "0.66V"（实测因此产生 347 条假值）
-  额定电压: (v) => {
-    let s = toHalf(v).toUpperCase().replace(/\s/g, '').replace(/^(AC|DC|～|~)/, '')
-    if (!/^\d/.test(s)) return null
-    if (!/V$/.test(s)) return null
-    return /^\d+(\.\d+)?(\/\d+(\.\d+)?)?K?V$/.test(s) ? s : null
-  },
-  // 容值：1000uF / 1000μF / 1000uf → 1000μF
   容值: (v) => {
     const s = toHalf(v).replace(/\s/g, '').toUpperCase().replace('Μ', 'μ')
     const m = /^(\d+(?:\.\d+)?)(UF|NF|PF|F)$/.exec(s)
@@ -132,14 +144,11 @@ const NORMALIZERS = {
     const u = m[2].toLowerCase() === 'uf' ? 'μF' : m[2]
     return m[1] + u
   },
-  // 阻值：10K / 10kΩ / 10k → 10kΩ（保留数量级字母）
   阻值: (v) => {
     let s = toHalf(v).replace(/\s/g, '').replace(/Ω|R(?=\d|$)/g, 'Ω')
     if (!/^\d/.test(s)) return null
     if (!/Ω$/.test(s)) s = s + 'Ω'
-    // 数量级字母统一小写：10KΩ → 10kΩ（M 保持大写）
-    s = s.replace(/([\d.]+)K(?=Ω)/, '$1k')
-    return s
+    return s.replace(/([\d.]+)K(?=Ω)/, '$1k')
   },
 }
 
@@ -150,11 +159,8 @@ function normalize(param, v) {
   return s || null
 }
 
-// ---------- 主流程 ----------
+// ============ 主流程 ============
 const rows = fs.readFileSync(NDJSON, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l))
-console.log('物料 ' + rows.length + ' 条，小类 ' + Object.keys(MAP).length + ' 个')
-
-// 按中类限定（先做 1001-1014，可改全量）
 const SUBS = Object.keys(MAP).filter((s) => { const m = s.slice(0, 4); return m >= '1001' && m <= '1014' }).sort()
 
 // 剔除疑似错类（只算一遍）
@@ -165,14 +171,16 @@ for (const r of rows) {
   const n = String(r.FNAME || '').trim()
   if (n && detectSubMismatch(n, s)) suspect.add(r.FNUMBER)
 }
-console.log('  剔除疑似错类 ' + suspect.size + ' 条（全库口径）')
+console.log('物料 ' + rows.length + ' 条 ｜ 范围 1001-1014（' + SUBS.length + ' 小类）')
+console.log('剔除疑似错类 ' + suspect.size + ' 条（全库口径）\n')
 
-const params = new Map()   // 参数名 → { subs:Set, raw:Map, norm:Map }
-let usedRows = 0
-let droppedRows = 0
+const out = { subs: {} }
+const pendingRows = []
+let usedRows = 0, droppedRows = 0
+const stat = { subs: 0, params: 0, accepted: 0, pending: 0, suspected: 0 }
 
 for (const sub of SUBS) {
-  const info = getCategory(sub)
+  const info = getCategory(sub) || {}
   const tokens = chooseTokens(info)
   if (!tokens.length) continue
   const list = rows.filter((r) => String(r.FNUMBER || '').startsWith(sub) && String(r.FSPECIFICATION || '').trim())
@@ -181,120 +189,118 @@ for (const sub of SUBS) {
   usedRows += clean.length
   if (!clean.length) continue
 
-  for (const t of tokens) {
-    let acc = params.get(t)
-    if (!acc) { acc = { subs: new Set(), raw: new Map(), norm: new Map() }; params.set(t, acc) }
-    acc.subs.add(sub)
-    for (const r of clean) {
-      const v = extractParams(String(r.FSPECIFICATION), [t])[t]
+  // 该小类内逐参数统计 —— 只在这一层做聚合，绝不跨小类
+  const perParam = new Map()   // 参数 → { raw:Map, norm:Map, aliasMap:Map }
+  for (const t of tokens) perParam.set(t, { raw: new Map(), norm: new Map(), aliasMap: new Map() })
+
+  for (const r of clean) {
+    const vals = extractParams(String(r.FSPECIFICATION), tokens)
+    for (const t of tokens) {
+      const v = vals[t]
       if (!v) continue
+      const acc = perParam.get(t)
       acc.raw.set(v, (acc.raw.get(v) || 0) + 1)
       const nv = normalize(t, v)
       if (nv == null) continue
       acc.norm.set(nv, (acc.norm.get(nv) || 0) + 1)
-      // 记录别名：原始写法 ≠ 归一值
-      if (nv !== String(v).trim()) {
-        acc.aliasMap = acc.aliasMap || new Map()
-        acc.aliasMap.set(String(v).trim(), nv)
-      }
+      if (nv !== String(v).trim()) acc.aliasMap.set(String(v).trim(), nv)
     }
   }
-}
-console.log('  参与构建物料 ' + usedRows + ' 条（剔除 ' + droppedRows + '）')
-console.log('  参数种类 ' + params.size + '\n')
 
-// ---------- 分类 ----------
-const out = { params: {} }
-const pendingRows = []
-let stat = { accepted: 0, pending: 0, suspected: 0 }
+  const params = {}
+  for (const [name, acc] of perParam) {
+    if (!acc.norm.size) continue
+    const ranked = [...acc.norm.entries()].sort((a, b) => b[1] - a[1])
+    const ser = checkSeries(name, ranked[0][0], sub)   // 先探一次，判断该参数在此类是否有序列
+    const hasSeries = !!ser
+    const normCount = ranked.length
+    // 类型按"该小类内"的取值种数判定，不看别的类
+    const kind = hasSeries ? 'series' : (normCount <= 15 ? 'enum' : normCount <= 50 ? 'semi' : 'free')
 
-for (const [name, acc] of [...params.entries()].sort((a, b) => b[1].norm.size - a[1].norm.size)) {
-  const ranked = [...acc.norm.entries()].sort((a, b) => b[1] - a[1])
-  const ser = SERIES[name]
-  const aliasesOf = () => {
-    const o = {}
-    if (acc.aliasMap) for (const [k, v] of acc.aliasMap) o[k] = v
-    return o
-  }
-
-  // 类型判定：归一后取值种数决定能不能当"标准"
-  //   ≤15  → enum  可直接给候选
-  //   16-50 → semi  只给 Top N 参考
-  //   >50  → free  不进标准库（型号/阻值/容值/电压这类），只留频次最高的几个作参考
-  const normCount = ranked.length
-  // 有标准序列的参数（额定电流/分断能力）：不看归一后种数，直接按"是否在序列内"收录
-  const kind = ser ? 'series' : (normCount <= 15 ? 'enum' : normCount <= 50 ? 'semi' : 'free')
-  if (kind === 'free') {
-    out.params[name] = {
-      type: 'free',
-      subs: [...acc.subs].sort(),
-      reference: ranked.slice(0, 5).map(([value, count]) => ({ value, count })),
+    const aliases = {}
+    for (const [k, v] of acc.aliasMap) aliases[k] = v
+    const base = {
+      type: kind,
+      series: hasSeries ? ser.series : '',
       rawCount: acc.raw.size,
       normCount,
-      aliases: aliasesOf(),
-      note: '取值过多，不推荐值；仅保留 Top5 作"同小类常见写法"参考',
+      aliases,
     }
-    continue
+
+    if (kind === 'free') {
+      params[name] = {
+        ...base,
+        reference: ranked.slice(0, 5).map(([value, count]) => ({ value, count })),
+        note: '取值过多，不推荐值；仅保留 Top5 作"本小类常见写法"参考',
+      }
+      continue
+    }
+
+    const accepted = [], pending = [], suspected = []
+    for (const [v, c] of ranked) {
+      const chk = hasSeries ? checkSeries(name, v, sub) : null
+      const inSeries = chk ? chk.ok : true
+      if (inSeries && c >= 2) accepted.push({ value: v, count: c })
+      else if (!inSeries && c >= 5) {
+        pending.push({ value: v, count: c, reason: '不在本小类标准序列但出现 ≥5 次，需确认是否为行业惯例/特殊规格' })
+        pendingRows.push({ 小类: sub, 小类名: info.subName || '', 参数: name, 值: v, 条数: c, 类型: '标准外高频' })
+      } else {
+        suspected.push({ value: v, count: c })
+      }
+    }
+
+    stat.accepted += accepted.length
+    stat.pending += pending.length
+    stat.suspected += suspected.length
+    stat.params++
+
+    params[name] = {
+      ...base,
+      accepted: accepted.slice(0, 30),
+      pending,
+      suspected: suspected.slice(0, 20),
+    }
   }
 
-  const accepted = [], pending = [], suspected = []
-
-  for (const [v, c] of ranked) {
-    const inSeries = ser ? ser.test(v) : true
-    if (inSeries && c >= 2) accepted.push({ value: v, count: c })
-    else if (!inSeries && c >= 5) {
-      pending.push({ value: v, count: c, reason: '不在标准序列但出现 ≥5 次，需确认是否为行业惯例/特殊规格' })
-      pendingRows.push({ 参数: name, 值: v, 条数: c, 类型: '标准外高频' })
-    } else if (!inSeries) {
-      suspected.push({ value: v, count: c })
-      pendingRows.push({ 参数: name, 值: v, 条数: c, 类型: '标准外低频(疑似笔误)' })
-    } else {
-      suspected.push({ value: v, count: c })
-    }
-  }
-
-  stat.accepted += accepted.length
-  stat.pending += pending.length
-  stat.suspected += suspected.length
-
-  out.params[name] = {
-    type: ser ? 'number-series' : kind,
-    kind,
-    series: ser ? ser.note : '',
-    subs: [...acc.subs].sort(),
-    accepted: accepted.slice(0, 30),
-    pending,
-    suspected: suspected.slice(0, 20),
-    aliases: aliasesOf(),
-    rawCount: acc.raw.size,
-    normCount,
+  if (!Object.keys(params).length) continue
+  stat.subs++
+  out.subs[sub] = {
+    subName: info.subName || '',
+    midName: info.midName || '',
+    rowCount: clean.length,
+    droppedCount: list.length - clean.length,
+    params,
   }
 }
 
 out.meta = {
+  version: '0.2.0',
   generatedAt: new Date().toISOString(),
   draft: true,
+  structure: 'subs[小类] → params[参数] → {type, accepted, pending, suspected, aliases}',
+  principle: '参数值按小类隔离：某小类的候选只来自该小类的存量，不跨小类共用',
   scope: '1001-1014 中类',
   sourceRows: usedRows,
   droppedRows,
-  note: '由 src/param-lib/build.mjs 自动生成。accepted=可直接推荐；pending=需人工确认；suspected=疑似笔误。人工确认后把 draft 改为 false。',
+  note: '由 src/param-lib/build.mjs 生成。accepted=可推荐；pending=待确认；suspected=疑似笔误/提取错误。人工确认后把 draft 改为 false。',
 }
 
 fs.writeFileSync(OUT_LIB, JSON.stringify(out, null, 2) + '\n', 'utf8')
 fs.writeFileSync(OUT_PENDING, JSON.stringify(pendingRows, null, 2) + '\n', 'utf8')
 
+// ============ 输出摘要 ============
 console.log('=== 输出 ===')
-console.log('  库草稿: src/config/param-standard.json（' + Object.keys(out.params).length + ' 个参数）')
-console.log('  待确认: data/param-standard-pending.json（' + pendingRows.length + ' 条）')
-console.log('  分类：accepted ' + stat.accepted + ' ｜ pending ' + stat.pending + ' ｜ suspected ' + stat.suspected)
+console.log('  库: src/config/param-standard.json')
+console.log('  小类 ' + stat.subs + ' 个 ｜ 参数条目 ' + stat.params + ' ｜ accepted ' + stat.accepted + ' ｜ pending ' + stat.pending + ' ｜ suspected ' + stat.suspected)
+console.log('  待确认清单: data/param-standard-pending.json（' + pendingRows.length + ' 条，均标注所属小类）')
 
-console.log('\n=== 各参数收敛情况（原始 → 归一后）===')
-for (const [name, p] of Object.entries(out.params)) {
-  const acc = p.accepted ? p.accepted.length : (p.reference ? p.reference.length : 0)
-  const pend = p.pending ? p.pending.length : 0
-  console.log('  ' + name.padEnd(12) + String(p.rawCount).padStart(4) + ' → ' + String(p.normCount).padStart(4)
-    + ' 种 ｜ ' + String(acc).padStart(3) + (p.type === 'free' ? ' 参考' : ' 收录')
-    + ' ｜ 待确认 ' + String(pend).padStart(2)
-    + ' ｜ ' + p.type + (p.kind ? '/' + p.kind : ''))
+console.log('\n=== 按小类抽样（验证隔离性）===')
+const sample = ['100105', '101301', '110302', '101401', '101410'].filter((s) => out.subs[s])
+for (const s of sample) {
+  const o = out.subs[s]
+  console.log('\n  ' + s + ' ' + o.subName + '（' + o.rowCount + ' 条）')
+  for (const [name, p] of Object.entries(o.params)) {
+    const top = (p.accepted || p.reference || []).slice(0, 4).map((x) => x.value + '(' + x.count + ')').join(' ')
+    if (top) console.log('    ' + name.padEnd(10) + p.type.padEnd(7) + top)
+  }
 }
-process.exit(0)

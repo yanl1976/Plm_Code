@@ -22,7 +22,7 @@ import { fileURLToPath } from 'url'
 import { getCategory, chooseTokens } from './classify.js'
 import { extractParams } from './struct-spec.js'
 import { loadGuide } from './guide-fields.js'
-import { enabled as paramLibEnabled, isShadow as paramLibShadow, checkValue as paramLibCheck, paramDef as paramLibDef } from './param-lib/store.js'
+import { enabled as paramLibEnabled, isShadow as paramLibShadow, checkValue as paramLibCheck, paramDef as paramLibDef, subParams as paramLibSubParams } from './param-lib/store.js'
 import { normalize as paramLibNormalize } from './param-lib/normalize.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -118,7 +118,19 @@ function statOf(sub, items) {
   const hit = CACHE.get(ckey)
   // 数据源变了（条数不同）也要重建，避免缓存住空表
   if (hit && Date.now() - hit.at < TTL && hit.srcCount === src.length) return hit
-  const meta = patternSegments(sub)
+  const meta0 = patternSegments(sub)
+  // 模板只声明了部分参数（如 100101 模板 5 段，库里实有 8 个参数），
+  // 未声明的那些（脱扣器 / 脱扣曲线 / 分断等级）永远轮不到补全。
+  // 这里把「库里有值、但模板没写」的参数追加为独立段，让补全覆盖整个参数库；
+  // 只追加有值的（没值的参数追上去也没候选，只会多一个空段）。
+  const declared = new Set(meta0.segments.flatMap((x) => x.params))
+  const extra = []
+  for (const [p, d] of Object.entries(paramLibSubParams(sub) || {})) {
+    if (declared.has(p)) continue
+    if (!((d.accepted || []).length)) continue
+    extra.push({ key: p, params: [p], rawNames: [p], tpl: '{' + p + '}', unit: '', appended: true })
+  }
+  const meta = extra.length ? { ...meta0, segments: [...meta0.segments, ...extra] } : meta0
   const table = new Map()
   for (const it of src) {
     // 调用方可以传"该小类"或"全量"：这里统一按小类过滤

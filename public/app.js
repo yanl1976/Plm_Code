@@ -1464,30 +1464,6 @@ async function loadParamLib() {
   renderParamList()
 }
 
-function paramRow(sub, p) {
-  // 三种来源分别标记：stock=本小类存量（实线）、series=标准序列补充（虚线）、
-  // reference=free 型的 Top5 参考（灰、不可当标准）
-  const chips = (p.values || []).map((v) => {
-    const src = v.source === 'series' ? ' series'
-      : (v.source === 'reference' ? ' reference' : '')
-    return '<span class="pl-chip' + src + '" title="存量 ' + (v.count || 0) + ' 条">'
-      + escapeHtml(v.value) + (v.count ? '<i>' + v.count + '</i>' : '') + '</span>'
-  }).join('')
-  const pend = p.pendingCount ? '<span class="pl-pend">待确认 ' + p.pendingCount + '</span>' : ''
-  const isFree = p.type === 'free'
-  const cnt = isFree ? '仅参考 ' + (p.values || []).length : p.acceptedCount + ' 值'
-  return '<div class="pl-param">'
-    + '<div class="pl-param-head"><b>' + escapeHtml(p.name) + '</b>'
-    + '<span class="pl-type">' + escapeHtml(p.type || '') + (p.series ? ' · ' + escapeHtml(p.series) : '') + '</span>'
-    + pend
-    + '<span class="pl-count">' + cnt + '</span>'
-    + '<button class="ghost pl-edit" data-edit="1" data-sub="' + sub + '" data-param="' + escapeHtml(p.name) + '">编辑</button>'
-    + '</div>'
-    + '<div class="pl-chips" id="plv-' + sub + '-' + encodeURIComponent(p.name) + '">'
-    + (chips || '<span class="pl-empty">（无收录值）</span>')
-    + '</div>'
-    + '</div>'
-}
 
 function renderParamList() {
   const list = $('#plList')
@@ -1496,20 +1472,34 @@ function renderParamList() {
   if (!r.items || !r.items.length) { list.innerHTML = '<div class="syn-empty">没有匹配的小类</div>'; return }
   list.innerHTML = r.items.map((x) => {
     const open = !!PL.opened[x.sub]
+    // 展开后只**横向列出参数名**，不再把每个参数的值铺开 ——
+    // 值属于细节（单个参数最多 28 个），铺开后一屏看不了几个小类；
+    // 需要改值时点参数 chip 或右侧「查看」，进抽屉处理。
+    const chips = (x.params || []).map((p) => {
+      const n = p.type === 'free' ? (p.values || []).length : p.acceptedCount
+      const tip = (p.type || '') + (n ? ' · ' + n + ' 值' : ' · 无值')
+      return '<span class="pl-pchip" data-sub="' + x.sub + '" data-param="' + escapeHtml(p.name)
+        + '" title="' + escapeHtml(tip) + '">' + escapeHtml(p.name)
+        + (n ? '<i>' + n + '</i>' : '') + '</span>'
+    }).join('')
     return '<div class="pl-sub' + (open ? ' open' : '') + '">'
       + '<div class="pl-sub-head" data-sub="' + x.sub + '">'
       + '<span class="pl-caret">' + (open ? '▾' : '▸') + '</span>'
       + '<b class="mono">' + x.sub + '</b><span class="pl-name">' + escapeHtml(x.subName) + '</span>'
       + '<span class="pl-meta">' + x.paramCount + ' 参数 · ' + x.valueCount + ' 值 · 存量 ' + x.rowCount + ' 条</span>'
       + '</div>'
-      + (open ? '<div class="pl-params">' + x.params.map((p) => paramRow(x.sub, p)).join('') + '</div>' : '')
+      + (open ? '<div class="pl-pchips">' + chips
+        + '<button class="ghost pl-view" data-sub="' + x.sub + '">查看</button></div>' : '')
       + '</div>'
   }).join('')
   list.querySelectorAll('.pl-sub-head').forEach((d) => {
     d.onclick = () => { PL.opened[d.dataset.sub] = !PL.opened[d.dataset.sub]; renderParamList() }
   })
-  list.querySelectorAll('[data-edit]').forEach((b) => {
-    b.onclick = (e) => { e.stopPropagation(); openPlEdit(b.dataset.sub, b.dataset.param) }
+  list.querySelectorAll('.pl-view').forEach((b) => {
+    b.onclick = (e) => { e.stopPropagation(); openPlEdit(b.dataset.sub) }
+  })
+  list.querySelectorAll('.pl-pchip').forEach((c) => {
+    c.onclick = (e) => { e.stopPropagation(); openPlEdit(c.dataset.sub, c.dataset.param) }
   })
 }
 

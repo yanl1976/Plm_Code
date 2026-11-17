@@ -1672,7 +1672,15 @@ const server = http.createServer(async (req, res) => {
       const cfg = readConfigJson('param-lib-rules.json') || {}
       const kw = (url.searchParams.get('kw') || '').trim().toLowerCase()
       let items = Object.entries(j.subs || {}).map(([sub, x]) => {
-        const params = Object.entries(x.params || {}).map(([name, d]) => {
+        // 参数顺序：常规参数按名称，手工新增的（note 含「新增」）排最后。
+        // 与 Excel 导出、抽屉列序保持同一口径，否则新增参数会"插"在中间。
+        const sortedEntries = Object.entries(x.params || {}).sort((a, b) => {
+          const na = /新增/.test((a[1] || {}).note || '')
+          const nb = /新增/.test((b[1] || {}).note || '')
+          if (na !== nb) return na ? 1 : -1
+          return a[0].localeCompare(b[0], 'zh')
+        })
+        const params = sortedEntries.map(([name, d]) => {
           // free 型（型号/阻值/容值）没有 accepted，只有 reference（Top5 参考值）——
           // 之前只读 accepted，导致界面显示「（无收录值）」，看起来像数据缺失。
           const raw = d.type === 'free' ? (d.reference || []) : (d.accepted || [])
@@ -1850,8 +1858,9 @@ const server = http.createServer(async (req, res) => {
         // 参数排序：常规参数按名称；通过「参数清单」手工新增的排在该小类末尾。
         // 否则新增参数（如 "111"）按字典序会跳到最前面，用户"在末尾加了一个"却找不到。
         const params = Object.entries(x.params || {}).sort((a, b) => {
-          const na = /由「参数清单」新增/.test((a[1] || {}).note || '')
-          const nb = /由「参数清单」新增/.test((b[1] || {}).note || '')
+          // 只要 note 里带「新增」就算手工新增：来源可能是「参数清单」或「编辑抽屉」
+          const na = /新增/.test((a[1] || {}).note || '')
+          const nb = /新增/.test((b[1] || {}).note || '')
           if (na !== nb) return na ? 1 : -1
           return a[0].localeCompare(b[0], 'zh')
         })
@@ -2010,8 +2019,9 @@ const server = http.createServer(async (req, res) => {
         // 参数排序：常规参数按名称；通过「参数清单」手工新增的排在该小类末尾。
         // 否则新增参数（如 "111"）按字典序会跳到最前面，用户"在末尾加了一个"却找不到。
         const params = Object.entries(x.params || {}).sort((a, b) => {
-          const na = /由「参数清单」新增/.test((a[1] || {}).note || '')
-          const nb = /由「参数清单」新增/.test((b[1] || {}).note || '')
+          // 只要 note 里带「新增」就算手工新增：来源可能是「参数清单」或「编辑抽屉」
+          const na = /新增/.test((a[1] || {}).note || '')
+          const nb = /新增/.test((b[1] || {}).note || '')
           if (na !== nb) return na ? 1 : -1
           return a[0].localeCompare(b[0], 'zh')
         })

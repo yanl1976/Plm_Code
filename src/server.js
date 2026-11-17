@@ -2174,21 +2174,70 @@ const server = http.createServer(async (req, res) => {
         标准值: 'accepted', 待确认: 'pending', 疑似噪音: 'suspected',
         accepted: 'accepted', pending: 'pending', suspected: 'suspected',
       }
+      // 类型/来源的反向映射必须定义在解析循环之前（const 有 TDZ，放后面会报
+      // "Cannot access 'SRC_BACK' before initialization"）
+      // 类型：导出是中文（枚举/半枚举/数值序列/自由文本），「标准序列」是早期用词，一并兼容
+      const TYPE_BACK = {
+        枚举: 'enum', 半枚举: 'semi', 数值序列: 'series', 标准序列: 'series', 自由文本: 'free',
+        enum: 'enum', semi: 'semi', series: 'series', 'number-series': 'series', free: 'free',
+      }
+      // 来源：导出是中文（存量/序列补充/手工添加/参考值），
+      // 不反解会把 manual 存成「手工添加」，来源统计与绿色标记都会失效
+      const SRC_BACK = {
+        存量: 'stock', 序列补充: 'series', 标准序列: 'series', 手工添加: 'manual', 参考值: 'reference',
+        stock: 'stock', series: 'series', manual: 'manual', reference: 'reference',
+      }
+      // ★ 按表头名取列，不再依赖固定列序 —— 用户可能调整过列顺序、插了辅助列或删了某列。
+      //   同一含义的多种写法都认（「值」/「取值」、「频次」/「数量」），取第一个匹配到的表头。
+      const pickCol = (header, names) => {
+        const h = (header || []).map((x) => String(x == null ? '' : x).trim())
+        for (const n of names) {
+          const i = h.indexOf(n)
+          if (i >= 0) return i
+        }
+        return -1
+      }
+      const H = rows[0] || []
+      const CI = {
+        sub: pickCol(H, ['小类号', '小类', '小类编码', '小类编号']),
+        param: pickCol(H, ['参数', '参数名', '参数名称']),
+        type: pickCol(H, ['类型']),
+        value: pickCol(H, ['值', '取值', '参数值']),
+        count: pickCol(H, ['频次', '数量', '出现次数']),
+        source: pickCol(H, ['来源']),
+        status: pickCol(H, ['状态']),
+      }
+      if (CI.sub < 0 || CI.param < 0 || CI.value < 0) {
+        const seen = (H || []).map((x) => String(x == null ? '' : x).trim()).filter(Boolean).join(' | ')
+        return sendJson(res, 400, {
+          ok: false,
+          error: '表头需包含「小类号 / 参数 / 值」三列（按名称识别）。当前表头：' + (seen || '(空)'),
+        })
+      }
+      const cellOf = (r, key) => {
+        const idx = CI[key]
+        if (idx < 0) return ''
+        const v = r[idx]
+        return String(v == null ? '' : v).trim()
+      }
+
       const groups = new Map()
       for (let i = 1; i < rows.length; i++) {
         const r = rows[i] || []
-        const sub = String(r[0] || '').trim()
-        const param = String(r[2] || '').trim()
-        const val = String(r[5] || '').trim()
-        if (!/^\d{6}$/.test(sub) || !param || !val) continue
-        const stRaw = String(r[8] || '').trim()
+        // 小类号列有的写法带名称（100101 固定式框架断路器），取前 6 位数字即可
+        const mSub = /^(\d{6})/.exec(cellOf(r, 'sub'))
+        const sub = mSub ? mSub[1] : ''
+        const param = cellOf(r, 'param')
+        const val = cellOf(r, 'value')
+        if (!sub || !param || !val) continue
+        const stRaw = cellOf(r, 'status')
         const st = ST_BACK[stRaw] || ST_BACK[stRaw.toLowerCase()] || 'accepted'
         const k = sub + '|' + param
-        if (!groups.has(k)) groups.set(k, { sub, param, typeRaw: String(r[3] || '').trim(), list: [] })
+        if (!groups.has(k)) groups.set(k, { sub, param, typeRaw: cellOf(r, 'type'), list: [] })
         groups.get(k).list.push({
           value: val,
-          count: Number(r[6]) || 0,
-          source: SRC_BACK[String(r[7] || '').trim()] || 'stock',
+          count: Number(cellOf(r, 'count')) || 0,
+          source: SRC_BACK[cellOf(r, 'source')] || 'stock',
           status: st,
         })
       }
@@ -2203,34 +2252,29 @@ const server = http.createServer(async (req, res) => {
       // ① 先处理「参数清单」：在该表里新增的参数，导入后成为该小类的参数声明
       //    （之后到「参数值」表给它填值即可；两张表在同一份文件里即可联动）
       //    合并单元格的后继行为空，用 curSub 向下继承上一行的小类号
-      // 导出的类型是中文（枚举/半枚举/数值序列/自由文本），导入要能反解；
-      // 「标准序列」是早期用词，一并兼容，否则新建参数会被降级成自由文本
-      const TYPE_BACK = {
-        枚举: 'enum', 半枚举: 'semi', 数值序列: 'series', 标准序列: 'series', 自由文本: 'free',
-        enum: 'enum', semi: 'semi', series: 'series', 'number-series': 'series', free: 'free',
-      }
-      // 来源列同理：导出写的是中文（存量/序列补充/手工添加/参考值），
-      // 不反解会把 manual 存成「手工添加」，来源统计与绿色标记都会失效
-      const SRC_BACK = {
-        存量: 'stock', 序列补充: 'series', 标准序列: 'series', 手工添加: 'manual', 参考值: 'reference',
-        stock: 'stock', series: 'series', manual: 'manual', reference: 'reference',
-      }
       const listWs = wb.Sheets['参数清单']
       if (listWs) {
         const lrows = XLSX.utils.sheet_to_json(listWs, { header: 1, raw: false, defval: '' })
+        const LH = lrows[0] || []
+        // 同样按表头名定位（第一列导出时是「小类（编号 名称）」这类合并列，写法和顺序都可能被调整过）
+        const LI = {
+          sub: pickCol(LH, ['小类（编号 名称）', '小类(编号 名称)', '小类', '小类号', '小类编号']),
+          param: pickCol(LH, ['参数', '参数名', '参数名称']),
+          type: pickCol(LH, ['类型']),
+        }
         let curSub = ''
         for (let i = 1; i < lrows.length; i++) {
           const r = lrows[i] || []
-          const c0 = String(r[0] || '').trim()
+          const c0 = LI.sub >= 0 ? String(r[LI.sub] == null ? '' : r[LI.sub]).trim() : ''
           const m = /^(\d{6})/.exec(c0)
           if (m) curSub = m[1]                       // 合并单元格只有首行有值
-          const param = String(r[1] || '').trim()
+          const param = LI.param >= 0 ? String(r[LI.param] == null ? '' : r[LI.param]).trim() : ''
           if (!curSub || !param) continue
           const node = (j.subs || {})[curSub]
           if (!node) { skipped.push(curSub + '（小类不在库中）'); continue }
           node.params = node.params || {}
           if (!node.params[param]) {
-            const t = TYPE_BACK[String(r[2] || '').trim()] || 'free'
+            const t = TYPE_BACK[LI.type >= 0 ? String(r[LI.type] == null ? '' : r[LI.type]).trim() : ''] || 'free'
             node.params[param] = {
               type: t, accepted: [], pending: [], suspected: [],
               note: '由「参数清单」新增（尚无取值，可在「参数值」表补充）',

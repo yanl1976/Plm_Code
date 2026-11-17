@@ -2275,6 +2275,230 @@
           "pending": [],
           "suspected": []
         },
+        "脱扣曲线": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 3,
+          "normCount": 3,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "C",
+              "count": 447,
+              "source": "stock"
+            },
+            {
+              "value": "D",
+              "count": 119,
+              "source": "stock"
+            },
+            {
+              "value": "B",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": []
+        },
+        "额定电流": {
+          "type": "series",
+          "series": "开关电器电流档位",
+          "rawCount": 42,
+          "normCount": 22,
+          "aliases": {
+            "1A": "1",
+            "3A": "3",
+            "10A": "10",
+            "6A": "6",
+            "20A": "20",
+            "2A": "2",
+            "32A": "32",
+            "16A": "16",
+            "125A": "125",
+            "40A": "40",
+            "50A": "50",
+            "63A": "63",
+            "25A": "25",
+            "4A": "4",
+            "60A": "60",
+            "700A": "700",
+            "5A": "5",
+            "80A": "80",
+            "100A": "100",
+            "12A": "12",
+            "8A": "8"
+          },
+          "accepted": [
+            {
+              "value": "10",
+              "count": 109,
+              "source": "stock"
+            },
+            {
+              "value": "16",
+              "count": 90,
+              "source": "stock"
+            },
+            {
+              "value": "6",
+              "count": 89,
+              "source": "stock"
+            },
+            {
+              "value": "25",
+              "count": 77,
+              "source": "stock"
+            },
+            {
+              "value": "32",
+              "count": 72,
+              "source": "stock"
+            },
+            {
+              "value": "63",
+              "count": 65,
+              "source": "stock"
+            },
+            {
+              "value": "20",
+              "count": 62,
+              "source": "stock"
+            },
+            {
+              "value": "40",
+              "count": 39,
+              "source": "stock"
+            },
+            {
+              "value": "3",
+              "count": 22,
+              "source": "stock"
+            },
+            {
+              "value": "4",
+              "count": 20,
+              "source": "stock"
+            },
+            {
+              "value": "50",
+              "count": 17,
+              "source": "stock"
+            },
+            {
+              "value": "2",
+              "count": 10,
+              "source": "stock"
+            },
+            {
+              "value": "125",
+              "count": 9,
+              "source": "stock"
+            },
+            {
+              "value": "80",
+              "count": 5,
+              "source": "stock"
+            },
+            {
+              "value": "100",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "1",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "13",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "160",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "200",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "250",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "315",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "400",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "500",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "630",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "800",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "1000",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "1250",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "1600",
+              "count": 0,
+              "source": "series"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "9",
+              "count": 3
+            },
+            {
+              "value": "5",
+              "count": 2
+            },
+            {
+              "value": "60",
+              "count": 1
+            },
+            {
+              "value": "700",
+              "count": 1
+            },
+            {
+              "value": "12",
+              "count": 1
+            },
+            {
+              "value": "8",
+              "count": 1
+            }
+          ]
+        },
         "分断能力": {
           "type": "series",
           "series": "断路器分断值",
@@ -2522,230 +2746,6 @@
           "suspected": [
             {
               "value": "250V",
-              "count": 1
-            }
-          ]
-        },
-        "脱扣曲线": {
-          "type": "enum",
-          "series": "",
-          "rawCount": 3,
-          "normCount": 3,
-          "aliases": {},
-          "accepted": [
-            {
-              "value": "C",
-              "count": 447,
-              "source": "stock"
-            },
-            {
-              "value": "D",
-              "count": 119,
-              "source": "stock"
-            },
-            {
-              "value": "B",
-              "count": 2,
-              "source": "stock"
-            }
-          ],
-          "pending": [],
-          "suspected": []
-        },
-        "额定电流": {
-          "type": "series",
-          "series": "开关电器电流档位",
-          "rawCount": 42,
-          "normCount": 22,
-          "aliases": {
-            "1A": "1",
-            "3A": "3",
-            "10A": "10",
-            "6A": "6",
-            "20A": "20",
-            "2A": "2",
-            "32A": "32",
-            "16A": "16",
-            "125A": "125",
-            "40A": "40",
-            "50A": "50",
-            "63A": "63",
-            "25A": "25",
-            "4A": "4",
-            "60A": "60",
-            "700A": "700",
-            "5A": "5",
-            "80A": "80",
-            "100A": "100",
-            "12A": "12",
-            "8A": "8"
-          },
-          "accepted": [
-            {
-              "value": "10",
-              "count": 109,
-              "source": "stock"
-            },
-            {
-              "value": "16",
-              "count": 90,
-              "source": "stock"
-            },
-            {
-              "value": "6",
-              "count": 89,
-              "source": "stock"
-            },
-            {
-              "value": "25",
-              "count": 77,
-              "source": "stock"
-            },
-            {
-              "value": "32",
-              "count": 72,
-              "source": "stock"
-            },
-            {
-              "value": "63",
-              "count": 65,
-              "source": "stock"
-            },
-            {
-              "value": "20",
-              "count": 62,
-              "source": "stock"
-            },
-            {
-              "value": "40",
-              "count": 39,
-              "source": "stock"
-            },
-            {
-              "value": "3",
-              "count": 22,
-              "source": "stock"
-            },
-            {
-              "value": "4",
-              "count": 20,
-              "source": "stock"
-            },
-            {
-              "value": "50",
-              "count": 17,
-              "source": "stock"
-            },
-            {
-              "value": "2",
-              "count": 10,
-              "source": "stock"
-            },
-            {
-              "value": "125",
-              "count": 9,
-              "source": "stock"
-            },
-            {
-              "value": "80",
-              "count": 5,
-              "source": "stock"
-            },
-            {
-              "value": "100",
-              "count": 4,
-              "source": "stock"
-            },
-            {
-              "value": "1",
-              "count": 2,
-              "source": "stock"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "manufacturer"
-            },
-            {
-              "value": "160",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "200",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "250",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "315",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "400",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "630",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "800",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1250",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1600",
-              "count": 0,
-              "source": "series"
-            }
-          ],
-          "pending": [],
-          "suspected": [
-            {
-              "value": "9",
-              "count": 3
-            },
-            {
-              "value": "5",
-              "count": 2
-            },
-            {
-              "value": "60",
-              "count": 1
-            },
-            {
-              "value": "700",
-              "count": 1
-            },
-            {
-              "value": "12",
-              "count": 1
-            },
-            {
-              "value": "8",
               "count": 1
             }
           ]
@@ -33484,7 +33484,7 @@
   },
   "meta": {
     "version": "0.2.0",
-    "generatedAt": "2026-11-17T15:17:13.480Z",
+    "generatedAt": "2026-11-17T15:25:20.980Z",
     "draft": true,
     "structure": "subs[小类] → params[参数] → {type, accepted, pending, suspected, aliases}",
     "principle": "参数值按小类隔离：某小类的候选只来自该小类的存量，不跨小类共用",

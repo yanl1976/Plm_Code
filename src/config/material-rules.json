@@ -259,7 +259,20 @@
       "ω": "Ω"
     },
     "requireParamHit": 1,
-    "requireParamMsg": "该小类的关键参数一个都没识别到（{tokens}），请按“参数+数值”补全，否则无法与相似物料区分"
+    "requireParamMsg": "该小类的关键参数一个都没识别到（{tokens}），请按“参数+数值”补全，否则无法与相似物料区分",
+    "subMismatchNote": {
+      "tried": true,
+      "at": "2026-11-17",
+      "conclusion": "按规格特征单位剔除错类不可行",
+      "evidence": "候选 114 条，人工核对几乎全为误判",
+      "examples": [
+        "端子 \"PH2538 0-5KΩ/4-20MA\" 被电阻单位误判（实为信号范围）",
+        "端头 \"TE 1mm^2 黄色\" 被截面面积误判（端头本就按导线截面分）",
+        "断路器 \"XT2N160 MF R8.5 F F 3P\" 被电容单位误判（F 为脱扣器代号）",
+        "指示灯 \"AD17KA-22\" 被分断能力误判（KA 是型号片段）"
+      ],
+      "decision": "错类剔除只按名称（detectSubMismatch，基于小类标准名的相似度），规格维度不参与剔除"
+    }
   },
   "material": {
     "nameEqualsSpecMsg": "名称与规格完全相同，名称应写“是什么”，规格写“型号+参数”",

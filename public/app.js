@@ -1709,6 +1709,15 @@ function bindPlColEvents(scope) {
       e.preventDefault()
       addFrom(inp.value)
     }
+    // 失焦也提交：很多人打完值直接点「保存全部」，不会先按回车，
+    // 值留在输入框里 → 底部显示"没有改动"、保存也不生效。
+    inp.onblur = () => {
+      const txt = String(inp.value || '').trim()
+      if (!txt) return
+      setTimeout(() => addFrom(txt), 0)   // 延后一拍，避免重渲染打断 blur
+    }
+    // 边输入边更新底部提示（有未提交内容时提醒可点保存）
+    inp.oninput = () => refreshPlFoot()
     // 粘贴多个值（含换行/逗号/多余空格）直接入列；单个值走默认粘贴，便于再修改
     inp.onpaste = (e) => {
       const cb = e.clipboardData || window.clipboardData
@@ -1736,11 +1745,40 @@ function refreshPlCol(pi) {
 
 function refreshPlFoot() {
   const n = (PLED.params || []).filter((p) => p.isNew || plDiff(p.name).changed).length
-  if ($('#plDfTip')) $('#plDfTip').textContent = n ? (n + ' 个参数有改动') : '没有改动'
-  if ($('#plDhSave')) $('#plDhSave').disabled = !n
+  // 底部提示：有改动报数量；输入框里还有未提交内容时单独提示
+  const pending = Array.from(document.querySelectorAll('#plDrawerBody input[data-pi]'))
+    .some((inp) => String(inp.value || '').trim())
+  if ($('#plDfTip')) {
+    $('#plDfTip').textContent = n
+      ? (n + ' 个参数有改动')
+      : (pending ? '输入框里有待添加的值，点「保存全部」会一并保存' : '没有改动')
+  }
+  // 不用 disabled：禁用后点击不会触发 onclick，用户填了值也点不动，
+  // 表现出来就是「保存无效」。改为弱化样式，逻辑在 savePlDrawer 里判断。
+  if ($('#plDhSave')) $('#plDhSave').classList.toggle('is-dim', !n && !pending)
+}
+
+/** 保存前把各列输入框里还没提交的内容收进来（防止"打了值没回车"被丢掉） */
+function commitPendingInputs() {
+  const inputs = document.querySelectorAll('#plDrawerBody input[data-pi]')
+  let touched = false
+  inputs.forEach((inp) => {
+    const txt = String(inp.value || '').trim()
+    if (!txt) return
+    const pi = Number(inp.dataset.pi)
+    const p = (PLED.params || [])[pi]
+    if (!p) return
+    for (const v of plSplitValues(txt)) {
+      if (!PLED.cur[p.name].includes(v)) { PLED.cur[p.name].push(v); touched = true }
+    }
+    inp.value = ''
+  })
+  if (touched) refreshPlFoot()
+  return touched
 }
 
 async function savePlDrawer() {
+  commitPendingInputs()
   // isNew：抽屉里新增的参数列（即使还没填值也要提交，否则不会被创建）
   const changed = (PLED.params || []).filter((p) => p.isNew || plDiff(p.name).changed)
   if (!changed.length) { closePlDrawer(); return }

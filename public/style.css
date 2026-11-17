@@ -845,3 +845,7 @@ button:disabled { opacity:.45; cursor:not-allowed; }
 
 /* 新增的参数列：标题前加一个小标记，提示「这是本次新建的」 */
 .pl-col.add .pl-col-name::after { content:' 新'; font-size:9px; color:#43a047; font-weight:400; }
+
+/* 保存按钮「暂无改动」时的弱化样式（仍可点击，避免 disabled 导致点击无效） */
+.pl-drawer-foot button.is-dim { opacity:.55; }
+.pl-drawer-foot button.is-dim:hover { opacity:.75; }

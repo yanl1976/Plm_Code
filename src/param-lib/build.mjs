@@ -33,6 +33,12 @@ const GUIDE = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/naming-guid
 const FIELDMAP = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/guide-field-map.json'), 'utf8'))
 const ALIAS = FIELDMAP.alias || {}
 const NAMEONLY = new Set(FIELDMAP.nameOnly || [])
+// 逐小类的 tokens 增减：
+//   subAddTokens    —— 模板里有、中类通用 tokens 没有的，要补进来
+//   subRemoveTokens —— 中类通用 tokens 带了、但该小类语义上不该有的，要排掉
+// 典型：1201 紧固件的「型号/材质/头型」、1103 电缆的「颜色」，
+// 都是中类通用 tokens 的副作用（同一中类下不同小类字段需求不同）。
+const DEDUP = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/dedup-rules.json'), 'utf8'))
 
 await loadIndex({ force: true })
 
@@ -174,7 +180,10 @@ const stat = { subs: 0, params: 0, accepted: 0, pending: 0, suspected: 0 }
 
 for (const sub of SUBS) {
   const info = getCategory(sub) || {}
-  const tokens = chooseTokens(info)
+  // 中类通用 tokens + 该小类补充 - 该小类排除
+  const tokAdd = (DEDUP.subAddTokens || {})[sub] || []
+  const tokDel = (DEDUP.subRemoveTokens || {})[sub] || []
+  const tokens = [...new Set([...chooseTokens(info), ...tokAdd])].filter((t) => !tokDel.includes(t))
   if (!tokens.length) continue
   const list = rows.filter((r) => String(r.FNUMBER || '').startsWith(sub) && String(r.FSPECIFICATION || '').trim())
   const clean = list.filter((r) => !suspect.has(r.FNUMBER))

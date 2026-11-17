@@ -1758,6 +1758,13 @@ const server = http.createServer(async (req, res) => {
       //   suspected = 疑似噪音（不采用，可删行清理）
       // 放一张表是为了人工维护时能在一个视图里完成「转正 / 删除 / 新增」，
       // 不用在两张表之间来回切（此前 accepted 与 pending 是分开的两个 sheet）。
+      // 导出给人看：类型 / 来源 / 状态一律转中文（导入时状态列中英文都认，见 import-xlsx）
+      // 类型与来源都要转中文，但两者都可能是 series，必须区分措辞，否则同一行出现两个「标准序列」
+      //   类型 series  → 数值序列（表示该参数按标准序列枚举）
+      //   来源 series  → 序列补充（表示该值来自标准序列、本小类存量未出现）
+      const TYPE_CN = { enum: '枚举', semi: '半枚举', series: '数值序列', free: '自由文本', 'number-series': '数值序列' }
+      const SRC_CN = { stock: '存量', series: '序列补充', manual: '手工添加', reference: '参考值' }
+      const ST_CN = { accepted: '标准值', pending: '待确认', suspected: '疑似噪音' }
       const rows = [['小类号', '小类名', '参数', '类型', '标准序列', '值', '频次', '来源', '状态', '备注']]
       const subsSorted = Object.entries(j.subs || {}).sort((a, b) => a[0].localeCompare(b[0]))
       for (const [sub, x] of subsSorted) {
@@ -1774,7 +1781,18 @@ const server = http.createServer(async (req, res) => {
               } else if (v.source === 'series') {
                 note = '标准序列补充（本小类存量未出现）'
               }
-              rows.push([sub, x.subName || '', name, d.type || '', d.series || '', v.value, v.count || 0, v.source || 'stock', status, note])
+              rows.push([
+                sub,
+                x.subName || '',
+                name,
+                TYPE_CN[d.type] || d.type || '',
+                d.series || '',
+                v.value,
+                v.count || 0,
+                SRC_CN[v.source] || v.source || '存量',
+                ST_CN[status] || status,
+                note,
+              ])
             }
           }
           add(d.accepted, 'accepted')
@@ -1789,9 +1807,14 @@ const server = http.createServer(async (req, res) => {
         ['  小类号   6 位小类编码，用于定位到具体小类（必填，不可乱改）'],
         ['  参数     参数名（必填，须与库中已有参数名一致）'],
         ['  值       参数取值（必填）'],
-        ['  状态     决定导入后的归类：accepted / pending / suspected'],
+        ['  状态     决定导入后的归类，三选一：'],
+        ['             标准值   = 会被推荐与校验采用'],
+        ['             待确认   = 仅记录，不参与推荐'],
+        ['             疑似噪音 = 不采用，确认无用可删行'],
+        ['            （也兼容英文 accepted / pending / suspected）'],
+        ['  类型     枚举 / 半枚举 / 标准序列 / 自由文本 / 数值序列（只读，由构建自动判定）'],
+        ['  来源     存量 / 标准序列 / 手工添加 / 参考值（只读，按小类号+参数+值重新计算）'],
         ['  备注     说明该值为什么不是标准值、以及建议怎么处理（导入时不读这一列）'],
-        ['  其余列（小类名/类型/标准序列/频次/来源）仅供阅读，导入时按小类号+参数+值重新计算'],
         [''],
         ['一·补充：颜色含义'],
         ['  红色加粗  = pending（待确认）：不在本小类标准序列，但存量出现较多，需人工判断'],
@@ -1870,7 +1893,12 @@ const server = http.createServer(async (req, res) => {
       const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' })
       if (!rows.length) return sendJson(res, 400, { ok: false, error: '工作表为空' })
 
-      const STATUS = new Set(['accepted', 'pending', 'suspected'])
+      // 状态列中英文都认：导出是中文（标准值/待确认/疑似噪音），
+      // 但旧文件或人工手填可能是英文（accepted/pending/suspected）
+      const ST_BACK = {
+        标准值: 'accepted', 待确认: 'pending', 疑似噪音: 'suspected',
+        accepted: 'accepted', pending: 'pending', suspected: 'suspected',
+      }
       const groups = new Map()
       for (let i = 1; i < rows.length; i++) {
         const r = rows[i] || []
@@ -1878,14 +1906,15 @@ const server = http.createServer(async (req, res) => {
         const param = String(r[2] || '').trim()
         const val = String(r[5] || '').trim()
         if (!/^\d{6}$/.test(sub) || !param || !val) continue
-        const st = String(r[8] || 'accepted').trim().toLowerCase()
+        const stRaw = String(r[8] || '').trim()
+        const st = ST_BACK[stRaw] || ST_BACK[stRaw.toLowerCase()] || 'accepted'
         const k = sub + '|' + param
         if (!groups.has(k)) groups.set(k, { sub, param, list: [] })
         groups.get(k).list.push({
           value: val,
           count: Number(r[6]) || 0,
-          source: String(r[7] || 'stock').trim() || 'stock',
-          status: STATUS.has(st) ? st : 'accepted',
+          source: String(r[7] || '').trim() || 'stock',
+          status: st,
         })
       }
       if (!groups.size) return sendJson(res, 400, { ok: false, error: '没有可导入的行（检查 小类号 / 参数 / 值 三列）' })

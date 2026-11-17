@@ -1678,6 +1678,7 @@ if ($('#plFile')) {
         const label = plImportMode === 'replace' ? '覆盖' : '补充'
         const lines = [
           '即将导入（' + label + '）：',
+          dry.newParams ? '  新增参数 ' + dry.newParams + ' 个（来自「参数清单」表）' : '',
           '  新增 ' + dry.added + ' 个值',
           '  更新 ' + dry.updated + ' 个值',
           dry.removed ? '  删除 ' + dry.removed + ' 个值（表里没有的）' : '  删除 0 个值',

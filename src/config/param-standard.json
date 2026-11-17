@@ -30505,6 +30505,8 @@
     "scope": "1001-1014 中类",
     "sourceRows": 8345,
     "droppedRows": 271,
-    "note": "由 src/param-lib/build.mjs 生成。accepted=可推荐；pending=待确认；suspected=疑似笔误/提取错误。人工确认后把 draft 改为 false。"
+    "note": "由 src/param-lib/build.mjs 生成。accepted=可推荐；pending=待确认；suspected=疑似笔误/提取错误。人工确认后把 draft 改为 false。",
+    "updatedAt": "2026-11-17T12:01:33.439Z",
+    "editedAt": "2026-11-17T12:00:40.124Z"
   }
 }

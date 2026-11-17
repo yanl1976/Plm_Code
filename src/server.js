@@ -1831,6 +1831,15 @@ const server = http.createServer(async (req, res) => {
         ['  补充（推荐）  只新增/更新表里出现的值，不删除库中已有但表里没有的值'],
         ['  覆盖          表里出现的每个「小类号+参数」整组替换，表里没有的值会被删除'],
         [''],
+        ['四、参数清单表（第二个标签）'],
+        ['  作用    声明「每个小类应该有哪些参数」，一行一个参数；第一列按小类纵向合并'],
+        ['  新增参数 在该小类下方插入一行，填「参数」列；'],
+        ['            「类型」可填 枚举 / 半枚举 / 数值序列 / 自由文本（留空按自由文本）'],
+        ['  联动    导入时**先**读参数清单补参数声明，**再**读参数值填取值，'],
+        ['           因此同一份文件里新增的参数可以直接在「参数值」表里给值'],
+        ['  注意    合并单元格只有该小类的首行有值，其余行为空，导入时会自动继承上一行'],
+        ['           如果想给新参数填值，到「参数值」表按「小类号 + 参数名 + 值」补一行即可'],
+        [''],
         ['四、注意'],
         ['  · 导入前会先做一次预检，显示 新增/更新/删除 的数量，确认后才写入'],
         ['  · 导入会自动备份当前库到 src/config/_backup/'],
@@ -1857,10 +1866,48 @@ const server = http.createServer(async (req, res) => {
         }
       }
       ws['!cols'] = [{ wch: 8 }, { wch: 14 }, { wch: 10 }, { wch: 9 }, { wch: 18 }, { wch: 16 }, { wch: 6 }, { wch: 9 }, { wch: 10 }, { wch: 48 }]
+
+      // 「参数清单」：一行一个「小类 + 参数」，回答「这个小类应该有哪些参数」。
+      // 第一列把「编号 + 名称」纵向合并成一个单元格，便于按小类浏览。
+      // 该表是**声明表**：在这里新增一行参数，导入后该小类的参数集合就会多出这一项，
+      // 之后到「参数值」表给这个参数填值即可。
+      const listRows = [['小类（编号 名称）', '参数', '类型', '已有值数']]
+      const merges = []
+      for (const [sub, x] of subsSorted) {
+        const params = Object.entries(x.params || {}).sort((a, b) => a[0].localeCompare(b[0], 'zh'))
+        if (!params.length) continue
+        const start = listRows.length
+        for (const [name, d] of params) {
+          listRows.push([
+            sub + ' ' + (x.subName || ''),
+            name,
+            TYPE_CN[d.type] || d.type || '',
+            (d.accepted || []).length,
+          ])
+        }
+        const end = listRows.length - 1
+        if (end > start) merges.push({ s: { r: start, c: 0 }, e: { r: end, c: 0 } })
+      }
+      const wsList = XLSXStyle.utils.aoa_to_sheet(listRows)
+      wsList['!merges'] = merges
+      for (let c = 0; c < 4; c++) {
+        const addr = XLSXStyle.utils.encode_cell({ r: 0, c })
+        if (wsList[addr]) wsList[addr].s = ST.head
+      }
+      for (let r = 1; r < listRows.length; r++) {
+        // 合并单元格的后续行没有值，补齐空单元格，避免样式设置报错
+        for (let c = 0; c < 4; c++) {
+          const addr = XLSXStyle.utils.encode_cell({ r, c })
+          if (!wsList[addr]) wsList[addr] = { t: 's', v: '' }
+        }
+      }
+      wsList['!cols'] = [{ wch: 30 }, { wch: 14 }, { wch: 10 }, { wch: 10 }]
+
       const wsGuide = XLSXStyle.utils.aoa_to_sheet(guide)
       wsGuide['!cols'] = [{ wch: 110 }]
       const wb = XLSXStyle.utils.book_new()
       XLSXStyle.utils.book_append_sheet(wb, ws, '参数值')
+      XLSXStyle.utils.book_append_sheet(wb, wsList, '参数清单')
       XLSXStyle.utils.book_append_sheet(wb, wsGuide, '维护说明')
       // cellStyles 必须显式开启，否则 styles.xml 里不落 font.color（读回来只有空的 patternType）
       const buf = XLSXStyle.write(wb, { type: 'buffer', bookType: 'xlsx', cellStyles: true })
@@ -1919,9 +1966,42 @@ const server = http.createServer(async (req, res) => {
       }
       if (!groups.size) return sendJson(res, 400, { ok: false, error: '没有可导入的行（检查 小类号 / 参数 / 值 三列）' })
 
-      const j = readConfigJson('param-standard.json') || { subs: {} }
-      let added = 0, touched = 0, removed = 0
+      // 深拷贝：readConfigJson 返回的是缓存中的同一个对象，
+      // 若 dryRun 直接改它，改动会残留在缓存里，导致随后的正式导入看不到「新增」。
+      const j = JSON.parse(JSON.stringify(readConfigJson('param-standard.json') || { subs: {} }))
+      let added = 0, touched = 0, removed = 0, newParams = 0
       const skipped = []
+
+      // ① 先处理「参数清单」：在该表里新增的参数，导入后成为该小类的参数声明
+      //    （之后到「参数值」表给它填值即可；两张表在同一份文件里即可联动）
+      //    合并单元格的后继行为空，用 curSub 向下继承上一行的小类号
+      const TYPE_BACK = { 枚举: 'enum', 半枚举: 'semi', 数值序列: 'series', 自由文本: 'free' }
+      const listWs = wb.Sheets['参数清单']
+      if (listWs) {
+        const lrows = XLSX.utils.sheet_to_json(listWs, { header: 1, raw: false, defval: '' })
+        let curSub = ''
+        for (let i = 1; i < lrows.length; i++) {
+          const r = lrows[i] || []
+          const c0 = String(r[0] || '').trim()
+          const m = /^(\d{6})/.exec(c0)
+          if (m) curSub = m[1]                       // 合并单元格只有首行有值
+          const param = String(r[1] || '').trim()
+          if (!curSub || !param) continue
+          const node = (j.subs || {})[curSub]
+          if (!node) { skipped.push(curSub + '（小类不在库中）'); continue }
+          node.params = node.params || {}
+          if (!node.params[param]) {
+            const t = TYPE_BACK[String(r[2] || '').trim()] || 'free'
+            node.params[param] = {
+              type: t, accepted: [], pending: [], suspected: [],
+              note: '由「参数清单」新增（尚无取值，可在「参数值」表补充）',
+            }
+            newParams++
+          }
+        }
+      }
+
+      // ② 再处理「参数值」：此时上面新增的参数已存在，值可以落到它上面
       for (const g of groups.values()) {
         const node = (j.subs || {})[g.sub]
         const d = node && (node.params || {})[g.param]
@@ -1957,7 +2037,7 @@ const server = http.createServer(async (req, res) => {
 
       if (dryRun) {
         return sendJson(res, 200, {
-          ok: true, dryRun: true, mode, added, updated: touched, removed,
+          ok: true, dryRun: true, mode, added, updated: touched, removed, newParams,
           groups: groups.size, skipped: skipped.slice(0, 10),
         })
       }
@@ -1975,7 +2055,7 @@ const server = http.createServer(async (req, res) => {
       j.meta.editedAt = j.meta.updatedAt
       saveConfigJson('param-standard.json', j)
       return sendJson(res, 200, {
-        ok: true, mode, added, updated: touched, removed,
+        ok: true, mode, added, updated: touched, removed, newParams,
         groups: groups.size, skipped: skipped.slice(0, 10), subs: Object.keys(j.subs || {}).length,
       })
     }

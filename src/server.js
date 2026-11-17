@@ -1860,11 +1860,16 @@ const server = http.createServer(async (req, res) => {
         ['  灰色      = suspected（疑似噪音）：出现次数很少，多为笔误或型号片段，可直接删行'],
         ['  无颜色    = accepted（标准值）：会被推荐与校验采用'],
         [''],
-        ['二、常见维护动作'],
+        ['二、常见维护动作（只改「参数值」表即可）'],
+        ['  新增一个值     → 在对应「小类号+参数」下插入一行，值列填取值，状态填 标准值'],
+        ['  新增一个参数   → 直接插入一行：小类号 + 新参数名 + 值；'],
+        ['                   库中不存在该参数时会自动创建（类型按「类型」列，留空按自由文本）'],
+        ['  一个参数多个值 → 同一个「小类号+参数」写多行，每行一个值'],
         ['  把疑似值转正   → 把该行「状态」改成 accepted'],
         ['  删除某个值     → 直接删掉该行（导入时选「覆盖」才生效）'],
-        ['  新增一个值     → 在对应「小类号+参数」下插入一行，状态填 accepted'],
         ['  批量清理噪音   → 按「状态」列筛选 suspected，整行删除'],
+        [''],
+        ['  注：值列为空的行会被跳过（不写入空值），只用于占位提示'],
         [''],
         ['三、导入模式（导出时看到的表，导入时二选一）'],
         ['  补充（推荐）  只新增/更新表里出现的值，不删除库中已有但表里没有的值'],
@@ -2002,7 +2007,7 @@ const server = http.createServer(async (req, res) => {
         const stRaw = String(r[8] || '').trim()
         const st = ST_BACK[stRaw] || ST_BACK[stRaw.toLowerCase()] || 'accepted'
         const k = sub + '|' + param
-        if (!groups.has(k)) groups.set(k, { sub, param, list: [] })
+        if (!groups.has(k)) groups.set(k, { sub, param, typeRaw: String(r[3] || '').trim(), list: [] })
         groups.get(k).list.push({
           value: val,
           count: Number(r[6]) || 0,
@@ -2050,8 +2055,20 @@ const server = http.createServer(async (req, res) => {
       // ② 再处理「参数值」：此时上面新增的参数已存在，值可以落到它上面
       for (const g of groups.values()) {
         const node = (j.subs || {})[g.sub]
-        const d = node && (node.params || {})[g.param]
-        if (!d) { skipped.push(g.sub + ' ' + g.param); continue }
+        if (!node) { skipped.push(g.sub + '（小类不在库中）'); continue }
+        node.params = node.params || {}
+        let d = node.params[g.param]
+        if (!d) {
+          // 参数值表里出现库里没有的参数 → 自动创建。
+          // 这是主要维护路径：用户只需在「参数值」表加行（小类号 + 参数 + 值），
+          // 不必先去「参数清单」声明；一个参数可以占多行（多个取值）。
+          const t = TYPE_BACK[String(g.typeRaw || '').trim()] || 'free'
+          d = node.params[g.param] = {
+            type: t, accepted: [], pending: [], suspected: [],
+            note: '由「参数值」表新增（暂无标准序列，按自由文本处理）',
+          }
+          newParams++
+        }
 
         if (mode === 'replace') {
           const bucket = { accepted: [], pending: [], suspected: [] }

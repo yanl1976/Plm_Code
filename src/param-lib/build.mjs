@@ -253,10 +253,24 @@ for (const sub of SUBS) {
     }
 
     if (kind === 'free') {
+      // free 型（型号/脱扣器等）只给 Top5 参考值，但厂家系列必须一起给出 ——
+      // 否则录入型号时看不到 MTZ3 / NSX630 / iC65N 这类系列，
+      // 而"系列进型号参数"正是它们唯一该待的地方。
+      const ref = ranked.slice(0, 5).map(([value, count]) => ({ value, count }))
+      const seenFree = new Set(ref.map((x) => String(x.value)))
+      const mfrFree = ((MFR.subs || {})[sub] || {})[name] || []
+      const confFree = CONFIRMED[sub + '|' + name] || []
+      for (const v of [...mfrFree, ...confFree]) {
+        const sv = String(v)
+        if (seenFree.has(sv)) continue
+        seenFree.add(sv)
+        const isMfr = mfrFree.map(String).includes(sv)
+        ref.push({ value: sv, count: 0, source: isMfr ? 'manufacturer' : 'confirmed' })
+      }
       params[name] = {
         ...base,
-        reference: ranked.slice(0, 5).map(([value, count]) => ({ value, count })),
-        note: '取值过多，不推荐值；仅保留 Top5 作"本小类常见写法"参考',
+        reference: ref,
+        note: '取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列',
       }
       continue
     }

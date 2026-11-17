@@ -2188,7 +2188,7 @@ const server = http.createServer(async (req, res) => {
         groups.get(k).list.push({
           value: val,
           count: Number(r[6]) || 0,
-          source: String(r[7] || '').trim() || 'stock',
+          source: SRC_BACK[String(r[7] || '').trim()] || 'stock',
           status: st,
         })
       }
@@ -2203,7 +2203,18 @@ const server = http.createServer(async (req, res) => {
       // ① 先处理「参数清单」：在该表里新增的参数，导入后成为该小类的参数声明
       //    （之后到「参数值」表给它填值即可；两张表在同一份文件里即可联动）
       //    合并单元格的后继行为空，用 curSub 向下继承上一行的小类号
-      const TYPE_BACK = { 枚举: 'enum', 半枚举: 'semi', 数值序列: 'series', 自由文本: 'free' }
+      // 导出的类型是中文（枚举/半枚举/数值序列/自由文本），导入要能反解；
+      // 「标准序列」是早期用词，一并兼容，否则新建参数会被降级成自由文本
+      const TYPE_BACK = {
+        枚举: 'enum', 半枚举: 'semi', 数值序列: 'series', 标准序列: 'series', 自由文本: 'free',
+        enum: 'enum', semi: 'semi', series: 'series', 'number-series': 'series', free: 'free',
+      }
+      // 来源列同理：导出写的是中文（存量/序列补充/手工添加/参考值），
+      // 不反解会把 manual 存成「手工添加」，来源统计与绿色标记都会失效
+      const SRC_BACK = {
+        存量: 'stock', 序列补充: 'series', 标准序列: 'series', 手工添加: 'manual', 参考值: 'reference',
+        stock: 'stock', series: 'series', manual: 'manual', reference: 'reference',
+      }
       const listWs = wb.Sheets['参数清单']
       if (listWs) {
         const lrows = XLSX.utils.sheet_to_json(listWs, { header: 1, raw: false, defval: '' })

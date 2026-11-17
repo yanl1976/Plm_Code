@@ -1712,6 +1712,42 @@ function startEditPlValue(el) {
   inp.onblur = () => finish(true)
 }
 
+/**
+ * 值排序：与后端 sortByValue 同口径（数值优先、含单位换算），无法解析的退回字典序。
+ * 抽屉里新增/修改一个值后立刻排序，否则「75」会落在「100」后面。
+ */
+function plNum(val) {
+  const t = String(val || '').toUpperCase().replace(/\s/g, '')
+  // 分数写法：1/2W = 0.5W、1/4W = 0.25W（电阻功率常见）
+  const frac = /^(\d+)\/(\d+)(W|KW)$/.exec(t)
+  if (frac) return (parseFloat(frac[1]) / parseFloat(frac[2])) * (frac[3] === 'KW' ? 1000 : 1)
+  // 单位等级：换算到基本单位再比，避免 "6KV" 排在 "690V" 前面
+  const UNITS = [
+    [/PF$/, 1e-12], [/NF$/, 1e-9], [/UF$|ΜF$|μF$/, 1e-6], [/MF$/, 1e-3],
+    [/MΩ$|MOHM$/, 1e6], [/KΩ$|KOHM$/, 1e3], [/Ω$|OHM$/, 1],
+    [/KV$/, 1e3], [/MV$/, 1e-3], [/V$/, 1],
+    [/KW$/, 1e3], [/MW$/, 1e-3], [/W$/, 1],
+    [/KA$/, 1e3], [/MA$/, 1e-3], [/A$/, 1],
+    [/MM\^?2$/, 1], [/MM$/, 1],
+  ]
+  let mul = 1
+  for (const [re, m] of UNITS) { if (re.test(t)) { mul = m; break } }
+  const m = /^(-?\d+(?:\.\d+)?)/.exec(t)
+  return m ? parseFloat(m[1]) * mul : NaN
+}
+
+function plSortValues(list) {
+  return list.slice().sort((a, b) => {
+    const na = plNum(a.value)
+    const nb = plNum(b.value)
+    const aNum = !Number.isNaN(na)
+    const bNum = !Number.isNaN(nb)
+    if (aNum && bNum && na !== nb) return na - nb
+    if (aNum !== bNum) return aNum ? -1 : 1      // 能算出数值的排前
+    return String(a.value).localeCompare(String(b.value), 'zh')
+  })
+}
+
 function bindPlColEvents(scope) {
   // 单击值 → 就地变成输入框（不再弹 prompt），回车/失焦确认，Esc 取消。
   // 改完：原值进 removed（红删除线，可恢复），新值标 manual（绿色）；两者随保存持久化。
@@ -1829,6 +1865,8 @@ function refreshPlCol(pi) {
   const col = document.querySelector('#plDrawerBody .pl-col[data-pi="' + pi + '"]')
   const p = (PLED.params || [])[pi]
   if (!col || !p) return
+  // 每次刷新都按值排序：新增/修改/恢复之后立刻归位（75 应插在 63 与 80 之间）
+  PLED.cur[p.name] = plSortValues(PLED.cur[p.name] || [])
   const tmp = document.createElement('div')
   tmp.innerHTML = renderPlCol(p, pi)
   const fresh = tmp.firstChild

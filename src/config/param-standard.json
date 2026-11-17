@@ -14335,6 +14335,36 @@
             {
               "value": "LA38-20D/2032",
               "count": 3
+            },
+            {
+              "value": "XB4-BA21",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "XB4-BA31",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "XB4-BA42",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "XB4-BA51",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "XB4-BA61",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "XB4-BS8444",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
@@ -14363,6 +14393,16 @@
               "source": "stock"
             },
             {
+              "value": "110V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "380V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
               "value": "36V",
               "count": 0,
               "source": "series"
@@ -14373,17 +14413,7 @@
               "source": "series"
             },
             {
-              "value": "110V",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "127V",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "380V",
               "count": 0,
               "source": "series"
             },
@@ -14477,7 +14507,18 @@
           "rawCount": 1,
           "normCount": 1,
           "aliases": {},
-          "accepted": [],
+          "accepted": [
+            {
+              "value": "22mm",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "30mm",
+              "count": 0,
+              "source": "manufacturer"
+            }
+          ],
           "pending": [],
           "suspected": [
             {
@@ -14517,6 +14558,11 @@
               "value": "白",
               "count": 4,
               "source": "stock"
+            },
+            {
+              "value": "蓝",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -14542,6 +14588,26 @@
               "value": "1NO+1NC",
               "count": 3,
               "source": "stock"
+            },
+            {
+              "value": "1NO",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "1NC",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "2NO",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "2NC",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -14591,6 +14657,21 @@
               "value": "LAY7-01D",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "XB4-BW33B5",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "XB4-BW34B5",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "XB4-BW3365",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -14665,6 +14746,16 @@
               "value": "绿",
               "count": 7,
               "source": "stock"
+            },
+            {
+              "value": "黄",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "蓝",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -14709,6 +14800,26 @@
             {
               "value": "LA38-20X3/203",
               "count": 2
+            },
+            {
+              "value": "XB4-BD21",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "XB4-BD25",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "XB4-BD33",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "XB4-BD53",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
@@ -14719,7 +14830,13 @@
           "rawCount": 1,
           "normCount": 1,
           "aliases": {},
-          "accepted": [],
+          "accepted": [
+            {
+              "value": "22mm",
+              "count": 0,
+              "source": "manufacturer"
+            }
+          ],
           "pending": [],
           "suspected": [
             {
@@ -15500,6 +15617,21 @@
             {
               "value": "ND16-22DS/4",
               "count": 7
+            },
+            {
+              "value": "AD16-22I",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "AD16-22D",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "AD16-22DS",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
@@ -15515,6 +15647,11 @@
               "value": "22",
               "count": 3,
               "source": "stock"
+            },
+            {
+              "value": "22mm",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -15551,6 +15688,11 @@
               "value": "黄/白",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "蓝",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -15635,6 +15777,36 @@
               "value": "DC 24V",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "12V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "24V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "48V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "110V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "220V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "380V",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -15818,6 +15990,16 @@
               "value": "G2-DVK-V5-R-P2",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "BD-AV",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "BD-DV",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -15887,6 +16069,21 @@
               "value": "0-20mA",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "AC 0-100V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "AC 0-300V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "AC 0-500V",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -15925,6 +16122,16 @@
               "value": "0-10V",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "0-20mA",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "0-5V",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -15977,6 +16184,21 @@
               "value": "1000",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "AC220V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "DC220V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "AC/DC220V",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -16031,7 +16253,13 @@
           "aliases": {
             "0.2": "0.2%"
           },
-          "accepted": [],
+          "accepted": [
+            {
+              "value": "0.5",
+              "count": 0,
+              "source": "manufacturer"
+            }
+          ],
           "pending": [],
           "suspected": [
             {
@@ -16084,6 +16312,21 @@
               "value": "FL2-75MV",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "BD-AI",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "BD-DI",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "BD-AI/C",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -16186,6 +16429,21 @@
               "value": "0-20mA",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "AC 0-1A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "AC 0-5A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "AC 0-50A",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -16221,6 +16479,16 @@
               "value": "2-75MV",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "0-5V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "0-10V",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -16266,6 +16534,21 @@
               "value": "10",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "AC220V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "DC220V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "AC/DC220V",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -20330,6 +20613,36 @@
             {
               "value": "MKP62",
               "count": 2
+            },
+            {
+              "value": "BSMJ0.4-20-3",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "BSMJ0.45-20-3",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "BSMJ0.45-14-3",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "BSMJ0.525-30-3",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "BCMJ",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "BZMJ",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
@@ -20535,6 +20848,31 @@
               "source": "stock"
             },
             {
+              "value": "450V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "525V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "690V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "750V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "1050V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
               "value": "6.3V",
               "count": 0,
               "source": "series"
@@ -20581,11 +20919,6 @@
             },
             {
               "value": "250V",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "450V",
               "count": 0,
               "source": "series"
             },
@@ -34941,7 +35274,7 @@
   },
   "meta": {
     "version": "0.2.0",
-    "generatedAt": "2026-11-17T15:39:45.645Z",
+    "generatedAt": "2026-11-17T15:40:36.966Z",
     "draft": true,
     "structure": "subs[小类] → params[参数] → {type, accepted, pending, suspected, aliases}",
     "principle": "参数值按小类隔离：某小类的候选只来自该小类的存量，不跨小类共用",

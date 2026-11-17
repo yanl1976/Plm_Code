@@ -1571,9 +1571,11 @@ function openPlEdit(sub, focusParam) {
   $('#plDrawer').classList.add('open')
   if (focusParam) {
     setTimeout(() => {
-      const ta = document.querySelector('#plDrawerBody textarea[data-p="' + focusParam.replace(/"/g, '\\"') + '"]')
-      // 横向排列：要把目标列横向滚进视野（inline），纵向保持不动
-      if (ta) { ta.focus(); ta.scrollIntoView({ block: 'nearest', inline: 'center' }) }
+      // 横向排列：把目标参数所在的那一列横向滚进视野，纵向保持不动
+      const pi = (PLED.item.params || []).findIndex((x) => x.name === focusParam)
+      if (pi < 0) return
+      const col = document.querySelector('#plDrawerBody .pl-col[data-pi="' + pi + '"]')
+      if (col) col.scrollIntoView({ block: 'nearest', inline: 'center' })
     }, 80)
   }
 }
@@ -1587,50 +1589,81 @@ function closePlDrawer() {
 function renderPlDrawer() {
   const box = $('#plDrawerBody')
   if (!box || !PLED.item) return
-  // 横向排列：一个参数一列（参数名在上、值在下面）。
-  // 参数多时由外层 .pl-drawer-body 左右滚动，不再纵向堆叠 ——
-  // 纵向排列时 8 个参数要滚很久才能看全，横向一屏能并排比较。
-  box.innerHTML = '<div class="pl-cols">' + (PLED.item.params || []).map((p) => {
-    const vals = PLED.cur[p.name] || []
-    const d = plDiff(p.name)
-    const cls = !d.changed ? '' : (d.added.length && !d.removed.length ? ' add'
-      : (!d.added.length && d.removed.length ? ' del' : ' mod'))
-    return '<div class="pl-col' + cls + '" data-pcol="' + escapeHtml(p.name) + '">'
-      + '<div class="pl-col-head">'
-      + '<div class="pl-col-name">' + escapeHtml(p.name) + '</div>'
-      + '<div class="pl-col-meta"><span>' + escapeHtml(p.type || '') + '</span><span>'
-      + vals.length + ' 值</span></div>'
-      + '</div>'
-      + '<div class="pl-col-body"><textarea data-p="' + escapeHtml(p.name) + '" spellcheck="false">'
-      + escapeHtml(vals.join('\n')) + '</textarea></div>'
-      + '<div class="pl-col-diff pl-diff">' + plDiffHtml(p.name) + '</div>'
-      + '</div>'
-  }).join('') + '</div>'
-
-  box.querySelectorAll('textarea[data-p]').forEach((ta) => {
-    ta.oninput = () => {
-      const name = ta.dataset.p
-      PLED.cur[name] = ta.value.split(/[\n,，;；]/).map((s) => s.trim()).filter(Boolean)
-      refreshPlCol(name)
-    }
-  })
+  // 横向排列：一列一个参数，参数名在上、值列表在下。
+  // 值必须单行显示（不换行）——列宽只有 124px，长值换行会把列撑乱；
+  // 超出部分裁成省略号，鼠标悬停用 title 看全文。textarea 做不到这点，故改用文本行。
+  box.innerHTML = '<div class="pl-cols">'
+    + (PLED.item.params || []).map((p, pi) => renderPlCol(p, pi)).join('')
+    + '</div>'
+  bindPlColEvents(box)
   refreshPlFoot()
 }
 
-/** 只刷新该列的标记，不重绘文本框（否则输入会丢焦点） */
-function refreshPlCol(name) {
-  const col = document.querySelector('#plDrawerBody .pl-col[data-pcol="' + name.replace(/"/g, '\\"') + '"]')
-  if (!col) return
-  const d = plDiff(name)
-  col.classList.remove('add', 'del', 'mod')
-  if (d.changed) {
-    col.classList.add(d.added.length && !d.removed.length ? 'add'
-      : (!d.added.length && d.removed.length ? 'del' : 'mod'))
-  }
-  const meta = col.querySelector('.pl-col-meta span:last-child')
-  if (meta) meta.textContent = (PLED.cur[name] || []).length + ' 值'
-  const diff = col.querySelector('.pl-col-diff')
-  if (diff) diff.innerHTML = plDiffHtml(name)
+function renderPlCol(p, pi) {
+  const vals = PLED.cur[p.name] || []
+  const d = plDiff(p.name)
+  const cls = !d.changed ? '' : (d.added.length && !d.removed.length ? ' add'
+    : (!d.added.length && d.removed.length ? ' del' : ' mod'))
+  const name = escapeHtml(p.name)
+  const rows = vals.map((v, i) => '<div class="pl-val" title="' + escapeHtml(v) + '">'
+    + escapeHtml(v) + '<i class="pl-x" data-pi="' + pi + '" data-del="' + i + '" title="删除">×</i></div>').join('')
+  // 被删掉的值也留在原位，加删除线，便于确认「删了什么」
+  const gone = d.removed.map((v) => '<div class="pl-val gone" title="已删除：' + escapeHtml(v) + '">'
+    + escapeHtml(v) + '</div>').join('')
+  return '<div class="pl-col' + cls + '" data-pi="' + pi + '">'
+    + '<div class="pl-col-head">'
+    + '<div class="pl-col-name" title="' + name + '">' + name + '</div>'
+    + '<div class="pl-col-meta" title="' + escapeHtml(p.type || '') + '"><span>'
+    + escapeHtml(p.type || '') + '</span> · <span>' + vals.length + ' 值</span></div>'
+    + '</div>'
+    + '<div class="pl-col-list">' + (rows || '<div class="pl-empty">（无值）</div>') + gone + '</div>'
+    + '<div class="pl-add-row"><input data-pi="' + pi + '" placeholder="+ 添加" /></div>'
+    + '<div class="pl-col-diff pl-diff">' + plDiffHtml(p.name) + '</div>'
+    + '</div>'
+}
+
+function bindPlColEvents(scope) {
+  scope.querySelectorAll('.pl-x[data-del]').forEach((b) => {
+    b.onclick = (e) => {
+      e.stopPropagation()
+      const pi = Number(b.dataset.pi)
+      const p = (PLED.item.params || [])[pi]
+      if (!p) return
+      PLED.cur[p.name].splice(Number(b.dataset.del), 1)
+      refreshPlCol(pi)
+    }
+  })
+  scope.querySelectorAll('input[data-pi]').forEach((inp) => {
+    inp.onkeydown = (e) => {
+      if (e.key !== 'Enter' || e.isComposing) return
+      e.preventDefault()
+      const pi = Number(inp.dataset.pi)
+      const p = (PLED.item.params || [])[pi]
+      if (!p) return
+      // 支持一次粘贴多个（逗号 / 换行 / 分号 / Tab 分隔）
+      const parts = String(inp.value || '').split(/[,\n，;；\t]+/).map((s) => s.trim()).filter(Boolean)
+      let n = 0
+      for (const v of parts) {
+        if (PLED.cur[p.name].includes(v)) continue
+        PLED.cur[p.name].push(v)
+        n++
+      }
+      inp.value = ''
+      if (n) refreshPlCol(pi)
+    }
+  })
+}
+
+/** 重渲染单列（删除/添加后调用），不影响其它列的输入状态 */
+function refreshPlCol(pi) {
+  const col = document.querySelector('#plDrawerBody .pl-col[data-pi="' + pi + '"]')
+  const p = (PLED.item.params || [])[pi]
+  if (!col || !p) return
+  const tmp = document.createElement('div')
+  tmp.innerHTML = renderPlCol(p, pi)
+  const fresh = tmp.firstChild
+  col.replaceWith(fresh)
+  bindPlColEvents(fresh)
   refreshPlFoot()
 }
 

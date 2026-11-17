@@ -1881,7 +1881,9 @@ const server = http.createServer(async (req, res) => {
         [''],
         ['四、参数清单表（第二个标签，当目录用）'],
         ['  作用    列出「每个小类有哪些参数」，一行一个参数；第一列按小类纵向合并'],
-        ['  在参数值表  该参数在「参数值」表中的起始行号，据此可直接跳转定位'],
+        ['  在参数值表  该参数在「参数值」表中的起始行，点击可直接跳转'],
+        ['           ⚠ 行号是导出时的快照：之后在参数值表增删行，位置会漂移，'],
+        ['             需要准确行号时重新导出；日常更稳的做法是在参数值表按「参数」列筛选'],
         ['  新增参数 在该小类下方插入一行，填「参数」列；'],
         ['            「类型」可填 枚举 / 半枚举 / 数值序列 / 自由文本（留空按自由文本）'],
         ['  联动    导入时**先**读参数清单补参数声明，**再**读参数值填取值，'],
@@ -1961,6 +1963,21 @@ const server = http.createServer(async (req, res) => {
         }
       }
       wsList['!cols'] = [{ wch: 30 }, { wch: 14 }, { wch: 10 }, { wch: 10 }, { wch: 14 }]
+
+      // 目录列做成超链接：点击直接跳到「参数值」表该参数的第一行。
+      // ⚠ 行号是**导出时的快照** —— 之后在参数值表增删行，位置会漂移。
+      //   Excel 是静态文件，无法跨表动态定位；需要准确行号时重新导出即可。
+      //   平时用「参数」列筛选反而更稳。
+      for (let r = 1; r < listRows.length; r++) {
+        const ln = Number(String(listRows[r][4] || '').replace(/[^\d]/g, ''))
+        if (!ln) continue
+        const addr = XLSXStyle.utils.encode_cell({ r, c: 4 })
+        if (!wsList[addr]) wsList[addr] = { t: 's', v: listRows[r][4] }
+        wsList[addr].l = {
+          Target: "#'参数值'!A" + ln,
+          Tooltip: '跳到参数值表第 ' + ln + ' 行（导出时的位置；增删行后会变，需重新导出）',
+        }
+      }
 
       const wsGuide = XLSXStyle.utils.aoa_to_sheet(guide)
       wsGuide['!cols'] = [{ wch: 110 }]

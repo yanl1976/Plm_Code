@@ -1672,14 +1672,15 @@ const server = http.createServer(async (req, res) => {
       const cfg = readConfigJson('param-lib-rules.json') || {}
       const kw = (url.searchParams.get('kw') || '').trim().toLowerCase()
       let items = Object.entries(j.subs || {}).map(([sub, x]) => {
-        // 参数顺序：常规参数按名称，手工新增的（note 含「新增」）排最后。
-        // 与 Excel 导出、抽屉列序保持同一口径，否则新增参数会"插"在中间。
-        const sortedEntries = Object.entries(x.params || {}).sort((a, b) => {
-          const na = /新增/.test((a[1] || {}).note || '')
-          const nb = /新增/.test((b[1] || {}).note || '')
-          if (na !== nb) return na ? 1 : -1
-          return a[0].localeCompare(b[0], 'zh')
-        })
+        // 参数顺序（三级）：型号永远第一 → 常规参数按名称 → 手工新增的排最后。
+        // 与 Excel 导出、抽屉列序保持同一口径：型号是物料身份，必须最靠前。
+        const listRank = (name, d) => {
+          if (name === '型号') return 0
+          if (/新增/.test((d || {}).note || '')) return 2
+          return 1
+        }
+        const sortedEntries = Object.entries(x.params || {}).sort((a, b) =>
+          (listRank(a[0], a[1]) - listRank(b[0], b[1])) || a[0].localeCompare(b[0], 'zh'))
         const params = sortedEntries.map(([name, d]) => {
           // free 型（型号/阻值/容值）没有 accepted，只有 reference（Top5 参考值）——
           // 之前只读 accepted，导致界面显示「（无收录值）」，看起来像数据缺失。
@@ -1855,15 +1856,16 @@ const server = http.createServer(async (req, res) => {
       const rowIndexOf = new Map()
       const subsSorted = Object.entries(j.subs || {}).sort((a, b) => a[0].localeCompare(b[0]))
       for (const [sub, x] of subsSorted) {
-        // 参数排序：常规参数按名称；通过「参数清单」手工新增的排在该小类末尾。
-        // 否则新增参数（如 "111"）按字典序会跳到最前面，用户"在末尾加了一个"却找不到。
-        const params = Object.entries(x.params || {}).sort((a, b) => {
-          // 只要 note 里带「新增」就算手工新增：来源可能是「参数清单」或「编辑抽屉」
-          const na = /新增/.test((a[1] || {}).note || '')
-          const nb = /新增/.test((b[1] || {}).note || '')
-          if (na !== nb) return na ? 1 : -1
-          return a[0].localeCompare(b[0], 'zh')
-        })
+        // 参数排序（三级）：型号永远第一 → 常规参数按名称 → 手工新增的排最后。
+        // 型号是物料的身份，必须最靠前（前端列表、抽屉、Excel 都是这个顺序）；
+        // 新增参数按字典序会跳到前面，用户"在末尾加了一个"却找不到，故固定放末尾。
+        const paramsRank = (name, d) => {
+          if (name === '型号') return 0
+          if (/新增/.test((d || {}).note || '')) return 2
+          return 1
+        }
+        const params = Object.entries(x.params || {}).sort((a, b) =>
+          (paramsRank(a[0], a[1]) - paramsRank(b[0], b[1])) || a[0].localeCompare(b[0], 'zh'))
         for (const [name, d] of params) {
           let hasRow = false
           const startLine = rows.length + 1      // 1-based Excel 行号（含表头）
@@ -2016,15 +2018,16 @@ const server = http.createServer(async (req, res) => {
       const listRows = [['小类（编号 名称）', '参数', '类型', '已有值数', '在参数值表']]
       const merges = []
       for (const [sub, x] of subsSorted) {
-        // 参数排序：常规参数按名称；通过「参数清单」手工新增的排在该小类末尾。
-        // 否则新增参数（如 "111"）按字典序会跳到最前面，用户"在末尾加了一个"却找不到。
-        const params = Object.entries(x.params || {}).sort((a, b) => {
-          // 只要 note 里带「新增」就算手工新增：来源可能是「参数清单」或「编辑抽屉」
-          const na = /新增/.test((a[1] || {}).note || '')
-          const nb = /新增/.test((b[1] || {}).note || '')
-          if (na !== nb) return na ? 1 : -1
-          return a[0].localeCompare(b[0], 'zh')
-        })
+        // 参数排序（三级）：型号永远第一 → 常规参数按名称 → 手工新增的排最后。
+        // 型号是物料的身份，必须最靠前（前端列表、抽屉、Excel 都是这个顺序）；
+        // 新增参数按字典序会跳到前面，用户"在末尾加了一个"却找不到，故固定放末尾。
+        const paramsRank = (name, d) => {
+          if (name === '型号') return 0
+          if (/新增/.test((d || {}).note || '')) return 2
+          return 1
+        }
+        const params = Object.entries(x.params || {}).sort((a, b) =>
+          (paramsRank(a[0], a[1]) - paramsRank(b[0], b[1])) || a[0].localeCompare(b[0], 'zh'))
         if (!params.length) continue
         const start = listRows.length
         for (const [name, d] of params) {

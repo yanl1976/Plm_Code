@@ -29,11 +29,48 @@ await loadIndex({ force: true })
 const R10 = [1, 1.25, 1.6, 2, 2.5, 3.15, 4, 5, 6.3, 8, 10, 12.5, 16, 20, 25, 31.5, 40, 50, 63, 80,
   100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300]
 const CB_CURRENT = [1, 2, 3, 4, 6, 10, 13, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600]
-const CB_BREAK = [3, 4.5, 6, 10, 15, 20, 25, 35, 50, 65, 100]
+// 断路器分断能力常见值（含 4.5kA 行业惯例、31.5 来自 R10）
+const CB_BREAK = [3, 4.5, 6, 8, 10, 12.5, 15, 16, 20, 25, 31.5, 35, 40, 50, 63, 65, 80, 100]
+
+// ---- 标准序列（国标/行业公开序列，仅用于"是否为标准值"的判定）----
+
+// 电流互感器标准变比（GB 1207 / GB/T 20840.2，二次侧 5A）
+const RATIO = ['50/5', '75/5', '100/5', '150/5', '200/5', '250/5', '300/5', '400/5', '500/5', '600/5',
+  '750/5', '800/5', '1000/5', '1200/5', '1500/5', '2000/5', '2500/5', '3000/5', '4000/5', '5000/5', '6000/5']
+
+// 标准电压（GB/T 156）—— 低压/高压/电缆常用
+const VOLT = ['9V', '12V', '24V', '36V', '48V', '110V', '127V', '220V', '380V', '400V', '415V', '440V',
+  '500V', '660V', '690V', '1140V',
+  '300/500V', '450/750V', '0.6/1KV', '3.6/6KV', '6/10KV', '8.7/15KV', '12/20KV', '26/35KV',
+  '6KV', '10KV', '20KV', '35KV', '66KV', '110KV', '220KV']
+
+// IEC 60063 优先数系
+const E24 = [1.0, 1.1, 1.2, 1.3, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.7, 3.0, 3.3, 3.6, 3.9, 4.3, 4.7, 5.1, 5.6, 6.2, 6.8, 7.5, 8.2, 9.1]
+const E6 = [1.0, 1.5, 2.2, 3.3, 4.7, 6.8]
+const E12 = [1.0, 1.2, 1.5, 1.8, 2.2, 2.7, 3.3, 3.9, 4.7, 5.6, 6.8, 8.2]
+
+/** 把数值归一到 [1,10) 的基准数，用于比对 E 系列 */
+function mantissa(n) {
+  if (!(n > 0)) return 0
+  let x = n
+  while (x >= 10) x /= 10
+  while (x < 1) x *= 10
+  return Math.round(x * 100) / 100
+}
+const inE = (set) => (v) => {
+  const m = /^([\d.]+)/.exec(String(v))
+  if (!m) return false
+  const base = mantissa(parseFloat(m[1]))
+  return set.some((e) => Math.abs(e - base) < 0.05)
+}
 
 const SERIES = {
-  额定电流: { set: new Set([...R10, ...CB_CURRENT]), note: 'R10 优先数系 + 断路器常见档位' },
-  分断能力: { set: new Set(CB_BREAK), note: '断路器行业常见分断值（含 4.5kA）' },
+  额定电流: { test: (v) => R10.includes(parseFloat(v)) || CB_CURRENT.includes(parseFloat(v)), note: 'R10 优先数系 + 断路器常见档位' },
+  分断能力: { test: (v) => CB_BREAK.includes(parseFloat(v)), note: '断路器行业常见分断值（含 4.5kA）' },
+  变比: { test: (v) => RATIO.includes(String(v)), note: 'GB 1207 标准变比（二次 5A）' },
+  额定电压: { test: (v) => VOLT.includes(String(v)), note: 'GB/T 156 标准电压等级' },
+  阻值: { test: inE(E24), note: 'E24 优先数系（IEC 60063）' },
+  容值: { test: (v) => inE(E6)(v) || inE(E12)(v), note: 'E6/E12 优先数系（IEC 60063）' },
 }
 
 // ---------- 值归一（按参数定制；未列出的走默认清洗）----------
@@ -80,12 +117,12 @@ const NORMALIZERS = {
     return m ? m[1] + '/' + m[2] : null
   },
   // 额定电压：去 AC/DC/~ 前缀，统一大写 V/kV；多值（0.6/1kV）保留
+  // 必须带单位 V/KV —— 否则 "0.66" 会被补成 "0.66V"（实测因此产生 347 条假值）
   额定电压: (v) => {
     let s = toHalf(v).toUpperCase().replace(/\s/g, '').replace(/^(AC|DC|～|~)/, '')
     if (!/^\d/.test(s)) return null
-    if (/^\d+(\.\d+)?(\/\d+(\.\d+)?)?K?V$/.test(s)) return s
-    const m = /^(\d+(?:\.\d+)?)(K?V)?$/.exec(s)
-    return m ? m[1] + (m[2] || 'V') : null
+    if (!/V$/.test(s)) return null
+    return /^\d+(\.\d+)?(\/\d+(\.\d+)?)?K?V$/.test(s) ? s : null
   },
   // 容值：1000uF / 1000μF / 1000uf → 1000μF
   容值: (v) => {
@@ -100,6 +137,8 @@ const NORMALIZERS = {
     let s = toHalf(v).replace(/\s/g, '').replace(/Ω|R(?=\d|$)/g, 'Ω')
     if (!/^\d/.test(s)) return null
     if (!/Ω$/.test(s)) s = s + 'Ω'
+    // 数量级字母统一小写：10KΩ → 10kΩ（M 保持大写）
+    s = s.replace(/([\d.]+)K(?=Ω)/, '$1k')
     return s
   },
 }
@@ -201,7 +240,7 @@ for (const [name, acc] of [...params.entries()].sort((a, b) => b[1].norm.size - 
   const accepted = [], pending = [], suspected = []
 
   for (const [v, c] of ranked) {
-    const inSeries = ser ? ser.set.has(parseFloat(v)) : true
+    const inSeries = ser ? ser.test(v) : true
     if (inSeries && c >= 2) accepted.push({ value: v, count: c })
     else if (!inSeries && c >= 5) {
       pending.push({ value: v, count: c, reason: '不在标准序列但出现 ≥5 次，需确认是否为行业惯例/特殊规格' })

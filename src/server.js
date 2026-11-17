@@ -1786,6 +1786,8 @@ const server = http.createServer(async (req, res) => {
       const SRC_CN = { stock: '存量', series: '序列补充', manual: '手工添加', reference: '参考值' }
       const ST_CN = { accepted: '标准值', pending: '待确认', suspected: '疑似噪音' }
       const rows = [['小类号', '小类名', '参数', '类型', '标准序列', '值', '频次', '来源', '状态', '备注']]
+      // 记录每个「小类+参数」在参数值表中的起始行号，供「参数清单」当目录用
+      const rowIndexOf = new Map()
       const subsSorted = Object.entries(j.subs || {}).sort((a, b) => a[0].localeCompare(b[0]))
       for (const [sub, x] of subsSorted) {
         // 参数排序：常规参数按名称；通过「参数清单」手工新增的排在该小类末尾。
@@ -1798,6 +1800,7 @@ const server = http.createServer(async (req, res) => {
         })
         for (const [name, d] of params) {
           let hasRow = false
+          const startLine = rows.length + 1      // 1-based Excel 行号（含表头）
           const add = (list, status) => {
             for (const v of sortByValue(name, list || [])) {
               hasRow = true
@@ -1837,6 +1840,7 @@ const server = http.createServer(async (req, res) => {
               '', 0, '存量', '标准值', '该参数尚无取值，可在本行填写',
             ])
           }
+          rowIndexOf.set(sub + '|' + name, startLine)
         }
       }
       const guide = [
@@ -1875,8 +1879,9 @@ const server = http.createServer(async (req, res) => {
         ['  补充（推荐）  只新增/更新表里出现的值，不删除库中已有但表里没有的值'],
         ['  覆盖          表里出现的每个「小类号+参数」整组替换，表里没有的值会被删除'],
         [''],
-        ['四、参数清单表（第二个标签）'],
-        ['  作用    声明「每个小类应该有哪些参数」，一行一个参数；第一列按小类纵向合并'],
+        ['四、参数清单表（第二个标签，当目录用）'],
+        ['  作用    列出「每个小类有哪些参数」，一行一个参数；第一列按小类纵向合并'],
+        ['  在参数值表  该参数在「参数值」表中的起始行号，据此可直接跳转定位'],
         ['  新增参数 在该小类下方插入一行，填「参数」列；'],
         ['            「类型」可填 枚举 / 半枚举 / 数值序列 / 自由文本（留空按自由文本）'],
         ['  联动    导入时**先**读参数清单补参数声明，**再**读参数值填取值，'],
@@ -1915,7 +1920,8 @@ const server = http.createServer(async (req, res) => {
       // 第一列把「编号 + 名称」纵向合并成一个单元格，便于按小类浏览。
       // 该表是**声明表**：在这里新增一行参数，导入后该小类的参数集合就会多出这一项，
       // 之后到「参数值」表给这个参数填值即可。
-      const listRows = [['小类（编号 名称）', '参数', '类型', '已有值数']]
+      // 目录列「在参数值表」：指向该参数在「参数值」表中的起始行，便于直接跳转定位
+      const listRows = [['小类（编号 名称）', '参数', '类型', '已有值数', '在参数值表']]
       const merges = []
       for (const [sub, x] of subsSorted) {
         // 参数排序：常规参数按名称；通过「参数清单」手工新增的排在该小类末尾。
@@ -1929,11 +1935,13 @@ const server = http.createServer(async (req, res) => {
         if (!params.length) continue
         const start = listRows.length
         for (const [name, d] of params) {
+          const ln = rowIndexOf.get(sub + '|' + name)
           listRows.push([
             sub + ' ' + (x.subName || ''),
             name,
             TYPE_CN[d.type] || d.type || '',
             (d.accepted || []).length,
+            ln ? '第 ' + ln + ' 行' : '',
           ])
         }
         const end = listRows.length - 1
@@ -1941,7 +1949,7 @@ const server = http.createServer(async (req, res) => {
       }
       const wsList = XLSXStyle.utils.aoa_to_sheet(listRows)
       wsList['!merges'] = merges
-      for (let c = 0; c < 4; c++) {
+      for (let c = 0; c < 5; c++) {
         const addr = XLSXStyle.utils.encode_cell({ r: 0, c })
         if (wsList[addr]) wsList[addr].s = ST.head
       }
@@ -1952,7 +1960,7 @@ const server = http.createServer(async (req, res) => {
           if (!wsList[addr]) wsList[addr] = { t: 's', v: '' }
         }
       }
-      wsList['!cols'] = [{ wch: 30 }, { wch: 14 }, { wch: 10 }, { wch: 10 }]
+      wsList['!cols'] = [{ wch: 30 }, { wch: 14 }, { wch: 10 }, { wch: 10 }, { wch: 14 }]
 
       const wsGuide = XLSXStyle.utils.aoa_to_sheet(guide)
       wsGuide['!cols'] = [{ wch: 110 }]

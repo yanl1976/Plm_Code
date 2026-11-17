@@ -114,6 +114,16 @@
               "source": "stock"
             },
             {
+              "value": "5000",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "6300",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
               "value": "1",
               "count": 0,
               "source": "series"
@@ -253,6 +263,21 @@
           "normCount": 1,
           "aliases": {},
           "accepted": [
+            {
+              "value": "100kA",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "150kA",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "200kA",
+              "count": 0,
+              "source": "manufacturer"
+            },
             {
               "value": "3",
               "count": 0,
@@ -415,6 +440,11 @@
               "source": "stock"
             },
             {
+              "value": "1150V",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
               "value": "24V",
               "count": 0,
               "source": "series"
@@ -562,6 +592,41 @@
               "value": "PR121/LSI",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "MicroLogic 2.0",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "MicroLogic 5.0",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "MicroLogic 6.0",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "MicroLogic 7.0",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "MicroLogic Active",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "Ekip",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "Ekip Touch",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -626,6 +691,21 @@
               "value": "N",
               "count": 14,
               "source": "stock"
+            },
+            {
+              "value": "H",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "L",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "S",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -733,6 +813,16 @@
               "value": "630",
               "count": 5,
               "source": "stock"
+            },
+            {
+              "value": "5000",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "6300",
+              "count": 0,
+              "source": "manufacturer"
             },
             {
               "value": "1",
@@ -1172,6 +1262,36 @@
               "value": "EA35",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "MicroLogic 2.0",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "MicroLogic 5.0",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "MicroLogic 6.0",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "MicroLogic 7.0",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "MicroLogic Active",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "Ekip",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -1246,7 +1366,48 @@
           "rawCount": 2,
           "normCount": 2,
           "aliases": {},
-          "accepted": [],
+          "accepted": [
+            {
+              "value": "100A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "125A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "160A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "250A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "400A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "630A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "800A",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "1250A",
+              "count": 0,
+              "source": "manufacturer"
+            }
+          ],
           "pending": [],
           "suspected": [
             {
@@ -1441,6 +1602,16 @@
               "source": "stock"
             },
             {
+              "value": "700",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "1000",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
               "value": "1",
               "count": 0,
               "source": "series"
@@ -1457,11 +1628,6 @@
             },
             {
               "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1000",
               "count": 0,
               "source": "series"
             },
@@ -1530,6 +1696,56 @@
           "normCount": 2,
           "aliases": {},
           "accepted": [
+            {
+              "value": "36kA",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "45kA",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "50kA",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "55kA",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "70kA",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "85kA",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "100kA",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "110kA",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "125kA",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "150kA",
+              "count": 0,
+              "source": "manufacturer"
+            },
             {
               "value": "3",
               "count": 0,
@@ -1895,6 +2111,31 @@
               "value": "H",
               "count": 28,
               "source": "stock"
+            },
+            {
+              "value": "B",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "S",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "M",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "L",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "C",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -2019,6 +2260,16 @@
               "value": "4P",
               "count": 50,
               "source": "stock"
+            },
+            {
+              "value": "1P+N",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "3P+N",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -2040,6 +2291,21 @@
               "value": "4.5",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "6kA",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "10kA",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "15kA",
+              "count": 0,
+              "source": "manufacturer"
             },
             {
               "value": "3",
@@ -2145,6 +2411,11 @@
               "value": "400V",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "230V",
+              "count": 0,
+              "source": "manufacturer"
             },
             {
               "value": "24V",
@@ -2393,7 +2664,7 @@
             {
               "value": "13",
               "count": 0,
-              "source": "series"
+              "source": "manufacturer"
             },
             {
               "value": "160",
@@ -2708,6 +2979,16 @@
               "value": "1P",
               "count": 13,
               "source": "stock"
+            },
+            {
+              "value": "1P+N",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "3P+N",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -2785,6 +3066,16 @@
               "source": "stock"
             },
             {
+              "value": "80",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "125",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
               "value": "1",
               "count": 0,
               "source": "series"
@@ -2806,16 +3097,6 @@
             },
             {
               "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "80",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "125",
               "count": 0,
               "source": "series"
             },
@@ -2911,6 +3192,16 @@
               "value": "500mA",
               "count": 3,
               "source": "stock"
+            },
+            {
+              "value": "100mA",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "300mA",
+              "count": 0,
+              "source": "manufacturer"
             }
           ],
           "pending": [],
@@ -2941,6 +3232,16 @@
               "value": "4.5",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "6kA",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "10kA",
+              "count": 0,
+              "source": "manufacturer"
             },
             {
               "value": "3",
@@ -33183,7 +33484,7 @@
   },
   "meta": {
     "version": "0.2.0",
-    "generatedAt": "2026-11-17T15:08:35.481Z",
+    "generatedAt": "2026-11-17T15:17:13.480Z",
     "draft": true,
     "structure": "subs[小类] → params[参数] → {type, accepted, pending, suspected, aliases}",
     "principle": "参数值按小类隔离：某小类的候选只来自该小类的存量，不跨小类共用",

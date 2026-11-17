@@ -1893,7 +1893,7 @@ const server = http.createServer(async (req, res) => {
       //   类型 series  → 数值序列（表示该参数按标准序列枚举）
       //   来源 series  → 序列补充（表示该值来自标准序列、本小类存量未出现）
       const TYPE_CN = { enum: '枚举', semi: '半枚举', series: '数值序列', free: '自由文本', 'number-series': '数值序列' }
-      const SRC_CN = { stock: '存量', series: '序列补充', manual: '手工添加', reference: '参考值' }
+      const SRC_CN = { stock: '存量', series: '序列补充', manual: '手工添加', reference: '参考值', manufacturer: '厂家样本' }
       const ST_CN = { accepted: '标准值', pending: '待确认', suspected: '疑似噪音' }
       const rows = [['小类号', '小类名', '参数', '类型', '标准序列', '值', '频次', '来源', '状态', '备注']]
       // 记录每个「小类+参数」在参数值表中的起始行号，供「参数清单」当目录用
@@ -2184,8 +2184,8 @@ const server = http.createServer(async (req, res) => {
       // 来源：导出是中文（存量/序列补充/手工添加/参考值），
       // 不反解会把 manual 存成「手工添加」，来源统计与绿色标记都会失效
       const SRC_BACK = {
-        存量: 'stock', 序列补充: 'series', 标准序列: 'series', 手工添加: 'manual', 参考值: 'reference',
-        stock: 'stock', series: 'series', manual: 'manual', reference: 'reference',
+        存量: 'stock', 序列补充: 'series', 标准序列: 'series', 手工添加: 'manual', 参考值: 'reference', 厂家样本: 'manufacturer',
+        stock: 'stock', series: 'series', manual: 'manual', reference: 'reference', manufacturer: 'manufacturer',
       }
       // ★ 按表头名取列，不再依赖固定列序 —— 用户可能调整过列顺序、插了辅助列或删了某列。
       //   同一含义的多种写法都认（「值」/「取值」、「频次」/「数量」），取第一个匹配到的表头。

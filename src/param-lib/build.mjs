@@ -42,6 +42,9 @@ const DEDUP = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/dedup-rules
 // 参数定义库：只用来判断「范式库声明的字段是否真的有提取规则」，
 // 没有定义的字段加进 tokens 也提不出值。
 const SFFIELDS = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/spec-fields.json'), 'utf8').replace(/^\uFEFF/, '')).library || {}
+// 厂家公开样本参数（施耐德/ABB/西门子/正泰/常熟等），
+// 与存量无关，直接并入 accepted，source=manufacturer，重建不会丢。
+const MFR = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/manufacturer-params.json'), 'utf8'))
 
 await loadIndex({ force: true })
 
@@ -195,13 +198,15 @@ for (const sub of SUBS) {
     .filter((k) => k && SFFIELDS[k])
   const tokAdd = (DEDUP.subAddTokens || {})[sub] || []
   const tokDel = (DEDUP.subRemoveTokens || {})[sub] || []
+  // 厂家样本里出现过的参数名也要进 tokens，否则参数根本不会被创建
+  const tokMfr = Object.keys((MFR.subs || {})[sub] || {})
   // 有范式字段就以范式为准（规范驱动）；没有才回落到中类通用 tokens。
   // 之前把两者叠加，导致 108 个小类凭空多出 224 个规范外的参数 ——
   // 例如仪表类普遍多出「变比/频率」、传感器多出「额定电压」，
   // 都是 1009/1005 中类 chooseTokens 的副作用，与这个小类的国标字段无关。
   const tokens = tokFields.length
-    ? [...new Set([...tokFields, ...tokAdd])].filter((t) => !tokDel.includes(t))
-    : [...new Set([...chooseTokens(info), ...tokAdd])].filter((t) => !tokDel.includes(t))
+    ? [...new Set([...tokFields, ...tokAdd, ...tokMfr])].filter((t) => !tokDel.includes(t))
+    : [...new Set([...chooseTokens(info), ...tokAdd, ...tokMfr])].filter((t) => !tokDel.includes(t))
   if (!tokens.length) continue
   const list = rows.filter((r) => String(r.FNUMBER || '').startsWith(sub) && String(r.FSPECIFICATION || '').trim())
   const clean = list.filter((r) => !suspect.has(r.FNUMBER))
@@ -279,6 +284,16 @@ for (const sub of SUBS) {
       if (pending.some((x) => String(x.value) === sv)) continue
       if (suspected.some((x) => String(x.value) === sv)) continue
       accepted.push({ value: sv, count: 0, source: 'confirmed' })
+    }
+
+    // 厂家样本参数：存量里没写、但厂家产品确有这个规格（如 MTZ 的 6300A、iC65 的 D 曲线）。
+    // 直接并入 accepted，标 source=manufacturer，与存量值区分开。
+    const mfrVals = ((MFR.subs || {})[sub] || {})[name] || []
+    for (const mv of mfrVals) {
+      const sv = String(mv)
+      if (accepted.some((x) => String(x.value) === sv)) continue
+      if (pending.some((x) => String(x.value) === sv)) continue
+      accepted.push({ value: sv, count: 0, source: 'manufacturer' })
     }
 
     // 方案 B：候选 = 本小类存量（带频次） + 本小类族的标准序列（count=0，标 source=series）

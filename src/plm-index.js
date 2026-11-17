@@ -19,6 +19,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { getCategory, chooseAttrs, chooseTokens } from './classify.js'
 import { buildSignature, looseSignature, normalize, tokenize, jaccard, modelOf } from './spec.js'
+import { normalizeByTemplate } from './spec-complete.js'
 import { extractParams } from './struct-spec.js'
 import { findAllSuggestions } from './name-synonyms.js'
 import { matchUnit } from './guide-units.js'
@@ -112,14 +113,23 @@ export function applyRecord(subs, rec, source) {
   const bucket = ensureBucket(subs, subKey)
   if (!bucket) return 'nocat'
 
-  const sig = buildSignature(rec, bucket.attrs)
+  // 签名前按模板规范化（补单位）：C20 与 C20A、3*2.5 与 3*2.5mm^2 归到同一签名，
+  // 否则少写单位就会被当成新物料，一物多号无法识别。
+  // 存量与查询必须用同一套规范化，故这里和 queryDuplicates 都要调用。
+  const sigRec = { ...rec, FSPECIFICATION: normalizeByTemplate(subKey, rec.FSPECIFICATION) }
+  const sig = buildSignature(sigRec, bucket.attrs)
   if (!sig) return 'nosig'
 
   const item = minimal(rec, source)
   item.params = extractParams(rec.FSPECIFICATION, bucket.tokens)
   item.sig = sig
   item.loose = looseSignature(sig)
-  item.tokens = tokenize((item.fName || '') + ' ' + (item.fSpec || ''))
+  // fuzzy 打分只比「规格」，不比名称。
+  // 原因：名称是自由描述，同一物常写成不同名称（库内叫「电阻」，用户写「普通电阻」），
+  // 把名称 token 混进来会稀释规格相似度 —— 实测 10K/0.5W ±1% 与 10K/0.5W/±1%/1210
+  // 规格完全对应（4/5=0.80），但因名称差两个字被拉到 0.667，低于阈值 0.8 而不提示。
+  // 名称是否一致由别处负责（subMismatch / 名称同义词），不应在这里否掉规格判断。
+  item.specTokens = tokenize(item.fSpec || '')
   item.orderSig = orderSignature(item.fSpec || '')
 
   bucket.items.push(item)
@@ -256,7 +266,11 @@ export function queryDuplicates(q) {
   }
 
   // 用待录数据构造临时记录，复用同一套签名算法（保证与存量同口径）
-  const probe = { FNAME: q.name || '', FSPECIFICATION: q.spec || '', F_ZXCV_ZYCS: q.zycs || '' }
+  const probe = {
+    FNAME: q.name || '',
+    FSPECIFICATION: normalizeByTemplate(sub, q.spec || ''),   // 与存量同口径（补单位）
+    F_ZXCV_ZYCS: q.zycs || '',
+  }
   const sig = buildSignature(probe, bucket.attrs)
   const loose = looseSignature(sig)
   const seen = new Set()
@@ -307,7 +321,8 @@ export function queryDuplicates(q) {
 
   // 3) 模糊：同小类内 token Jaccard + 型号段约束，避免把"同系列不同规格"误报
   if (out.length < limit && (q.name || q.spec)) {
-    const probeTokens = tokenize(String(q.name || '') + ' ' + String(q.spec || ''))
+    // 只比规格（与 items[].specTokens 同口径）。名称不参与：名称差异不代表规格不同。
+    const probeTokens = tokenize(String(q.spec || '') || String(q.name || ''))
     const probeModel = modelOf(q.spec || '')
     if (probeTokens.size) {
       // 候选收敛：优先同型号段，其次全小类（小类通常几百条，可接受）
@@ -316,7 +331,7 @@ export function queryDuplicates(q) {
       for (const it of pool) {
         if (seen.has(it.fNumber)) continue
         if (probeModel && it.fSpec && modelOf(it.fSpec) !== probeModel) continue
-        const j = jaccard(probeTokens, it.tokens)
+        const j = jaccard(probeTokens, it.specTokens)
         if (j >= FUZZY_THRESHOLD) scored.push([j, it])
       }
       scored.sort((a, b) => b[0] - a[0])

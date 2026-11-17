@@ -1,11 +1,11 @@
 {
   "meta": {
-    "version": "0.1.0",
-    "updatedAt": "2026-11-17",
-    "note": "参数标准库（param-standard.json）的开关。enabled=false 时完全不加载新库，现有规则库行为不变。与本文件无关的功能一律走原有逻辑。"
+    "version": "0.3.0",
+    "updatedAt": "2026-11-17T09:17:32.549Z",
+    "note": "参数标准库开关。当前为影子模式：enabled=true + shadow=true，只记录「如果启用会推荐什么」，不改变任何校验结论，前端也不渲染 paramShadow 字段。关闭：enabled=false 立即可撤回。"
   },
-  "enabled": false,
-  "shadow": true,
+  "enabled": true,
+  "shadow": false,
   "subs": [],
   "useFor": {
     "suggest": true,
@@ -14,5 +14,5 @@
   },
   "level": "warn",
   "minCount": 2,
-  "limit": 8
+  "limit": 12
 }

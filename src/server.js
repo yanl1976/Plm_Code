@@ -17,7 +17,8 @@ import * as backup from './backup.js'
 import { executeQuery } from './db.js'
 import { inspectRow } from './validate.js'
 import { applyAiOverlay } from './ai/overlay.js'
-import { getCategory, chooseTokens } from './classify.js'
+import { getCategory, chooseTokens, chooseAttrs } from './classify.js'
+import { sortByValue } from './param-lib/store.js'
 import * as guideFields from './guide-fields.js'
 import { complete as specComplete } from './spec-complete.js'
 import { matchUnit, matchSystemWord } from './guide-units.js'
@@ -26,7 +27,7 @@ import { getOverride, saveOverride, deleteOverride, bulkPrefill, overrideMtime, 
 import XLSX from 'xlsx'
 import { cableSpecHints } from './cable-spec.js'
 import { summary as stdWatchSummary, runCheck as stdWatchRun, loadWatch as stdWatchLoad, saveWatch as stdWatchSave, isDue as stdWatchDue } from './std-watch.js'
-import { normalize, tokenize, jaccard, looseSignature, modelOf } from './spec.js'
+import { normalize, tokenize, jaccard, looseSignature, modelOf, buildSignature } from './spec.js'
 import { orderSignature } from './plm-index.js'
 import { applyBlocks, normalizeBlocks } from './block-gate.js'
 import { erpEnabled, datasourceSummary } from './datasource.js'
@@ -333,6 +334,52 @@ function allDocs() {
   }
   _docsCache = { mtime, list }
   return list
+}
+
+/**
+ * 同小类查重（实时）—— 与 3100 的 queryDuplicates 同口径。
+ *
+ * ① exact：名称+规格归一后签名一致（完全相同）
+ * ② fuzzy：规格 token 相似度 ≥0.8 且型号段相同（高度相似，如少写封装）
+ *
+ * 只看「规格」：名称是自由描述，库内叫「电阻」而用户写「普通电阻」很常见，
+ * 名称差异不能否掉规格一致的判断。
+ */
+function findDuplicatesLocal(sub, name, spec, limit) {
+  const lim = Math.max(1, Math.min(Number(limit) || 8, 20))
+  const s6 = String(sub || '').slice(0, 6)
+  const info = getCategory(s6)
+  if (!info) return { level: 'none', duplicates: [] }
+  const attrs = chooseAttrs(info)
+  const nm = String(name || '')
+  const sp = String(spec || '')
+  const probeSig = buildSignature({ FNAME: nm, FSPECIFICATION: sp }, attrs)
+  const probeToks = tokenize(sp)
+  const probeModel = modelOf(sp)
+  const out = []
+  const seen = new Set()
+  const push = (d, level, score) => {
+    if (!d || seen.has(d.fnumber)) return
+    seen.add(d.fnumber)
+    out.push({
+      fnumber: d.fnumber, name: d.name, spec: d.spec,
+      level, score: Math.round(score * 100) / 100,
+    })
+  }
+  for (const d of allDocs()) {
+    if (!String(d.fnumber).startsWith(s6)) continue
+    if (probeSig && buildSignature({ FNAME: d.name, FSPECIFICATION: d.spec }, attrs) === probeSig) {
+      push(d, 'exact', 1)
+      continue
+    }
+    if (!probeToks.size || !d.spec) continue
+    if (probeModel && modelOf(d.spec) !== probeModel) continue
+    const j = jaccard(probeToks, tokenize(d.spec))
+    if (j >= 0.8) push(d, 'fuzzy', j)
+  }
+  const rank = { exact: 0, fuzzy: 1 }
+  out.sort((a, b) => (rank[a.level] - rank[b.level]) || (b.score - a.score))
+  return { level: out.length ? out[0].level : 'none', duplicates: out.slice(0, lim) }
 }
 // 小类内名称使用频次：一次遍历建表并按 mtime 缓存
 // 用途一：录入页「本小类常用名称」参考
@@ -1445,6 +1492,21 @@ const server = http.createServer(async (req, res) => {
       // knownCount：该名称在本小类的存量出现次数，用于区分「已是在用的完整名称」与「还在打字」
       m.knownCount = nameCountInSub(m.sub, rawName.trim())
       const verdict = checkMaterial(m)
+      // 同小类实时查重：exact=完全相同（应阻断）／fuzzy=规格高度相似（只提示）。
+      // 此前看板没有查重能力，只有插件有；用户在录入页看不到"这条可能已经存在"。
+      if (m.sub && m.spec) {
+        try {
+          const dup = findDuplicatesLocal(m.sub, m.name, m.spec, 8)
+          verdict.duplicateLevel = dup.level
+          verdict.duplicates = dup.duplicates
+        } catch (e) {
+          verdict.duplicates = []
+          verdict.duplicateLevel = 'none'
+        }
+      } else {
+        verdict.duplicates = []
+        verdict.duplicateLevel = 'none'
+      }
       // 阻断开关：blocks.<key> === false 的 error 降级为 warning
       let blocksRaw = (qbody && qbody.blocks) || null
       if (!blocksRaw) {
@@ -1575,6 +1637,233 @@ const server = http.createServer(async (req, res) => {
       j.meta.updatedAt = new Date().toISOString()
       saveConfigJson('naming-guide.json', j)
       return sendJson(res, 200, { ok: true, sub, total: Object.keys(j.subs).length })
+    }
+
+    // ===================== 参数标准库管理 =====================
+    // 数据：src/config/param-standard.json（按小类隔离：subs[小类] → params[参数] → accepted/pending）
+    // 开关：src/config/param-lib-rules.json（enabled / shadow / subs 白名单）
+    // 注意：本组接口只改「值清单」，不改 type/series —— 那些由 src/param-lib/build.mjs 从规格模板推导。
+
+    if (p === '/api/param-lib/list') {
+      const j = readConfigJson('param-standard.json') || { subs: {} }
+      const cfg = readConfigJson('param-lib-rules.json') || {}
+      const kw = (url.searchParams.get('kw') || '').trim().toLowerCase()
+      let items = Object.entries(j.subs || {}).map(([sub, x]) => {
+        const params = Object.entries(x.params || {}).map(([name, d]) => {
+          // free 型（型号/阻值/容值）没有 accepted，只有 reference（Top5 参考值）——
+          // 之前只读 accepted，导致界面显示「（无收录值）」，看起来像数据缺失。
+          const raw = d.type === 'free' ? (d.reference || []) : (d.accepted || [])
+          // 与 Excel 导出同口径：按值递增（不是按频次）。
+          // 之前界面用 JSON 原顺序（= 频次降序），和导出文件顺序不一致，维护时很难对照。
+          const sorted = sortByValue(name, raw)
+          return {
+            name,
+            type: d.type || '',
+            series: d.series || '',
+            acceptedCount: (d.accepted || []).length,
+            pendingCount: (d.pending || []).length,
+            suspectedCount: (d.suspected || []).length,
+            // 只回传前 60 个供界面展示（单参数超过这个量说明它本该是 free 型）
+            values: sorted.slice(0, 60).map((v) => ({
+              value: v.value,
+              count: v.count || 0,
+              source: v.source || (d.type === 'free' ? 'reference' : 'stock'),
+            })),
+          }
+        })
+        return {
+          sub,
+          subName: x.subName || '',
+          midName: x.midName || '',
+          rowCount: x.rowCount || 0,
+          droppedCount: x.droppedCount || 0,
+          params,
+          paramCount: params.length,
+          valueCount: params.reduce((s, q) => s + q.acceptedCount, 0),
+        }
+      })
+      if (kw) items = items.filter((x) => (x.sub + ' ' + x.subName + ' ' + x.midName).toLowerCase().indexOf(kw) >= 0)
+      items.sort((a, b) => a.sub.localeCompare(b.sub))
+      return sendJson(res, 200, {
+        ok: true,
+        config: {
+          enabled: !!cfg.enabled,
+          shadow: cfg.shadow !== false,
+          level: cfg.level || 'warn',
+          limit: cfg.limit || 12,
+          subs: Array.isArray(cfg.subs) ? cfg.subs : [],
+        },
+        meta: j.meta || {},
+        items,
+        summary: {
+          subs: items.length,
+          params: items.reduce((s, x) => s + x.paramCount, 0),
+          values: items.reduce((s, x) => s + x.valueCount, 0),
+        },
+      })
+    }
+
+    if (p === '/api/param-lib' && (req.method === 'PUT' || req.method === 'POST')) {
+      const b = await readBody(req, 8 * 1024 * 1024)
+      const sub = String(b.sub || '').trim().slice(0, 6)
+      if (!/^\d{6}$/.test(sub)) return sendJson(res, 400, { ok: false, error: '小类号必须是 6 位数字' })
+      const j = readConfigJson('param-standard.json') || { subs: {} }
+      const node = (j.subs || {})[sub]
+      if (!node) return sendJson(res, 404, { ok: false, error: '该小类不在参数库中（需先运行 npm run param:build）' })
+      const param = String(b.param || '').trim()
+      const d = (node.params || {})[param]
+      if (!d) return sendJson(res, 404, { ok: false, error: '该参数不在本小类中' })
+
+      const normList = (arr) => (Array.isArray(arr) ? arr : [])
+        .map((x) => (typeof x === 'string'
+          ? { value: String(x).trim(), count: 0 }
+          : { value: String(x.value || '').trim(), count: Number(x.count) || 0 }))
+        .filter((x) => x.value)
+
+      if (Array.isArray(b.accepted)) d.accepted = normList(b.accepted)
+      if (Array.isArray(b.pending)) d.pending = normList(b.pending)
+      j.meta = j.meta || {}
+      j.meta.updatedAt = new Date().toISOString()
+      j.meta.editedAt = j.meta.updatedAt
+      saveConfigJson('param-standard.json', j)
+      return sendJson(res, 200, { ok: true, sub, param, accepted: (d.accepted || []).length, pending: (d.pending || []).length })
+    }
+
+    if (p === '/api/param-lib/config' && req.method === 'POST') {
+      const b = await readBody(req)
+      const cfg = readConfigJson('param-lib-rules.json') || {}
+      if (b.enabled != null) cfg.enabled = !!b.enabled
+      if (b.shadow != null) cfg.shadow = !!b.shadow
+      if (Array.isArray(b.subs)) cfg.subs = b.subs.map((x) => String(x).trim()).filter((x) => /^\d{6}$/.test(x))
+      if (b.level) cfg.level = String(b.level)
+      if (b.limit != null) cfg.limit = Math.max(1, Math.min(Number(b.limit) || 12, 60))
+      cfg.meta = cfg.meta || {}
+      cfg.meta.updatedAt = new Date().toISOString()
+      saveConfigJson('param-lib-rules.json', cfg)
+      return sendJson(res, 200, { ok: true, config: cfg })
+    }
+
+    // 导出 Excel：一行一个值，便于在 Excel 里筛选/排序/批量改，再导入回来
+    // 排序：小类升序 → 参数名升序 → 组内按值递增（复用标准库的单位等级排序，
+    //       pF→nF→μF / Ω→kΩ / V→kV）。不排序时值会按 JSON 原顺序输出，
+    //       看起来是 3P/1250/800/4/630/2… 这种乱的顺序，维护时很难扫视。
+    if (p === '/api/param-lib/export-xlsx' && req.method === 'GET') {
+      const j = readConfigJson('param-standard.json') || { subs: {} }
+      const rows = [['小类号', '小类名', '参数', '类型', '标准序列', '值', '频次', '来源']]
+      const pend = [['小类号', '小类名', '参数', '值', '频次', '原因']]
+      const subsSorted = Object.entries(j.subs || {}).sort((a, b) => a[0].localeCompare(b[0]))
+      for (const [sub, x] of subsSorted) {
+        const params = Object.entries(x.params || {}).sort((a, b) => a[0].localeCompare(b[0], 'zh'))
+        for (const [name, d] of params) {
+          const acc = sortByValue(name, d.accepted || [])
+          for (const v of acc) {
+            rows.push([sub, x.subName || '', name, d.type || '', d.series || '', v.value, v.count || 0, v.source || 'stock'])
+          }
+          const pv = sortByValue(name, d.pending || [])
+          for (const v of pv) {
+            pend.push([sub, x.subName || '', name, v.value, v.count || 0, v.reason || ''])
+          }
+        }
+      }
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '参数值')
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(pend), '待确认')
+      const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+      res.writeHead(200, {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': 'attachment; filename="param-standard.xlsx"',
+        'Content-Length': buf.length,
+      })
+      res.end(buf)
+      return
+    }
+
+    // 导入 Excel：按 (小类号, 参数) 分组重建值清单；表头之外的行即「该参数应收录的值」
+    if (p === '/api/param-lib/import-xlsx' && req.method === 'POST') {
+      const chunks = []
+      for await (const c of req) chunks.push(c)
+      let wb = null
+      try { wb = XLSX.read(Buffer.concat(chunks), { type: 'buffer' }) } catch (e) {
+        return sendJson(res, 400, { ok: false, error: 'Excel 解析失败：' + e.message })
+      }
+      const ws = wb.Sheets['参数值'] || wb.Sheets[wb.SheetNames[0]]
+      if (!ws) return sendJson(res, 400, { ok: false, error: '未找到「参数值」工作表' })
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' })
+      if (!rows.length) return sendJson(res, 400, { ok: false, error: '工作表为空' })
+
+      const groups = new Map()
+      for (let i = 1; i < rows.length; i++) {
+        const r = rows[i] || []
+        const sub = String(r[0] || '').trim()
+        const param = String(r[2] || '').trim()
+        const val = String(r[5] || '').trim()
+        if (!/^\d{6}$/.test(sub) || !param || !val) continue
+        const k = sub + '|' + param
+        if (!groups.has(k)) groups.set(k, { sub, param, list: [] })
+        groups.get(k).list.push({
+          value: val,
+          count: Number(r[6]) || 0,
+          source: String(r[7] || 'stock').trim() || 'stock',
+        })
+      }
+      if (!groups.size) return sendJson(res, 400, { ok: false, error: '没有可导入的行（检查前 6 列：小类号/小类名/参数/类型/序列/值）' })
+
+      const j = readConfigJson('param-standard.json') || { subs: {} }
+      let updated = 0
+      const skipped = []
+      for (const g of groups.values()) {
+        const node = (j.subs || {})[g.sub]
+        const d = node && (node.params || {})[g.param]
+        if (!d) { skipped.push(g.sub + ' ' + g.param); continue }
+        const seen = new Set()
+        d.accepted = g.list.filter((v) => {
+          if (seen.has(v.value)) return false
+          seen.add(v.value)
+          return true
+        })
+        updated++
+      }
+      j.meta = j.meta || {}
+      j.meta.updatedAt = new Date().toISOString()
+      j.meta.editedAt = j.meta.updatedAt
+      saveConfigJson('param-standard.json', j)
+      return sendJson(res, 200, { ok: true, updated, skipped: skipped.slice(0, 10), subs: Object.keys(j.subs || {}).length })
+    }
+
+    if (p === '/api/param-lib/export' && req.method === 'GET') {
+      const j = readConfigJson('param-standard.json') || { subs: {} }
+      const body = JSON.stringify(j, null, 2) + '\n'
+      res.writeHead(200, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="param-standard.json"',
+        'Content-Length': Buffer.byteLength(body),
+      })
+      res.end(body)
+      return
+    }
+
+    if (p === '/api/param-lib/import' && req.method === 'POST') {
+      const b = await readBody(req, 16 * 1024 * 1024)
+      const data = b && b.subs ? b : (b && b.data) || null
+      if (!data || typeof data !== 'object' || !data.subs) {
+        return sendJson(res, 400, { ok: false, error: '格式不符：需要 { subs: { "100105": { params: {...} } } }' })
+      }
+      const j = readConfigJson('param-standard.json') || { subs: {} }
+      const mode = b.mode === 'replace' ? 'replace' : 'merge'
+      if (mode === 'replace') {
+        j.subs = data.subs
+      } else {
+        j.subs = j.subs || {}
+        for (const [sub, node] of Object.entries(data.subs)) {
+          if (!/^\d{6}$/.test(sub)) continue
+          j.subs[sub] = node
+        }
+      }
+      j.meta = j.meta || {}
+      j.meta.updatedAt = new Date().toISOString()
+      j.meta.draft = false
+      saveConfigJson('param-standard.json', j)
+      return sendJson(res, 200, { ok: true, mode, subs: Object.keys(j.subs || {}).length })
     }
 
     /**

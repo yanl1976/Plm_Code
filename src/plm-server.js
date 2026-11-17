@@ -982,6 +982,8 @@ function handleCheck(body) {
     result.specFormat = r.specFormat || null
     // 名称与所选小类不符（疑似选错小类）：带候选类别，前端可展示
     result.subMismatch = r.subMismatch || null
+    // 参数标准库影子评估（仅记录，不参与 pass/errors/warnings；插件不读取此字段）
+    result.paramShadow = r.paramShadow || null
   } catch (e) {
     result.warnings.push('规则校验异常（已跳过）：' + e.message)
   }

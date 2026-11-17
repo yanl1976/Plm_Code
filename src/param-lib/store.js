@@ -74,14 +74,124 @@ export function paramDef(sub, name) {
 }
 
 /**
- * 某小类下某参数的标准取值候选（按本小类存量频次降序，只返回 accepted）
- * @returns {Array<{value:string, count:number}>}
+ * 把参数值换算成可比较的数值（基本单位），用于"按值递增"排序。
+ * 复合电压 450/750V 取额定值（后一个数）；无法解析的返回 NaN（走字典序）。
+ */
+export function numericOf(param, value) {
+  const s = String(value || '').toUpperCase().replace(/\s/g, '')
+  if (param === '额定电压') {
+    const m = /^(\d+(?:\.\d+)?)(?:\/(\d+(?:\.\d+)?))?(KV|V)$/.exec(s)
+    if (!m) return NaN
+    const base = m[2] ? parseFloat(m[2]) : parseFloat(m[1])
+    return base * (m[3] === 'KV' ? 1000 : 1)
+  }
+  if (param === '容值') {
+    // 注意：toUpperCase() 会把 μ(U+03BC) 变成希腊大写 Μ(U+039C)，不是 ASCII 的 M。
+    // 若按 MF 处理会被当成毫法（1e-3），与微法（1e-6）差 1000 倍 —— 实测导致 2200μF 排在 220μF 之前。
+    // 故先把 μ/Μ 统一成 u，再解析。
+    const u = String(value || '').replace(/\s/g, '').replace(/[\u03BC\u039C]/g, 'u')
+    const m = /^(\d+(?:\.\d+)?)(uF|nF|pF|mF|F)$/i.exec(u)
+    if (!m) return NaN
+    const unit = m[2].toLowerCase()
+    const mult = unit === 'f' ? 1 : unit === 'uf' ? 1e-6 : unit === 'nf' ? 1e-9 : unit === 'pf' ? 1e-12 : 1e-3
+    return parseFloat(m[1]) * mult
+  }
+  if (param === '阻值') {
+    const m = /^(\d+(?:\.\d+)?)(MΩ|KΩ|Ω)$/.exec(s)
+    if (!m) return NaN
+    const mult = { 'MΩ': 1e6, 'KΩ': 1e3, 'Ω': 1 }[m[2]] || 1
+    return parseFloat(m[1]) * mult
+  }
+  // 功率：支持分数写法 1/2W、1/4W（=0.5W、0.25W）与 kW
+  // 不处理的话，1/2W 会被当成"1"，排到 1W 之后 —— 电阻功率档位里这两个写法很常见
+  if (param === '功率') {
+    const frac = /^(\d+)\/(\d+)\s*(KW|W)$/i.exec(s)
+    if (frac) {
+      const v = parseFloat(frac[1]) / parseFloat(frac[2])
+      return v * (frac[3].toUpperCase() === 'KW' ? 1000 : 1)
+    }
+    const num = /^([\d.]+)\s*(KW|W)$/i.exec(s)
+    if (num) return parseFloat(num[1]) * (num[2].toUpperCase() === 'KW' ? 1000 : 1)
+  }
+  // 通用：取首个数字（极数 3P→3、电流 10→10、精度 ±1%→1、分断能力 6→6、变比 200/5→200）
+  const m = /(-?\d+(?:\.\d+)?)/.exec(s)
+  return m ? parseFloat(m[1]) : NaN
+}
+
+/**
+ * 单位等级（用于"按单位递增"排序）：
+ *   容值 pF(1) → nF(2) → μF(3) → mF(4) → F(5)
+ *   阻值 Ω(1) → kΩ(2) → MΩ(3)
+ * 同一等级内再按数量递增。
+ * 这样得到的是「表格序」——同一单位排在一起，扫一眼就能定位。
+ */
+const UNIT_RANK = {
+  容值: [
+    [/^pF$/, 1], [/^nF$/, 2],
+    [/^[\u03BC\u039Cu]F$/, 3],   // μF(U+03BC) / ΜF(U+039C 希腊大写) / uF(ASCII)
+    [/^mF$/, 4], [/^F$/, 5],
+  ],
+  阻值: [[/^Ω$/, 1], [/^kΩ$/, 2], [/^MΩ$/, 3]],
+  // 注意顺序：KV 必须先于 V 判断，否则 0.6/1KV 会被当成 V 组
+  额定电压: [[/KV$/, 2], [/V$/, 1]],
+  // 功率不进这张表：电阻功率有分数写法 1/2W、1/4W，
+  // 而 unitParts 对「a/b」的约定是"复合值取后一个"（电压 450/750V 取 750），
+  // 于是 1/2W 会被取成 2，排到 2W 旁边。功率的分数换算统一交给 numericOf 处理。
+}
+
+/** 拆出「单位等级 + 数量」，用于按单位递增排序；无法解析返回 null */
+function unitParts(param, value) {
+  const s = String(value || '').replace(/\s/g, '')
+  const rules = UNIT_RANK[param]
+  if (!rules) return null
+  // 数值（含 450/750 这种复合）在前、单位在后。
+  // 必须用贪婪的 [\d./]+ —— 非贪婪会把 27Ω 拆成 2 + 7Ω，解析失败后落到队首（实测踩过）
+  const m = /^([\d./]+)([A-Za-zΩμΜ%]+)$/.exec(s)
+  if (!m) return null
+  let num = parseFloat(m[1].split('/').pop())
+  if (!isFinite(num)) num = parseFloat(m[1])
+  const unit = m[2]
+  for (const [re, rank] of rules) {
+    if (re.test(unit)) return { rank, num: isFinite(num) ? num : 0 }
+  }
+  return null
+}
+
+/** 按值递增排序；带单位的参数按「单位等级 → 数量」，其余按数值，非数值按字典序 */
+export function sortByValue(param, arr) {
+  const useUnit = !!UNIT_RANK[param]
+  return arr.slice().sort((a, b) => {
+    if (useUnit) {
+      const pa = unitParts(param, a.value)
+      const pb = unitParts(param, b.value)
+      if (pa && pb) {
+        if (pa.rank !== pb.rank) return pa.rank - pb.rank
+        return pa.num - pb.num
+      }
+      if (pa) return -1
+      if (pb) return 1
+    }
+    const na = numericOf(param, a.value)
+    const nb = numericOf(param, b.value)
+    const fa = isFinite(na)
+    const fb = isFinite(nb)
+    if (fa && fb) return na - nb
+    if (fa) return -1
+    if (fb) return 1
+    return String(a.value).localeCompare(String(b.value), 'zh')
+  })
+}
+
+/**
+ * 某小类下某参数的标准取值候选 —— **按值递增排序**（便于扫视定位）。
+ * 频次只作为附注返回，不参与排序。
+ * @returns {Array<{value:string, count:number, source?:string}>}
  */
 export function standardValues(sub, name, limit) {
   const d = paramDef(sub, name)
   if (!d) return []
-  const max = limit || config().limit || 8
-  return (d.accepted || []).slice(0, max)
+  const max = limit || config().limit || 12
+  return sortByValue(name, d.accepted || []).slice(0, max)
 }
 
 /**

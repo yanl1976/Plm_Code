@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ERP 物料主数据治理 · 一物多号清洗</title>
-  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/style.css?v=20261117b" />
 </head>
 <body>
   <header class="topbar">
@@ -185,6 +185,7 @@
       <div class="sub-tabs">
         <button class="sub-tab active" data-subtab="syn">名称同义词字典</button>
         <button class="sub-tab" data-subtab="guide">国标命名范式库</button>
+        <button class="sub-tab" data-subtab="param">参数标准库</button>
         <button class="sub-tab" data-subtab="std">标准查新</button>
         <span id="rulesSummary" class="sub-tabs-sum"></span>
       </div>
@@ -206,6 +207,28 @@
           </div>
           <div id="synMsg" class="syn-msg"></div>
           <div id="synList" class="syn-list"></div>
+        </div>
+      </div>
+
+      <div class="sub-panel" id="sub-param">
+        <div class="settings-card">
+          <h3>参数标准库 <span class="syn-tip">按小类隔离 · 录入补全与值校验的取值来源 · 改完即时生效</span></h3>
+          <div class="syn-bar">
+            <label class="pl-switch"><input type="checkbox" id="plEnabled" /> 启用</label>
+            <label class="pl-switch"><input type="checkbox" id="plShadow" /> 影子模式</label>
+            <input id="plSearch" placeholder="搜索小类号 / 名称" autocomplete="off" />
+            <button id="btnPlExport" class="ghost" title="导出为 Excel：一行一个值，可在 Excel 里筛选/排序/批量改，再导入回来">导出 Excel</button>
+            <button id="btnPlExportJson" class="ghost" title="导出为 JSON，便于程序处理或迁移">导出 JSON</button>
+            <button id="btnPlImport" class="ghost" title="导入 Excel 或 JSON（Excel 按「小类号+参数」整组覆盖）">导入</button>
+            <input type="file" id="plFile" accept=".json,.xlsx,.xls,application/json" style="display:none" />
+            <span id="plStats" class="syn-stats"></span>
+          </div>
+          <div id="plMsg" class="syn-msg"></div>
+          <div class="pl-note">
+            参数值<b>按小类隔离</b>：某小类的候选只来自该小类存量，不会串到其它类（如电容的 63V 不会推荐给断路器）。<br>
+            <b>±1% 与 1% 是两个不同值</b>：GB/T 2691 规定允许偏差必须带 ± 号（±1% ≙ 字母代码 F），漏写 ± 的不自动等同。
+          </div>
+          <div id="plList" class="syn-list"></div>
         </div>
       </div>
 
@@ -338,6 +361,6 @@
     </div>
   </div>
 
-  <script src="/app.js"></script>
+  <script src="/app.js?v=20261117b"></script>
 </body>
 </html>

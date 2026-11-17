@@ -66,7 +66,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 19,
           "normCount": 18,
           "aliases": {
@@ -92,11 +92,6 @@
               "source": "stock"
             },
             {
-              "value": "2000",
-              "count": 14,
-              "source": "stock"
-            },
-            {
               "value": "800",
               "count": 9,
               "source": "stock"
@@ -117,18 +112,8 @@
               "source": "stock"
             },
             {
-              "value": "2500",
-              "count": 6,
-              "source": "stock"
-            },
-            {
               "value": "630",
               "count": 4,
-              "source": "stock"
-            },
-            {
-              "value": "4000",
-              "count": 3,
               "source": "stock"
             },
             {
@@ -147,37 +132,7 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -187,7 +142,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -207,7 +162,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -270,48 +225,32 @@
               "value": "500",
               "count": 0,
               "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
-              "count": 0,
-              "source": "series"
             }
           ],
           "pending": [
             {
+              "value": "2000",
+              "count": 14,
+              "reason": "不在本小类标准序列但出现 ≥5 次，需确认是否为行业惯例/特殊规格"
+            },
+            {
               "value": "3200",
               "count": 8,
+              "reason": "不在本小类标准序列但出现 ≥5 次，需确认是否为行业惯例/特殊规格"
+            },
+            {
+              "value": "2500",
+              "count": 6,
               "reason": "不在本小类标准序列但出现 ≥5 次，需确认是否为行业惯例/特殊规格"
             }
           ],
           "suspected": [
             {
               "value": "220",
+              "count": 3
+            },
+            {
+              "value": "4000",
               "count": 3
             },
             {
@@ -763,7 +702,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 13,
           "normCount": 13,
           "aliases": {
@@ -781,11 +720,6 @@
             "04": "4"
           },
           "accepted": [
-            {
-              "value": "2000",
-              "count": 11,
-              "source": "stock"
-            },
             {
               "value": "1250",
               "count": 10,
@@ -807,32 +741,12 @@
               "source": "stock"
             },
             {
-              "value": "2500",
-              "count": 5,
-              "source": "stock"
-            },
-            {
               "value": "630",
               "count": 5,
               "source": "stock"
             },
             {
-              "value": "4000",
-              "count": 2,
-              "source": "stock"
-            },
-            {
               "value": "1",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
               "count": 0,
               "source": "series"
             },
@@ -842,12 +756,7 @@
               "source": "series"
             },
             {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
@@ -857,17 +766,7 @@
               "source": "series"
             },
             {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -877,7 +776,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -897,7 +796,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -960,51 +859,30 @@
               "value": "500",
               "count": 0,
               "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
-              "count": 0,
-              "source": "series"
             }
           ],
           "pending": [
             {
+              "value": "2000",
+              "count": 11,
+              "reason": "不在本小类标准序列但出现 ≥5 次，需确认是否为行业惯例/特殊规格"
+            },
+            {
               "value": "3200",
               "count": 9,
+              "reason": "不在本小类标准序列但出现 ≥5 次，需确认是否为行业惯例/特殊规格"
+            },
+            {
+              "value": "2500",
+              "count": 5,
               "reason": "不在本小类标准序列但出现 ≥5 次，需确认是否为行业惯例/特殊规格"
             }
           ],
           "suspected": [
+            {
+              "value": "4000",
+              "count": 2
+            },
             {
               "value": "220",
               "count": 2
@@ -1409,7 +1287,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 56,
           "normCount": 39,
           "aliases": {
@@ -1549,17 +1427,7 @@
               "source": "stock"
             },
             {
-              "value": "12.5",
-              "count": 5,
-              "source": "stock"
-            },
-            {
               "value": "1250",
-              "count": 2,
-              "source": "stock"
-            },
-            {
-              "value": "6.3",
               "count": 2,
               "source": "stock"
             },
@@ -1579,82 +1447,7 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "31.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
               "count": 0,
               "source": "series"
             },
@@ -1665,6 +1458,16 @@
             },
             {
               "value": "13",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "1000",
+              "count": 0,
+              "source": "series"
+            },
+            {
+              "value": "1600",
               "count": 0,
               "source": "series"
             }
@@ -1689,12 +1492,21 @@
               "value": "225",
               "count": 8,
               "reason": "不在本小类标准序列但出现 ≥5 次，需确认是否为行业惯例/特殊规格"
+            },
+            {
+              "value": "12.5",
+              "count": 5,
+              "reason": "不在本小类标准序列但出现 ≥5 次，需确认是否为行业惯例/特殊规格"
             }
           ],
           "suspected": [
             {
               "value": "220",
               "count": 4
+            },
+            {
+              "value": "6.3",
+              "count": 2
             },
             {
               "value": "0.03",
@@ -2151,7 +1963,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 42,
           "normCount": 22,
           "aliases": {
@@ -2259,47 +2071,7 @@
               "source": "stock"
             },
             {
-              "value": "5",
-              "count": 2,
-              "source": "stock"
-            },
-            {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "12.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "31.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -2357,41 +2129,6 @@
               "value": "1600",
               "count": 0,
               "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
             }
           ],
           "pending": [],
@@ -2399,6 +2136,10 @@
             {
               "value": "9",
               "count": 3
+            },
+            {
+              "value": "5",
+              "count": 2
             },
             {
               "value": "60",
@@ -3033,7 +2774,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 21,
           "normCount": 14,
           "aliases": {
@@ -3108,27 +2849,12 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
@@ -3138,27 +2864,7 @@
               "source": "series"
             },
             {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "12.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "31.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -3224,46 +2930,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
               "count": 0,
               "source": "series"
             }
@@ -3547,7 +3213,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 6,
           "normCount": 5,
           "aliases": {
@@ -3558,22 +3224,7 @@
           },
           "accepted": [
             {
-              "value": "2.5",
-              "count": 3,
-              "source": "stock"
-            },
-            {
               "value": "1",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
               "count": 0,
               "source": "series"
             },
@@ -3583,7 +3234,7 @@
               "source": "series"
             },
             {
-              "value": "3.15",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
@@ -3593,17 +3244,7 @@
               "source": "series"
             },
             {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -3613,7 +3254,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -3633,7 +3274,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -3721,60 +3362,14 @@
               "value": "1600",
               "count": 0,
               "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
-              "count": 0,
-              "source": "series"
             }
           ],
           "pending": [],
           "suspected": [
+            {
+              "value": "2.5",
+              "count": 3
+            },
             {
               "value": "220",
               "count": 2
@@ -4128,7 +3723,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 5,
           "normCount": 5,
           "aliases": {
@@ -4150,27 +3745,7 @@
               "source": "stock"
             },
             {
-              "value": "3150",
-              "count": 2,
-              "source": "stock"
-            },
-            {
-              "value": "2000",
-              "count": 2,
-              "source": "stock"
-            },
-            {
               "value": "1",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
               "count": 0,
               "source": "series"
             },
@@ -4180,12 +3755,7 @@
               "source": "series"
             },
             {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
@@ -4195,17 +3765,7 @@
               "source": "series"
             },
             {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -4215,7 +3775,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -4235,7 +3795,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -4313,50 +3873,18 @@
               "value": "1600",
               "count": 0,
               "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
-              "count": 0,
-              "source": "series"
             }
           ],
           "pending": [],
           "suspected": [
+            {
+              "value": "3150",
+              "count": 2
+            },
+            {
+              "value": "2000",
+              "count": 2
+            },
             {
               "value": "1600",
               "count": 1
@@ -4685,12 +4213,13 @@
           "rawCount": 4,
           "normCount": 2,
           "aliases": {
-            "3": "3P"
+            "3": "3P",
+            "三极": "3P"
           },
           "accepted": [
             {
               "value": "3P",
-              "count": 10,
+              "count": 11,
               "source": "stock"
             }
           ],
@@ -4704,7 +4233,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 17,
           "normCount": 15,
           "aliases": {
@@ -4736,27 +4265,12 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
@@ -4766,17 +4280,7 @@
               "source": "series"
             },
             {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -4786,7 +4290,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -4802,11 +4306,6 @@
             },
             {
               "value": "25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "31.5",
               "count": 0,
               "source": "series"
             },
@@ -4892,51 +4391,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
               "count": 0,
               "source": "series"
             }
@@ -5192,7 +4646,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 7,
           "normCount": 7,
           "aliases": {
@@ -5221,27 +4675,12 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
@@ -5251,17 +4690,7 @@
               "source": "series"
             },
             {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -5271,7 +4700,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -5291,7 +4720,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -5367,56 +4796,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             }
@@ -5669,7 +5048,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 11,
           "normCount": 11,
           "aliases": {
@@ -5712,27 +5091,12 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
@@ -5742,17 +5106,7 @@
               "source": "series"
             },
             {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -5762,7 +5116,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -5782,7 +5136,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -5848,56 +5202,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             }
@@ -6003,7 +5307,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 2,
           "normCount": 2,
           "aliases": {
@@ -6017,27 +5321,12 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
@@ -6047,17 +5336,7 @@
               "source": "series"
             },
             {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -6067,7 +5346,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -6087,7 +5366,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -6173,56 +5452,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             }
@@ -6384,7 +5613,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 6,
           "normCount": 6,
           "aliases": {
@@ -6407,27 +5636,12 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
@@ -6437,17 +5651,7 @@
               "source": "series"
             },
             {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -6457,7 +5661,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -6477,7 +5681,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -6558,56 +5762,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             }
@@ -6859,7 +6013,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 5,
           "normCount": 5,
           "aliases": {
@@ -6881,42 +6035,17 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "2.5",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "3.15",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -6926,7 +6055,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -6946,7 +6075,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -7032,56 +6161,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             }
@@ -7298,7 +6377,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 14,
           "normCount": 14,
           "aliases": {
@@ -7363,37 +6442,12 @@
               "source": "series"
             },
             {
-              "value": "1.25",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -7403,7 +6457,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -7423,7 +6477,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -7479,56 +6533,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             }
@@ -7906,7 +6910,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 50,
           "normCount": 50,
           "aliases": {
@@ -8048,11 +7052,6 @@
               "source": "stock"
             },
             {
-              "value": "2500",
-              "count": 3,
-              "source": "stock"
-            },
-            {
               "value": "50",
               "count": 3,
               "source": "stock"
@@ -8088,47 +7087,12 @@
               "source": "stock"
             },
             {
-              "value": "1.25",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "12.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -8139,41 +7103,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             }
@@ -8194,6 +7123,10 @@
             {
               "value": "710",
               "count": 4
+            },
+            {
+              "value": "2500",
+              "count": 3
             },
             {
               "value": "150",
@@ -8265,10 +7198,6 @@
             },
             {
               "value": "60",
-              "count": 1
-            },
-            {
-              "value": "1600",
               "count": 1
             }
           ]
@@ -8577,7 +7506,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 4,
           "normCount": 4,
           "aliases": {
@@ -8593,27 +7522,12 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
@@ -8623,17 +7537,7 @@
               "source": "series"
             },
             {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -8643,7 +7547,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -8663,7 +7567,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -8749,56 +7653,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             }
@@ -9000,7 +7854,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 27,
           "normCount": 27,
           "aliases": {
@@ -9089,11 +7943,6 @@
               "source": "stock"
             },
             {
-              "value": "8",
-              "count": 3,
-              "source": "stock"
-            },
-            {
               "value": "125",
               "count": 3,
               "source": "stock"
@@ -9129,42 +7978,7 @@
               "source": "stock"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "12.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "31.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -9212,45 +8026,14 @@
               "value": "1600",
               "count": 0,
               "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
             }
           ],
           "pending": [],
           "suspected": [
+            {
+              "value": "8",
+              "count": 3
+            },
             {
               "value": "5",
               "count": 1
@@ -9528,7 +8311,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 1,
           "normCount": 1,
           "aliases": {},
@@ -9539,27 +8322,12 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
@@ -9569,17 +8337,7 @@
               "source": "series"
             },
             {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -9589,7 +8347,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -9609,7 +8367,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -9695,56 +8453,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             }
@@ -9936,7 +8644,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 1,
           "normCount": 1,
           "aliases": {},
@@ -9947,27 +8655,12 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
@@ -9977,17 +8670,7 @@
               "source": "series"
             },
             {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -9997,7 +8680,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -10017,7 +8700,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -10103,56 +8786,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             }
@@ -10359,7 +8992,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 1,
           "normCount": 1,
           "aliases": {
@@ -10372,27 +9005,12 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
@@ -10402,17 +9020,7 @@
               "source": "series"
             },
             {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -10422,7 +9030,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -10442,7 +9050,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -10528,56 +9136,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             }
@@ -10765,7 +9323,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 20,
           "normCount": 18,
           "aliases": {
@@ -10805,11 +9363,6 @@
               "source": "stock"
             },
             {
-              "value": "6.3",
-              "count": 2,
-              "source": "stock"
-            },
-            {
               "value": "50",
               "count": 2,
               "source": "stock"
@@ -10820,27 +9373,7 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
               "count": 0,
               "source": "series"
             },
@@ -10850,17 +9383,12 @@
               "source": "series"
             },
             {
-              "value": "5",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "8",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -10880,7 +9408,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -10958,55 +9486,14 @@
               "value": "1600",
               "count": 0,
               "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
-              "count": 0,
-              "source": "series"
             }
           ],
           "pending": [],
           "suspected": [
+            {
+              "value": "6.3",
+              "count": 2
+            },
             {
               "value": "30",
               "count": 2
@@ -13831,7 +12318,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 35,
           "normCount": 35,
           "aliases": {
@@ -13903,27 +12390,12 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
@@ -13933,17 +12405,7 @@
               "source": "series"
             },
             {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -13953,7 +12415,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -13968,7 +12430,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -14034,56 +12496,6 @@
             },
             {
               "value": "1250",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             }
@@ -14326,6 +12738,21 @@
           ],
           "pending": [],
           "suspected": []
+        },
+        "额定容量": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "2.1kva",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -14542,7 +12969,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 28,
           "normCount": 28,
           "aliases": {
@@ -14602,27 +13029,12 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
@@ -14632,17 +13044,7 @@
               "source": "series"
             },
             {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -14652,7 +13054,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -14672,7 +13074,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -14738,56 +13140,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             }
@@ -15390,6 +13742,75 @@
               "count": 1
             }
           ]
+        },
+        "额定容量": {
+          "type": "free",
+          "series": "",
+          "rawCount": 60,
+          "normCount": 60,
+          "aliases": {},
+          "reference": [
+            {
+              "value": "50VA",
+              "count": 12
+            },
+            {
+              "value": "1600kVA",
+              "count": 5
+            },
+            {
+              "value": "115kVA",
+              "count": 5
+            },
+            {
+              "value": "75kVA",
+              "count": 5
+            },
+            {
+              "value": "400VA",
+              "count": 4
+            }
+          ],
+          "note": "取值过多，不推荐值；仅保留 Top5 作\"本小类常见写法\"参考"
+        },
+        "电压比": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 6,
+          "normCount": 6,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "10/0.4kV",
+              "count": 8,
+              "source": "stock"
+            },
+            {
+              "value": "0.6/0.4kV",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "0.4/0.23kV",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "6.3/0.4KV",
+              "count": 1
+            },
+            {
+              "value": "10/0.69kV",
+              "count": 1
+            },
+            {
+              "value": "6/0.4kV",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -15847,6 +14268,161 @@
               "count": 1
             }
           ]
+        },
+        "额定容量": {
+          "type": "semi",
+          "series": "",
+          "rawCount": 32,
+          "normCount": 32,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "100VA",
+              "count": 15,
+              "source": "stock"
+            },
+            {
+              "value": "500VA",
+              "count": 14,
+              "source": "stock"
+            },
+            {
+              "value": "50VA",
+              "count": 12,
+              "source": "stock"
+            },
+            {
+              "value": "400VA",
+              "count": 9,
+              "source": "stock"
+            },
+            {
+              "value": "250VA",
+              "count": 9,
+              "source": "stock"
+            },
+            {
+              "value": "1000VA",
+              "count": 9,
+              "source": "stock"
+            },
+            {
+              "value": "200VA",
+              "count": 7,
+              "source": "stock"
+            },
+            {
+              "value": "630VA",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "800VA",
+              "count": 4,
+              "source": "stock"
+            },
+            {
+              "value": "5000VA",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "2500VA",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "300VA",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "2000VA",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "5kVA",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "10kVA",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "160VA",
+              "count": 1
+            },
+            {
+              "value": "1200VA",
+              "count": 1
+            },
+            {
+              "value": "12kVA",
+              "count": 1
+            },
+            {
+              "value": "24kVA",
+              "count": 1
+            },
+            {
+              "value": "900VA",
+              "count": 1
+            },
+            {
+              "value": "1.5kVA",
+              "count": 1
+            },
+            {
+              "value": "1500VA",
+              "count": 1
+            },
+            {
+              "value": "600VA",
+              "count": 1
+            },
+            {
+              "value": "32VA",
+              "count": 1
+            },
+            {
+              "value": "3kVA",
+              "count": 1
+            },
+            {
+              "value": "25VA",
+              "count": 1
+            },
+            {
+              "value": "1kVA",
+              "count": 1
+            },
+            {
+              "value": "8000VA",
+              "count": 1
+            },
+            {
+              "value": "30kVA",
+              "count": 1
+            },
+            {
+              "value": "3500VA",
+              "count": 1
+            },
+            {
+              "value": "7500VA",
+              "count": 1
+            },
+            {
+              "value": "2kVA",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -16127,6 +14703,56 @@
           ],
           "pending": [],
           "suspected": []
+        },
+        "额定容量": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 9,
+          "normCount": 9,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "315kVA",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "500VA",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "60kVA",
+              "count": 1
+            },
+            {
+              "value": "6kVA",
+              "count": 1
+            },
+            {
+              "value": "100VA",
+              "count": 1
+            },
+            {
+              "value": "4000VA",
+              "count": 1
+            },
+            {
+              "value": "63VA",
+              "count": 1
+            },
+            {
+              "value": "50VA",
+              "count": 1
+            },
+            {
+              "value": "1kVA",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -16273,7 +14899,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 2,
           "normCount": 2,
           "aliases": {
@@ -16287,27 +14913,12 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
@@ -16317,17 +14928,7 @@
               "source": "series"
             },
             {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -16337,7 +14938,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -16357,7 +14958,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -16443,56 +15044,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             }
@@ -16653,7 +15204,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 16,
           "normCount": 7,
           "aliases": {
@@ -16684,47 +15235,17 @@
               "source": "stock"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "4",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "5",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -16744,7 +15265,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -16830,51 +15351,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             }
@@ -17103,7 +15579,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 2,
           "normCount": 2,
           "aliases": {
@@ -17117,27 +15593,12 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
@@ -17147,17 +15608,7 @@
               "source": "series"
             },
             {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -17167,7 +15618,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -17187,7 +15638,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -17273,56 +15724,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             }
@@ -17468,7 +15869,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 84,
           "normCount": 4,
           "aliases": {
@@ -17483,27 +15884,12 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
@@ -17513,17 +15899,7 @@
               "source": "series"
             },
             {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -17533,7 +15909,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -17553,7 +15929,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -17639,56 +16015,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             }
@@ -21603,6 +19929,21 @@
               "count": 1
             }
           ]
+        },
+        "安装孔径": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "22",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -21933,7 +20274,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 4,
           "normCount": 4,
           "aliases": {
@@ -21953,42 +20294,17 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "2.5",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "3.15",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -21998,7 +20314,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -22018,7 +20334,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -22104,56 +20420,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             }
@@ -22311,6 +20577,21 @@
               "count": 1
             }
           ]
+        },
+        "安装孔径": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "22",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -22415,13 +20696,18 @@
           "type": "enum",
           "series": "",
           "rawCount": 2,
-          "normCount": 1,
+          "normCount": 2,
           "aliases": {
-            "3": "3P"
+            "3": "3P",
+            "单极": "1P"
           },
           "accepted": [],
           "pending": [],
           "suspected": [
+            {
+              "value": "1P",
+              "count": 1
+            },
             {
               "value": "3P",
               "count": 1
@@ -22430,7 +20716,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 3,
           "normCount": 3,
           "aliases": {
@@ -22450,27 +20736,12 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
@@ -22480,22 +20751,12 @@
               "source": "series"
             },
             {
-              "value": "5",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -22515,7 +20776,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -22601,56 +20862,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             }
@@ -22821,7 +21032,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 1,
           "normCount": 1,
           "aliases": {
@@ -22834,27 +21045,12 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
@@ -22864,17 +21060,7 @@
               "source": "series"
             },
             {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -22884,7 +21070,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -22904,7 +21090,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -22990,56 +21176,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             }
@@ -23233,7 +21369,7 @@
         },
         "额定电流": {
           "type": "series",
-          "series": "R10 + 断路器档位",
+          "series": "开关电器电流档位",
           "rawCount": 1,
           "normCount": 1,
           "aliases": {},
@@ -23244,27 +21380,12 @@
               "source": "series"
             },
             {
-              "value": "1.25",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "1.6",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "2",
               "count": 0,
               "source": "series"
             },
             {
-              "value": "2.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3.15",
+              "value": "3",
               "count": 0,
               "source": "series"
             },
@@ -23274,17 +21395,7 @@
               "source": "series"
             },
             {
-              "value": "5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6.3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "8",
+              "value": "6",
               "count": 0,
               "source": "series"
             },
@@ -23294,7 +21405,7 @@
               "source": "series"
             },
             {
-              "value": "12.5",
+              "value": "13",
               "count": 0,
               "source": "series"
             },
@@ -23314,7 +21425,7 @@
               "source": "series"
             },
             {
-              "value": "31.5",
+              "value": "32",
               "count": 0,
               "source": "series"
             },
@@ -23400,56 +21511,6 @@
             },
             {
               "value": "1600",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "2500",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3150",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "4000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "5000",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6300",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "3",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "6",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "13",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "32",
               "count": 0,
               "source": "series"
             }
@@ -24006,6 +22067,22 @@
               "count": 1
             }
           ]
+        },
+        "安装孔径": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 1,
+          "normCount": 1,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "22",
+              "count": 3,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": []
         }
       }
     },
@@ -24723,6 +22800,39 @@
               "count": 1
             }
           ]
+        },
+        "输入量程": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 5,
+          "normCount": 5,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "0-20mA",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "4-20mA",
+              "count": 1
+            },
+            {
+              "value": "0-60MPa",
+              "count": 1
+            },
+            {
+              "value": "0-40MPa",
+              "count": 1
+            },
+            {
+              "value": "0-16MPa",
+              "count": 1
+            }
+          ]
         }
       }
     },
@@ -25097,6 +23207,36 @@
           "suspected": [
             {
               "value": "24V",
+              "count": 1
+            }
+          ]
+        },
+        "输入量程": {
+          "type": "enum",
+          "series": "",
+          "rawCount": 4,
+          "normCount": 4,
+          "aliases": {},
+          "accepted": [
+            {
+              "value": "4-20mA",
+              "count": 12,
+              "source": "stock"
+            },
+            {
+              "value": "0-20mA",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
+          "pending": [],
+          "suspected": [
+            {
+              "value": "4~20mA",
+              "count": 1
+            },
+            {
+              "value": "0-10MPa",
               "count": 1
             }
           ]
@@ -27534,20 +25674,29 @@
           "type": "series",
           "series": "E6/E12",
           "rawCount": 36,
-          "normCount": 16,
+          "normCount": 22,
           "aliases": {
+            "10μf": "10μF",
+            "220μf": "220μF",
+            "47μf": "47μF",
             "6800uF": "6800μF",
+            "100μf": "100μF",
             "1000uF": "1000μF",
+            "1000μf": "1000μF",
             "0.47uF": "0.47μF",
             "7500uF": "7500μF",
             "4700uF": "4700μF",
             "820uF": "820μF",
+            "331MF": "331mF",
+            "681MF": "681mF",
+            "101MF": "101mF",
             "10000uF": "10000μF",
             "2200uF": "2200μF",
             "100uF": "100μF",
             "330uF": "330μF",
             "470uF": "470μF",
             "220uF": "220μF",
+            "12000µF": "12000μF",
             "10uF": "10μF",
             "47uF": "47μF",
             "22000uF": "22000μF",
@@ -27557,22 +25706,47 @@
           "accepted": [
             {
               "value": "100μF",
-              "count": 7,
+              "count": 11,
               "source": "stock"
             },
             {
               "value": "330μF",
+              "count": 6,
+              "source": "stock"
+            },
+            {
+              "value": "220μF",
               "count": 5,
               "source": "stock"
             },
             {
               "value": "470μF",
+              "count": 5,
+              "source": "stock"
+            },
+            {
+              "value": "10000μF",
               "count": 4,
               "source": "stock"
             },
             {
-              "value": "220μF",
-              "count": 4,
+              "value": "47μF",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "1000μF",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "0.47μF",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "10μF",
+              "count": 2,
               "source": "stock"
             },
             {
@@ -27581,7 +25755,12 @@
               "source": "stock"
             },
             {
-              "value": "0.47μF",
+              "value": "331mF",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "101mF",
               "count": 2,
               "source": "stock"
             },
@@ -27589,14 +25768,15 @@
               "value": "2200μF",
               "count": 2,
               "source": "stock"
+            },
+            {
+              "value": "12000μF",
+              "count": 2,
+              "source": "stock"
             }
           ],
           "pending": [],
           "suspected": [
-            {
-              "value": "1000μF",
-              "count": 1
-            },
             {
               "value": "7500μF",
               "count": 1
@@ -27610,15 +25790,15 @@
               "count": 1
             },
             {
-              "value": "10000μF",
+              "value": "681mF",
               "count": 1
             },
             {
-              "value": "10μF",
+              "value": "3300μF",
               "count": 1
             },
             {
-              "value": "47μF",
+              "value": "3900μF",
               "count": 1
             },
             {
@@ -27794,15 +25974,42 @@
           "type": "series",
           "series": "E6/E12",
           "rawCount": 7,
-          "normCount": 1,
+          "normCount": 6,
           "aliases": {
-            "0.47uF": "0.47μF"
+            "0.047μf": "0.047μF",
+            "1.0μf": "1.0μF",
+            "0.47uF": "0.47μF",
+            "0.33μf": "0.33μF",
+            "1μf": "1μF",
+            "0.47μf": "0.47μF"
           },
-          "accepted": [],
+          "accepted": [
+            {
+              "value": "0.47μF",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
           "pending": [],
           "suspected": [
             {
-              "value": "0.47μF",
+              "value": "0.047μF",
+              "count": 1
+            },
+            {
+              "value": "0.15μF",
+              "count": 1
+            },
+            {
+              "value": "1.0μF",
+              "count": 1
+            },
+            {
+              "value": "0.33μF",
+              "count": 1
+            },
+            {
+              "value": "1μF",
               "count": 1
             }
           ]
@@ -28398,21 +26605,22 @@
           "type": "series",
           "series": "E6/E12",
           "rawCount": 10,
-          "normCount": 4,
+          "normCount": 10,
           "aliases": {
-            "1nF": "1NF",
-            "10nF": "10NF",
-            "2.2nF": "2.2NF",
-            "470nF": "470NF"
+            "2.2μf": "2.2μF",
+            "0.68μf": "0.68μF",
+            "0.022μf": "0.022μF",
+            "0.33μf": "0.33μF",
+            "1.5μf": "1.5μF"
           },
           "accepted": [
             {
-              "value": "1NF",
+              "value": "1nF",
               "count": 2,
               "source": "stock"
             },
             {
-              "value": "10NF",
+              "value": "10nF",
               "count": 2,
               "source": "stock"
             }
@@ -28420,11 +26628,35 @@
           "pending": [],
           "suspected": [
             {
-              "value": "2.2NF",
+              "value": "2.2μF",
               "count": 1
             },
             {
-              "value": "470NF",
+              "value": "0.68μF",
+              "count": 1
+            },
+            {
+              "value": "0.47μF",
+              "count": 1
+            },
+            {
+              "value": "0.022μF",
+              "count": 1
+            },
+            {
+              "value": "0.33μF",
+              "count": 1
+            },
+            {
+              "value": "1.5μF",
+              "count": 1
+            },
+            {
+              "value": "2.2nF",
+              "count": 1
+            },
+            {
+              "value": "470nF",
               "count": 1
             }
           ]
@@ -28624,13 +26856,19 @@
           "type": "series",
           "series": "E6/E12",
           "rawCount": 7,
-          "normCount": 3,
+          "normCount": 6,
           "aliases": {
             "0.22uF": "0.22μF",
             "50uF": "50μF",
             "20uF": "20μF"
           },
-          "accepted": [],
+          "accepted": [
+            {
+              "value": "0.22μF",
+              "count": 2,
+              "source": "stock"
+            }
+          ],
           "pending": [],
           "suspected": [
             {
@@ -28638,7 +26876,15 @@
               "count": 2
             },
             {
-              "value": "0.22μF",
+              "value": "0.1μF",
+              "count": 1
+            },
+            {
+              "value": "1.5μF",
+              "count": 1
+            },
+            {
+              "value": "0.39μF",
               "count": 1
             },
             {
@@ -28768,15 +27014,19 @@
           "type": "series",
           "series": "E6/E12",
           "rawCount": 2,
-          "normCount": 1,
+          "normCount": 2,
           "aliases": {
-            "47pF": "47PF"
+            "100μf": "100μF"
           },
           "accepted": [],
           "pending": [],
           "suspected": [
             {
-              "value": "47PF",
+              "value": "47pF",
+              "count": 1
+            },
+            {
+              "value": "100μF",
               "count": 1
             }
           ]
@@ -28913,100 +27163,90 @@
           "type": "series",
           "series": "E6/E12",
           "rawCount": 48,
-          "normCount": 36,
+          "normCount": 39,
           "aliases": {
             "3.3uF": "3.3μF",
             "1uF": "1μF",
             "0.1uF": "0.1μF",
             "30uF": "30μF",
-            "2200pF": "2200PF",
-            "3300pF": "3300PF",
             "390uf": "390μF",
             "15uF": "15μF",
             "0.47uF": "0.47μF",
             "2uF": "2μF",
-            "4700pF": "4700PF",
             "4.7uF": "4.7μF",
-            "100nF": "100NF",
-            "1nF": "1NF",
             "0.22uF": "0.22μF",
-            "4.7nF": "4.7NF",
             "0.01uF": "0.01μF",
-            "470pF": "470PF",
-            "330pF": "330PF",
-            "560pF": "560PF",
-            "10000pF": "10000PF",
             "10uF": "10μF",
-            "1000pF": "1000PF",
-            "3.3nF": "3.3NF",
             "1.0uF": "1.0μF",
-            "33pF": "33PF",
-            "4.7 nF": "4.7NF",
-            "10nF": "10NF",
-            "330nF": "330NF",
-            "220nF": "220NF",
+            "4.7 nF": "4.7nF",
             "0.33uF": "0.33μF",
-            "10 nF": "10NF",
-            "470nF": "470NF",
+            "10 nF": "10nF",
             "47uF": "47μF",
-            "2.2nF": "2.2NF",
-            "15pF": "15PF",
-            "10000uF": "10000μF",
-            "180pF": "180PF"
+            "10000uF": "10000μF"
           },
           "accepted": [
             {
-              "value": "1μF",
-              "count": 6,
-              "source": "stock"
-            },
-            {
               "value": "4.7μF",
-              "count": 6,
+              "count": 8,
               "source": "stock"
             },
             {
-              "value": "100NF",
-              "count": 5,
+              "value": "1μF",
+              "count": 7,
               "source": "stock"
             },
             {
               "value": "0.1μF",
-              "count": 4,
+              "count": 5,
               "source": "stock"
             },
             {
               "value": "0.47μF",
-              "count": 3,
+              "count": 5,
               "source": "stock"
             },
             {
-              "value": "4.7NF",
-              "count": 3,
+              "value": "100nF",
+              "count": 5,
               "source": "stock"
             },
             {
               "value": "10μF",
-              "count": 3,
+              "count": 4,
               "source": "stock"
             },
             {
-              "value": "10NF",
+              "value": "390μF",
               "count": 3,
-              "source": "stock"
-            },
-            {
-              "value": "4700PF",
-              "count": 2,
               "source": "stock"
             },
             {
               "value": "0.22μF",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "4.7nF",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "10nF",
+              "count": 3,
+              "source": "stock"
+            },
+            {
+              "value": "0.15μF",
               "count": 2,
               "source": "stock"
             },
             {
-              "value": "330PF",
+              "value": "4700pF",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "330pF",
               "count": 2,
               "source": "stock"
             },
@@ -29027,15 +27267,15 @@
               "count": 1
             },
             {
-              "value": "2200PF",
+              "value": "0.068μF",
               "count": 1
             },
             {
-              "value": "3300PF",
+              "value": "2200pF",
               "count": 1
             },
             {
-              "value": "390μF",
+              "value": "3300pF",
               "count": 1
             },
             {
@@ -29047,7 +27287,11 @@
               "count": 1
             },
             {
-              "value": "1NF",
+              "value": "330μF",
+              "count": 1
+            },
+            {
+              "value": "1nF",
               "count": 1
             },
             {
@@ -29055,23 +27299,23 @@
               "count": 1
             },
             {
-              "value": "470PF",
+              "value": "470pF",
               "count": 1
             },
             {
-              "value": "560PF",
+              "value": "560pF",
               "count": 1
             },
             {
-              "value": "10000PF",
+              "value": "10000pF",
               "count": 1
             },
             {
-              "value": "1000PF",
+              "value": "1000pF",
               "count": 1
             },
             {
-              "value": "3.3NF",
+              "value": "3.3nF",
               "count": 1
             },
             {
@@ -29079,23 +27323,19 @@
               "count": 1
             },
             {
-              "value": "33PF",
+              "value": "33pF",
               "count": 1
             },
             {
-              "value": "330NF",
+              "value": "330nF",
               "count": 1
             },
             {
-              "value": "220NF",
+              "value": "220nF",
               "count": 1
             },
             {
               "value": "0.33μF",
-              "count": 1
-            },
-            {
-              "value": "470NF",
               "count": 1
             }
           ]
@@ -29258,22 +27498,19 @@
             "420uF": "420μF",
             "1uF": "1μF",
             "0.1uF": "0.1μF",
-            "4700pF": "4700PF",
-            "33nF": "33NF",
-            "2200pF": "2200PF",
             "0.22uF": "0.22μF",
             "0.01uF": "0.01μF",
             "47uF": "47μF"
           },
           "accepted": [
             {
-              "value": "4700PF",
+              "value": "0.47μF",
               "count": 3,
               "source": "stock"
             },
             {
-              "value": "0.47μF",
-              "count": 2,
+              "value": "4700pF",
+              "count": 3,
               "source": "stock"
             },
             {
@@ -29282,17 +27519,18 @@
               "source": "stock"
             },
             {
-              "value": "33NF",
+              "value": "1.5μF",
+              "count": 2,
+              "source": "stock"
+            },
+            {
+              "value": "33nF",
               "count": 2,
               "source": "stock"
             }
           ],
           "pending": [],
           "suspected": [
-            {
-              "value": "1.5μF",
-              "count": 1
-            },
             {
               "value": "420μF",
               "count": 1
@@ -29306,7 +27544,7 @@
               "count": 1
             },
             {
-              "value": "2200PF",
+              "value": "2200pF",
               "count": 1
             },
             {
@@ -29440,7 +27678,7 @@
   },
   "meta": {
     "version": "0.2.0",
-    "generatedAt": "2026-11-17T08:33:15.826Z",
+    "generatedAt": "2026-11-17T09:49:08.243Z",
     "draft": true,
     "structure": "subs[小类] → params[参数] → {type, accepted, pending, suspected, aliases}",
     "principle": "参数值按小类隔离：某小类的候选只来自该小类的存量，不跨小类共用",

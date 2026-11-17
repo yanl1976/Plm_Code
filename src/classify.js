@@ -38,13 +38,25 @@ export function chooseAttrs(info) {
 export function chooseTokens(info) {
   if (!info) return []
   const hay = [info.subName, info.midName, info.bigName].filter(Boolean).join(' ')
+  let base = null
   for (const h of RULES.heuristics) {
-    if (h.match.some((kw) => hay.includes(kw)) && Array.isArray(h.tokens)) return h.tokens
+    if (h.match.some((kw) => hay.includes(kw)) && Array.isArray(h.tokens)) { base = h.tokens; break }
   }
   // 小类级显式声明（subOverrides）优先于兜底；这是人工确认过的「该小类确实要这些参数」
-  if (info.sub && RULES.subOverrides[info.sub] && Array.isArray(RULES.subOverrides[info.sub].tokens))
-    return RULES.subOverrides[info.sub].tokens
-  return []
+  if (!base && info.sub && RULES.subOverrides[info.sub] && Array.isArray(RULES.subOverrides[info.sub].tokens))
+    base = RULES.subOverrides[info.sub].tokens
+  if (!base) return []
+
+  // 小类级**增量**参数（subAddTokens）：不覆盖 heuristic / subOverrides，只做追加。
+  // 用于「只有这几个小类需要某参数」的情况，避免改了 heuristic 影响同族其他小类。
+  // 例：100101-100104 的模板含 {壳架}，但同族的 100105 微型断路器没有，不该加。
+  const extra = (RULES.subAddTokens || {})[info.sub]
+  if (Array.isArray(extra) && extra.length) {
+    const out = base.slice()
+    for (const t of extra) if (!out.includes(t)) out.push(t)
+    return out
+  }
+  return base
 }
 
 // 给一条物料记录附加分类信息 + 查重属性

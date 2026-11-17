@@ -12,6 +12,7 @@ import path from 'path'
 import { fileURLToPath, pathToFileURL } from 'url'
 import { buildSignature, tokenize, jaccard, normalize, looseSignature, RULES } from './spec.js'
 import { matchUnit } from './guide-units.js'
+import { normalizeByTemplate } from './spec-complete.js'
 
 // 带重试的文件写入：规避 Windows 下防病毒/索引服务偶发占用文件导致的 EBUSY/EPERM
 function safeWrite(file, data) {
@@ -110,6 +111,9 @@ export async function runDedup({ fuzzy = false, limit = 0 } = {}) {
         if (u && u.unit && u.unit !== rec.FNAME) sigRec = Object.assign({}, rec, { FNAME: u.unit })
       } catch (e) { /* 单元表异常时退回原名 */ }
     }
+    // 签名前按模板规范化（补单位）：C20 → C20A、3*2.5 → 3*2.5mm^2。
+    // 与 plm-index 的索引构建/查询保持同一口径，否则批处理与在线查重结论会不一致。
+    sigRec = { ...sigRec, FSPECIFICATION: normalizeByTemplate(subKey, sigRec.FSPECIFICATION) }
     const sig = buildSignature(sigRec, attrs)
     if (!sig) return // 名称与规格都空，无法构成签名
     const m = minimal(rec)

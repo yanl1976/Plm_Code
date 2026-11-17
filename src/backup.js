@@ -72,6 +72,12 @@ export const LIBS = [
     desc: '规格中的单位符号统一表（GBK/CP936 兼容，含 must/should 两级替换）',
     kind: 'file', path: 'src/config/spec-symbols.json',
   },
+  {
+    key: 'paramlib', name: '参数标准库',
+    desc: '按小类隔离的参数取值库（录入补全与值校验的来源）+ 启用开关',
+    kind: 'files',
+    paths: ['src/config/param-standard.json', 'src/config/param-lib-rules.json'],
+  },
   { key: 'selection', name: '选型库', desc: '按小类组织的选型手册与系列数据', kind: 'dir', path: 'data/selection' },
   {
     key: 'settings', name: '系统设置', desc: '提取范围、筛查组织、数据源开关',

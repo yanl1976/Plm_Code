@@ -69,8 +69,10 @@ const inE = (set) => (v) => {
 function seriesOf(param, sub) {
   const s6 = String(sub || '').slice(0, 6)
   switch (param) {
+    // 开关电器（1001-1014 区间的主体）用固定电流档位；
+    // 不用 R10 合并 —— R10 的 1.25/1.6/2.5/3.15/6.3 不是断路器/接触器规格，混进来会误导。
     case '额定电流':
-      return { list: [...new Set([...R10, ...CB_CURRENT].map(String))], series: 'R10 + 断路器档位' }
+      return { list: CB_CURRENT.map(String), series: '开关电器电流档位' }
     case '分断能力':
       return { list: CB_BREAK.map(String), series: '断路器分断值' }
     case '变比':
@@ -95,7 +97,7 @@ function checkSeries(param, value, sub) {
   const s6 = String(sub || '').slice(0, 6)
   switch (param) {
     case '额定电流':
-      return { ok: R10.includes(parseFloat(value)) || CB_CURRENT.includes(parseFloat(value)), series: 'R10 + 断路器档位' }
+      return { ok: CB_CURRENT.includes(parseFloat(value)), series: '开关电器电流档位' }
     case '分断能力':
       return { ok: CB_BREAK.includes(parseFloat(value)), series: '断路器分断值' }
     case '变比':

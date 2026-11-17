@@ -664,3 +664,47 @@ tr.saving { opacity:.45; }
 .cls-bar { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
 .cls-bar button { background:var(--panel2); color:var(--text); border:1px solid var(--line); padding:6px 14px; border-radius:6px; cursor:pointer; font-size:13px; }
 .cls-bar button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+
+/* ================= 参数标准库（命名规范 → 参数标准库） ================= */
+.pl-switch { display:inline-flex; align-items:center; gap:5px; font-size:12px; color:var(--muted); cursor:pointer; }
+.pl-switch input { margin:0; }
+.pl-note { font-size:11px; color:var(--muted); line-height:1.7; padding:6px 8px; margin:4px 0 8px;
+  background:rgba(62,166,255,.05); border-left:2px solid var(--accent); border-radius:0 4px 4px 0; }
+.pl-note b { color:var(--text); }
+.pl-sub { border-bottom:1px solid var(--line); }
+.pl-sub-head { display:flex; align-items:center; gap:8px; padding:6px 8px; cursor:pointer; }
+.pl-sub-head:hover { background:rgba(255,255,255,.03); }
+.pl-caret { width:12px; color:var(--muted); }
+.pl-sub-head b { color:var(--accent); font-family:ui-monospace,Consolas,monospace; }
+.pl-name { min-width:120px; }
+.pl-meta { margin-left:auto; font-size:11px; color:var(--muted); }
+.pl-params { padding:2px 8px 10px 26px; }
+.pl-param { padding:5px 0; border-top:1px dashed rgba(255,255,255,.06); }
+.pl-param-head { display:flex; align-items:center; gap:8px; font-size:12px; }
+.pl-type { font-size:11px; color:var(--muted); }
+.pl-count { font-size:11px; color:var(--muted); margin-left:auto; }
+.pl-pend { font-size:11px; color:var(--amber); }
+.pl-edit { padding:1px 8px !important; font-size:11px !important; }
+.pl-chips { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
+.pl-chip { font-size:11px; padding:1px 6px; border:1px solid var(--line); border-radius:3px;
+  font-family:ui-monospace,Consolas,monospace; }
+.pl-chip.series { border-style:dashed; opacity:.75; }
+.pl-chip i { font-style:normal; opacity:.5; margin-left:3px; font-size:10px; }
+.pl-empty { font-size:11px; color:var(--muted); }
+.pl-edit-box { width:100%; box-sizing:border-box; font-family:ui-monospace,Consolas,monospace; font-size:12px;
+  background:rgba(255,255,255,.04); color:var(--text); border:1px solid var(--accent);
+  border-radius:4px; padding:4px 6px; }
+.pl-edit-bar { display:flex; align-items:center; gap:8px; margin-top:4px; }
+.pl-tip { font-size:11px; color:var(--muted); }
+
+/* 参数标准库：标签式编辑（替代原来的逗号文本框） */
+.pl-chip-edit { display:flex; flex-wrap:wrap; gap:4px; align-items:center; }
+.pl-chip .pl-x { margin-left:5px; cursor:pointer; font-weight:400; color:var(--muted); }
+.pl-chip .pl-x:hover { color:var(--red); }
+.pl-chip.manual { border-color:var(--accent); }
+.pl-add { flex:1; min-width:140px; font-size:11px; padding:2px 7px; background:transparent;
+  border:1px dashed var(--line); border-radius:3px; color:var(--text); outline:none; }
+.pl-add:focus { border-color:var(--accent); }
+
+/* free 型（型号/阻值/容值）的 Top5 参考值：只是"常见写法"，不是标准，样式上要弱化 */
+.pl-chip.reference { border-style:dotted; opacity:.55; }

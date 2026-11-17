@@ -1271,8 +1271,8 @@ $('#ngSearch') && $('#ngSearch').addEventListener('input', () => {
   }, 300)
 })
 
-// ================= 命名规范页（两个子标签：同义词 / 命名范式） =================
-const rulesLoaded = { syn: false, guide: false, std: false }
+// ================= 命名规范页（四个子标签：同义词 / 范式库 / 参数标准库 / 标准查新） =================
+const rulesLoaded = { syn: false, guide: false, param: false, std: false }
 
 function switchSubTab(name) {
   document.querySelectorAll('.sub-tab').forEach((b) => {
@@ -1283,6 +1283,8 @@ function switchSubTab(name) {
   })
   if (name === 'syn' && !rulesLoaded.syn) { rulesLoaded.syn = true; loadSynonyms() }
   if (name === 'guide' && !rulesLoaded.guide) { rulesLoaded.guide = true; loadGuideList() }
+  // 参数标准库：此分支缺失会让页面只有标题和开关、列表永远空白（首次实现时踩过）
+  if (name === 'param' && !rulesLoaded.param) { rulesLoaded.param = true; loadParamLib() }
   if (name === 'std' && !rulesLoaded.std) { rulesLoaded.std = true; loadStdWatch() }
 }
 
@@ -1439,10 +1441,176 @@ $('#stdAuto') && ($('#stdAuto').onchange = async () => {
   } catch (e) { }
 })
 
+// ================= 参数标准库（按小类隔离） =================
+// 数据源：src/config/param-standard.json；开关：src/config/param-lib-rules.json
+// 界面只改「值清单」（accepted / pending），type 与 series 由构建脚本推导。
+const PL = { data: null, kw: '', opened: {}, editing: null }
+
+async function loadParamLib() {
+  const list = $('#plList')
+  if (!list) return
+  const r = await api('/api/param-lib/list?kw=' + encodeURIComponent(PL.kw || '')).catch(() => null)
+  if (!r || !r.ok) {
+    list.innerHTML = '<div class="syn-empty">读取失败：param-standard.json 可能尚未生成（先运行 npm run param:build）</div>'
+    return
+  }
+  PL.data = r
+  if ($('#plEnabled')) $('#plEnabled').checked = !!r.config.enabled
+  if ($('#plShadow')) $('#plShadow').checked = !!r.config.shadow
+  const st = r.summary || {}
+  if ($('#plStats')) {
+    $('#plStats').textContent = (st.subs || 0) + ' 个小类 · ' + (st.params || 0) + ' 个参数 · ' + (st.values || 0) + ' 个值'
+  }
+  renderParamList()
+}
+
+function paramRow(sub, p) {
+  // 三种来源分别标记：stock=本小类存量（实线）、series=标准序列补充（虚线）、
+  // reference=free 型的 Top5 参考（灰、不可当标准）
+  const chips = (p.values || []).map((v) => {
+    const src = v.source === 'series' ? ' series'
+      : (v.source === 'reference' ? ' reference' : '')
+    return '<span class="pl-chip' + src + '" title="存量 ' + (v.count || 0) + ' 条">'
+      + escapeHtml(v.value) + (v.count ? '<i>' + v.count + '</i>' : '') + '</span>'
+  }).join('')
+  const pend = p.pendingCount ? '<span class="pl-pend">待确认 ' + p.pendingCount + '</span>' : ''
+  const isFree = p.type === 'free'
+  const cnt = isFree ? '仅参考 ' + (p.values || []).length : p.acceptedCount + ' 值'
+  return '<div class="pl-param">'
+    + '<div class="pl-param-head"><b>' + escapeHtml(p.name) + '</b>'
+    + '<span class="pl-type">' + escapeHtml(p.type || '') + (p.series ? ' · ' + escapeHtml(p.series) : '') + '</span>'
+    + pend
+    + '<span class="pl-count">' + cnt + '</span>'
+    + '<button class="ghost pl-edit" data-edit="1" data-sub="' + sub + '" data-param="' + escapeHtml(p.name) + '">编辑</button>'
+    + '</div>'
+    + '<div class="pl-chips" id="plv-' + sub + '-' + encodeURIComponent(p.name) + '">'
+    + (chips || '<span class="pl-empty">（无收录值）</span>')
+    + '</div>'
+    + '</div>'
+}
+
+function renderParamList() {
+  const list = $('#plList')
+  const r = PL.data
+  if (!list || !r) return
+  if (!r.items || !r.items.length) { list.innerHTML = '<div class="syn-empty">没有匹配的小类</div>'; return }
+  list.innerHTML = r.items.map((x) => {
+    const open = !!PL.opened[x.sub]
+    return '<div class="pl-sub' + (open ? ' open' : '') + '">'
+      + '<div class="pl-sub-head" data-sub="' + x.sub + '">'
+      + '<span class="pl-caret">' + (open ? '▾' : '▸') + '</span>'
+      + '<b class="mono">' + x.sub + '</b><span class="pl-name">' + escapeHtml(x.subName) + '</span>'
+      + '<span class="pl-meta">' + x.paramCount + ' 参数 · ' + x.valueCount + ' 值 · 存量 ' + x.rowCount + ' 条</span>'
+      + '</div>'
+      + (open ? '<div class="pl-params">' + x.params.map((p) => paramRow(x.sub, p)).join('') + '</div>' : '')
+      + '</div>'
+  }).join('')
+  list.querySelectorAll('.pl-sub-head').forEach((d) => {
+    d.onclick = () => { PL.opened[d.dataset.sub] = !PL.opened[d.dataset.sub]; renderParamList() }
+  })
+  list.querySelectorAll('[data-edit]').forEach((b) => {
+    b.onclick = (e) => { e.stopPropagation(); editParam(b.dataset.sub, b.dataset.param) }
+  })
+}
+
+/**
+ * 就地编辑某参数的值清单 —— 标签式（chip）编辑，而不是"整段文本"。
+ *
+ * 为什么不给 textarea：值清单本质是「标签集合」，用逗号文本编辑时看不到频次、
+ * 无法单独删一个、22 个值挤在一起容易改错。标签式更贴近它的真实形态：
+ *   · 点 × 删除单个
+ *   · 输入后回车添加（可一次粘贴多个，逗号/换行/分号都认）
+ *   · 每个标签仍显示存量频次，便于判断该值是否常用
+ */
+function editParam(sub, param) {
+  const box = document.getElementById('plv-' + sub + '-' + encodeURIComponent(param))
+  if (!box) return
+  const item = (PL.data.items || []).find((x) => x.sub === sub)
+  const p = item && (item.params || []).find((y) => y.name === param)
+  if (!p) return
+  PL.editing = {
+    sub,
+    param,
+    values: (p.values || []).map((v) => ({ value: String(v.value), count: v.count || 0, source: v.source || 'stock' })),
+    box,
+  }
+  renderEditChips()
+}
+
+function renderEditChips() {
+  const ed = PL.editing
+  if (!ed) return
+  const box = ed.box
+  if (!box) return
+  const chips = ed.values.map((v, i) => {
+    const cls = v.source === 'series' ? ' series' : (v.source === 'manual' ? ' manual' : '')
+    return '<span class="pl-chip' + cls + '" data-i="' + i + '" title="存量 ' + (v.count || 0) + ' 条">'
+      + escapeHtml(v.value) + (v.count ? '<i>' + v.count + '</i>' : '')
+      + '<b class="pl-x" data-del="' + i + '" title="删除">×</b></span>'
+  }).join('')
+  box.innerHTML = '<div class="pl-chip-edit">' + chips
+    + '<input class="pl-add" placeholder="+ 添加值，回车确认（可粘贴多个）" autocomplete="off" /></div>'
+    + '<div class="pl-edit-bar">'
+    + '<span class="pl-tip">点 × 删除 · 回车添加 · 保存后立即生效</span>'
+    + '<button class="primary pl-save">保存</button><button class="ghost pl-cancel">取消</button>'
+    + '</div>'
+
+  // 删除单个
+  box.querySelectorAll('[data-del]').forEach((b) => {
+    b.onclick = (e) => {
+      e.stopPropagation()
+      PL.editing.values.splice(Number(b.dataset.del), 1)
+      renderEditChips()
+    }
+  })
+
+  // 回车/粘贴添加：支持一次加多个
+  const inp = box.querySelector('.pl-add')
+  const addFrom = (txt) => {
+    const parts = String(txt || '').split(/[,\n，;；\t]+/).map((s) => s.trim()).filter(Boolean)
+    let added = 0
+    for (const v of parts) {
+      if (PL.editing.values.some((x) => x.value === v)) continue
+      PL.editing.values.push({ value: v, count: 0, source: 'manual' })
+      added++
+    }
+    inp.value = ''
+    if (added) renderEditChips()
+    const again = box.querySelector('.pl-add')
+    if (again) again.focus()
+  }
+  inp.onkeydown = (e) => {
+    if (e.key !== 'Enter' || e.isComposing) return
+    e.preventDefault()
+    addFrom(inp.value)
+  }
+  inp.onpaste = () => {
+    // 粘贴后由 input 值接管，回车时才提交（避免粘贴即写入造成意外）
+  }
+
+  box.querySelector('.pl-cancel').onclick = () => { PL.editing = null; renderParamList() }
+  box.querySelector('.pl-save').onclick = async () => {
+    const r = await api('/api/param-lib', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sub: ed.sub, param: ed.param, accepted: ed.values }),
+    }).catch(() => null)
+    const msg = $('#plMsg')
+    if (r && r.ok) {
+      if (msg) { msg.className = 'syn-msg ok'; msg.textContent = '已保存：' + ed.sub + ' · ' + ed.param + ' 共 ' + r.accepted + ' 个值' }
+      PL.editing = null
+      await loadParamLib()
+    } else if (msg) {
+      msg.className = 'syn-msg err'; msg.textContent = (r && r.error) || '保存失败'
+    }
+  }
+}
+
 async function loadRules() {
   const cur = document.querySelector('.sub-tab.active')
   const name = cur ? cur.dataset.subtab : 'syn'
   if (name === 'guide') { rulesLoaded.guide = true; await loadGuideList() }
+  else if (name === 'param') { rulesLoaded.param = true; await loadParamLib() }
   else if (name === 'std') { rulesLoaded.std = true; await loadStdWatch() }
   else { rulesLoaded.syn = true; await loadSynonyms() }
   updateRulesSummary()
@@ -1465,6 +1633,62 @@ async function updateRulesSummary() {
 document.querySelectorAll('.sub-tab').forEach((b) => {
   b.onclick = () => switchSubTab(b.dataset.subtab)
 })
+
+// ---------- 参数标准库：搜索 / 开关 / 导出 / 导入 ----------
+if ($('#plSearch')) {
+  let plTimer = null
+  $('#plSearch').oninput = (e) => {
+    clearTimeout(plTimer)
+    plTimer = setTimeout(() => { PL.kw = e.target.value.trim(); loadParamLib() }, 250)
+  }
+}
+async function savePlConfig(patch) {
+  const r = await api('/api/param-lib/config', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch),
+  }).catch(() => null)
+  const m = $('#plMsg')
+  if (r && r.ok) {
+    if (m) {
+      m.className = 'syn-msg ok'
+      m.textContent = '开关已保存：' + (r.config.enabled ? '启用' : '停用')
+        + (r.config.shadow ? ' · 影子模式（只记录不生效）' : ' · 正式生效')
+    }
+  } else if (m) { m.className = 'syn-msg err'; m.textContent = '保存失败' }
+}
+if ($('#plEnabled')) $('#plEnabled').onchange = (e) => savePlConfig({ enabled: e.target.checked })
+if ($('#plShadow')) $('#plShadow').onchange = (e) => savePlConfig({ shadow: e.target.checked })
+if ($('#btnPlExport')) $('#btnPlExport').onclick = () => { location.href = '/api/param-lib/export-xlsx' }
+if ($('#btnPlExportJson')) $('#btnPlExportJson').onclick = () => { location.href = '/api/param-lib/export' }
+if ($('#btnPlImport')) $('#btnPlImport').onclick = () => $('#plFile').click()
+if ($('#plFile')) {
+  $('#plFile').onchange = async (e) => {
+    const f = e.target.files && e.target.files[0]
+    if (!f) return
+    const m = $('#plMsg')
+    const setMsg = (ok, text) => { if (m) { m.className = 'syn-msg ' + (ok ? 'ok' : 'err'); m.textContent = text } }
+    try {
+      let r = null
+      if (/\.xlsx?$/i.test(f.name)) {
+        // Excel：一行一个值，按「小类号 + 参数」整组覆盖
+        const resp = await fetch('/api/param-lib/import-xlsx', { method: 'POST', body: f })
+        r = await resp.json()
+        if (r && r.ok) setMsg(true, 'Excel 导入成功：更新 ' + r.updated + ' 个参数组' + (r.skipped && r.skipped.length ? '，跳过 ' + r.skipped.length + ' 个（库中无此小类/参数）' : ''))
+      } else {
+        const data = JSON.parse(await f.text())
+        r = await api('/api/param-lib/import', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data, mode: 'merge' }),
+        })
+        if (r && r.ok) setMsg(true, 'JSON 导入成功：共 ' + r.subs + ' 个小类（同小类已覆盖）')
+      }
+      if (r && r.ok) { await loadParamLib() } else { setMsg(false, (r && r.error) || '导入失败') }
+    } catch (err) {
+      setMsg(false, '导入失败：' + err.message)
+    } finally {
+      e.target.value = ''
+    }
+  }
+}
 
 // ---------- 启动 ----------
 loadOverview()
@@ -2514,6 +2738,22 @@ function renderNmRule(r) {
     pushHint('保存时会自动整理规格空格（' + fmt.reasons.join('、') + '）→ ' + fmt.fixed, 'warn')
   }
   otherWarns.forEach((w) => pushHint(w))
+
+  // 同小类实时查重结果（后端 /validate 新增 duplicateLevel / duplicates）：
+  //   exact = 完全相同规格已存在（红，应视为重复物料）
+  //   fuzzy = 规格高度相似，如少写封装（琥珀，只提示让人确认）
+  // 此前看板没有这块，用户在录入页根本看不到"这条可能已经存在"。
+  const dups = r.duplicates || []
+  if (dups.length) {
+    const isExact = r.duplicateLevel === 'exact'
+    const head = isExact
+      ? '相同规格已存在 ' + dups.length + ' 条'
+      : '规格高度相似 ' + dups.length + ' 条，请确认是否重复'
+    const detail = dups.slice(0, 5).map((d) => String(d.fnumber || '') + ' ' + String(d.spec || '')
+      + (d.level === 'exact' ? '' : '（相似 ' + Math.round((Number(d.score) || 0) * 100) + '%）')).join('；')
+    if (!buckets.dup) buckets.dup = []
+    buckets.dup.push({ text: head + '：' + detail, level: isExact ? 'error' : 'warn' })
+  }
 
   // 跨小类：名称明显属于另一个小类（如 110301 电线 里填「电话线」）。
   // 后端 detectSubMismatch 已给出 msg/level，但看板此前完全没有渲染这个字段 ——

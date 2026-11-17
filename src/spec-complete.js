@@ -22,6 +22,7 @@ import { fileURLToPath } from 'url'
 import { getCategory, chooseTokens } from './classify.js'
 import { extractParams } from './struct-spec.js'
 import { loadGuide } from './guide-fields.js'
+import { enabled as paramLibEnabled, isShadow as paramLibShadow, checkValue as paramLibCheck, paramDef as paramLibDef } from './param-lib/store.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const MAP_FILE = path.join(ROOT, 'src/config/guide-field-map.json')
@@ -55,14 +56,34 @@ export function patternSegments(sub) {
   for (const seg of String(pat).split(/\s+/).filter(Boolean)) {
     const rawNames = [...seg.matchAll(/\{([^}]+)\}/g)].map((m) => m[1].trim())
     if (!rawNames.length) continue
-    // 翻译成参数名；参数库里没有的（如 设备类型/关键参数/端头类型）直接跳过 —— 不猜
-    const params = rawNames.map((n) => al[n] || (tokens.includes(n) ? n : ''))
-    if (params.some((p) => !p)) continue
-    let unit = seg.replace(/\{[^}]+\}/g, '').replace(/^[*×·]+/, '').trim()
+    // 翻译成参数名；参数库里没有的（如 壳架/设备类型/关键参数/端头类型）留空
+    const mapped = rawNames.map((n) => al[n] || (tokens.includes(n) ? n : ''))
+    const kept = mapped.filter(Boolean)
+    if (!kept.length) continue                     // 全部对不上 → 整段跳过（确实无从推荐）
+
+    // 部分对齐：把对不上的占位符从模板里剪掉（连同其后紧跟的分隔符），而不是整段丢弃。
+    // 否则 `{壳架}/{额定电流}A` 会整段消失 —— 用户输入 12（1250 的前缀）时被归到"分断能力"，
+    // 表现为"12 后面本该有参数却不出候选"（实测 100101 固定式框架断路器）。
+    let tplSeg = seg
+    rawNames.forEach((n, i) => {
+      if (mapped[i]) return
+      const esc = n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      tplSeg = tplSeg.replace(new RegExp('\\{' + esc + '\\}[/\\*×·]?'), '')
+    })
+    tplSeg = tplSeg.replace(/^[/\*×·\s]+/, '').replace(/[/\*×·\s]+$/, '')
+
+    let unit = tplSeg.replace(/\{[^}]+\}/g, '').replace(/^[*×·]+/, '').trim()
     if (!/^[A-Za-zΩ℃°%μ0-9^]+$/.test(unit)) unit = ''
     // tpl：去掉尾部单位后的段模板（保留参数间分隔符）
-    const tpl = unit ? seg.slice(0, seg.lastIndexOf(unit)) : seg
-    out.push({ key: params.join('+'), params, rawNames, tpl, unit })
+    const tpl = unit ? tplSeg.slice(0, tplSeg.lastIndexOf(unit)) : tplSeg
+    out.push({
+      key: kept.join('+'),
+      params: kept,
+      rawNames,
+      tpl,
+      unit,
+      partial: kept.length < rawNames.length,   // 该段有占位符未能对齐（如 {壳架}）
+    })
   }
   return { segments: out, tokens, pattern: pat }
 }
@@ -88,7 +109,12 @@ const TTL = 5 * 60 * 1000
  */
 function statOf(sub, items) {
   const src = items || []
-  const hit = CACHE.get(sub)
+  // 缓存键必须带上「标准库开关状态」：
+  // 否则切换 enabled/shadow 后仍命中 5 分钟前的旧统计，
+  // 表现为「开关改了但候选没变」（实测对比三种状态结果完全一致，就是踩了这个）。
+  const plFlag = paramLibEnabled(sub) ? (paramLibShadow() ? ':shadow' : ':assist') : ':off'
+  const ckey = sub + plFlag
+  const hit = CACHE.get(ckey)
   // 数据源变了（条数不同）也要重建，避免缓存住空表
   if (hit && Date.now() - hit.at < TTL && hit.srcCount === src.length) return hit
   const meta = patternSegments(sub)
@@ -104,8 +130,31 @@ function statOf(sub, items) {
     const vals = extractParams(spec, meta.tokens)
     for (const sg of meta.segments) {
       if (!sg.params.every((p) => vals[p])) continue   // 参数不全 → 该段不算有效取值
-      const v = fillTpl(sg, vals)
-      if (!v) continue
+      // 单参数段：若该小类已收录参数标准库，只接受「库内认可的值」。
+      // 否则型号片段会被当成参数值 —— 实测 "LA38-11/203" 被解析出 额定电压="11/203"，
+      // 于是候选里冒出 11/203、22/203 这类垃圾（它们并不在参数库里）。
+      // 影子模式（shadow=true）下不过滤 —— 影子的定义是「不影响结果」。
+      // 要真正按标准库收敛候选，需 enabled=true 且 shadow=false。
+      //
+      // ⚠ free 型（型号/阻值/容值）必须跳过过滤：它们本就没有"标准值"，
+      //   checkValue 对它们的返回值恒为 unknown，一旦过滤就会把「型号段」整个清空 ——
+      //   表现为「输入型号时一个候选都没有，像是补全功能被关了」。
+      if (sg.params.length === 1 && paramLibEnabled(sub) && !paramLibShadow()) {
+        const def = paramLibDef(sub, sg.params[0])
+        if (def && def.type !== 'free') {
+          const chk = paramLibCheck(sub, sg.params[0], vals[sg.params[0]])
+          if (!chk.ok) continue
+        }
+      }
+      // 补段单位：`{脱扣特性}{额定电流}A` 需拼成 "C10A"、`{芯数}*{截面}mm^2` 需 "3*2.5mm^2"。
+      // 但 extractParams 取到的值有时已带单位（16A / 10kΩ），无脑追加会变成 C10AA、10kΩΩ ——
+      // 故先判断值是否已以该单位结尾。
+      const filled = fillTpl(sg, vals)
+      if (!filled) continue
+      const u = sg.unit || ''
+      let v = (u && !filled.toUpperCase().endsWith(u.toUpperCase())) ? filled + u : filled
+      // 数量级字母统一小写：10KΩ → 10kΩ（同一参数出现两种写法会让候选重复且难扫视）
+      v = v.replace(/(\d)K(?=Ω)/g, '$1k')
       if (!table.has(sg.key)) table.set(sg.key, new Map())
       const m = table.get(sg.key)
       m.set(v, (m.get(v) || 0) + 1)
@@ -116,7 +165,7 @@ function statOf(sub, items) {
     ranked.set(k, [...m.entries()].sort((a, b) => b[1] - a[1]).map(([value, count]) => ({ value, count })))
   }
   const st = { at: Date.now(), ...meta, ranked, total: src.length, srcCount: src.length }
-  CACHE.set(sub, st)
+  CACHE.set(ckey, st)
   return st
 }
 
@@ -144,11 +193,26 @@ export function complete(sub, q, items) {
   // 关键：归属只从「head 已填完的段之后」开始找。
   //       否则「型号」这类宽正则会把 3P / C1 也认成型号（实测：NXB-63 3P 被判成型号段）。
   const headStr = tail ? raw.slice(0, raw.length - tail.length) : raw
-  const headVals = extractParams(headStr, st.tokens)
+  // 型号段固定吃第一个 token，其内容不参与后续段的「是否已填」判定。
+  // 原因：型号正则极宽，会把型号里的片段认成别的参数 ——
+  //   实测 "LA38-11/203" 被解析出 额定电压="11/203"，于是空格后直接跳过电压段、
+  //   跳到颜色，用户看不到本该出现的电压提示。
+  const headToks = String(headStr).trim().split(/\s+/).filter(Boolean)
+  const firstIsModel = st.segments[0] && st.segments[0].params.length === 1 && st.segments[0].params[0] === '型号'
   let start = 0
-  for (let i = 0; i < st.segments.length; i++) {
-    if (st.segments[i].params.every((p) => headVals[p])) start = i + 1
-    else break
+  if (firstIsModel && headToks.length) {
+    start = 1                                  // 第一个 token 归型号段
+    const restVals = extractParams(headToks.slice(1).join(' '), st.tokens)
+    for (let i = 1; i < st.segments.length; i++) {
+      if (st.segments[i].params.every((p) => restVals[p])) start = i + 1
+      else break
+    }
+  } else {
+    const headVals = extractParams(headStr, st.tokens)
+    for (let i = 0; i < st.segments.length; i++) {
+      if (st.segments[i].params.every((p) => headVals[p])) start = i + 1
+      else break
+    }
   }
   let idx = -1
   if (tail) {
@@ -158,23 +222,98 @@ export function complete(sub, q, items) {
     }
   }
   if (idx < 0) idx = start < st.segments.length ? start : st.segments.length - 1
+
+  // 末尾为空（刚打完空格）时，如果当前段没有任何候选，就向后找第一个有候选的段。
+  // 否则会"卡"在冷门段上（如 101001 的安装孔径，存量只有 2% 写过），
+  // 用户看到的是"什么都没有"，误以为补全功能失效。
+  // 只在前缀为空时跳：用户正在输入某段时不跳，避免打断。
+  const prefixOf = tail
+  if (!prefixOf) {
+    let probe = idx
+    while (probe < st.segments.length && !((st.ranked.get(st.segments[probe].key) || []).length)) probe++
+    if (probe < st.segments.length) idx = probe
+  }
+
   const seg = st.segments[idx]
   const prefix = tail
 
   const all = st.ranked.get(seg.key) || []
-  const key = prefix.toLowerCase()
-  let opts = key
-    ? all.filter((x) => x.value.toLowerCase().startsWith(key) || x.value.toLowerCase().includes(key))
-    : all
+  // 过滤按「参数值」而不是「字符串包含」：
+  //   输入 "10" 时，字符串 includes 会命中 D100A / C100（都含 "10"），但它们额定电流是 100，明显不是用户要的。
+  //   正确做法：把用户已输入的片段解析出参数值，候选的对应参数必须一致（数值比较，忽略 A/mm^2 等单位后缀）。
+  // 用户常省略单位：输入 "10" 想表达 10A、"10k" 想表达 10kΩ。
+  // 而参数正则通常要求带单位（额定电流 = /^(\d+)\s*A$/），直接解析会得到空值 →
+  // 过滤失效、一个候选都不给（实测 GSB2-63M/2P 10 就是这样）。故补单位再试一次。
+  let tailVals = prefix ? extractParams(prefix, seg.params) : {}
+  if (prefix && seg.unit && !seg.params.some((p) => tailVals[p])) {
+    const v2 = extractParams(prefix + seg.unit, seg.params)
+    if (seg.params.some((p) => v2[p])) tailVals = v2
+  }
+  const hasTail = seg.params.some((p) => tailVals[p])
+  // 组合段（`{芯数}*{截面}mm^2`）：用户输入 "3" 可能指首参数（3 芯）也可能指末参数（3 平方）。
+  // 上面补单位只匹配到末参数，这里再不补单位解析一次，作为备选条件，两者取并集。
+  let tailAlt = null
+  if (prefix && seg.params.length > 1 && hasTail) {
+    const v0 = extractParams(prefix, seg.params)
+    if (seg.params.some((p) => v0[p]) && JSON.stringify(v0) !== JSON.stringify(tailVals)) tailAlt = v0
+  }
+  const numOf = (s) => {
+    const m = /([\d.]+)/.exec(String(s || ''))
+    return m ? parseFloat(m[1]) : null
+  }
+  const eqVal = (a, b) => {
+    const na = numOf(a)
+    const nb = numOf(b)
+    if (na != null && nb != null && na === nb) return true
+    return String(a).toUpperCase() === String(b).toUpperCase()
+  }
+  let opts
+  const kk = prefix.toLowerCase()
+  if (hasTail) {
+    const matchBy = (tv) => all.filter((x) => {
+      const cv = extractParams(x.value, seg.params)
+      return seg.params.every((p) => !tv[p] || eqVal(cv[p], tv[p]))
+    })
+    // ① 参数级精确匹配（输入 10 只留额定电流=10，排除 D100A/C100）
+    const exact = matchBy(tailVals)
+    // ①b 组合段的另一种理解（3 芯 vs 3 平方）
+    const exactAlt = tailAlt ? matchBy(tailAlt) : []
+    // ①c 组合段：把前缀直接当首个参数（输入 3 可能是「3 芯」，此时 extractParams 未必识别得出）
+    let firstHit = []
+    if (kk && seg.params.length > 1) {
+      const fp = seg.params[0]
+      firstHit = all.filter((x) => {
+        const cv = extractParams(x.value, seg.params)
+        return cv[fp] && eqVal(cv[fp], prefix)
+      })
+    }
+    // ② 字符串前缀匹配（容错：输入 C1 时 C10A/C16A 也可能是想要的，不能只给 C1A）
+    const pre = kk ? all.filter((x) => x.value.toLowerCase().startsWith(kk)) : []
+    const seen = new Set()
+    opts = []
+    // 顺序即优先级：组合段输入 "3" 时，"芯数=3"（3*2.5mm^2）比"截面=3"更可能是用户本意，
+    // 而 exact 往往条数更多，会把前者挤出前 N 个（实测只看到 3*3mm^2、20*3.0mm^2 等截面=3 的）
+    for (const x of [...firstHit, ...exact, ...exactAlt, ...pre]) {
+      if (seen.has(x.value)) continue
+      seen.add(x.value)
+      opts.push(x)
+    }
+    if (!opts.length) opts = pre
+  } else {
+    opts = kk ? all.filter((x) => x.value.toLowerCase().startsWith(kk)) : all
+  }
 
   // 单位补全：本段带单位、输入是「数字（可带 k/M/μ 倍率）」→ 优先给「数字+单位」
   // 例：电阻段输入 10k → 10kΩ
   // 限定单参数段：组合段 `{芯数}*{截面}mm^2` 的单位只属于后半段，
   // 若对整段补单位，输入 "3" 会被补成 "3mm^2"（实测发现的错误）
+  // 单位补全只在「该值确实存在」时给：输入 10k → 10kΩ 有意义；
+  // 但输入 12 就造出 12A（该小类根本没有 12A）只会误导用户。
   const unitHit = seg.unit && seg.params.length === 1 && /^[\d.]+\s*[kKmMμuGg]?$/.test(prefix)
   if (unitHit) {
     const withUnit = prefix + seg.unit
-    opts = [{ value: withUnit, count: 0, kind: 'unit' }, ...opts.filter((x) => x.value !== withUnit)]
+    const exists = all.some((x) => x.value === withUnit) || opts.some((x) => x.value === withUnit)
+    if (exists) opts = [{ value: withUnit, count: 0, kind: 'unit' }, ...opts.filter((x) => x.value !== withUnit)]
   }
 
   return {
@@ -193,4 +332,80 @@ export function complete(sub, q, items) {
 }
 
 /** 清缓存（测试或数据刷新时用） */
-export function clearCompleteCache() { CACHE.clear() }
+export function clearCompleteCache() { CACHE.clear(); SEG_CACHE.clear() }
+
+// 段序列缓存：normalizeByTemplate 会被「索引加载 2 万条」和「每次查重」调用，
+// 不缓存的话 patternSegments 每次都重建模板，明显拖慢启动。
+const SEG_CACHE = new Map()
+function segmentsOf(sub) {
+  const s6 = String(sub || '').slice(0, 6)
+  const hit = SEG_CACHE.get(s6)
+  if (hit) return hit
+  const v = patternSegments(s6)
+  SEG_CACHE.set(s6, v)
+  return v
+}
+
+/**
+ * 规格规范化 —— 用于**查重签名**，把「同一物的不同写法」收敛成同一结果。
+ *
+ * 解决的实际问题：用户少写单位时签名不同，导致同一物被判为新物料。
+ *   输入 NXBF-63 2P C20   → 规范化 NXBF-63 2P C20A
+ *   输入 NXBF-63 2P C20A  → 规范化 NXBF-63 2P C20A     ← 两者签名相同，能判重复
+ *
+ * 做法：按模板逐段解析；某段解析不全时补上该段单位再试（C20 → C20A、3*2.5 → 3*2.5mm^2）；
+ *      最后按模板顺序重组。
+ *
+ * 安全：一段都拼不出来时返回原值 —— 宁可漏判，也不能把规格改错后拿去比对。
+ */
+export function normalizeByTemplate(sub, spec) {
+  const s6 = String(sub || '').slice(0, 6)
+  const raw = String(spec || '').trim()
+  if (!raw) return raw
+  const meta = segmentsOf(s6)
+  if (!meta.segments.length) return raw
+
+  const tokens = raw.split(/\s+/).filter(Boolean)
+  if (!tokens.length) return raw
+
+  const vals = {}
+  let ti = 0
+  // 型号段固定吃第一个 token（型号正则太宽，会抢走 3*2.5、C20 这类片段）
+  const first = meta.segments[0]
+  if (first && first.params.length === 1 && first.params[0] === '型号' && tokens.length) {
+    vals['型号'] = tokens[0]
+    ti = 1
+  }
+
+  let segIdx = ti ? 1 : 0
+  for (; ti < tokens.length; ti++) {
+    const t = tokens[ti]
+    let hit = false
+    for (let i = segIdx; i < meta.segments.length; i++) {
+      const seg = meta.segments[i]
+      let v = extractParams(t, seg.params)
+      if (!seg.params.some((p) => v[p]) && seg.unit) {
+        const v2 = extractParams(t + seg.unit, seg.params)     // 补段单位再试
+        if (seg.params.some((p) => v2[p])) v = v2
+      }
+      if (seg.params.some((p) => v[p])) {
+        for (const p of seg.params) if (v[p]) vals[p] = v[p]
+        segIdx = i
+        hit = true
+        break
+      }
+    }
+    if (!hit) continue      // 无法归入任何段（多余内容）—— 忽略，不影响已解析的段
+  }
+
+  const parts = []
+  for (const seg of meta.segments) {
+    if (!seg.params.every((p) => vals[p])) continue           // 该段不全 → 跳过
+    let v = fillTpl(seg, vals)
+    const u = seg.unit || ''
+    if (u && !v.toUpperCase().endsWith(u.toUpperCase())) v += u
+    v = v.replace(/(\d)K(?=Ω)/g, '$1k')
+    parts.push(v)
+  }
+  return parts.length ? parts.join(' ') : raw
+}

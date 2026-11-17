@@ -60,11 +60,15 @@ export const NORMALIZERS = {
     const m = /^(\d+(?:\.\d+)?)[\/:：](\d+(?:\.\d+)?)A?$/i.exec(s)
     return m ? m[1] + '/' + m[2] : null
   },
+  // 容值：单位大小写统一为规范写法 pF / nF / μF / mF / F
+  // （原先只把 UF 转成 μF，NF/PF 保持大写，导致同一参数出现两种写法，排序也乱）
   容值: (v) => {
-    const s = toHalf(v).replace(/\s/g, '').toUpperCase().replace('Μ', 'μ')
-    const m = /^(\d+(?:\.\d+)?)(UF|NF|PF|F)$/.exec(s)
+    // toUpperCase 会把 μ(U+03BC) 变成希腊大写 Μ(U+039C)，这里先转成 ASCII 的 U 再匹配，
+    // 否则 μF 归一后会匹配不到、直接返回 null（值被丢弃）
+    const s = toHalf(v).replace(/\s/g, '').toUpperCase().replace(/\u039C/g, 'U')
+    const m = /^(\d+(?:\.\d+)?)(UF|NF|PF|MF|F)$/.exec(s)
     if (!m) return null
-    const u = m[2].toLowerCase() === 'uf' ? 'μF' : m[2]
+    const u = m[2] === 'UF' ? 'μF' : m[2] === 'NF' ? 'nF' : m[2] === 'PF' ? 'pF' : m[2] === 'MF' ? 'mF' : 'F'
     return m[1] + u
   },
   阻值: (v) => {

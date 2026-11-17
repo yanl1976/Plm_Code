@@ -19,6 +19,7 @@ import { getCategory, chooseTokens, MAP } from './classify.js'
 import { extractParams } from './struct-spec.js'
 import { suggestName } from './name-synonyms.js'
 import { matchSystemWord, matchExcludeHint, allUnitNames, ACCESSORY_SUFFIX } from './guide-units.js'
+import { shadowEval } from './param-lib/shadow.js'
 
 // ---- 「名称 → 主导小类」索引（由 dedup 生成，见 src/dedup.js）----
 // 用途：跨小类检测。名称若在别的小类有 ≥3 条同类记录、且占该名称 ≥80%，
@@ -677,6 +678,9 @@ export function checkMaterial(m = {}) {
   const warnings = [...n.warnings, ...sp.warnings]
   const syn = n.nameSynonym || null
   return {
+    // 参数标准库影子评估：仅记录「如果启用会推荐什么 / 用户写的值是否标准」，
+    // 不参与 ok / errors / warnings，前端不使用。开关关闭时返回 null（开销近乎为零）。
+    paramShadow: shadowEval(m.sub, m.name, m.spec),
     ok: errors.length === 0,
     errors,
     warnings,

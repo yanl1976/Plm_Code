@@ -17,6 +17,7 @@
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { normalize } from './normalize.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 const CONF_FILE = path.join(ROOT, 'src/config/param-lib-rules.json')
@@ -92,8 +93,13 @@ export function checkValue(sub, name, value) {
   const d = paramDef(sub, name)
   if (!d) return { ok: true, normalized: String(value || ''), reason: 'no-def' }
   const raw = String(value || '').trim()
-  const alias = (d.aliases || {})[raw]
-  const v = alias != null ? String(alias) : raw
+  // 先归一再比对：调用方给的是原始写法（220kV / 4极 / 10k），
+  // 库里的键是归一键（220KV / 4P / 10kΩ）。不归一就会把合法值判成"非标"。
+  const nv = normalize(name, raw)
+  const base = nv == null ? raw : nv
+  const al = d.aliases || {}
+  const alias = al[raw] != null ? al[raw] : al[base]
+  const v = alias != null ? String(alias) : base
   if ((d.accepted || []).some((x) => String(x.value) === v)) return { ok: true, normalized: v, reason: 'standard' }
   if ((d.pending || []).some((x) => String(x.value) === v)) return { ok: true, normalized: v, reason: 'pending' }
   return { ok: false, normalized: v, reason: 'unknown' }

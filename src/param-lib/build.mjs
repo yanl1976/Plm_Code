@@ -21,6 +21,7 @@ import { getCategory, chooseTokens } from '../classify.js'
 import { extractParams } from '../struct-spec.js'
 import { loadIndex } from '../plm-index.js'
 import { detectSubMismatch } from '../material-rules.js'
+import { normalize } from './normalize.js'
 
 const ROOT = path.resolve(process.cwd())
 const NDJSON = path.join(ROOT, 'data/materials.ndjson')
@@ -61,9 +62,35 @@ const inE = (set) => (v) => {
 }
 
 /**
- * 序列判定。第二个参数 sub 决定用哪套体系 —— 不同小类同一参数可以有完全不同的值域。
- * @returns {{ok:boolean, series:string}|null} null 表示该参数无标准序列
+ * 取「该小类族」的标准序列。第二个参数 sub 决定用哪套体系 ——
+ * 不同小类同一参数可以有完全不同的值域（电容 63V vs 配电 380V）。
+ * @returns {{list:string[], series:string}|null} null 表示该参数无标准序列
  */
+function seriesOf(param, sub) {
+  const s6 = String(sub || '').slice(0, 6)
+  switch (param) {
+    case '额定电流':
+      return { list: [...new Set([...R10, ...CB_CURRENT].map(String))], series: 'R10 + 断路器档位' }
+    case '分断能力':
+      return { list: CB_BREAK.map(String), series: '断路器分断值' }
+    case '变比':
+      return { list: RATIO, series: 'GB 1207 变比' }
+    case '额定电压': {
+      if (/^1014/.test(s6)) return { list: VOLT_CAP, series: '电容耐压' }        // 6.3V…630V
+      if (/^1103/.test(s6)) return { list: VOLT_CABLE, series: '电缆电压等级' }   // 300/500V…26/35kV
+      return { list: VOLT_GRID, series: 'GB/T 156' }                             // 24V…220kV
+    }
+    // E 系列（阻值/容值）是「基准 × 数量级」，组合无穷，不能枚举补充 —— 只校验不扩展
+    case '阻值':
+      return { list: [], series: 'E24', testOnly: true }
+    case '容值':
+      return { list: [], series: 'E6/E12', testOnly: true }
+    default:
+      return null
+  }
+}
+
+/** 序列判定：该值是否属于本小类族的标准值 */
 function checkSeries(param, value, sub) {
   const s6 = String(sub || '').slice(0, 6)
   switch (param) {
@@ -74,7 +101,6 @@ function checkSeries(param, value, sub) {
     case '变比':
       return { ok: RATIO.includes(String(value)), series: 'GB 1207 变比' }
     case '额定电压': {
-      // 按小类族选体系
       if (/^1014/.test(s6)) return { ok: VOLT_CAP.includes(String(value)), series: '电容耐压' }
       if (/^1103/.test(s6)) return { ok: VOLT_CABLE.includes(String(value)), series: '电缆电压等级' }
       return { ok: VOLT_GRID.includes(String(value)), series: 'GB/T 156' }
@@ -88,76 +114,7 @@ function checkSeries(param, value, sub) {
   }
 }
 
-// ============ 值归一（按参数定制）============
-const toHalf = (s) => String(s)
-  .replace(/[\uFF01-\uFF5E]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
-  .replace(/\u3000/g, ' ')
-  .trim()
 
-const NORMALIZERS = {
-  极数: (v) => {
-    const s = toHalf(v).toUpperCase().replace(/\s/g, '')
-    const m = /^(\d)P?(\+N)?$/.exec(s)
-    return m ? m[1] + 'P' + (m[2] || '') : null
-  },
-  脱扣曲线: (v) => {
-    const s = toHalf(v).toUpperCase().replace(/\s/g, '')
-    return ['B', 'C', 'D'].includes(s) ? s : null
-  },
-  额定电流: (v) => {
-    const m = /^([\d.]+)\s*A?$/i.exec(toHalf(v))
-    if (!m) return null
-    const n = parseFloat(m[1])
-    return isFinite(n) && n > 0 ? String(n) : null
-  },
-  分断能力: (v) => {
-    const m = /^([\d.]+)\s*k?A?$/i.exec(toHalf(v))
-    if (!m) return null
-    const n = parseFloat(m[1])
-    return isFinite(n) && n > 0 ? String(n) : null
-  },
-  // 必须带单位 V/KV —— 否则 "0.66" 会被补成 "0.66V"（曾产生 347 条假值）
-  额定电压: (v) => {
-    let s = toHalf(v).toUpperCase().replace(/\s/g, '').replace(/^(AC|DC|～|~)/, '')
-    if (!/^\d/.test(s)) return null
-    if (!/V$/.test(s)) return null
-    return /^\d+(\.\d+)?(\/\d+(\.\d+)?)?K?V$/.test(s) ? s : null
-  },
-  精度: (v) => {
-    const s = toHalf(v).replace(/\s/g, '')
-    const m = /^±?\d+(\.\d+)?%?$/.exec(s)
-    return m ? (s.includes('%') ? s : s + '%') : null
-  },
-  分断等级: (v) => {
-    const s = toHalf(v).toUpperCase().replace(/\s/g, '')
-    return /^[A-Z]$/.test(s) ? s : null
-  },
-  变比: (v) => {
-    const s = toHalf(v).replace(/\s/g, '')
-    const m = /^(\d+(?:\.\d+)?)[\/:：](\d+(?:\.\d+)?)A?$/i.exec(s)
-    return m ? m[1] + '/' + m[2] : null
-  },
-  容值: (v) => {
-    const s = toHalf(v).replace(/\s/g, '').toUpperCase().replace('Μ', 'μ')
-    const m = /^(\d+(?:\.\d+)?)(UF|NF|PF|F)$/.exec(s)
-    if (!m) return null
-    const u = m[2].toLowerCase() === 'uf' ? 'μF' : m[2]
-    return m[1] + u
-  },
-  阻值: (v) => {
-    let s = toHalf(v).replace(/\s/g, '').replace(/Ω|R(?=\d|$)/g, 'Ω')
-    if (!/^\d/.test(s)) return null
-    if (!/Ω$/.test(s)) s = s + 'Ω'
-    return s.replace(/([\d.]+)K(?=Ω)/, '$1k')
-  },
-}
-
-function normalize(param, v) {
-  const f = NORMALIZERS[param]
-  if (f) return f(v)
-  const s = toHalf(v)
-  return s || null
-}
 
 // ============ 主流程 ============
 const rows = fs.readFileSync(NDJSON, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l))
@@ -240,13 +197,27 @@ for (const sub of SUBS) {
     for (const [v, c] of ranked) {
       const chk = hasSeries ? checkSeries(name, v, sub) : null
       const inSeries = chk ? chk.ok : true
-      if (inSeries && c >= 2) accepted.push({ value: v, count: c })
+      if (inSeries && c >= 2) accepted.push({ value: v, count: c, source: 'stock' })
       else if (!inSeries && c >= 5) {
         pending.push({ value: v, count: c, reason: '不在本小类标准序列但出现 ≥5 次，需确认是否为行业惯例/特殊规格' })
         pendingRows.push({ 小类: sub, 小类名: info.subName || '', 参数: name, 值: v, 条数: c, 类型: '标准外高频' })
       } else {
         suspected.push({ value: v, count: c })
       }
+    }
+
+    // 方案 B：候选 = 本小类存量（带频次） + 本小类族的标准序列（count=0，标 source=series）
+    // 只扩展枚举型序列；E 系列（阻值/容值）是"基准×数量级"，组合无穷，不扩展（testOnly）。
+    // 注意：序列仍按小类族取（电容耐压 / 电缆 / 配电），所以不会出现"断路器推荐 63V"。
+    const serInfo = hasSeries ? seriesOf(name, sub) : null
+    if (serInfo && !serInfo.testOnly && serInfo.list.length) {
+      const have = new Set(accepted.map((x) => String(x.value)))
+      for (const sv of serInfo.list) {
+        if (have.has(String(sv))) continue
+        accepted.push({ value: String(sv), count: 0, source: 'series' })
+      }
+      // 存量支持的排在前（按频次降序），序列补充的排后
+      accepted.sort((a, b) => (b.count || 0) - (a.count || 0))
     }
 
     stat.accepted += accepted.length
@@ -256,7 +227,7 @@ for (const sub of SUBS) {
 
     params[name] = {
       ...base,
-      accepted: accepted.slice(0, 30),
+      accepted: accepted.slice(0, 60),
       pending,
       suspected: suspected.slice(0, 20),
     }

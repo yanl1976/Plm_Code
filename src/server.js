@@ -25,6 +25,9 @@ import { matchUnit, matchSystemWord } from './guide-units.js'
 import { loadTemplates, buildTree, rebuildMid, addCustomParam, removeCustomParam, saveTemplates } from './feature-templates.js'
 import { getOverride, saveOverride, deleteOverride, bulkPrefill, overrideMtime, countParamUsage } from './feature-store.js'
 import XLSX from 'xlsx'
+// 带样式的分支：参数标准库导出需要对「待确认」行标红。
+// 只在该导出接口里用，其余导出仍走原生 xlsx（避免无谓改动）。
+import XLSXStyle from 'xlsx-js-style'
 import { cableSpecHints } from './cable-spec.js'
 import { summary as stdWatchSummary, runCheck as stdWatchRun, loadWatch as stdWatchLoad, saveWatch as stdWatchSave, isDue as stdWatchDue } from './std-watch.js'
 import { normalize, tokenize, jaccard, looseSignature, modelOf, buildSignature } from './spec.js'
@@ -1755,14 +1758,23 @@ const server = http.createServer(async (req, res) => {
       //   suspected = 疑似噪音（不采用，可删行清理）
       // 放一张表是为了人工维护时能在一个视图里完成「转正 / 删除 / 新增」，
       // 不用在两张表之间来回切（此前 accepted 与 pending 是分开的两个 sheet）。
-      const rows = [['小类号', '小类名', '参数', '类型', '标准序列', '值', '频次', '来源', '状态']]
+      const rows = [['小类号', '小类名', '参数', '类型', '标准序列', '值', '频次', '来源', '状态', '备注']]
       const subsSorted = Object.entries(j.subs || {}).sort((a, b) => a[0].localeCompare(b[0]))
       for (const [sub, x] of subsSorted) {
         const params = Object.entries(x.params || {}).sort((a, b) => a[0].localeCompare(b[0], 'zh'))
         for (const [name, d] of params) {
           const add = (list, status) => {
             for (const v of sortByValue(name, list || [])) {
-              rows.push([sub, x.subName || '', name, d.type || '', d.series || '', v.value, v.count || 0, v.source || 'stock', status])
+              // 备注列：写明「为什么它不是标准值、该怎么处理」，便于在表里直接决策
+              let note = ''
+              if (status === 'pending') {
+                note = v.reason || '不在本小类标准序列，需确认是否为行业惯例或特殊规格'
+              } else if (status === 'suspected') {
+                note = '仅出现 ' + (v.count || 0) + ' 次，疑似笔误或型号片段；确认无用可直接删行'
+              } else if (v.source === 'series') {
+                note = '标准序列补充（本小类存量未出现）'
+              }
+              rows.push([sub, x.subName || '', name, d.type || '', d.series || '', v.value, v.count || 0, v.source || 'stock', status, note])
             }
           }
           add(d.accepted, 'accepted')
@@ -1778,7 +1790,13 @@ const server = http.createServer(async (req, res) => {
         ['  参数     参数名（必填，须与库中已有参数名一致）'],
         ['  值       参数取值（必填）'],
         ['  状态     决定导入后的归类：accepted / pending / suspected'],
+        ['  备注     说明该值为什么不是标准值、以及建议怎么处理（导入时不读这一列）'],
         ['  其余列（小类名/类型/标准序列/频次/来源）仅供阅读，导入时按小类号+参数+值重新计算'],
+        [''],
+        ['一·补充：颜色含义'],
+        ['  红色加粗  = pending（待确认）：不在本小类标准序列，但存量出现较多，需人工判断'],
+        ['  灰色      = suspected（疑似噪音）：出现次数很少，多为笔误或型号片段，可直接删行'],
+        ['  无颜色    = accepted（标准值）：会被推荐与校验采用'],
         [''],
         ['二、常见维护动作'],
         ['  把疑似值转正   → 把该行「状态」改成 accepted'],
@@ -1794,10 +1812,35 @@ const server = http.createServer(async (req, res) => {
         ['  · 导入前会先做一次预检，显示 新增/更新/删除 的数量，确认后才写入'],
         ['  · 导入会自动备份当前库到 src/config/_backup/'],
       ]
-      const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '参数值')
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(guide), '维护说明')
-      const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+      // 样式：待确认=红色加粗（需专门确认）、疑似=灰色（可删）、表头=浅底加粗
+      const ws = XLSXStyle.utils.aoa_to_sheet(rows)
+      const ST = {
+        head: { font: { bold: true }, fill: { fgColor: { rgb: 'FFF0F4F8' } }, alignment: { horizontal: 'center', vertical: 'center' } },
+        pending: { font: { color: { rgb: 'FFD32F2F' }, bold: true } },
+        suspected: { font: { color: { rgb: 'FF9E9E9E' } } },
+      }
+      for (let c = 0; c < rows[0].length; c++) {
+        const addr = XLSXStyle.utils.encode_cell({ r: 0, c })
+        if (ws[addr]) ws[addr].s = ST.head
+      }
+      for (let r = 1; r < rows.length; r++) {
+        const st = rows[r][8]
+        const style = st === 'pending' ? ST.pending : (st === 'suspected' ? ST.suspected : null)
+        if (!style) continue
+        for (let c = 0; c < rows[r].length; c++) {
+          const addr = XLSXStyle.utils.encode_cell({ r, c })
+          if (!ws[addr]) ws[addr] = { t: 's', v: '' }
+          ws[addr].s = style
+        }
+      }
+      ws['!cols'] = [{ wch: 8 }, { wch: 14 }, { wch: 10 }, { wch: 9 }, { wch: 18 }, { wch: 16 }, { wch: 6 }, { wch: 9 }, { wch: 10 }, { wch: 48 }]
+      const wsGuide = XLSXStyle.utils.aoa_to_sheet(guide)
+      wsGuide['!cols'] = [{ wch: 110 }]
+      const wb = XLSXStyle.utils.book_new()
+      XLSXStyle.utils.book_append_sheet(wb, ws, '参数值')
+      XLSXStyle.utils.book_append_sheet(wb, wsGuide, '维护说明')
+      // cellStyles 必须显式开启，否则 styles.xml 里不落 font.color（读回来只有空的 patternType）
+      const buf = XLSXStyle.write(wb, { type: 'buffer', bookType: 'xlsx', cellStyles: true })
       res.writeHead(200, {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': 'attachment; filename="param-standard.xlsx"',

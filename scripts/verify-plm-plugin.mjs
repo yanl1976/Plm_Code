@@ -367,7 +367,9 @@ async function run() {
     p.pick(0)
     ok('GGXH 回填', p.ctl['GGXH_Value'].__text === 'NXB-63 C16 3P', 'got=' + p.ctl['GGXH_Value'].__text)
     await sleep(60)
-    ok('ZYCS 同步为规格型号', p.ctl['ZYCS_Value'].__text === 'NXB-63 C16 3P', 'got=' + p.ctl['ZYCS_Value'].__text)
+    // ZYCS（主要参数）已与规格解耦：规格只写 GGXH 与 FLSXHB，
+    // ZYCS 由弹窗「主要参数」框写入并置只读，不应被规格覆盖。
+    ok('ZYCS 不被规格覆盖', p.ctl['ZYCS_Value'].__text !== 'NXB-63 C16 3P', 'got=' + p.ctl['ZYCS_Value'].__text)
   }
 
   // S5 保存时命中重复 + 用户取消 → 阻断

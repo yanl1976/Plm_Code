@@ -14,7 +14,8 @@
  *   3) 失焦/保存 —— 调 /api/plm/check 做同小类查重，命中 exact/sep 级重复时提示并二次确认
  *   4) 规格空格整理 —— 失焦/保存前把首尾空格、连续空格、全角空格就地修正
  *        口径同后端 material-rules.fixSpecFormat；乘号(×/x/X -> *)不在此处理（待定）
- *   5) 规格型号自动同步 —— 把 GGXH 写入 主要参数(ZYCS) 与 分类属性合并(FLSXHB)：
+ *   5) 规格型号同步 分类属性合并(FLSXHB)；主要参数(ZYCS) 改由弹窗「主要参数」框独立维护，
+ *      回填后 PLM 的该框置灰只读（规格不再复制到 ZYCS，避免同名但内容不同）：
  *        仅当二者为空或等于二开占位文字时填入，已有值一律不覆盖（不改变 PLM 生成逻辑）
  *        时机：规格输入/点选候选、进入步骤2、点"确定"前兜底
  *        宽度：严格按 PLM 元数据（GGXH 500 / ZYCS 1000 / FLSXHB 100）
@@ -40,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.14';
+  var PLUGIN_VERSION = '2.15';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -76,7 +77,8 @@
     suggestDebounce: 300,        // 输入防抖(ms)
     minLen: 2,                   // 触发联想的最少字符数
     autoFillZycs: false,         // 旧逻辑：用结构化建议回填 ZYCS（现由 fillSpecToParams 统一处理，默认关闭）
-    fillSpecToParams: true,      // 将「规格型号」同步回填到 主要参数(ZYCS) 与 分类属性合并(FLSXHB)
+    fillSpecToParams: true,      // 将「规格型号」同步回填到 分类属性合并(FLSXHB)
+  fillParamsToZycs: true,      // 将弹窗里的「主要参数」回填到 ZYCS（与规格解耦，回填后置灰只读）
 
     // 字段宽度：必须与 PLM 元数据/数据库一致（运行时还会与控件 maxlength 取小值）
     //   PSEITEM.ENAME      nvarchar(200)  / PSEITEMMASTER.model STRING200
@@ -187,7 +189,7 @@
     'checkButtonText', 'checkButtonHost', 'checkButtonPlace',
     'checkButtonOffsetX', 'checkButtonOffsetY',
     'restrictItemType', 'itemTypeAllowText', 'itemTypeAllowValues',
-    'tidySpecSpace', 'fillSpecToParams', 'blockOnDuplicate',
+    'tidySpecSpace', 'fillSpecToParams', 'fillParamsToZycs', 'blockOnDuplicate',
     'notifyDuplicateOnBlur', 'strictWidth',
     'suggestDebounce', 'minLen', 'timeout', 'domWatchDelay', 'debug'
   ];
@@ -493,8 +495,51 @@
     }
     if (!over) state.specOverWarned = false;
 
-    syncZycs(v);
+    // ZYCS（主要参数）不再由规格复制：它是独立内容（附加说明/可选配件/其他参数），
+    // 由弹窗「主要参数」框维护，见 syncParamsToZycs。
     syncFlsxhb(v);
+  }
+
+  /**
+   * 主要参数 → ZYCS。
+   * 与 syncZycs 的区别：内容来自用户/助手的「主要参数」，不是规格的副本。
+   * 写入后把 PLM 的 ZYCS 框置灰只读 —— 避免页面与助手两边不一致。
+   */
+  function syncParamsToZycs(v) {
+    if (!CFG.enabled || !CFG.fillParamsToZycs) return false;
+    if (!isValidCtl(state.zycs)) return false;
+    var s = String(v == null ? '' : v).replace(/^\s+|\s+$/g, '');
+    if (!s) return false;
+    var lim = ctlLimit(state.zycs, CFG.zycsMaxLen);
+    if (s.length > lim) s = clipSmart(s, lim);
+    var ok = writeText(state.zycs, s);
+    if (ok) {
+      fillMark.zycs = s;
+      lockZycs();
+      log('已回填 主要参数(ZYCS) 并置只读（上限 ' + lim + ' 字符）');
+    }
+    return ok;
+  }
+
+  /** ZYCS 回填后置灰只读：readonly 阻止键盘输入，样式给出视觉反馈 */
+  function lockZycs() {
+    try {
+      var el = domOf(state.zycs);
+      if (!el) return;
+      el.readOnly = true;
+      el.style.background = '#f2f2f2';
+      el.style.color = '#888';
+      el.title = '已由录入助手回填；需要修改请重新打开助手';
+    } catch (e) { }
+  }
+
+  /** 读 ZYCS 现有值（占位文字视为空），用于弹窗初始化 */
+  function readZycsValue() {
+    try {
+      var cur = readText(state.zycs);
+      if (!cur || cur === ZYCS_PLACEHOLDER) return '';
+      return cur;
+    } catch (e) { return ''; }
   }
 
   // -------- 保存前宽度校验：超限提示并阻断，让用户回去修改（不静默截断） --------
@@ -1858,6 +1903,36 @@
     setSimBtn(0);
     specRow.appendChild(quickRow);
     body.appendChild(specRow);
+
+    // 主要参数：与规格解耦（规格只写型号+主参数，附加说明/可选配件写这里）
+    // 输入后写回 PLM 的 ZYCS，并把该框置灰只读；需要改就重新打开本助手。
+    var paramsRow = dlgEl('div', 'display:flex;align-items:flex-start;gap:8px;margin:6px 0 4px;');
+    paramsRow.appendChild(dlgEl('span', 'flex:0 0 auto;width:64px;color:#666;font-size:13px;padding-top:4px;', '主要参数'));
+    var paramsWrap = dlgEl('div', 'flex:1 1 auto;min-width:0;');
+    var paramsIn = dlgEl('textarea', 'width:100%;box-sizing:border-box;padding:6px 8px;border:' + C_LINE + ';'
+      + 'border-radius:3px;font-size:13px;background:' + C_INPUT_BG + ';color:inherit;resize:vertical;height:54px;'
+      + 'font-family:inherit;line-height:1.5;');
+    paramsIn.className = 'plm-smart-dlg-params';
+    paramsIn.value = readZycsValue();
+    paramsIn.placeholder = '附加说明、可选配件等，如：MO 电动操作机构、UVR 欠压线圈（回填后 PLM 中该框置灰只读）';
+    paramsWrap.appendChild(paramsIn);
+    paramsRow.appendChild(paramsWrap);
+    paramsRow.appendChild(dlgEl('div', 'flex:0 0 112px;'));   // 与上面两行右边界对齐
+    body.appendChild(paramsRow);
+
+    // 输入即写回（防抖 300ms）：边写边同步，避免用户忘记点保存
+    var paramsTimer = null;
+    paramsIn.oninput = function () {
+      if (paramsTimer) clearTimeout(paramsTimer);
+      paramsTimer = setTimeout(function () {
+        if (String(paramsIn.value || '').trim()) syncParamsToZycs(paramsIn.value);
+      }, 300);
+    };
+    // 失焦时立即写回，避免防抖未触发就关闭弹窗
+    paramsIn.onblur = function () {
+      if (paramsTimer) { clearTimeout(paramsTimer); paramsTimer = null; }
+      if (String(paramsIn.value || '').trim()) syncParamsToZycs(paramsIn.value);
+    };
 
     // 规格输入下方的「同型号系列」近似联想（看板同款，数据来自 3130）
     var specSug = dlgEl('div', 'display:none;margin-top:4px;border:' + C_LINE + ';border-radius:4px;'
@@ -3354,7 +3429,7 @@
       // 类型门控：只对「电气元件 / 原材料 / 外购标准件」启用按钮，其余类型置灰
       try { bindTypeWatch(); refreshTypeGate(); startTypeWatch(); } catch (e) { log('类型门控异常（已忽略）', e && e.message); }
 
-      // 编辑/复制场景：规格型号已有值，立即同步一次 ZYCS/FLSXHB
+      // 编辑/复制场景：规格型号已有值，立即同步一次 FLSXHB（ZYCS 由主要参数框维护，不在此同步）
       if (CFG.fillSpecToParams) {
         var initSpec = readText(state.ggxh);
         if (initSpec) syncSpecToParams(initSpec);

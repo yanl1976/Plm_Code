@@ -299,17 +299,17 @@
           "aliases": {},
           "accepted": [
             {
-              "value": "100kA",
+              "value": "100",
               "count": 0,
               "source": "manufacturer"
             },
             {
-              "value": "150kA",
+              "value": "150",
               "count": 0,
               "source": "manufacturer"
             },
             {
-              "value": "200kA",
+              "value": "200",
               "count": 0,
               "source": "manufacturer"
             },
@@ -395,11 +395,6 @@
             },
             {
               "value": "80",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "100",
               "count": 0,
               "source": "series"
             }
@@ -1822,52 +1817,52 @@
           "aliases": {},
           "accepted": [
             {
-              "value": "36kA",
+              "value": "36",
               "count": 0,
               "source": "manufacturer"
             },
             {
-              "value": "45kA",
+              "value": "45",
               "count": 0,
               "source": "manufacturer"
             },
             {
-              "value": "50kA",
+              "value": "50",
               "count": 0,
               "source": "manufacturer"
             },
             {
-              "value": "55kA",
+              "value": "55",
               "count": 0,
               "source": "manufacturer"
             },
             {
-              "value": "70kA",
+              "value": "70",
               "count": 0,
               "source": "manufacturer"
             },
             {
-              "value": "85kA",
+              "value": "85",
               "count": 0,
               "source": "manufacturer"
             },
             {
-              "value": "100kA",
+              "value": "100",
               "count": 0,
               "source": "manufacturer"
             },
             {
-              "value": "110kA",
+              "value": "110",
               "count": 0,
               "source": "manufacturer"
             },
             {
-              "value": "125kA",
+              "value": "125",
               "count": 0,
               "source": "manufacturer"
             },
             {
-              "value": "150kA",
+              "value": "150",
               "count": 0,
               "source": "manufacturer"
             },
@@ -1937,11 +1932,6 @@
               "source": "series"
             },
             {
-              "value": "50",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "63",
               "count": 0,
               "source": "series"
@@ -1953,11 +1943,6 @@
             },
             {
               "value": "80",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "100",
               "count": 0,
               "source": "series"
             }
@@ -2716,17 +2701,12 @@
               "source": "stock"
             },
             {
-              "value": "6kA",
+              "value": "10",
               "count": 0,
               "source": "manufacturer"
             },
             {
-              "value": "10kA",
-              "count": 0,
-              "source": "manufacturer"
-            },
-            {
-              "value": "15kA",
+              "value": "15",
               "count": 0,
               "source": "manufacturer"
             },
@@ -2741,17 +2721,7 @@
               "source": "series"
             },
             {
-              "value": "10",
-              "count": 0,
-              "source": "series"
-            },
-            {
               "value": "12.5",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "15",
               "count": 0,
               "source": "series"
             },
@@ -3438,12 +3408,7 @@
               "source": "stock"
             },
             {
-              "value": "6kA",
-              "count": 0,
-              "source": "manufacturer"
-            },
-            {
-              "value": "10kA",
+              "value": "10",
               "count": 0,
               "source": "manufacturer"
             },
@@ -3454,11 +3419,6 @@
             },
             {
               "value": "8",
-              "count": 0,
-              "source": "series"
-            },
-            {
-              "value": "10",
               "count": 0,
               "source": "series"
             },
@@ -7178,12 +7138,7 @@
               "source": "stock"
             },
             {
-              "value": "100kA",
-              "count": 0,
-              "source": "manufacturer"
-            },
-            {
-              "value": "120kA",
+              "value": "120",
               "count": 0,
               "source": "manufacturer"
             },
@@ -8883,17 +8838,7 @@
               "source": "stock"
             },
             {
-              "value": "0.2",
-              "count": 0,
-              "source": "manufacturer"
-            },
-            {
-              "value": "0.5",
-              "count": 0,
-              "source": "manufacturer"
-            },
-            {
-              "value": "1",
+              "value": "1%",
               "count": 0,
               "source": "manufacturer"
             }
@@ -9295,12 +9240,7 @@
               "source": "stock"
             },
             {
-              "value": "0.5",
-              "count": 0,
-              "source": "manufacturer"
-            },
-            {
-              "value": "1",
+              "value": "1%",
               "count": 0,
               "source": "manufacturer"
             }
@@ -12975,7 +12915,7 @@
           "aliases": {},
           "accepted": [
             {
-              "value": "1.5",
+              "value": "1.5%",
               "count": 0,
               "source": "manufacturer"
             }
@@ -13200,7 +13140,7 @@
           "aliases": {},
           "accepted": [
             {
-              "value": "1.5",
+              "value": "1.5%",
               "count": 0,
               "source": "manufacturer"
             }
@@ -13867,12 +13807,12 @@
           },
           "accepted": [
             {
-              "value": "0.2",
+              "value": "0.2%",
               "count": 0,
               "source": "manufacturer"
             },
             {
-              "value": "0.5",
+              "value": "0.5%",
               "count": 0,
               "source": "manufacturer"
             },
@@ -16263,7 +16203,7 @@
           },
           "accepted": [
             {
-              "value": "0.5",
+              "value": "0.5%",
               "count": 0,
               "source": "manufacturer"
             }
@@ -35282,7 +35222,7 @@
   },
   "meta": {
     "version": "0.2.0",
-    "generatedAt": "2026-11-18T00:53:40.641Z",
+    "generatedAt": "2026-11-18T01:07:42.864Z",
     "draft": true,
     "structure": "subs[小类] → params[参数] → {type, accepted, pending, suspected, aliases}",
     "principle": "参数值按小类隔离：某小类的候选只来自该小类的存量，不跨小类共用",

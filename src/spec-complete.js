@@ -198,6 +198,21 @@ function statOf(sub, items) {
   for (const [k, m] of table) {
     ranked.set(k, [...m.entries()].sort((a, b) => b[1] - a[1]).map(([value, count]) => ({ value, count })))
   }
+
+  // —— 标准库优先 ——
+  // 存量统计会把「3」「AC100-415V」「DC250V/DC50…」这类非标写法也算成候选，
+  // 与参数标准库里整理好的值（24V/36V/48V/…/220KV）完全对不上。
+  // 因此：单参数段且标准库已收录 ≥3 个值时，直接以库值作为候选（顺序即库里整理好的顺序）；
+  // 库值不足（0~2 个，多因该小类样本太少）时保留存量统计，避免补全"什么都不给"。
+  // free 型（型号/阻值/容值）不走这条：它们本就没有标准值。
+  for (const sg of segs) {
+    if (sg.params.length !== 1) continue
+    const def = paramLibDef(sub, sg.params[0])
+    if (!def || def.type === 'free') continue
+    const acc = (def.accepted || []).filter((v) => v && v.value != null && String(v.value) !== '')
+    if (acc.length < 3) continue
+    ranked.set(sg.key, acc.map((v) => ({ value: String(v.value), count: v.count || 0 })))
+  }
   const st = { at: Date.now(), ...meta, ranked, total: src.length, srcCount: src.length }
   CACHE.set(ckey, st)
   return st

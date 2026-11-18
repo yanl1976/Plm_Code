@@ -293,21 +293,22 @@ for (const sub of SUBS) {
     // 不能因为某批数据缺失就丢掉）。source=confirmed 便于和存量值区分。
     const confList = CONFIRMED[sub + '|' + name] || []
     for (const cv of confList) {
-      const sv = String(cv)
-      if (accepted.some((x) => String(x.value) === sv)) continue
-      if (pending.some((x) => String(x.value) === sv)) continue
-      if (suspected.some((x) => String(x.value) === sv)) continue
-      accepted.push({ value: sv, count: 0, source: 'confirmed' })
+      // 先归一再去重：6kA 与存量里的 6 是同一个值，不去重会并存两条
+      const nv = normalize(name, String(cv)) || String(cv)
+      if (accepted.some((x) => String(x.value) === nv)) continue
+      if (pending.some((x) => String(x.value) === nv)) continue
+      if (suspected.some((x) => String(x.value) === nv)) continue
+      accepted.push({ value: nv, count: 0, source: 'confirmed' })
     }
 
     // 厂家样本参数：存量里没写、但厂家产品确有这个规格（如 MTZ 的 6300A、iC65 的 D 曲线）。
     // 直接并入 accepted，标 source=manufacturer，与存量值区分开。
     const mfrVals = ((MFR.subs || {})[sub] || {})[name] || []
     for (const mv of mfrVals) {
-      const sv = String(mv)
-      if (accepted.some((x) => String(x.value) === sv)) continue
-      if (pending.some((x) => String(x.value) === sv)) continue
-      accepted.push({ value: sv, count: 0, source: 'manufacturer' })
+      const nv = normalize(name, String(mv)) || String(mv)
+      if (accepted.some((x) => String(x.value) === nv)) continue
+      if (pending.some((x) => String(x.value) === nv)) continue
+      accepted.push({ value: nv, count: 0, source: 'manufacturer' })
     }
 
     // 方案 B：候选 = 本小类存量（带频次） + 本小类族的标准序列（count=0，标 source=series）

@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.16';
+  var PLUGIN_VERSION = '2.17';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -506,8 +506,8 @@
    * 写入后把 PLM 的 ZYCS 框置灰只读 —— 避免页面与助手两边不一致。
    */
   function syncParamsToZycs(v) {
-    if (!CFG.enabled || !CFG.fillParamsToZycs) return false;
-    if (!isValidCtl(state.zycs)) return false;
+    if (!CFG.enabled || !CFG.fillParamsToZycs) { log('主要参数未回填：开关关闭'); return false; }
+    if (!isValidCtl(state.zycs)) { log('主要参数未回填：未取到 ZYCS 控件'); return false; }
     var s = String(v == null ? '' : v).replace(/^\s+|\s+$/g, '');
     if (!s) return false;
     var lim = ctlLimit(state.zycs, CFG.zycsMaxLen);
@@ -3332,7 +3332,8 @@
         if (r.specFormat && r.specFormat.fixed != null) sp = r.specFormat.fixed;
       }
 
-      // 回填范围：名称 + 规格型号（主要参数/分类属性仍不写）
+      // 回填范围：名称 + 规格型号 + 主要参数
+      // （主要参数与规格解耦后，ZYCS 由弹窗的「主要参数」框提供，不再跟随规格）
       var applied = [];
       if (nm && writeText(state.ename, nm)) {
         fireBlur(state.ename);
@@ -3342,6 +3343,9 @@
         fireBlur(state.ggxh);
         applied.push('规格型号');
       }
+      // 主要参数 → ZYCS：写入后由 syncParamsToZycs 置灰只读
+      var pv = paramsIn ? String(paramsIn.value || '') : '';
+      if (pv.trim() && syncParamsToZycs(pv)) applied.push('主要参数');
       closeEditor();
       // 记住回填后的内容：之后 PLM 输入框不再弹联想/重复提示，除非用户再改
       state.quietKey = fieldKey();

@@ -881,3 +881,12 @@ button:disabled { opacity:.45; cursor:not-allowed; }
   line-height:16px; outline:none; }
 /* 可编辑的值行：悬停给出提示色，提示这里可点 */
 .pl-val[data-i]:hover { background:rgba(79,195,247,.14); border-radius:3px; }
+
+/* 主要参数：与「规格型号」同宽同高。
+   规格行靠 .nm-spec-wrap 的 flex:0 1 60% 控制宽度，主要参数的外层 div 没设，
+   textarea 的 flex:1 只对 .nm-row 的直接子元素生效，导致框缩成一小块。 */
+.nm-row.nm-params { align-items:flex-start; }
+.nm-row.nm-params > label { padding-top:8px; }
+.nm-params-wrap { position:relative; flex:0 1 60%; max-width:60%; min-width:0; }
+.nm-params-wrap textarea { width:100%; min-height:56px; }
+

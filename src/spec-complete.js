@@ -249,11 +249,21 @@ export function complete(sub, q, items, depth = 0) {
     }
   }
   let idx = -1
+  let idxPrefix = -1   // 次级判据：tail 是某段候选值的前缀（还没写完）
   if (tail) {
+    const tl = String(tail).toLowerCase()
     for (let i = start; i < st.segments.length; i++) {
       const segI = st.segments[i]
       const tv = extractParams(tail, segI.params)
-      if (!segI.params.some((p) => tv[p])) continue
+      if (!segI.params.some((p) => tv[p])) {
+        // 该段还解析不出完整值，但 tail 已经是它某个候选值的开头（如 C 之于 C10A）：
+        // 说明用户正在写这一段，记下来作为兜底，别急着跳到别的段。
+        if (idxPrefix < 0) {
+          const cands = st.ranked.get(segI.key) || []
+          if (cands.some((c) => String(c.value).toLowerCase().startsWith(tl))) idxPrefix = i
+        }
+        continue
+      }
       // 型号段让位：若这一段输入里还能解析出别的参数（典型 GSW3-3200/3P 的 /3P），
       // 说明型号已经写完，不该再被当成"仍在填型号"。否则后续段永远轮不到，
       // 用户按 Tab 只会得到一个和型号重复的型号串。
@@ -266,6 +276,8 @@ export function complete(sub, q, items, depth = 0) {
       break
     }
   }
+  // 完整值优先；没有完整值时才用"前缀命中"的段
+  if (idx < 0) idx = idxPrefix
   if (idx < 0) idx = start < st.segments.length ? start : st.segments.length - 1
 
   // 末尾为空（刚打完空格）时，如果当前段没有任何候选，就向后找第一个有候选的段。

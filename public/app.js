@@ -2783,21 +2783,25 @@ $('#nmParams').addEventListener('blur', () => {
   }, 180)
 })
 
-// 与规格型号框同一套 IDE 键位：Tab 采纳首个候选、Esc 收起候选
-$('#nmParams').addEventListener('keydown', (e) => {
-  if (e.isComposing) return                    // 中文输入法组字中，不拦截
-  const box = $('#nmParamsSuggest')
-  const open = box && box.classList.contains('show')
-  if (e.key === 'Tab' && !e.shiftKey && open) {
+// 主要参数框的 IDE 键位：Tab 采纳首个候选、Esc 收起。
+// 挂在 document 捕获阶段 —— 冒泡阶段会晚于 textarea 的默认 Tab（跳焦点），
+// 一旦焦点走了，blur 会清掉候选，Tab 就"没反应"。
+document.addEventListener('keydown', (e) => {
+  const t = e.target
+  if (!t || t.id !== 'nmParams') return
+  if (e.isComposing) return                    // 中文输入法组字中不拦截
+  const box = document.getElementById('nmParamsSuggest')
+  if (!box || !box.classList.contains('show')) return
+  if (e.key === 'Tab' && !e.shiftKey) {
     const first = box.querySelector('[data-i]')
-    if (first) { e.preventDefault(); first.click() }
+    if (first) { e.preventDefault(); e.stopPropagation(); first.click() }
     return
   }
-  if (e.key === 'Escape' && open) {
+  if (e.key === 'Escape') {
     box.classList.remove('show')
     box.innerHTML = ''
   }
-})
+}, true)
 
 async function nmParamsInput() {
   const el = $('#nmParams')

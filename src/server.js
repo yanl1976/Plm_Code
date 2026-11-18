@@ -1278,48 +1278,77 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
+    // 附加参数补全：接线能力 / 可选配件（代号 + 中文）。
+    // 这些参数不进规格型号（规格只写主参数），单独归入「技术参数」框。
+    if (p === '/api/new-material/accessory-complete') {
+      const sub = (url.searchParams.get('sub') || '').trim().slice(0, 6)
+      const q = String(url.searchParams.get('q') || '').trim()
+      const model = String(url.searchParams.get('model') || '').trim().toUpperCase()
+      const tl = q.toLowerCase()
+      let dict = { wiring: {}, accessories: [] }
+      try {
+        dict = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/accessory-dict.json'), 'utf8'))
+      } catch (e) { /* 字典缺失时返回空 */ }
+      const subWiring = (dict.wiring || {})[sub] || []
+      const items = []
+      // 接线能力（按小类）：输入参数名（接线）或空时全给，否则按值过滤
+      const wiringNameHit = !tl || '接线能力'.includes(tl)
+      for (const w of subWiring) {
+        const ws = String(w)
+        if (wiringNameHit || ws.toLowerCase().includes(tl)) {
+          items.push({ kind: 'wiring', param: '接线能力', code: '', cn: ws, label: ws })
+        }
+      }
+      // 可选配件（同小类优先，其次全局）
+      // 同一小类下有多个系列（100105 里既有西门子 3WT，也有正泰 NB8-40J），
+      // 配件完全不同。给了型号就只取该系列的；没给型号才退回全小类。
+      const hitSeries = (a) => {
+        if (!model) return true
+        const se = String(a.series || '').toUpperCase()
+        if (!se) return true                     // 无系列标记的算通用
+        return model.includes(se) || se.includes(model)
+      }
+      const acc = (dict.accessories || []).filter((a) => (!a.sub || a.sub === sub) && hitSeries(a))
+      for (const a of acc) {
+        const code = String(a.code || '')
+        const cn = String(a.cn || '')
+        if (tl && !(code.toLowerCase().includes(tl) || cn.toLowerCase().includes(tl))) continue
+        items.push({
+          kind: 'accessory', param: a.type === '标配' ? '可选配件(标配)' : '可选配件',
+          code, cn, series: String(a.series || ''),   // 带上系列，前端可二次过滤
+          label: (code ? code + ' ' + cn : cn).trim(),   // 无中文的代号别留尾随空格
+        })
+        if (items.length >= 40) break
+      }
+      return sendJson(res, 200, { ok: true, q, items })
+    }
+
     // 主要参数补全：按「参数名 值」给候选。
     // 规格型号框只填型号，其余参数都在这个框里，需要它自己的 IDE（参数名提示 + 值提示）。
     if (p === '/api/new-material/param-complete') {
       const sub = (url.searchParams.get('sub') || '').trim().slice(0, 6)
       const q = String(url.searchParams.get('q') || '').trim()
-      if (!sub) return sendJson(res, 200, { ok: false, options: [] })
+      if (!sub) return sendJson(res, 200, { ok: false, groups: [] })
       const defs = paramLibSubParams(sub) || {}
       const tl = q.toLowerCase()
-      // 分两档：前缀命中优先、包含命中兜底。
-      // 只用 includes 时，输入 "10" 会把「额定电压 110V」「分断能力 100」全刷出来，候选很乱。
-      const strong = []
-      const weak = []
-      const push = (arr, name, v, kind) => arr.push({ value: name + ' ' + v, param: name, kind })
+      // 按「参数」分组返回：{ param: '极数', values: ['1P','2P'] }
+      // 前端照规格框的样式渲染成「左侧参数名 + 右侧两列值网格」，
+      // 采纳时只插入值本身（1P），不带参数名 —— 主要参数里放的是纯参数值。
+      const groups = []
       for (const [name, d] of Object.entries(defs)) {
         if (name === '型号') continue            // 型号归规格框
         const vals = [...(d.accepted || []), ...(d.reference || [])]
           .map((x) => String(x && x.value != null ? x.value : x))
           .filter(Boolean)
-          .slice(0, 12)
-        const lname = name.toLowerCase()
-        // ① 输入是参数名（或还没输入）→ 给该参数的值
-        if (!tl || lname.includes(tl)) {
-          if (!vals.length) strong.push({ value: name, param: name, kind: 'name' })
-          for (const v of vals) push(strong, name, v, 'param')
-          continue
-        }
-        // ② 输入像参数值 → 前缀优先，包含次之
-        for (const v of vals) {
-          const lv = v.toLowerCase()
-          if (lv.startsWith(tl)) push(strong, name, v, 'value')
-          else if (lv.includes(tl)) push(weak, name, v, 'value')
-        }
+        const nameHit = !tl || name.toLowerCase().includes(tl)
+        // 参数名命中 → 给该参数全部值；否则只给值里含输入的那些
+        const hit = nameHit ? vals : vals.filter((v) => v.toLowerCase().includes(tl))
+        if (!hit.length) continue
+        const uniq = [...new Set(hit)].slice(0, 8)
+        groups.push({ param: name, values: uniq })
+        if (groups.length >= 6) break
       }
-      const seen = new Set()
-      const out = []
-      for (const o of [...strong, ...weak]) {
-        if (seen.has(o.value)) continue
-        seen.add(o.value)
-        out.push(o)
-        if (out.length >= 8) break        // 候选太多反而难选
-      }
-      return sendJson(res, 200, { ok: true, q, options: out })
+      return sendJson(res, 200, { ok: true, q, groups })
     }
 
     if (p === '/api/new-material/spec-suggest') {

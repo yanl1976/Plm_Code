@@ -1,0 +1,266 @@
+{
+  "meta": {
+    "note": "附加参数（接线能力 / 可选配件）的代号与中文对应。来源：选型库 Excel 的「可配附件」「附件」「接线能力」列。技术参数框从这里取候选，不参与规格型号的段推进。",
+    "updatedAt": "2026-11-18T08:32:37.600Z"
+  },
+  "wiring": {
+    "100105": [
+      "-（母排连接）",
+      "1~16"
+    ]
+  },
+  "accessories": [
+    {
+      "code": "MO",
+      "cn": "电动操作机构",
+      "type": "标配",
+      "sub": "100105",
+      "brand": "西门子",
+      "series": "3WT",
+      "source": "3WT.json"
+    },
+    {
+      "code": "ST",
+      "cn": "分励脱扣",
+      "type": "标配",
+      "sub": "100105",
+      "brand": "西门子",
+      "series": "3WT",
+      "source": "3WT.json"
+    },
+    {
+      "code": "CC",
+      "cn": "合闸线圈",
+      "type": "标配",
+      "sub": "100105",
+      "brand": "西门子",
+      "series": "3WT",
+      "source": "3WT.json"
+    },
+    {
+      "code": "AUX",
+      "cn": "辅助触点(2NO+2NC)",
+      "type": "标配",
+      "sub": "100105",
+      "brand": "西门子",
+      "series": "3WT",
+      "source": "3WT.json"
+    },
+    {
+      "code": "T40",
+      "cn": "门密封框",
+      "type": "标配",
+      "sub": "100105",
+      "brand": "西门子",
+      "series": "3WT",
+      "source": "3WT.json"
+    },
+    {
+      "code": "UVR",
+      "cn": "欠压线圈",
+      "type": "选配",
+      "sub": "100105",
+      "brand": "西门子",
+      "series": "3WT",
+      "source": "3WT.json"
+    },
+    {
+      "code": "UVR-t",
+      "cn": "欠压可调延时线圈",
+      "type": "选配",
+      "sub": "100105",
+      "brand": "西门子",
+      "series": "3WT",
+      "source": "3WT.json"
+    },
+    {
+      "code": "",
+      "cn": "2NO+2NC 扩展辅助触点",
+      "type": "选配",
+      "sub": "100105",
+      "brand": "西门子",
+      "series": "3WT",
+      "source": "3WT.json"
+    },
+    {
+      "code": "",
+      "cn": "钢缆联锁",
+      "type": "选配",
+      "sub": "100105",
+      "brand": "西门子",
+      "series": "3WT",
+      "source": "3WT.json"
+    },
+    {
+      "code": "",
+      "cn": "导向框架",
+      "type": "选配",
+      "sub": "100105",
+      "brand": "西门子",
+      "series": "3WT",
+      "source": "3WT.json"
+    },
+    {
+      "code": "",
+      "cn": "主回路连接附件",
+      "type": "选配",
+      "sub": "100105",
+      "brand": "西门子",
+      "series": "3WT",
+      "source": "3WT.json"
+    },
+    {
+      "code": "",
+      "cn": "锁定装置",
+      "type": "选配",
+      "sub": "100105",
+      "brand": "西门子",
+      "series": "3WT",
+      "source": "3WT.json"
+    },
+    {
+      "code": "S9",
+      "cn": "",
+      "type": "",
+      "sub": "100105",
+      "brand": "正泰",
+      "series": "NB8-40J",
+      "source": "NB8-40J.json"
+    },
+    {
+      "code": "V9",
+      "cn": "",
+      "type": "",
+      "sub": "100105",
+      "brand": "正泰",
+      "series": "NB8-40J",
+      "source": "NB8-40J.json"
+    },
+    {
+      "code": "XF9",
+      "cn": "",
+      "type": "",
+      "sub": "100105",
+      "brand": "正泰",
+      "series": "NB8-40J",
+      "source": "NB8-40J.json"
+    },
+    {
+      "code": "",
+      "cn": "安装辅材",
+      "type": "",
+      "sub": "100105",
+      "brand": "正泰",
+      "series": "NB8-40J",
+      "source": "NB8-40J.json"
+    },
+    {
+      "code": "",
+      "cn": "GB/T 6170-8级螺母 + GB/T 97.1平垫圈",
+      "type": "",
+      "sub": "120102",
+      "brand": "标准产品",
+      "series": "螺栓选型清单",
+      "source": "螺栓选型清单.json"
+    },
+    {
+      "code": "",
+      "cn": "GB/T 41-4级螺母 + GB/T 95平垫圈",
+      "type": "",
+      "sub": "120102",
+      "brand": "标准产品",
+      "series": "螺栓选型清单",
+      "source": "螺栓选型清单.json"
+    },
+    {
+      "code": "",
+      "cn": "配套内六角扳手",
+      "type": "",
+      "sub": "120102",
+      "brand": "标准产品",
+      "series": "螺栓选型清单",
+      "source": "螺栓选型清单.json"
+    },
+    {
+      "code": "",
+      "cn": "可选 GB/T 93弹垫",
+      "type": "",
+      "sub": "120102",
+      "brand": "标准产品",
+      "series": "螺栓选型清单",
+      "source": "螺栓选型清单.json"
+    },
+    {
+      "code": "",
+      "cn": "禁止重复使用",
+      "type": "",
+      "sub": "120102",
+      "brand": "标准产品",
+      "series": "螺栓选型清单",
+      "source": "螺栓选型清单.json"
+    },
+    {
+      "code": "",
+      "cn": "无（90°沉孔安装）",
+      "type": "",
+      "sub": "120102",
+      "brand": "标准产品",
+      "series": "螺栓选型清单",
+      "source": "螺栓选型清单.json"
+    },
+    {
+      "code": "",
+      "cn": "可选螺纹锁固胶",
+      "type": "",
+      "sub": "120102",
+      "brand": "标准产品",
+      "series": "螺栓选型清单",
+      "source": "螺栓选型清单.json"
+    },
+    {
+      "code": "",
+      "cn": "无",
+      "type": "",
+      "sub": "120102",
+      "brand": "标准产品",
+      "series": "螺栓选型清单",
+      "source": "螺栓选型清单.json"
+    },
+    {
+      "code": "",
+      "cn": "GB/T 6170螺母×2 + GB/T 97.1平垫圈×2",
+      "type": "",
+      "sub": "120102",
+      "brand": "标准产品",
+      "series": "螺栓选型清单",
+      "source": "螺栓选型清单.json"
+    },
+    {
+      "code": "",
+      "cn": "GB/T 6170螺母 + GB/T 97.1平垫圈",
+      "type": "",
+      "sub": "120102",
+      "brand": "标准产品",
+      "series": "螺栓选型清单",
+      "source": "螺栓选型清单.json"
+    },
+    {
+      "code": "",
+      "cn": "A2不锈钢螺母 + A2平垫圈（涂防咬合剂）",
+      "type": "",
+      "sub": "120102",
+      "brand": "标准产品",
+      "series": "螺栓选型清单",
+      "source": "螺栓选型清单.json"
+    },
+    {
+      "code": "",
+      "cn": "GB/T 1229螺母 + GB/T 1230垫圈（成套供货）",
+      "type": "",
+      "sub": "120102",
+      "brand": "标准产品",
+      "series": "螺栓选型清单",
+      "source": "螺栓选型清单.json"
+    }
+  ]
+}

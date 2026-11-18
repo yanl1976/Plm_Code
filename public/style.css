@@ -898,4 +898,15 @@ button:disabled { opacity:.45; cursor:not-allowed; }
 .nm-params-wrap textarea { width:100%; min-height:56px; }
 /* 主要参数的候选浮层：限高 + 不与下方行重叠太多 */
 #nmParamsSuggest { max-height:200px; }
+/* 候选面板底部的操作提示：不可点、不参与 hover */
+.nm-suggest > .nm-sug-hint {
+  padding:5px 10px;
+  font-size:11px;
+  color:var(--muted);
+  cursor:default;
+  display:block;
+  border-top:1px dashed var(--line);
+  font-family:inherit;
+  background:transparent;
+}
 

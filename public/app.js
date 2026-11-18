@@ -2783,6 +2783,22 @@ $('#nmParams').addEventListener('blur', () => {
   }, 180)
 })
 
+// 与规格型号框同一套 IDE 键位：Tab 采纳首个候选、Esc 收起候选
+$('#nmParams').addEventListener('keydown', (e) => {
+  if (e.isComposing) return                    // 中文输入法组字中，不拦截
+  const box = $('#nmParamsSuggest')
+  const open = box && box.classList.contains('show')
+  if (e.key === 'Tab' && !e.shiftKey && open) {
+    const first = box.querySelector('[data-i]')
+    if (first) { e.preventDefault(); first.click() }
+    return
+  }
+  if (e.key === 'Escape' && open) {
+    box.classList.remove('show')
+    box.innerHTML = ''
+  }
+})
+
 async function nmParamsInput() {
   const el = $('#nmParams')
   const box = $('#nmParamsSuggest')

@@ -890,6 +890,18 @@ function cleanRowsByModel(rows, columns) {
   return { rows: out, dropped, filled, padded }
 }
 
+/**
+ * 追加一条导入记录到 data/selection/import-log.ndjson。
+ * 目的：出了问题能回溯「哪次导入、什么文件、清洗了什么、失败原因是什么」，
+ * 不必再去猜当时的现场。日志写失败不影响导入。
+ */
+function appendImportLog(rec) {
+  try {
+    const f = path.join(SELECT_SERIES_DIR, '..', 'import-log.ndjson')
+    fs.appendFileSync(f, JSON.stringify(rec) + '\n', 'utf8')
+  } catch (e) { /* 忽略 */ }
+}
+
 /** 导入一个系列（列驱动）：写 data/selection/series/<sub>_<id>.json */
 function importSeries(body) {
   const sub = String(body.sub || '').trim()
@@ -909,8 +921,14 @@ function importSeries(body) {
 
   if (!/^\d{6}$/.test(sub)) return { ok: false, error: '小类号必须是 6 位数字' }
   if (!id) return { ok: false, error: '系列代号不能为空' }
-  if (!columns.length) return { ok: false, error: '没有可用的参数列' }
-  if (!rows.length) return { ok: false, error: '没有数据行（检查表头行是否识别正确）' }
+  if (!columns.length) {
+    appendImportLog({ at: new Date().toISOString(), file: String(body.source || ''), sub, series: id, ok: false, error: '没有可用的参数列' })
+    return { ok: false, error: '没有可用的参数列' }
+  }
+  if (!rows.length) {
+    appendImportLog({ at: new Date().toISOString(), file: String(body.source || ''), sub, series: id, ok: false, error: '没有数据行（检查表头行是否识别正确）' })
+    return { ok: false, error: '没有数据行（检查表头行是否识别正确）' }
+  }
 
   const modelCol = columns.find((c) => c.role === 'model')
   // 型号列清洗（厂家样本普遍存在合并单元格）：
@@ -920,9 +938,15 @@ function importSeries(body) {
   //   ② 整行全空 —— 表尾空行、分块之间的空行，直接丢弃。
   //   ③ 第一行就没有型号 —— 这才是表头识别真的错了。
   const cleanedRows = cleanRowsByModel(rows, columns)
-  if (cleanedRows.error) return { ok: false, error: cleanedRows.error }
+  if (cleanedRows.error) {
+    appendImportLog({ at: new Date().toISOString(), file: String(body.source || ''), sub, series: id, ok: false, error: cleanedRows.error })
+    return { ok: false, error: cleanedRows.error }
+  }
   const rowsFixed = cleanedRows.rows
-  if (!rowsFixed.length) return { ok: false, error: '清洗空行后没有有效数据' }
+  if (!rowsFixed.length) {
+    appendImportLog({ at: new Date().toISOString(), file: String(body.source || ''), sub, series: id, ok: false, error: '清洗空行后没有有效数据' })
+    return { ok: false, error: '清洗空行后没有有效数据' }
+  }
 
   // 目录按小类分层：series/<小类号>/<系列代号>.json
   const safe = (s) => String(s).replace(/[\\/:*?"<>|\s]+/g, '_')
@@ -962,6 +986,19 @@ function importSeries(body) {
   }
 
   fs.writeFileSync(abs, JSON.stringify(data, null, 2), 'utf8')
+  appendImportLog({
+    at: now,
+    file: String(body.source || ''),
+    sub,
+    series: id,
+    rows: rowsFixed.length,
+    filledModel: cleanedRows.filled,     // 因合并单元格补型号的行数
+    paddedCells: cleanedRows.padded,     // 其他列因合并补值的单元格数
+    droppedRows: cleanedRows.dropped,    // 丢弃的空行数
+    columns: columns.length,
+    ok: true,
+    error: '',
+  })
   return {
     ok: true, file: 'series/' + sub + '/' + fileName,
     count: rowsFixed.length, columns: columns.length,

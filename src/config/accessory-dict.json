@@ -1,7 +1,7 @@
 {
   "meta": {
     "note": "附加参数（接线能力 / 可选配件），按「小类 + 系列」存储。由 src/accessory-dict.js 从 data/selection 自动生成，选型库导入后会自动重建，请勿手工编辑。",
-    "updatedAt": "2026-11-18T10:04:50.252Z"
+    "updatedAt": "2026-11-18T10:47:22.221Z"
   },
   "wiring": [
     {

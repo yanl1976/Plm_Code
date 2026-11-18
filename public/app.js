@@ -2788,31 +2788,6 @@ $('#nmSave').onclick = nmSave
   $('#nmExport').onclick = () => window.open('/api/new-material/export', '_blank')
 
 
-function nmExtractExtras(spec) {
-  const s = String(spec || '')
-  const out = []
-  // ① +OF / +MN / +YU(AC220V) 这类「加装件」
-  for (const m of s.matchAll(/[+＋]\s*([A-Za-z][A-Za-z0-9]{0,6}(?:\([^)]{0,20}\))?)/g)) out.push(m[1])
-  // ② 单独出现的常见附件代号（OF/MX/MN/SD/AL/AX/UVR/YU/vigi…）
-  for (const m of s.matchAll(/(?:^|\s)(OF|MX|MN|MNA|SD|SDE|AUX|AL|AX|UVR|YU|VIGI)(?=\s|$)/gi)) out.push(m[1].toUpperCase())
-  // ③ 中文说明：内置 / 带加长手柄 / 欠压脱扣器YU220 / 2组辅助触点…
-  for (const m of s.matchAll(/(内置|附带[^\s]{1,12}|带[^\s]{1,12}|\d+\s*组[^\s]{1,8}|[^\s]{0,6}(?:手柄|辅助触点|转换触头|失压单元|脱扣器单元))/g)) out.push(m[1])
-  const uniq = [...new Set(out.map((x) => String(x).trim()).filter(Boolean))]
-  return uniq.join(' ')
-}
-
-function nmSyncExtras() {
-  const spec = $('#nmSpec')
-  const box = $('#nmParams')
-  if (!spec || !box) return
-  const v = nmExtractExtras(spec.value)
-  // 用户改过且与上次自动值不同 → 不动它
-  if (box.dataset.auto === '1' || !box.value.trim()) {
-    box.value = v
-    box.dataset.auto = '1'
-  }
-}
-$('#nmParams') && $('#nmParams').addEventListener('input', () => { $('#nmParams').dataset.auto = '0' })
 
 $('#nmSpec').addEventListener('input', () => {
     clearTimeout(nm.timer)
@@ -2881,12 +2856,13 @@ async function nmFillExtras() {
     return spec
   })()
 
+  // 型号还没填 → 无法判断属于哪个系列，技术参数保持空白；
+  // 等选型助手回填或手工写好型号后再取对应配件，避免一选分类就塞入别家的内容。
+  if (!model) { el.value = ''; el.dataset.auto = '1'; return }
+
   const r = await api('/api/new-material/accessory-complete?sub=' + encodeURIComponent(sub)
     + '&model=' + encodeURIComponent(model) + '&q=').catch(() => null)
-  // 选型库里「型号 → 可配附件」是一一对应的（3WT11N04 只对应西门子那套），
-  // 所以必须按型号所属系列取；型号还没填时只填与型号无关的接线能力。
-  const rawItems = (r && r.items) || []
-  const items = model ? rawItems : rawItems.filter((it) => it.kind === 'wiring')
+  const items = (r && r.items) || []
 
   // 没有可填内容时清空，而不是保留上一次的结果 ——
   // 否则换型号后看到的是旧配件，会被误认为"过滤没生效"。

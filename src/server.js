@@ -1282,45 +1282,52 @@ const server = http.createServer(async (req, res) => {
     // 这些参数不进规格型号（规格只写主参数），单独归入「技术参数」框。
     if (p === '/api/new-material/accessory-complete') {
       const sub = (url.searchParams.get('sub') || '').trim().slice(0, 6)
-      const q = String(url.searchParams.get('q') || '').trim()
       const model = String(url.searchParams.get('model') || '').trim().toUpperCase()
-      const tl = q.toLowerCase()
-      let dict = { wiring: {}, accessories: [] }
+      let dict = { wiringBySeries: {}, accessories: [] }
       try {
         dict = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/accessory-dict.json'), 'utf8'))
       } catch (e) { /* 字典缺失时返回空 */ }
-      const subWiring = (dict.wiring || {})[sub] || []
+
+      // 附加参数按「系列」存储：100105 下 3WT 与 NB8-40J 的接线能力、配件都不同。
+      // 给了型号就只取该型号所属系列；找不到对应系列就返回空，不拿别家的充数。
+      const wiringBySeries = dict.wiringBySeries || {}
+      const accessories = dict.accessories || []
+      const seriesSet = new Set([
+        ...Object.keys(wiringBySeries),
+        ...accessories.map((a) => String(a.series || '')),
+      ].filter(Boolean))
+
+      const hit = (se) => {
+        const S = String(se || '').toUpperCase()
+        if (!S || !model) return false
+        return model.includes(S) || S.includes(model)
+      }
+      const matched = model ? [...seriesSet].filter(hit) : [...seriesSet]
+
       const items = []
-      // 接线能力（按小类）：输入参数名（接线）或空时全给，否则按值过滤
-      const wiringNameHit = !tl || '接线能力'.includes(tl)
-      for (const w of subWiring) {
-        const ws = String(w)
-        if (wiringNameHit || ws.toLowerCase().includes(tl)) {
-          items.push({ kind: 'wiring', param: '接线能力', code: '', cn: ws, label: ws })
+      const seen = new Set()
+      for (const se of matched) {
+        for (const w of wiringBySeries[se] || []) {
+          const k = 'w|' + se + '|' + w
+          if (seen.has(k)) continue
+          seen.add(k)
+          items.push({ kind: 'wiring', param: '接线能力', code: '', cn: String(w), series: se, label: String(w) })
+        }
+        for (const a of accessories.filter((x) => String(x.series || '') === se)) {
+          const code = String(a.code || '')
+          const cn = String(a.cn || '')
+          const k = (code ? 'c:' + code.toUpperCase() : 'n:' + cn) + '@' + se
+          if (seen.has(k)) continue
+          seen.add(k)
+          items.push({
+            kind: 'accessory',
+            param: a.type === '标配' ? '可选配件(标配)' : '可选配件',
+            code, cn, series: se,
+            label: (code ? code + ' ' + cn : cn).trim(),
+          })
         }
       }
-      // 可选配件（同小类优先，其次全局）
-      // 同一小类下有多个系列（100105 里既有西门子 3WT，也有正泰 NB8-40J），
-      // 配件完全不同。给了型号就只取该系列的；没给型号才退回全小类。
-      const hitSeries = (a) => {
-        if (!model) return true
-        const se = String(a.series || '').toUpperCase()
-        if (!se) return true                     // 无系列标记的算通用
-        return model.includes(se) || se.includes(model)
-      }
-      const acc = (dict.accessories || []).filter((a) => (!a.sub || a.sub === sub) && hitSeries(a))
-      for (const a of acc) {
-        const code = String(a.code || '')
-        const cn = String(a.cn || '')
-        if (tl && !(code.toLowerCase().includes(tl) || cn.toLowerCase().includes(tl))) continue
-        items.push({
-          kind: 'accessory', param: a.type === '标配' ? '可选配件(标配)' : '可选配件',
-          code, cn, series: String(a.series || ''),   // 带上系列，前端可二次过滤
-          label: (code ? code + ' ' + cn : cn).trim(),   // 无中文的代号别留尾随空格
-        })
-        if (items.length >= 40) break
-      }
-      return sendJson(res, 200, { ok: true, q, items })
+      return sendJson(res, 200, { ok: true, model, sub, items })
     }
 
     // 主要参数补全：按「参数名 值」给候选。

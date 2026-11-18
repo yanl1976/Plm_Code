@@ -340,7 +340,14 @@ export function complete(sub, q, items, depth = 0) {
       const sg = st.segments[probe]
       const hasCand = (st.ranked.get(sg.key) || []).length > 0
       const isModel = sg.params.length === 1 && sg.params[0] === '型号'
-      const filled = !isModel && sg.params.every((p) => (extractParams(raw, sg.params)[p] || ''))
+      // 段是否已填：解析出值，或「最后一个片段正好是该段候选值」。
+      // 后者专治裸数字写法 —— 分断能力在存量里大量写作 6 / 4.5（不带 kA），
+      // 正则提取不到，会让这一段永远判成「未填」，于是每次 Tab 都往末尾追加下一个值
+      // （实测：iC65N 2P C10A 6 → Tab → 4.5 → Tab → 10 → Tab → 15）。
+      const lastTok = (raw.trim().split(/\s+/).pop() || '').toLowerCase()
+      const byCand = sg.params.length === 1 && lastTok.length > 0
+        && (st.ranked.get(sg.key) || []).some((c) => String(c.value).toLowerCase() === lastTok)
+      const filled = !isModel && (sg.params.every((p) => (extractParams(raw, sg.params)[p] || '')) || byCand)
       if (hasCand && !filled) break
       probe++
     }
@@ -542,6 +549,27 @@ export function complete(sub, q, items, depth = 0) {
     const withUnit = prefix + seg.unit
     const exists = all.some((x) => x.value === withUnit) || opts.some((x) => x.value === withUnit)
     if (exists) opts = [{ value: withUnit, count: 0, kind: 'unit' }, ...opts.filter((x) => x.value !== withUnit)]
+  }
+
+  // —— 末尾空格时，不回头提示"已经越过"的段 ——
+  // 场景：3WT11H04 4P LSI/LSIG400A 50kA 690V␣
+  //   脱扣曲线没被识别（LSI 不是 B/C/D），补全把它判成空段回头提示，
+  //   此时按 Tab 会把 C10A 追加到规格末尾 —— 规格已经完整，这就是"多余数据"。
+  // 判据：当前段之前已有更靠后的段填满 → 不再提示（追加位置会在末尾，语义错位）。
+  if (!prefix) {
+    const allVals = extractParams(raw, st.tokens)
+    let lastFilled = -1
+    st.segments.forEach((sg, i) => {
+      if (sg.params.length && sg.params.every((p) => allVals[p])) lastFilled = i
+    })
+    if (idx < lastFilled) {
+      return {
+        ok: true, param: seg.key, unit: seg.unit, prefix, index: idx, total: st.segments.length,
+        filled: st.segments.slice(0, idx).map((x) => x.key), segments: st.segments.map((x) => x.key),
+        options: [], pattern: st.pattern, sampleSize: st.total,
+        note: '后面的段已填，不再回头提示',
+      }
+    }
   }
 
   return {

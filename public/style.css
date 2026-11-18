@@ -887,6 +887,10 @@ button:disabled { opacity:.45; cursor:not-allowed; }
    textarea 的 flex:1 只对 .nm-row 的直接子元素生效，导致框缩成一小块。 */
 .nm-row.nm-params { align-items:flex-start; }
 .nm-row.nm-params > label { padding-top:8px; }
-.nm-params-wrap { position:relative; flex:0 1 60%; max-width:60%; min-width:0; }
+/* 与规格型号同宽：两行各自 flex 基准不同（规格行右侧还有库存/按钮），
+   改用同一组固定基准值，保证像素级一致 */
+.nm-row.nm-spec .nm-spec-wrap,
+.nm-params-wrap { flex:0 0 560px; max-width:560px; min-width:0; }
+.nm-params-wrap { position:relative; }
 .nm-params-wrap textarea { width:100%; min-height:56px; }
 

@@ -18,7 +18,7 @@ import { executeQuery } from './db.js'
 import { inspectRow } from './validate.js'
 import { applyAiOverlay } from './ai/overlay.js'
 import { getCategory, chooseTokens, chooseAttrs } from './classify.js'
-import { sortByValue } from './param-lib/store.js'
+import { sortByValue, subParams as paramLibSubParams } from './param-lib/store.js'
 import * as guideFields from './guide-fields.js'
 import { complete as specComplete } from './spec-complete.js'
 import { matchUnit, matchSystemWord } from './guide-units.js'
@@ -1262,12 +1262,57 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/new-material/spec-complete') {
       const sub = (url.searchParams.get('sub') || '').trim().slice(0, 6)
       const q = url.searchParams.get('q') || ''
+      // onlyModel=1：规格型号框只补「型号」段。
+      // 参数（极数/额定电流/防护等级…）已分流到「主要参数」框，
+      // 规格框再提示这些会把用户往"参数堆进规格"的老习惯上带。
+      const onlyModel = url.searchParams.get('onlyModel') === '1'
       if (!sub) return sendJson(res, 200, { ok: false, options: [] })
       try {
-        return sendJson(res, 200, specComplete(sub, q, allDocs()))
+        const r = specComplete(sub, q, allDocs())
+        if (onlyModel && r && r.param && r.param !== '型号') {
+          return sendJson(res, 200, { ...r, options: [], onlyModel: true })
+        }
+        return sendJson(res, 200, r)
       } catch (e) {
         return sendJson(res, 200, { ok: false, reason: String((e && e.message) || e), options: [] })
       }
+    }
+
+    // 主要参数补全：按「参数名 值」给候选。
+    // 规格型号框只填型号，其余参数都在这个框里，需要它自己的 IDE（参数名提示 + 值提示）。
+    if (p === '/api/new-material/param-complete') {
+      const sub = (url.searchParams.get('sub') || '').trim().slice(0, 6)
+      const q = String(url.searchParams.get('q') || '').trim()
+      if (!sub) return sendJson(res, 200, { ok: false, options: [] })
+      const defs = paramLibSubParams(sub) || {}
+      const tl = q.toLowerCase()
+      const out = []
+      for (const [name, d] of Object.entries(defs)) {
+        if (name === '型号') continue            // 型号归规格框，不在主要参数里重复
+        const vals = [...(d.accepted || []), ...(d.reference || [])]
+          .map((v) => String(v && v.value != null ? v.value : v))
+          .filter(Boolean)
+          .slice(0, 12)
+        const nameHit = !tl || name.toLowerCase().includes(tl)
+        if (nameHit) {
+          // 输入的是参数名（或还没输入）→ 给「参数名 值」
+          for (const v of vals) out.push({ value: name + ' ' + v, param: name, kind: 'param' })
+          if (!vals.length) out.push({ value: name, param: name, kind: 'name' })
+          continue
+        }
+        // 输入的可能是值 → 反查出参数名，一起给出
+        for (const v of vals) {
+          if (v.toLowerCase().includes(tl)) out.push({ value: name + ' ' + v, param: name, kind: 'value' })
+        }
+      }
+      const seen = new Set()
+      const uniq = []
+      for (const o of out) {
+        if (seen.has(o.value)) continue
+        seen.add(o.value)
+        uniq.push(o)
+      }
+      return sendJson(res, 200, { ok: true, q, options: uniq.slice(0, 12) })
     }
 
     if (p === '/api/new-material/spec-suggest') {

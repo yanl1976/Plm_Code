@@ -2768,7 +2768,48 @@ function bindNmEvents() {
   $('#nmBig').onchange = onNmBigChange
   $('#nmMid').onchange = onNmMidChange
   $('#nmSub').onchange = onNmSubChange
-  $('#nmSave').onclick = nmSave
+  // —— 主要参数框的联想：按「参数名 值」给候选 ——
+// 规格型号框只填型号，其余参数（额定电流、防护等级、附件…）都在这个框里，
+// 它需要自己的 IDE：输入参数名提示该参数的值，输入值反查参数名。
+$('#nmParams').addEventListener('input', () => {
+  clearTimeout(nm.paramTimer)
+  nm.paramTimer = setTimeout(nmParamsInput, 200)
+})
+$('#nmParams').addEventListener('blur', () => {
+  // 延迟收起，避免点候选时先被 blur 清掉
+  setTimeout(() => {
+    const box = $('#nmParamsSuggest')
+    if (box) { box.innerHTML = ''; box.classList.remove('show') }
+  }, 180)
+})
+
+async function nmParamsInput() {
+  const el = $('#nmParams')
+  const box = $('#nmParamsSuggest')
+  if (!el || !box) return
+  const q = String(el.value || '').trim()
+  if (!nm.cur.sub || !q) { box.innerHTML = ''; box.classList.remove('show'); return }
+  const r = await api('/api/new-material/param-complete?sub=' + encodeURIComponent(nm.cur.sub)
+    + '&q=' + encodeURIComponent(q)).catch(() => null)
+  const opts = (r && r.options) || []
+  if (!opts.length) { box.innerHTML = ''; box.classList.remove('show'); return }
+  box.innerHTML = opts.map((o, i) =>
+    '<div data-i="' + i + '"><span>' + escapeHtml(o.value) + '</span></div>').join('')
+  box.classList.add('show')
+  box.querySelectorAll('[data-i]').forEach((d) => {
+    d.onclick = () => {
+      const v = opts[Number(d.dataset.i)].value
+      const cur = String(el.value || '').trim()
+      // 用中文分号分隔，与后端 buildRowParams 的拼装口径一致
+      el.value = cur ? (cur.replace(/[；;，,]\s*$/, '') + '；' + v) : v
+      box.innerHTML = ''
+      box.classList.remove('show')
+      el.focus()
+    }
+  })
+}
+
+$('#nmSave').onclick = nmSave
   $('#nmSimilar').onclick = () => nmShowSimilar(false)
   const nmSelBtn = $('#nmSelect')
   if (nmSelBtn) nmSelBtn.onclick = () => nmShowSelect()
@@ -3015,7 +3056,7 @@ function nmSpecInput() {
   const seq = ++nm.sugSeq
   nm.complete = null
   // ① 分段补全（参数级）：推断"当前在填哪一段"，给该段的取值候选
-  api('/api/new-material/spec-complete?sub=' + sub + '&q=' + encodeURIComponent(q))
+  api('/api/new-material/spec-complete?sub=' + sub + '&q=' + encodeURIComponent(q) + '&onlyModel=1')
     .then((c) => {
       if (seq !== nm.sugSeq) return
       nm.complete = (c && c.ok) ? c : null

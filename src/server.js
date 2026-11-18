@@ -1336,33 +1336,7 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { ok: true, model, sub, items })
     }
 
-    // 主要参数补全：按「参数名 值」给候选。
-    // 规格型号框只填型号，其余参数都在这个框里，需要它自己的 IDE（参数名提示 + 值提示）。
-    if (p === '/api/new-material/param-complete') {
-      const sub = (url.searchParams.get('sub') || '').trim().slice(0, 6)
-      const q = String(url.searchParams.get('q') || '').trim()
-      if (!sub) return sendJson(res, 200, { ok: false, groups: [] })
-      const defs = paramLibSubParams(sub) || {}
-      const tl = q.toLowerCase()
-      // 按「参数」分组返回：{ param: '极数', values: ['1P','2P'] }
-      // 前端照规格框的样式渲染成「左侧参数名 + 右侧两列值网格」，
-      // 采纳时只插入值本身（1P），不带参数名 —— 主要参数里放的是纯参数值。
-      const groups = []
-      for (const [name, d] of Object.entries(defs)) {
-        if (name === '型号') continue            // 型号归规格框
-        const vals = [...(d.accepted || []), ...(d.reference || [])]
-          .map((x) => String(x && x.value != null ? x.value : x))
-          .filter(Boolean)
-        const nameHit = !tl || name.toLowerCase().includes(tl)
-        // 参数名命中 → 给该参数全部值；否则只给值里含输入的那些
-        const hit = nameHit ? vals : vals.filter((v) => v.toLowerCase().includes(tl))
-        if (!hit.length) continue
-        const uniq = [...new Set(hit)].slice(0, 8)
-        groups.push({ param: name, values: uniq })
-        if (groups.length >= 6) break
-      }
-      return sendJson(res, 200, { ok: true, q, groups })
-    }
+
 
     if (p === '/api/new-material/spec-suggest') {
       const sub = (url.searchParams.get('sub') || '').trim()

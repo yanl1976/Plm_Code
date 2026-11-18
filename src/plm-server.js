@@ -24,6 +24,7 @@ import path from 'path'
 import XLSX from 'xlsx'
 import { fileURLToPath } from 'url'
 import { loadIndex, indexStatus, queryDuplicates, suggestNames, suggestSpecs, categoryOf, tokensOf, bucketItems } from './plm-index.js'
+import { buildAccessoryDict } from './accessory-dict.js'
 import { complete as specComplete } from './spec-complete.js'
 import { checkMaterial, suggestSpec } from './material-rules.js'
 import { cableSpecHints } from './cable-spec.js'
@@ -1119,6 +1120,16 @@ const server = http.createServer(async (req, res) => {
       const body = await readBody(req, 12 * 1024 * 1024)
       const out = importSeries(body)
       log('[select-import]', out.ok ? 'ok' : out.error, out.file || '')
+      // 选型库更新后，附加参数字典必须跟着重建，
+      // 否则录入页的技术参数还是导入前的旧配件。
+      if (out.ok) {
+        try {
+          const st = buildAccessoryDict()
+          log('[accessory-dict] 已重建', JSON.stringify(st))
+        } catch (e) {
+          log('[accessory-dict] 重建失败', String((e && e.message) || e))
+        }
+      }
       return send(res, 200, out)
     }
     if (p === '/api/plm/select/list' && req.method === 'GET') {

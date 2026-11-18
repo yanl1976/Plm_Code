@@ -1283,23 +1283,27 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/new-material/accessory-complete') {
       const sub = (url.searchParams.get('sub') || '').trim().slice(0, 6)
       const model = String(url.searchParams.get('model') || '').trim().toUpperCase()
-      let dict = { wiringBySeries: {}, accessories: [] }
+      let dict = { wiring: [], accessories: [] }
       try {
         dict = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/accessory-dict.json'), 'utf8'))
       } catch (e) { /* 字典缺失时返回空 */ }
 
-      // 附加参数按「系列」存储：100105 下 3WT 与 NB8-40J 的接线能力、配件都不同。
-      // 给了型号就只取该型号所属系列；找不到对应系列就返回空，不拿别家的充数。
-      const wiringBySeries = dict.wiringBySeries || {}
-      const accessories = dict.accessories || []
+      // 附加参数按「小类 + 系列」存储：
+      //   100105 下 3WT 与 NB8-40J 的接线能力/配件各不相同；
+      //   不同小类之间也互不影响（早期版本漏了小类维度，导致任意小类都返回 100105 的内容）。
+      const wiring = (dict.wiring || []).filter((w) => String(w.sub || '') === sub)
+      const accessories = (dict.accessories || []).filter((a) => String(a.sub || '') === sub)
+
+      // 空 series = 通用（如螺栓的「选型清单」，与具体型号无关）
       const seriesSet = new Set([
-        ...Object.keys(wiringBySeries),
+        ...wiring.map((w) => String(w.series || '')),
         ...accessories.map((a) => String(a.series || '')),
-      ].filter(Boolean))
+      ])
 
       const hit = (se) => {
         const S = String(se || '').toUpperCase()
-        if (!S || !model) return false
+        if (!S) return true              // 通用项：任何型号都适用
+        if (!model) return false
         return model.includes(S) || S.includes(model)
       }
       const matched = model ? [...seriesSet].filter(hit) : [...seriesSet]
@@ -1307,11 +1311,13 @@ const server = http.createServer(async (req, res) => {
       const items = []
       const seen = new Set()
       for (const se of matched) {
-        for (const w of wiringBySeries[se] || []) {
-          const k = 'w|' + se + '|' + w
-          if (seen.has(k)) continue
-          seen.add(k)
-          items.push({ kind: 'wiring', param: '接线能力', code: '', cn: String(w), series: se, label: String(w) })
+        for (const w of wiring.filter((x) => String(x.series || '') === se)) {
+          for (const v of w.values || []) {
+            const k = 'w|' + se + '|' + v
+            if (seen.has(k)) continue
+            seen.add(k)
+            items.push({ kind: 'wiring', param: '接线能力', code: '', cn: String(v), series: se, label: String(v) })
+          }
         }
         for (const a of accessories.filter((x) => String(x.series || '') === se)) {
           const code = String(a.code || '')

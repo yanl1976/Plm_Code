@@ -2866,6 +2866,8 @@ async function nmFillExtras() {
 
   const r = await api('/api/new-material/accessory-complete?sub=' + encodeURIComponent(sub)
     + '&model=' + encodeURIComponent(model) + '&q=').catch(() => null)
+  // 请求期间用户可能已经手动编辑过；改过就不覆盖（否则会把手写的删减冲掉）
+  if (el.dataset.auto === '0') return
   const items = (r && r.items) || []
 
   // 没有可填内容时清空，而不是保留上一次的结果 ——
@@ -4182,7 +4184,7 @@ async function nmSave() {
     const tidy = r.specTidy
     msg('已加入待新增清单，编码 ' + r.item.code)
     $('#nmName').value = ''; $('#nmSpec').value = ''; $('#nmUnit').value = ''; $('#nmRemark').value = ''
-    if ($('#nmParams')) $('#nmParams').value = ''
+    if ($('#nmParams')) { $('#nmParams').value = ''; $('#nmParams').dataset.auto = '1' }   // 重置标记，下一条仍可自动填
     $('#nmSuggest').innerHTML = ''; $('#nmSpecCheck').innerHTML = ''
     // 清掉上一条查询到的库存/参考库存，避免残留误导下一条录入
     const invEl = $('#nmInv'); if (invEl) invEl.innerHTML = ''

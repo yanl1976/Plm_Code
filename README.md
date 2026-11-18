@@ -83,6 +83,7 @@ Plm_Code/
     plm-index.js                # PLM 实时联想 + 查重内存索引（毫秒级，不落盘）
     plm-server.js               # PLM 录入助手 API（:3100）：/suggest /check /health /reload
     server.js                   # 治理看板 Web 服务（:3000）：REST + 后台重跑（纯内置 http）
+    accessory-dict.js           # 附加参数字典生成器：选型库 -> config/accessory-dict.json（导入后自动重建）
 
     ai/                         # LLM 辅助抽取（规则先行，AI 仅补缺项，默认关闭）
       client.js                 # OpenAI 兼容 chat/completions 客户端（cloud/local 双档案）
@@ -105,6 +106,7 @@ Plm_Code/
       brand-decode.json         # 型号编码解码表（文本提取为空时的盲区填充）
       extract-cases.json        # 特征参数提取黄金样例（validate 断言，改动必须全绿）
       settings.json             # 系统设置（编码前缀过滤 / 筛查组织）
+      accessory-dict.json       # 附加参数字典（接线能力 / 可选配件，按小类+系列；由选型库生成，勿手改）
       中类提取规则设计.md        # 中类提取规则设计说明
 ```
 
@@ -211,6 +213,33 @@ pm2 delete plm-api plm-web       # 停掉本项目两个，不影响同机其它
 - **提取配置（两层可配、无需改代码）**：某小类提取哪些参数 → `src/config/dedup-rules.json` 的 `heuristics[].tokens`（或 `subOverrides[<小类>].tokens`）。**未命中且无 subOverrides 声明的小类一律不提取参数**（不再回退全局默认集，见 `meta.tokensPolicy`），界面显示「校验规则待完善」；每个参数如何取值 → `src/config/spec-fields.json` 的 `library`（正则）。实现见 `src/struct-spec.js` + `src/classify.js`(`chooseTokens`)，`src/dedup.js` 在聚类时为每个成员附加 `params`。前端查重簇对比表动态生成**参数列**（等宽居中、首行为参考、差异红字）。
 - **局限与扩展**：品牌系列代号（如 `NSX100F MA100`、`3RT`、`6ES7…`）的额定电流常内嵌于型号且无单位，需按品牌追加规则；端子间距(3.81mm)、部分简写仍待补充。新增品类参数只需在两份配置中追加条目。
 
+## 规格型号 / 主要参数 / 技术参数 的分工
+
+「新增物料」页有三个文本域，边界必须分清——**把配件写进规格会让同型号被判成不同物料**：
+
+| 区域 | ERP 字段 | 内容 | 来源 |
+|---|---|---|---|
+| 规格型号 | `FSPECIFICATION` | 型号 + 主参数（`GSW3-3200/3P`） | 手输 / 选型助手回填 / 分段补全 |
+| 主要参数 | `F_ZXCV_ZYCS` | 规格之外的主参数（`额定电流 3200A`） | 手输，带参数名与值的补全 |
+| 技术参数 | `F_ZXCV_ZYCS` | 附加说明 + 可选配件（`MO 电动操作机构、UVR 欠压线圈`） | **选型库自动填**，可手工删减 |
+
+技术参数的完整链路：
+
+```
+选型库 Excel（可配附件 / 接线能力列）
+  → src/accessory-dict.js 按「小类 + 系列」解析
+  → src/config/accessory-dict.json
+  → GET /api/new-material/accessory-complete?sub=&model=
+  → 技术参数框（型号为空不填；用户改过后不再覆盖）
+```
+
+要点：
+- **附加参数不进规格补全**：它们不在 `param-standard.json`，也不在 `naming-guide.fields`，209 个小类全扫为 0
+- **按系列隔离**：`100105` 下 3WT（西门子）与 NB8-40J（正泰）的配件完全不同，型号匹配不到就留空，不拿别家的凑
+- **导入即重建**：`/api/plm/select/import` 成功后自动调用 `buildAccessoryDict()`，无需人工跑脚本
+
+详解见 [`docs/规格与技术参数分离.md`](docs/规格与技术参数分离.md)。
+
 ## Web 可视化前端
 零额外依赖（纯 Node 内置 http），可视化全流程与结果，支持人工复核与在线归并：
 ```bash
@@ -300,6 +329,7 @@ npm run server                  # 端口取 .env 的 PORT（默认 3000），被
 | 文档 | 内容 |
 |---|---|
 | **`docs/系统业务蓝图.md`** | **维护与扩展的基线文档**：分层图、三条主链路、规则链、协作矩阵、扩展指引、维护约定。<br>改规则必须同步更新；用 `npm run verify:blueprint` 自检 |
+| **`docs/规格与技术参数分离.md`** | 规格型号 / 主要参数 / 技术参数三个框的取值边界；附加参数字典的生成、系列匹配、自动填充与排障对照表 |
 | `docs/规格字符标准.md` | 规格型号字符统一：GBK/CP936 兼容底线、must/should 替换表、`mm^2` 决策与国标依据 |
 | `docs/待修正清单-字符集.xlsx` | 存量待修正物料（must 157 条 / should 220 条），按字符分类，供批量处理 |
 | `docs/分类治理记录-批次4.md` | 四个杂类（120404/120405/101808/101912）的归属判定方法与可执行清单 |
@@ -315,5 +345,6 @@ npm run server                  # 端口取 .env 的 PORT（默认 3000），被
 | `naming-guide.json`（范式库） | `guide-fields.js` 的 readJsonCached（mtime） | 否 |
 | `guide-field-map.json`（字段映射） | 同上 | 否 |
 | `material-rules.json`（书写规则 / unitCase） | `material-rules.js` 的 `rules()` 按 mtime | 否 |
+| `accessory-dict.json`（附加参数：接线能力 / 可选配件） | 接口每次请求直读 | 否（**由选型库生成，勿手改**；导入选型库即自动重建） |
 | **`dedup-rules.json`**（heuristics / subOverrides / normalize / tokensPolicy） | `spec.js` 模块级常量（启动读一次） | **是** |
 | **`spec-symbols.json`**（字符统一表） | `spec.js` 模块级常量（启动读一次） | **是** |

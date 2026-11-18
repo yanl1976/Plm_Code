@@ -108,6 +108,11 @@ const TTL = 5 * 60 * 1000
  *        该小类的物料（由调用方提供 —— 3130 用 allDocs()，3100 用 plm-index 的 bucketItems）。
  *        不传则仅返回模板结构、无候选。
  */
+/** 型号族：去掉非字母数字、统一大写、取前 4 位。GSB2-63M/3P → GSB2、iC65N → IC65 */
+function modelFamily(v) {
+  return String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4)
+}
+
 function statOf(sub, items) {
   const src = items || []
   // 缓存键必须带上「标准库开关状态」：
@@ -147,6 +152,13 @@ function statOf(sub, items) {
   }
   const meta = { ...meta0, segments: segs }
   const table = new Map()
+  // 值 → 型号集合：同一小类下不同品牌型号的写法差异很大
+  //（GSB2 写 C32/D6，iC65N 写 C10A/C16A），
+  // 候选必须能按"当前输入所属系列"收窄，否则填良信型号却看到施耐德的写法。
+  const valueModels = new Map()
+  // 型号族 → 段 → 值 → 次数：用来回答"GSB2 系列自己习惯怎么写"
+  // （GSB 写 C32 / D6，iC65N 写 C10A / C16A，不能混着推荐）
+  const famTable = new Map()
   for (const it of src) {
     // 调用方可以传"该小类"或"全量"：这里统一按小类过滤
     // 三处来源字段命名不同：plm-index 的 minimal() 用 fNumber，看板 allDocs() 用 fnumber，快照用 FNUMBER
@@ -192,11 +204,29 @@ function statOf(sub, items) {
       if (!table.has(sg.key)) table.set(sg.key, new Map())
       const m = table.get(sg.key)
       m.set(v, (m.get(v) || 0) + 1)
+      // 记录该值由哪个型号写出（最多留 30 个，避免内存膨胀）
+      const mdl = String(vals['型号'] || '').trim()
+      if (mdl) {
+        const vk = sg.key + '\u0001' + v
+        const set = valueModels.get(vk) || new Set()
+        if (set.size < 30) set.add(mdl)
+        valueModels.set(vk, set)
+        // 同时累计到型号族
+        const fk = modelFamily(mdl) + '\u0001' + sg.key
+        const fm = famTable.get(fk) || new Map()
+        fm.set(v, (fm.get(v) || 0) + 1)
+        famTable.set(fk, fm)
+      }
     }
   }
   const ranked = new Map()
   for (const [k, m] of table) {
-    ranked.set(k, [...m.entries()].sort((a, b) => b[1] - a[1]).map(([value, count]) => ({ value, count })))
+    ranked.set(k, [...m.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([value, count]) => {
+        const set = valueModels.get(k + '\u0001' + value)
+        return set ? { value, count, models: [...set] } : { value, count }
+      }))
   }
 
   // —— 标准库优先 ——
@@ -213,7 +243,7 @@ function statOf(sub, items) {
     if (acc.length < 3) continue
     ranked.set(sg.key, acc.map((v) => ({ value: String(v.value), count: v.count || 0 })))
   }
-  const st = { at: Date.now(), ...meta, ranked, total: src.length, srcCount: src.length }
+  const st = { at: Date.now(), ...meta, ranked, famTable, total: src.length, srcCount: src.length }
   CACHE.set(ckey, st)
   return st
 }
@@ -438,6 +468,28 @@ export function complete(sub, q, items, depth = 0) {
     if (!opts.length) opts = pre
   } else {
     opts = kk ? all.filter((x) => x.value.toLowerCase().startsWith(kk)) : all
+  }
+
+  // —— 型号内聚 ——
+  // 同一小类里不同品牌的写法差别很大：GSB2 写 C32 / D6，iC65N 写 C10A / C16A，
+  // NXB-63 写 C10 / C16。按「全小类」给候选时，填 GSB2 也会看到一堆 iC65N 的写法。
+  // 这里用统计阶段记下的「值 ← 哪些型号」做收窄：当前输入能识别出型号时，
+  // 只保留同系列型号写出过的值；同系列值太少（<3）才回退到全小类候选，避免"什么都不给"。
+  // 型号段本身不做这层过滤（它就是在选型号）。
+  // 组合段（脱扣曲线+额定电流 → "C10A"）同样适用：不同品牌的组合写法差别最大。
+  if (!seg.params.includes('型号')) {
+    const mdl = String(extractParams(raw, ['型号'])['型号'] || '').trim()
+    const curFam = modelFamily(mdl)
+    if (curFam.length >= 3 && st.famTable) {
+      const fm = st.famTable.get(curFam + '\u0001' + seg.key)
+      if (fm && fm.size >= 3) {
+        // 族内写法按该族出现次数排序，放在最前；全小类的其余值作为补充排在后面
+        const famOps = [...fm.entries()].sort((a, b) => b[1] - a[1])
+          .map(([value, count]) => ({ value, count, sameFamily: true }))
+        const seen = new Set(famOps.map((o) => o.value))
+        opts = [...famOps, ...opts.filter((o) => !seen.has(o.value))]
+      }
+    }
   }
 
   // —— 剔除「已出现在规格前面部分」的候选 ——

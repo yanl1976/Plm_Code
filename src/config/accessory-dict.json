@@ -1,9 +1,17 @@
 {
   "meta": {
     "note": "附加参数（接线能力 / 可选配件），按「小类 + 系列」存储。由 src/accessory-dict.js 从 data/selection 自动生成，选型库导入后会自动重建，请勿手工编辑。",
-    "updatedAt": "2026-11-18T09:57:47.442Z"
+    "updatedAt": "2026-11-18T10:04:50.252Z"
   },
   "wiring": [
+    {
+      "sub": "100101",
+      "series": "",
+      "values": [
+        "水平后连接",
+        "水平后连接（可选择垂直后连接）"
+      ]
+    },
     {
       "sub": "100105",
       "series": "3WT",
@@ -20,6 +28,159 @@
     }
   ],
   "accessories": [
+    {
+      "code": "",
+      "cn": "标配见“标配与附件”页",
+      "type": "",
+      "sub": "100101",
+      "series": "",
+      "brand": "施耐德",
+      "source": "EasyPact_EVS+_选型手册.json"
+    },
+    {
+      "code": "",
+      "cn": "可选：MN 失压线圈（含延时单元）",
+      "type": "",
+      "sub": "100101",
+      "series": "",
+      "brand": "施耐德",
+      "source": "EasyPact_EVS+_选型手册.json"
+    },
+    {
+      "code": "PF",
+      "cn": "准备合闸触点",
+      "type": "",
+      "sub": "100101",
+      "series": "",
+      "brand": "施耐德",
+      "source": "EasyPact_EVS+_选型手册.json"
+    },
+    {
+      "code": "EIP",
+      "cn": "相间隔板",
+      "type": "",
+      "sub": "100101",
+      "series": "",
+      "brand": "施耐德",
+      "source": "EasyPact_EVS+_选型手册.json"
+    },
+    {
+      "code": "",
+      "cn": "机械联锁",
+      "type": "",
+      "sub": "100101",
+      "series": "",
+      "brand": "施耐德",
+      "source": "EasyPact_EVS+_选型手册.json"
+    },
+    {
+      "code": "",
+      "cn": "按钮锁定装置",
+      "type": "",
+      "sub": "100101",
+      "series": "",
+      "brand": "施耐德",
+      "source": "EasyPact_EVS+_选型手册.json"
+    },
+    {
+      "code": "",
+      "cn": "钥匙锁",
+      "type": "",
+      "sub": "100101",
+      "series": "",
+      "brand": "施耐德",
+      "source": "EasyPact_EVS+_选型手册.json"
+    },
+    {
+      "code": "Eco-Com",
+      "cn": "通信模块",
+      "type": "",
+      "sub": "100101",
+      "series": "",
+      "brand": "施耐德",
+      "source": "EasyPact_EVS+_选型手册.json"
+    },
+    {
+      "code": "",
+      "cn": "固定式不可选 CB 二次端子罩",
+      "type": "",
+      "sub": "100101",
+      "series": "",
+      "brand": "施耐德",
+      "source": "EasyPact_EVS+_选型手册.json"
+    },
+    {
+      "code": "CB",
+      "cn": "二次端子罩",
+      "type": "",
+      "sub": "100101",
+      "series": "",
+      "brand": "施耐德",
+      "source": "EasyPact_EVS+_选型手册.json"
+    },
+    {
+      "code": "",
+      "cn": "抽架位置触点",
+      "type": "",
+      "sub": "100101",
+      "series": "",
+      "brand": "施耐德",
+      "source": "EasyPact_EVS+_选型手册.json"
+    },
+    {
+      "code": "VSPD",
+      "cn": "门联锁",
+      "type": "",
+      "sub": "100101",
+      "series": "",
+      "brand": "施耐德",
+      "source": "EasyPact_EVS+_选型手册.json"
+    },
+    {
+      "code": "VPEC",
+      "cn": "退出位置锁",
+      "type": "",
+      "sub": "100101",
+      "series": "",
+      "brand": "施耐德",
+      "source": "EasyPact_EVS+_选型手册.json"
+    },
+    {
+      "code": "VPOC",
+      "cn": "摇入联锁",
+      "type": "",
+      "sub": "100101",
+      "series": "",
+      "brand": "施耐德",
+      "source": "EasyPact_EVS+_选型手册.json"
+    },
+    {
+      "code": "",
+      "cn": "计数器",
+      "type": "",
+      "sub": "100101",
+      "series": "",
+      "brand": "施耐德",
+      "source": "EasyPact_EVS+_选型手册.json"
+    },
+    {
+      "code": "",
+      "cn": "外接中性线互感器",
+      "type": "",
+      "sub": "100101",
+      "series": "",
+      "brand": "施耐德",
+      "source": "EasyPact_EVS+_选型手册.json"
+    },
+    {
+      "code": "",
+      "cn": "外接中性线互感器（4P 不选外接中性线互感器）",
+      "type": "",
+      "sub": "100101",
+      "series": "",
+      "brand": "施耐德",
+      "source": "EasyPact_EVS+_选型手册.json"
+    },
     {
       "code": "MO",
       "cn": "电动操作机构",

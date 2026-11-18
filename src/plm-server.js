@@ -611,7 +611,8 @@ function buildRowParams(row, cols) {
 }
 
 function buildRowSpec(row, cols, modelCol) {
-  const base = String((row[modelCol.key] == null ? '' : row[modelCol.key])).trim()
+  // modelCol 可能为 undefined（列定义里未标 role='model'，也没匹配到常见列名）
+  const base = modelCol ? String((row[modelCol.key] == null ? '' : row[modelCol.key])).trim() : ''
   const parts = []
   if (base) parts.push(base)
   for (const c of cols) {
@@ -729,11 +730,18 @@ function handleSelect(body) {
       const guided = composeSpecByGuide(seriesSub, row, cols)
       const model = guided || suggestSpec(rawModel)
 
+      // 回填规格：
+      //   ① 范式拼得出来 → 用它（顺序正确、乘号统一）
+      //   ② 拼不出来（样本缺模板要求的列，如施耐德 EVS 没有「壳架」）→ 按列定义拼，
+      //      勾了「进规格」的列都会进；这是管理页那个勾选框的真实含义
+      //   ③ 再不行才退回纯型号
+      const byCols = buildRowSpec(row, cols, modelCol)
+      const fullSpec = guided || byCols || model
+
       items.push({
         series: s.id, brand: s.brand || '', name: s.name || '',
         model,                                   // 纯型号，表格首列显示
-        // 完整规格：同 model（范式拼装已包含全部必需参数），不再追加附件等冗余列
-        spec: model,
+        spec: fullSpec,                          // 回填进「规格型号」的完整文本
         guided: !!guided,                        // 是否按范式拼装（前端可标注）
         cells: row,
         poles: row['极数'] || '', current: row['额定电流'] || '',
@@ -820,6 +828,68 @@ function handleSelect(body) {
   }
 }
 
+/**
+ * 型号列清洗（厂家样本普遍存在合并单元格，必须统一处理）。
+ *
+ *   ① 合并单元格的续行：型号在 Excel 里视觉上跨了多行，解析后只有首行有值。
+ *      这类行沿用上一行的型号（前向填充）—— 严格校验会让完全正确的文件也导不进来
+ *      （施耐德 EVS 样本 1700+ 行，型号列多处合并）。
+ *   ② 整行全空：表尾空行、分块之间的空行，直接丢弃。
+ *   ③ 第一行就没有型号：才是表头识别真的错了。
+ *
+ * 解析接口与保存接口共用本函数，保证「预览条数」与「入库条数」一致。
+ * @returns {{ rows: object[], dropped: number, filled: number, error?: string }}
+ */
+function cleanRowsByModel(rows, columns) {
+  const modelCol = (columns || []).find((c) => c.role === 'model')
+  const list = Array.isArray(rows) ? rows : []
+  if (!modelCol) return { rows: list, dropped: 0, filled: 0 }
+
+  const mk = modelCol.key
+  const out = []
+  let lastModel = ''
+  let dropped = 0
+  let filled = 0
+
+  for (const r of list) {
+    const allEmpty = (columns || []).every((c) => !String(r[c.key] == null ? '' : r[c.key]).trim())
+    if (allEmpty) { dropped++; continue }
+
+    const cur = String(r[mk] == null ? '' : r[mk]).trim()
+    if (!cur) {
+      if (!lastModel) return { rows: list, dropped: 0, filled: 0, error: '型号列在第一行就为空，请检查表头行是否识别正确' }
+      r[mk] = lastModel
+      filled++
+    } else {
+      lastModel = cur
+    }
+    out.push(r)
+  }
+
+  // ② 其余列的前向填充。
+  // 合并单元格不只出现在型号列：施耐德 EVS 样本里有整行 4 个单元格同时被合并，
+  // 解析后只有左上角有值，表现为「该行额定电流/分断能力/接线能力全是空」。
+  // 这类空格的语义就是"同上一行"，不补会导致选型助手列表出现空格。
+  // 型号列已在上方处理，这里跳过（避免重复计数）。
+  let padded = 0
+  const lastVal = {}
+  // 自由文本列不参与填充：不同型号的说明/备注各不相同，
+  // 沿用上一行会把 A 的描述写到 B 上（实测螺栓的「中文说明」会串行）。
+  const NO_FILL = /说明|备注|描述|摘要|注释|comment|remark|note|desc/i
+  for (const r of out) {
+    for (const c of columns) {
+      const k = String(c.key || '')
+      if (!k || k === mk || k === '小类号') continue
+      if (NO_FILL.test(k)) continue
+      const v = String(r[k] == null ? '' : r[k]).trim()
+      if (v) { lastVal[k] = v; continue }
+      if (lastVal[k]) { r[k] = lastVal[k]; padded++ }
+    }
+  }
+
+  return { rows: out, dropped, filled, padded }
+}
+
 /** 导入一个系列（列驱动）：写 data/selection/series/<sub>_<id>.json */
 function importSeries(body) {
   const sub = String(body.sub || '').trim()
@@ -843,13 +913,16 @@ function importSeries(body) {
   if (!rows.length) return { ok: false, error: '没有数据行（检查表头行是否识别正确）' }
 
   const modelCol = columns.find((c) => c.role === 'model')
-  if (modelCol) {
-    for (let i = 0; i < rows.length; i++) {
-      if (!String(rows[i][modelCol.key] == null ? '' : rows[i][modelCol.key]).trim()) {
-        return { ok: false, error: '第 ' + (i + 1) + ' 条数据的型号为空' }
-      }
-    }
-  }
+  // 型号列清洗（厂家样本普遍存在合并单元格）：
+  //   ① 合并单元格的续行 —— 型号在 Excel 里视觉上跨了多行，解析后只有首行有值。
+  //      这类行按上一行的型号沿用（前向填充），不能整批拒绝：
+  //      施耐德 EVS 样本 1700+ 行，型号列多处合并，严格校验会让正确的文件也导不进来。
+  //   ② 整行全空 —— 表尾空行、分块之间的空行，直接丢弃。
+  //   ③ 第一行就没有型号 —— 这才是表头识别真的错了。
+  const cleanedRows = cleanRowsByModel(rows, columns)
+  if (cleanedRows.error) return { ok: false, error: cleanedRows.error }
+  const rowsFixed = cleanedRows.rows
+  if (!rowsFixed.length) return { ok: false, error: '清洗空行后没有有效数据' }
 
   // 目录按小类分层：series/<小类号>/<系列代号>.json
   const safe = (s) => String(s).replace(/[\\/:*?"<>|\s]+/g, '_')
@@ -868,7 +941,7 @@ function importSeries(body) {
       importedAt: now,
       mode: 'table',
       columns,
-      rows,
+      rows: rowsFixed,
     }],
   }
 
@@ -891,7 +964,7 @@ function importSeries(body) {
   fs.writeFileSync(abs, JSON.stringify(data, null, 2), 'utf8')
   return {
     ok: true, file: 'series/' + sub + '/' + fileName,
-    count: rows.length, columns: columns.length,
+    count: rowsFixed.length, columns: columns.length,
     replaced: !!backup, backup,
   }
 }
@@ -1113,7 +1186,17 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/plm/select/parse' && req.method === 'POST') {
       const body = await readBody(req, 12 * 1024 * 1024)      // Excel 可能几 MB
       const out = parseExcelBase64(body.data)
-      if (out.ok) out.fileName = String(body.fileName || '')
+      if (out.ok) {
+        out.fileName = String(body.fileName || '')
+        // 合并单元格续行在预览阶段就填好型号，否则用户看到的条数与入库后不一致
+        const cleaned = cleanRowsByModel(out.rows || [], out.columns || [])
+        if (cleaned.error) return send(res, 200, { ok: false, error: cleaned.error })
+        out.rows = cleaned.rows
+        out.total = cleaned.rows.length
+        out.mergedRows = cleaned.filled      // 因合并单元格而补型号的行数
+        out.paddedCells = cleaned.padded     // 其他列因合并单元格补值的单元格数
+        out.droppedRows = cleaned.dropped    // 丢弃的空行数
+      }
       return send(res, 200, out)
     }
     if (p === '/api/plm/select/import' && req.method === 'POST') {

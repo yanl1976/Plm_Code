@@ -195,6 +195,9 @@ $('btnParse').onclick = function () {
       STATE.rows = r.rows || [];
       STATE.fileName = f.name;
       say('parseMsg', '解析成功：' + r.sheetName + '，表头第 ' + r.headerRow + ' 行，' + r.total + ' 行数据'
+      + (r.mergedRows ? '（其中 ' + r.mergedRows + ' 行型号来自合并单元格，已自动沿用上一行）' : '')
+      + (r.paddedCells ? '（另有 ' + r.paddedCells + ' 个空白单元格因合并已补值）' : '')
+      + (r.droppedRows ? '（已忽略 ' + r.droppedRows + ' 个空行）' : '')
         + (r.halfWidthConverted ? '（已自动把 ' + r.halfWidthConverted + ' 处全角字符转为半角）' : ''), true);
       $('step2').classList.remove('hidden');
       $('sheetInfo').textContent = '工作表：' + r.sheetName + '　表头行：第 ' + r.headerRow + ' 行　数据行：' + r.total

@@ -114,6 +114,12 @@ if (cstep.Name == 'InforCenter/PSE/CreateItem/PSEITEM-CREATE.html') {
 
 回填方式（页面 `OnCreate` 里已有同类用法）：`ctrl.SetText(v)` / `GetText()` / `GetTag()` / `SetTag({text,value})`。
 
+> **`ZYCS_Value` 的 `OnFocusout` 联动要注意**：该控件绑定「默认值联动」，
+> 写入后若触发 blur，平台可能按联动规则重算并覆盖插件写的值。
+> 当前实现是「写值后立即置 `readOnly` + 灰底」来规避；
+> 若现场发现主要参数被平台改回占位文字，说明联动优先级更高，
+> 需要改为在 `OnOK`（保存前）写入，或由二开调整该字段的联动。
+
 **(4) 字段对应关系**
 
 | PLM（`PSEITEM` / `PSEITEMBASEFORM`） | ERP（`T_BD_MATERIAL`） | 说明 |
@@ -218,9 +224,12 @@ state.subs: Map<subKey(6位), {
 
 ```
 重置状态（每次打开新增页都是新实例）
-  → GetControl 取 4 个控件
+  → GetControl 取 4 个控件（ENAME / GGXH / ZYCS / ECODE）
   → 校验控件存在（PLM 用 id=='' 表示不存在）
   → 为 ENAME/GGXH 绑定 input(防抖)/blur/keydown(Esc)
+  → 注入「智能录入」按钮 → 点开弹窗
+       ├─ 名称、规格型号（可编辑，带联想 / 选型助手 / 类似型号）
+       └─ 主要参数（可编辑；输入即写 ZYCS，写后置灰只读）
   → 异步探活（仅日志，不阻塞）
 ```
 
@@ -260,7 +269,9 @@ state.subs: Map<subKey(6位), {
 | `timeout` | `1500` | 单次请求超时，超时即放行 |
 | `suggestDebounce` | `300` | 输入防抖 |
 | `minLen` | `2` | 触发联想最少字符 |
-| `autoFillZycs` | `true` | 选规格时连带回填主要参数 |
+| `fillSpecToParams` | `true` | 规格同步到 分类属性合并(FLSXHB)；**不再写 ZYCS**（与主要参数解耦） |
+| `fillParamsToZycs` | `true` | 弹窗「主要参数」回填 ZYCS，回填后该框置灰只读 |
+| `autoFillZycs` | `false` | 旧逻辑（已停用），由 `fillParamsToZycs` 取代 |
 | `blockOnDuplicate` | `true` | 命中强重复是否二次确认 |
 | `notifyDuplicateOnBlur` | `true` | 失焦是否浮层提示重复 |
 | `tidySpecSpace` | `true` | 失焦/保存前自动整理规格空格（首尾 + 连续 + 全角）；乘号不处理 |
@@ -327,6 +338,127 @@ state.subs: Map<subKey(6位), {
 ### 6.4 `POST /api/plm/reload`
 
 重载索引，返回同 health。**每次 `npm run extract` 后调用**。
+
+### 6.5 `GET /api/plm/spec-complete`
+
+规格分段补全：按小类范式拆段，返回「当前在填哪一段」与该段候选。
+
+| 参数 | 必填 | 说明 |
+|---|---|---|
+| `sub` | 是 | 6 位小类 |
+| `q` | 是 | 已输入的规格 |
+
+响应：
+
+| 字段 | 说明 |
+|---|---|
+| `param` | 当前段（如「脱扣曲线+额定电流」） |
+| `prefix` | 待替换的片段（Tab 采纳时替换它） |
+| `index` / `total` | 段序号 / 总段数 |
+| `filled[]` / `segments[]` | 已填段 / 全部段 |
+| `options[]` | `{value, count}`，最多 8 条 |
+| `pattern` | 该小类的规格范式 |
+
+段推进的三条特殊规则（型号段不推进 / 写完才推进 / 不回头提示）见
+`docs/系统业务蓝图.md` 第 4.1 节。
+
+### 6.6 `POST /api/plm/select`
+
+选型查询（选型助手使用）。
+
+请求（json 或 form）：
+
+| 字段 | 必填 | 说明 |
+|---|---|---|
+| `sub` | 是 | 6 位小类 |
+| `series` | 否 | 系列代号；空则跨系列 |
+| `filters` | 否 | `{列名: 值}` 精确过滤 |
+| `scene`/`poles`/`curve`/`current` | 否 | 规则式系列的快捷条件 |
+| `limit` | 否 | 默认 200，上限 500 |
+
+响应 `items[]` 元素：
+
+| 字段 | 说明 |
+|---|---|
+| `model` | 纯型号（表格首列显示） |
+| `spec` | 完整规格（回填 `GGXH`） |
+| **`params`** | **主要参数（回填 `ZYCS`）**：接线能力 + 可选配件 |
+| `cells` | 该行原始列值 |
+| `poles`/`current`/`curve`/`breaking` | 常用参数快捷字段 |
+
+两个关键取值规则：
+
+1. **`spec` 三级取值**：`composeSpecByGuide`（范式拼装）→ `buildRowSpec`（按列拼，尊重「进规格」勾选 `specPart`）→ 纯型号。
+   样本缺范式要求的列时（如施耐德 EVS 没有「壳架」），会落到第二级，不再只剩型号。
+2. **`params` 来自 `accessory-dict.json`**：按「小类 + 型号」匹配系列；
+   空 `series` 视为通用，匹配不到任何系列时返回空（不拿别家凑）。
+
+### 6.7 `GET /api/plm/select/series?sub=`
+
+该小类下的系列清单：
+
+```json
+{ "ok": true, "sub": "100105", "dirExists": true, "fileCount": 2,
+  "series": [{ "id": "3WT", "brand": "西门子", "enabled": true, "mode": "table",
+               "rowCount": 156, "columnCount": 9 }] }
+```
+
+停用的系列不参与选型（`enabled: false`）。
+
+### 6.8 `POST /api/plm/select/parse`
+
+上传 Excel 解析（预览，不入库）。
+
+请求：`{ data: <base64>, fileName }`
+
+响应：
+
+| 字段 | 说明 |
+|---|---|
+| `sheetName` / `headerRow` | 选中的工作表 / 表头行号 |
+| `columns[]` / `rows[]` | 列定义与数据行 |
+| `total` | 清洗后的有效行数 |
+| `mergedRows` | 因合并单元格而补型号的行数 |
+| `paddedCells` | 其他列因合并补值的单元格数 |
+| `droppedRows` | 丢弃的空行数 |
+
+合并单元格的清洗规则（前向填充、跳过整行空、首行无型号才报错）见
+`docs/选型库导入问题记录.md`。
+
+### 6.9 `POST /api/plm/select/import`
+
+导入一个系列（入库）。
+
+请求：`{ sub, id, source, brand, name, columns[], rows[] }`
+
+响应：`{ ok, file, count, columns, replaced, backup }`
+
+三个副作用：
+
+1. 覆盖前备份到 `data/selection/series/<小类>/.history/`（保留 5 份）
+2. **自动重建** `src/config/accessory-dict.json`（`buildAccessoryDict()`）
+3. 追加一条 `data/selection/import-log.ndjson`（成功与失败都记）
+
+### 6.10 选型库管理接口
+
+| 接口 | 方法 | 说明 |
+|---|---|---|
+| `/api/plm/select/list` | GET | 系列清单（含文件与行数） |
+| `/api/plm/select/detail` | GET | 单个系列详情（`?sub=&id=`） |
+| `/api/plm/select/toggle` | POST | `{sub, id, enabled}` 启用/停用 |
+| `/api/plm/select/delete` | POST | `{sub, id}` 删除系列 |
+
+### 6.11 快照同步接口
+
+| 接口 | 方法 | 说明 |
+|---|---|---|
+| `/api/plm/snapshot/plan` | GET | 同步计划（是否需要拉取） |
+| `/api/plm/snapshot/status` | GET | 当前快照状态与时效 |
+| `/api/plm/snapshot/reset` | POST | 重置快照 |
+| `/api/plm/snapshot/merge` | POST | 合并 PLM + ERP 快照 |
+| `/api/plm/snapshot/merged` | GET | 读取合并结果 |
+| `/api/plm/snapshot/upload` | POST | 上传 PLM 导出文件 |
+| `/api/plm/snapshot/done` | POST | 标记同步完成 |
 
 ---
 

@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.23';
+  var PLUGIN_VERSION = '2.24';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -529,6 +529,7 @@
       var s1 = text.length > lim1 ? clipSmart(text, lim1) : text;
       if (writeText(c1, s1)) {
         fillMark.zycs = s1;
+        writeZycsMemory(s1);   // 记到向导对话框根节点：表单销毁重建后可自愈
         lockCtl(c1, CFG.zycsMaxLen);
         ok = true;
         log('已回填 主要参数(ZYCS) 并置只读（' + s1.length + ' 字符）');
@@ -663,22 +664,111 @@
     } catch (e) { }
   }
 
+  // -------- 主要参数作用域记忆：向导销毁/重建表单后的自愈依据 --------
+  // 向导「下一步」会销毁第 1 步表单（PSEItem.js CreateItemFormInit：Close(BaseInfoContainer)）；
+  // 「上一步」重建第 1 步时若框架回放中断（现场实拍：GuideManagement ExecPreStep 读 GetPara
+  // 抛 undefined），ZYCS 会以空值/占位文字重建，且重建页 OnCreate 会把 fillMark 清空 ——
+  // 包装拦截和保存兜底两层防护同时失效。
+  // 因此把助手写入的值记到【向导对话框根节点】（ZYCS 节点向上最外层的 [pagepagename] 祖先）：
+  //   同一向导内翻页/重建 → 根节点不变 → 记忆仍在 → 轮询自愈写回；
+  //   向导关闭/新开向导   → 根节点随页销毁（且 PageOnCreate/PageOnClose 主动清标记）→ 绝不串场。
+  var ZYCS_MEM_TTL = 2 * 60 * 60 * 1000;   // 兜底有效期：防缓存页残留旧值（正常会被开关钩子清掉）
+
+  function zycsScopeEl() {
+    try {
+      var c = zycsCtl();
+      var el = c && (c.__el || domOf(c));
+      if (!el) return null;
+      var scope = null, p = el, hop = 0;
+      while (p && hop < 14) {
+        if (p.getAttribute && p.getAttribute('pagepagename')) scope = p;  // 取最外层
+        p = p.parentNode; hop++;
+      }
+      return scope;
+    } catch (e) { return null; }
+  }
+
+  function writeZycsMemory(v) {
+    try {
+      var el = zycsScopeEl();
+      if (el) el.__plmSmartZycs = { value: v, at: Date.now() };
+    } catch (e) { }
+  }
+
+  function readZycsMemory() {
+    try {
+      var el = zycsScopeEl();
+      var m = el && el.__plmSmartZycs;
+      if (m && m.value && (Date.now() - m.at) < ZYCS_MEM_TTL) return String(m.value);
+    } catch (e) { }
+    return '';
+  }
+
+  /** 向导页打开/关闭（GuideManagement PageOnCreate/PageOnClose）时清理记忆，防串场 */
+  function clearZycsMemoryByPage(pageEvent) {
+    try {
+      var o = pageEvent && pageEvent.o;
+      var root = o && (o.__el || domOf(o));
+      var els = [];
+      if (root) {
+        els.push(root);
+        for (var p = root.parentNode, hop = 0; p && hop < 14; p = p.parentNode, hop++) {
+          if (p.getAttribute && p.getAttribute('pagepagename')) els.push(p);
+        }
+        if (root.querySelectorAll) {
+          var ns = root.querySelectorAll('[pagepagename]');
+          for (var i = 0; i < ns.length; i++) els.push(ns[i]);
+        }
+      }
+      for (var j = 0; j < els.length; j++) {
+        if (els[j] && els[j].__plmSmartZycs) els[j].__plmSmartZycs = null;
+      }
+    } catch (e) { }
+  }
+
+  /**
+   * 自愈：ZYCS 是占位文字/空而作用域记忆存在 → 写回。
+   * 挂在 watchDialog 轮询里每 800ms 执行一次，兜住一切未知的覆盖/重建路径
+   * （包括框架回放中断导致整表重建的场景）。仅在「助手在本向导内写过参数」时生效。
+   */
+  function healZycsIfWiped() {
+    try {
+      if (!CFG.enabled || !CFG.fillParamsToZycs) return;
+      var mem = readZycsMemory();
+      if (!mem) return;
+      invalidateStaleZycs();
+      var c = zycsCtl();
+      if (!c) return;
+      var cur = readText(c);
+      if (cur === ZYCS_PLACEHOLDER || !cur) {
+        if (writeText(c, mem)) {
+          fillMark.zycs = mem;
+          log('自愈恢复主要参数：表单被重建/占位文字覆盖 → 写回助手值（' + mem.length + ' 字符）');
+        }
+      }
+    } catch (e) { }
+  }
+
   /**
    * 防止「主要参数」被平台的占位文字覆盖。
    *
    * 二开在 TSDC/PSE/Js/PSEItem.js 里，当物料类型属于
    * CreateItemGGXHCanNotEditType（原材料/电气元件/外购标准件）时，
-   * 每次 ITEMTYPE 变化都会无条件执行：
+   * 三个入口都会无条件执行：
    *     zycsCtrl.Disable();
    *     zycsCtrl.SetText("填写分类属性后合并自动生成");
-   * 向导从第 1 页走到第 2/3 页时会再次触发，把助手回填的内容冲掉。
+   *   ① SubDataModelValue —— ITEMTYPE 变化（向导翻页会再次触发）
+   *   ② ItemGuide_Init    —— 向导初始化/步骤页重建
+   *   ③ EditPage_OnCreate —— 编辑页打开（存储值会被占位文字顶掉）
    *
-   * 做法：包装该函数 —— 先记住调用前的有效值，平台逻辑跑完后
-   * 若发现被占位文字覆盖，立即把有效值写回。
+   * 做法：包装这三个函数 —— 先记住调用前的有效值，平台逻辑跑完后
+   * 若发现被占位文字/清空覆盖，立即把有效值写回（before 为空时回退到作用域记忆）。
    */
   function guardZycsFromPlaceholder() {
     var names = [
-      'InforCenter_PSEITEM_ITEMTYPE_SubDataModelValue'
+      'InforCenter_PSEITEM_ITEMTYPE_SubDataModelValue',
+      'InforCenter_PSE_ItemGuide_Init',
+      'InforCenter_PSEITEM_EditPage_OnCreate'
     ];
     var done = 0;
     for (var i = 0; i < names.length; i++) {
@@ -687,7 +777,7 @@
       if (typeof orig !== 'function') continue;   // 平台脚本未加载 → 外层重试
       if (orig.__plmGuard) { done++; continue; }  // 幂等：已包装
       (function (fn, name) {
-        var wrapped = function (e) {
+        var wrapped = function () {
           var before = '';
           try { invalidateStaleZycs(); var c0 = zycsCtl(); if (c0) before = readText(c0); } catch (er) { }
           var r = fn.apply(this, arguments);
@@ -695,11 +785,13 @@
             invalidateStaleZycs();
             var c = zycsCtl();
             var after = c ? readText(c) : '';
-            if (before && before !== ZYCS_PLACEHOLDER
+            var src = (before && before !== ZYCS_PLACEHOLDER) ? before : readZycsMemory();
+            if (src && src !== ZYCS_PLACEHOLDER
               && (after === ZYCS_PLACEHOLDER || !after)) {
-              if (writeText(c, before)) {
-                fillMark.zycs = before;
-                log('主要参数被平台占位文字覆盖，已自动写回（' + before.length + ' 字符）');
+              if (writeText(c, src)) {
+                fillMark.zycs = src;
+                writeZycsMemory(src);
+                log('主要参数被平台占位文字覆盖，已自动写回（' + src.length + ' 字符）');
               }
             }
           } catch (er2) { }
@@ -724,29 +816,64 @@
 
   /**
    * 保存/翻页前兜底（独立于查重、宽度开关）：
-   * ZYCS 当前是占位文字或空、而助手此前写过值 → 写回，防止占位文字随单据落库。
-   * 覆盖 wrap 之外的路径：PSEItem.js 晚于本文件加载、向导重建 DOM 等。
+   * ZYCS 当前是占位文字或空、而助手此前写过值（fillMark 或作用域记忆）→ 写回，
+   * 防止占位文字/空值随单据落库。
    */
   function restoreZycsBeforeSave(where) {
     try {
-      if (!CFG.enabled || !CFG.fillParamsToZycs || !fillMark.zycs) return;
+      if (!CFG.enabled || !CFG.fillParamsToZycs) return;
+      var src = fillMark.zycs || readZycsMemory();
+      if (!src) return;
       invalidateStaleZycs();
       var c = zycsCtl();
       if (!c) return;
       var cur = readText(c);
       if (cur === ZYCS_PLACEHOLDER || !cur) {
-        if (writeText(c, fillMark.zycs)) {
-          log('保存前恢复主要参数（' + (where || '') + '）：占位文字/空 → 助手值（' + fillMark.zycs.length + ' 字符）');
+        if (writeText(c, src)) {
+          fillMark.zycs = src;
+          log('保存前恢复主要参数（' + (where || '') + '）：占位文字/空 → 助手值（' + src.length + ' 字符）');
         }
       }
     } catch (e) { }
   }
 
-  // PSEItem.js（TSDC/PSE/Js）可能晚于本文件加载：延迟包装，幂等，最多重试 20 秒
+  /**
+   * 向导容器的开/页关钩子（GuideManagement.page 固化调用）：清理作用域记忆。
+   * 只链式包装（先原逻辑后清理），不改平台行为；平台脚本晚加载时由外层重试补挂。
+   */
+  function installZycsMemoryHooks() {
+    var names = [
+      'InforCenter_Platform_GuideManagement_PageOnCreate',
+      'InforCenter_Platform_GuideManagement_PageOnClose'
+    ];
+    var done = 0;
+    for (var i = 0; i < names.length; i++) {
+      var nm = names[i];
+      var orig = window[nm];
+      if (typeof orig !== 'function') continue;
+      if (orig.__plmGuard) { done++; continue; }
+      (function (fn, name) {
+        var wrapped = function () {
+          var r = fn.apply(this, arguments);
+          try { clearZycsMemoryByPage(arguments[0]); } catch (e) { }
+          return r;
+        };
+        wrapped.__plmGuard = true;
+        window[name] = wrapped;
+        log('已挂接 ' + name + '（向导开/关时清理主要参数记忆）');
+      })(orig, nm);
+      done++;
+    }
+    return done === names.length;
+  }
+
+  // PSEItem.js / 平台向导脚本可能晚于本文件加载：延迟包装，幂等，最多重试 20 秒
   var guardTries = 0;
   (function installZycsGuard() {
     if (!CFG.enabled) return;
-    if (guardZycsFromPlaceholder()) return;
+    var a = guardZycsFromPlaceholder();
+    var b = installZycsMemoryHooks();
+    if (a && b) return;
     if (++guardTries < 40) setTimeout(installZycsGuard, 500);
   })();
 
@@ -4238,6 +4365,8 @@
         domWatchTimer = setTimeout(tick, 1500);
         return;
       }
+      // 主要参数自愈：向导销毁/重建表单或占位文字覆盖后，每轮轮询检查并写回
+      healZycsIfWiped();
       try {
         // 当前该接管的目标输入框（弹窗关闭时为空）
         var specNow = findInput('GGXH_Value') || findInputByLabel(['规格型号'], { noDropdown: true });
@@ -4289,6 +4418,10 @@
 
   // 版本号挂在全局：控制台默认静默后，用 __plmVersion 即可确认插件是否加载、是哪个版本
   try { window.__plmVersion = pluginVersion() } catch (e5) { }
+  // 主要参数记忆句柄（排查/测试用）：write 写入作用域记忆、read 读取、heal 手动触发自愈
+  try {
+    window.__plmSmartZycsMem = { write: writeZycsMemory, read: readZycsMemory, heal: healZycsIfWiped };
+  } catch (e5b) { }
 
   log('脚本已加载 v' + pluginVersion() + '（api=' + apiUrl('')
     + '；地址来源=' + ((extCfg() && extCfg().apiBase) ? 'ItemSmartInput.config.js' : '内置默认')

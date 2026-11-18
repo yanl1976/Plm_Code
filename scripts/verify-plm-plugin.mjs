@@ -40,6 +40,10 @@ function mkEl(tag) {
     children: [],
     innerHTML: '',
     parentNode: null,
+    isConnected: true,
+    __attrs: {},
+    getAttribute(k) { return this.__attrs[k] != null ? this.__attrs[k] : null },
+    setAttribute(k, v) { this.__attrs[k] = String(v) },
     appendChild(c) { this.children.push(c); c.parentNode = this; c.parent = this; return c },
     insertBefore(node, ref) {
       const i = ref ? this.children.indexOf(ref) : -1
@@ -1271,6 +1275,58 @@ async function run() {
     p.ctl['ZYCS_Value'].SetText(PLACEHOLDER)
     p.OnOK()
     ok('保存前兜底恢复主要参数', p.ctl['ZYCS_Value'].__text === params,
+      'got=' + JSON.stringify(p.ctl['ZYCS_Value'].__text))
+  }
+
+  // S42 主要参数作用域记忆与自愈：表单被重建/占位文字覆盖后从记忆写回，且不串场
+  {
+    console.log('[S42] 主要参数作用域记忆与自愈')
+    const PLACEHOLDER = '填写分类属性后合并自动生成'
+    const p = newPage({
+      ctrls: baseCtrl(),
+      ajaxHandler: router({ '/health': HEALTH_OK, '/check': CHECK_CLEAN }),
+    })
+    p.OnCreate()
+
+    // 构造向导结构：body > [pagepagename=GuideManagement] > form > 输入框
+    // zycsScopeEl 会把记忆写到最外层 [pagepagename] 祖先（向导对话框根节点）上
+    const scope = p.doc.createElement('div')
+    scope.setAttribute('pagepagename', 'GuideManagement')
+    p.doc.body.appendChild(scope)
+    scope.appendChild(p.form)
+
+    const mem = p.sandbox.__plmSmartZycsMem
+    ok('暴露 __plmSmartZycsMem 调试句柄', !!mem && typeof mem.write === 'function' && typeof mem.heal === 'function')
+
+    // 模拟助手回填主要参数 → 记忆写到向导根节点
+    const params = '型号:3WT11N04；额定电流:400A；极数:3P'
+    p.ctl['ZYCS_Value'].SetText(params)
+    mem.write(params)
+    ok('作用域记忆已写入', mem.read() === params, 'got=' + JSON.stringify(mem.read()))
+
+    // 场景 A：平台把 ZYCS 覆盖成占位文字 → 自愈写回
+    p.ctl['ZYCS_Value'].SetText(PLACEHOLDER)
+    mem.heal()
+    ok('占位文字覆盖后自愈写回', p.ctl['ZYCS_Value'].__text === params,
+      'got=' + JSON.stringify(p.ctl['ZYCS_Value'].__text))
+
+    // 场景 B：真实业务值不被自愈破坏
+    p.ctl['ZYCS_Value'].SetText('用户手工填写的内容')
+    mem.heal()
+    ok('真实业务值不被自愈覆盖', p.ctl['ZYCS_Value'].__text === '用户手工填写的内容',
+      'got=' + JSON.stringify(p.ctl['ZYCS_Value'].__text))
+
+    // 场景 C：空值 + 有记忆 → 自愈写回（表单重建后 ZYCS 为空的形态）
+    p.ctl['ZYCS_Value'].SetText('')
+    mem.heal()
+    ok('空值时自愈写回', p.ctl['ZYCS_Value'].__text === params,
+      'got=' + JSON.stringify(p.ctl['ZYCS_Value'].__text))
+
+    // 场景 D：记忆清空（向导已关/新开向导）后不再自愈
+    scope.__plmSmartZycs = null
+    p.ctl['ZYCS_Value'].SetText(PLACEHOLDER)
+    mem.heal()
+    ok('记忆清空后不自愈（不串场）', p.ctl['ZYCS_Value'].__text === PLACEHOLDER,
       'got=' + JSON.stringify(p.ctl['ZYCS_Value'].__text))
   }
 

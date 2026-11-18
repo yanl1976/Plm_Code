@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.25';
+  var PLUGIN_VERSION = '2.26';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -2037,6 +2037,10 @@
     try {
       if (dlg.similarMask && dlg.similarMask.parentNode) dlg.similarMask.parentNode.removeChild(dlg.similarMask);
     } catch (e) { }
+    // 规格联想浮层挂在 document.body 上，随弹窗一起清理（否则关闭后残留在页面）
+    try {
+      if (dlg.idePanel && dlg.idePanel.parentNode) dlg.idePanel.parentNode.removeChild(dlg.idePanel);
+    } catch (e) { }
     try { if (dlg.mask && dlg.mask.parentNode) dlg.mask.parentNode.removeChild(dlg.mask); } catch (e) { }
     dlg = null;
   }
@@ -2353,6 +2357,19 @@
     var specSug = dlgEl('div', 'display:none;margin-top:4px;border:' + C_LINE + ';border-radius:4px;'
       + 'overflow:hidden;font-size:12px;background:' + C_INPUT_BG + ';max-height:230px;overflow-y:auto;');
     specSug.className = 'plm-smart-dlg-sug';
+
+    // ---- 规格型号「IDE 式联想」浮层 ----
+    // 输入即出候选；↑↓ 选择 / Tab·Enter 补全 / Alt+1..8 直选 / Esc 关闭。
+    // 挂在 document.body + fixed 定位：弹窗面板自身 overflow:auto，内嵌浮层会被裁剪。
+    var idePanel = dlgEl('div', 'position:fixed;z-index:2147483005;display:none;'
+      + 'border:' + C_LINE + ';border-radius:4px;background:' + th.bg + ';'
+      + 'box-shadow:0 8px 22px rgba(0,0,0,.28);max-height:264px;overflow-y:auto;font-size:12px;');
+    idePanel.className = 'plm-smart-ide-panel';
+    document.body.appendChild(idePanel);
+    var ideItems = [];      // [{ value, note }]
+    var ideSel = -1;        // 当前高亮下标
+    var ideSeq = 0;         // 请求序号：丢弃过期响应
+    var ideTimer = null;
 
     // 规格的问题提示 + 规范写法
     var specTip = dlgEl('div', 'margin:2px 0 4px;min-height:16px;');
@@ -3701,6 +3718,126 @@
       });
     }
 
+    // ===== 规格型号 IDE 式联想：候选渲染 + 键盘补全（与页面 bindSpecComplete 同习惯）=====
+    function placeIde() {
+      try {
+        var r = specIn.getBoundingClientRect();
+        idePanel.style.left = Math.max(4, Math.round(r.left)) + 'px';
+        idePanel.style.top = Math.round(r.bottom + 4) + 'px';
+        idePanel.style.width = Math.max(180, Math.round(r.width)) + 'px';
+      } catch (e) { }
+    }
+
+    function hideIde() {
+      ideItems = [];
+      ideSel = -1;
+      if (idePanel) { idePanel.style.display = 'none'; idePanel.innerHTML = ''; }
+    }
+
+    function renderIde() {
+      if (!ideItems.length) { hideIde(); return; }
+      var qn = String(specIn.value || '').trim().toLowerCase();
+      var html = '<div style="padding:4px 8px;opacity:.6;border-bottom:' + C_LINE + ';font-size:11px;">'
+        + 'Tab/Enter 补全 · ↑↓ 选择 · Alt+序号直选 · Esc 关闭</div>';
+      for (var i = 0; i < ideItems.length; i++) {
+        var it = ideItems[i];
+        var s = String(it.value == null ? '' : it.value);
+        var idx = qn ? s.toLowerCase().indexOf(qn) : -1;
+        var body = idx >= 0
+          ? escHtml(s.slice(0, idx + qn.length))
+          + '<b style="color:' + th.accent + '">' + escHtml(s.slice(idx + qn.length)) + '</b>'
+          : escHtml(s);
+        html += '<div class="plm-smart-ide-item" data-idx="' + i + '"'
+          + ' style="padding:5px 8px;cursor:pointer;display:flex;gap:8px;align-items:center;'
+          + (i === ideSel ? 'background:rgba(64,158,255,.16);' : '')
+          + 'border-bottom:1px solid rgba(127,127,127,.12);">'
+          + '<span style="opacity:.45;min-width:14px;">' + (i < 8 ? (i + 1) : '·') + '</span>'
+          + '<span style="flex:1 1 auto;word-break:break-all;">' + body + '</span>'
+          + (it.note ? '<span style="opacity:.6;white-space:nowrap;">' + escHtml(it.note) + '</span>' : '')
+          + '</div>';
+      }
+      idePanel.innerHTML = html;
+      placeIde();
+      idePanel.style.display = 'block';
+      // 用 mousedown（早于输入框 blur）应用，避免点候选时面板先被收起
+      var rows = idePanel.children || [];
+      for (var k = 0; k < rows.length; k++) {
+        (function (row) {
+          if (String(row.className || '').indexOf('plm-smart-ide-item') < 0) return;
+          row.onmousedown = function (ev) {
+            if (ev && ev.preventDefault) ev.preventDefault();
+            applyIde(parseInt(row.getAttribute('data-idx'), 10));
+          };
+        })(rows[k]);
+      }
+    }
+
+    function applyIde(i) {
+      if (!(i >= 0) || i >= ideItems.length) return;
+      var v = String(ideItems[i].value == null ? '' : ideItems[i].value);
+      if (!v) return;
+      specIn.value = v;
+      hideIde();
+      checkNow();
+    }
+
+    /**
+     * 输入即联想：3130 同型号系列（带库存/型号段）优先，3100 存量写法补充，
+     * 归一化去重后前缀命中置顶，最多 8 条（Alt+1..8 与页面输入框一致）。
+     */
+    function loadIde() {
+      if (!dlg) return;
+      var q = String(specIn.value || '').trim();
+      if (q.length < 2) { hideIde(); return; }
+      var seq = ++ideSeq;
+      var qn = q.toLowerCase();
+      var out = [], seen = {};
+      function add(v, note) {
+        var s = String(v == null ? '' : v).trim();
+        if (!s || s.toLowerCase() === qn) return;
+        var k = normKey(s);
+        if (!k || seen[k]) return;
+        seen[k] = 1;
+        out.push({ value: s, note: note || '' });
+      }
+      var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
+      var pending = 1;   // 3100 一次；配置了 3130 再加一次
+      function flush() {
+        if (pending > 0 || seq !== ideSeq || !dlg) return;
+        var qk = normKey(q);
+        out.sort(function (a, b) {
+          var pa = normKey(a.value).indexOf(qk) === 0 ? 0 : 1;
+          var pb = normKey(b.value).indexOf(qk) === 0 ? 0 : 1;
+          return pa - pb;
+        });
+        ideItems = out.slice(0, 8);
+        ideSel = ideItems.length ? 0 : -1;
+        renderIde();
+      }
+      if (base) {
+        pending++;
+        apiAbsolute(base + '/api/new-material/spec-suggest?sub=' + encodeURIComponent(currentSub())
+          + '&q=' + encodeURIComponent(q), function (r) {
+          if (seq !== ideSeq) return;
+          var items = (r && r.items) || [];
+          for (var i = 0; i < items.length; i++) {
+            var it = items[i];
+            var note = [];
+            if (it.seriesSpecs > 1) note.push('型号段 ' + it.seriesSpecs + ' 条');
+            if (it.qty != null) note.push('库存 ' + it.qty);
+            add(it.spec, note.join(' · '));
+          }
+          pending--; flush();
+        });
+      }
+      apiAsync('/api/plm/suggest', { field: 'spec', value: q, sub: currentSub() }, function (r) {
+        if (seq !== ideSeq) return;
+        var list = (r && r.suggestions) || [];
+        for (var j = 0; j < list.length; j++) add(list[j] && list[j].value, '');
+        pending--; flush();
+      });
+    }
+
     var timer = null;
     function onChange() {
       if (timer) clearTimeout(timer);
@@ -3708,14 +3845,16 @@
     }
     // 多事件绑定：某些环境 input 不一定按预期触发（输入法、脚本赋值、平台键事件处理），
     // 用 keyup/change/paste 兜底，失焦时再强制校验一次
-    function bindLive(el) {
-      el.oninput = onChange;
+    function bindLive(el, extra) {
+      function fire(ev) { onChange(); if (extra) extra(ev); }
+      el.oninput = fire;
       el.onkeyup = onChange;
-      el.onchange = onChange;
-      el.onpaste = function () { setTimeout(onChange, 0); };
+      el.onchange = fire;
+      el.onpaste = function () { setTimeout(function () { fire(); }, 0); };
       el.onblur = function () {
         if (timer) clearTimeout(timer);
         checkNow();
+        if (extra) setTimeout(hideIde, 150);   // 联想浮层失焦收起（specSug 常驻逻辑不变）
         // 失焦不再关闭 specSug：
         //   specSug 是常驻的「同型号系列」参考列表，不是输入下拉补全。
         //   点「展开/折叠」、切到名称框等失焦动作，不应让清单消失（原来 180ms 后强制隐藏，导致此 bug）。
@@ -3723,7 +3862,50 @@
       };
     }
     bindLive(nameIn);
-    bindLive(specIn);
+    bindLive(specIn, function () {
+      if (ideTimer) clearTimeout(ideTimer);
+      ideTimer = setTimeout(loadIde, 260);
+    });
+
+    // 规格框键盘补全（捕获阶段不需要：弹窗内无平台按键拦截）
+    specIn.onkeydown = function (e) {
+      e = e || window.event;
+      if (!e || e.isComposing) return;
+      var vis = idePanel.style.display !== 'none' && ideItems.length > 0;
+      if (e.key === 'Escape' && vis) {
+        if (e.preventDefault) e.preventDefault();
+        hideIde();
+        return;
+      }
+      if (!vis) return;
+      if (e.altKey && /^[1-8]$/.test(String(e.key || ''))) {
+        if (e.preventDefault) e.preventDefault();
+        applyIde(parseInt(e.key, 10) - 1);
+        return;
+      }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        if (e.preventDefault) e.preventDefault();
+        var n = ideItems.length;
+        ideSel = e.key === 'ArrowDown'
+          ? (ideSel < 0 ? 0 : Math.min(ideSel + 1, n - 1))
+          : (ideSel < 0 ? n - 1 : Math.max(ideSel - 1, 0));
+        renderIde();
+        return;
+      }
+      if (e.key === 'Tab' && !e.shiftKey) {
+        if (e.preventDefault) e.preventDefault();
+        if (e.stopPropagation) e.stopPropagation();
+        applyIde(ideSel >= 0 ? ideSel : 0);
+        return;
+      }
+      if (e.key === 'Enter') {
+        if (e.preventDefault) e.preventDefault();
+        applyIde(ideSel >= 0 ? ideSel : 0);
+        return;
+      }
+    };
+    // 弹窗内容滚动时浮层位置会偏：收起即可（再次输入会重新弹出并定位）
+    try { panel.onscroll = function () { hideIde(); }; } catch (e) { }
 
     saveBtn.onclick = function () {
       var nm = nameIn.value;
@@ -3785,7 +3967,8 @@
     document.body.appendChild(mask);
     dlg = {
       mask: mask, panel: panel, nameIn: nameIn, specIn: specIn, paramsIn: paramsIn,
-      nameTip: nameTip, specTip: specTip, invWrap: invWrap, invBadge: invBadge, simBtn: simBtn
+      nameTip: nameTip, specTip: specTip, invWrap: invWrap, invBadge: invBadge, simBtn: simBtn,
+      idePanel: idePanel
     };
 
     renderInfo(null);

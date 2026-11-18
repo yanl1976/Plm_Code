@@ -1383,6 +1383,85 @@ async function run() {
       'got=' + JSON.stringify(q.ctl['FLSXHB_Value'].__text))
   }
 
+  // S44 弹窗内规格型号 IDE 联想：输入出候选 / Tab 补全 / ↑↓+Enter / Alt+序号 / Esc 关闭
+  {
+    console.log('[S44] 弹窗内规格型号 IDE 联想与键盘补全')
+    const SPEC_SUG_3130 = {
+      ok: true,
+      modelSummary: { model: 'IC65N', specCount: 5, itemCount: 3 },
+      items: [
+        { spec: 'IC65N C10A/2P', model: 'IC65N', seriesSpecs: 5, qty: 12 },
+        { spec: 'IC65N C16 3P', model: 'IC65N', seriesSpecs: 5, qty: 3 },
+      ],
+    }
+    const p = newPage({
+      ctrls: baseCtrl(),
+      ajaxHandler: router({
+        '/health': HEALTH_OK,
+        '/check': CHECK_CLEAN,
+        'spec-suggest': SPEC_SUG_3130,
+        '/suggest': SUGGEST_SPEC,
+      }),
+      globalCfg: { inventoryBase: 'http://127.0.0.1:3130', fillSpecToParams: true },
+    })
+    p.ctl['ECODE_Value'].__text = '10010500435'
+    p.ctl['ECODE_Value'].__tag = { value: '10010500435' }
+    p.ctl['ENAME_Value'].__text = '微型断路器'
+    p.ctl['GGXH_Value'].__text = ''
+    p.OnCreate()
+
+    const btn = findBtn(p)
+    if (btn) btn.onclick({ preventDefault() { }, stopPropagation() { } })
+    await sleep(80)
+    const specEl = findByClass(p, 'plm-smart-dlg-spec')
+    const ideEl = findByClass(p, 'plm-smart-ide-panel')
+    ok('弹窗内规格输入框存在', !!specEl)
+    ok('联想浮层已创建（挂 body 上）', !!ideEl)
+
+    const key = (el, k, extra) => el.onkeydown(Object.assign({ key: k, preventDefault() { }, stopPropagation() { } }, extra || {}))
+
+    // ① 输入 ic → 出候选（3130 同型号 + 3100 存量合并，前缀命中置顶）
+    specEl.value = 'ic'
+    specEl.oninput({})
+    await sleep(650)
+    ok('输入 2 字后浮层展开', !!ideEl && ideEl.style.display === 'block',
+      'display=' + (ideEl && ideEl.style.display))
+    // mock 的 innerHTML 只存字符串（真实浏览器会生成 DOM），这里按渲染结果断言。
+    // 注意候选值会按「已输入前缀 + 加粗后缀」拆成两段，不能整串匹配。
+    const ideHtml = String(ideEl.innerHTML || '')
+    ok('候选行已渲染（含 3130 数据）',
+      ideHtml.indexOf('plm-smart-ide-item') >= 0 && ideHtml.indexOf('65N C10A/2P') >= 0,
+      'html=' + ideHtml.slice(0, 100))
+
+    // ② Tab 补全第一个（前缀命中优先）
+    key(specEl, 'Tab')
+    ok('Tab 补全为第一个候选', specEl.value === 'IC65N C10A/2P', 'got=' + JSON.stringify(specEl.value))
+    ok('补全后浮层收起', ideEl.style.display === 'none')
+
+    // ③ ↑↓ + Enter：选第二个
+    specEl.value = 'ic'
+    specEl.oninput({})
+    await sleep(650)
+    key(specEl, 'ArrowDown')
+    key(specEl, 'Enter')
+    ok('↓+Enter 补全为第二个候选', specEl.value === 'IC65N C16 3P', 'got=' + JSON.stringify(specEl.value))
+
+    // ④ Alt+2 直选
+    specEl.value = 'ic'
+    specEl.oninput({})
+    await sleep(650)
+    key(specEl, '2', { altKey: true })
+    ok('Alt+2 直选第二个候选', specEl.value === 'IC65N C16 3P', 'got=' + JSON.stringify(specEl.value))
+
+    // ⑤ Esc 关闭浮层，不改值
+    specEl.value = 'ic'
+    specEl.oninput({})
+    await sleep(650)
+    key(specEl, 'Escape')
+    ok('Esc 收起浮层且不改值', ideEl.style.display === 'none' && specEl.value === 'ic',
+      'display=' + ideEl.style.display + ' value=' + JSON.stringify(specEl.value))
+  }
+
   console.log('\n----------------------------------------')
   console.log(`结果: ${pass} 通过 / ${fail} 失败`)
   if (fail) console.log('失败项: ' + failures.join(' | '))

@@ -357,8 +357,12 @@ export function complete(sub, q, items, depth = 0) {
       // 多参数段（脱扣曲线+额定电流）不适用：c16 可能还要补成 C16A。
       // 单参数段：解析值与片段相同，或片段正好是该段某个候选值（含不带单位的写法，
       // 如分断能力在存量里常写成裸数字 6 / 4.5，正则要求 kA 提不到值），都算写完。
+      // 型号段不参与「写完即推进」：
+      //   型号是自由文本，输入 "iC" 时解析出的型号也是 "iC"，看起来"值等于片段"，
+      //   于是被判为写完、跳到极数 —— 用户本想继续打 iC65N，候选却被换成了极数。
+      const isModelParam = seg.params.length === 1 && seg.params[0] === '型号'
       const tl2 = String(tail || '').toLowerCase()
-      const singleExact = seg.params.length === 1 && tl2.length > 0
+      const singleExact = !isModelParam && seg.params.length === 1 && tl2.length > 0
         && (String(vals[seg.params[0]] || '').toLowerCase() === tl2
           || (st.ranked.get(seg.key) || []).some((c) => String(c.value).toLowerCase() === tl2))
       // singleExact 也算"已填"：分断能力写裸数字（6）时正则提取不到值，
@@ -466,7 +470,11 @@ export function complete(sub, q, items, depth = 0) {
     // 这样「输完型号 → 提示电压」「输完电压 → 提示颜色」，不必依赖用户记得打空格。
     // 继续打字时会重新计算（此时 prefix 不再等于任何完整值，会回到本段补全），风险可控。
     const isComplete = all.some((x) => String(x.value).trim().toLowerCase() === k)
-    if (isComplete && idx < st.segments.length - 1) {
+    // 型号段不自动推进：型号是自由文本，用户经常写到一半（iC → iC65N）；
+    // 一旦当前串刚好等于某个存量型号，就跳到极数，导致「型号还没打完候选就没了」。
+    // 型号段结束以空格为准（打空格后自然进入下一段）。
+    const segIsModel = seg.params.length === 1 && seg.params[0] === '型号'
+    if (isComplete && !segIsModel && idx < st.segments.length - 1) {
       return complete(s6, String(raw).replace(/\s*$/, '') + ' ', items)
     }
   }

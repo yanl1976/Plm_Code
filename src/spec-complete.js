@@ -314,7 +314,18 @@ export function complete(sub, q, items, depth = 0) {
     if (!isModelSeg) {
       const v = extractParams(raw, seg.params)
       const filledNow = seg.params.every((p) => v[p])
-      if (filledNow && idx < st.segments.length - 1) {
+      // 该段填满后是否推进到下一段，分两种情况：
+      //   ① 值来自型号内嵌（GSW3-3200/3P 的 3P）→ 推进，否则会推荐"已经写过的极数"
+      //   ② 值来自用户单独输入（iC65N c16 的 C16）→ 不推进，让用户能继续补 C16A 这类组合值
+      // 只对「极数」做内嵌判断：型号串里最容易顺带包含的就是极数，
+      // 其它参数（脱扣曲线/电流）出现在型号里属巧合，不能据此跳段。
+      const vals = extractParams(raw, st.tokens)
+      const modelSeg = st.segments.find((sg) => sg.params.length === 1 && sg.params[0] === '型号')
+      const modelVal = modelSeg ? String(extractParams(raw, modelSeg.params)['型号'] || '') : ''
+      const isPoleSeg = seg.params.includes('极数')
+      const fromModel = !!modelVal && isPoleSeg
+        && seg.params.every((p) => vals[p] && modelVal.toUpperCase().includes(String(vals[p]).toUpperCase()))
+      if (filledNow && fromModel && idx < st.segments.length - 1) {
         return complete(s6, String(raw).replace(/\s*$/, '') + ' ', items, depth + 1)
       }
     }

@@ -1,10 +1,10 @@
 {
   "meta": {
     "version": "0.3.0",
-    "updatedAt": "2026-11-17T09:17:32.549Z",
+    "updatedAt": "2026-11-18T00:37:54.313Z",
     "note": "参数标准库开关。当前为影子模式：enabled=true + shadow=true，只记录「如果启用会推荐什么」，不改变任何校验结论，前端也不渲染 paramShadow 字段。关闭：enabled=false 立即可撤回。"
   },
-  "enabled": true,
+  "enabled": false,
   "shadow": false,
   "subs": [],
   "useFor": {

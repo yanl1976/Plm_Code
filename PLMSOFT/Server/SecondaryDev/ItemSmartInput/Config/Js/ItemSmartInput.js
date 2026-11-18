@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.17';
+  var PLUGIN_VERSION = '2.19';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -507,12 +507,13 @@
    */
   function syncParamsToZycs(v) {
     if (!CFG.enabled || !CFG.fillParamsToZycs) { log('主要参数未回填：开关关闭'); return false; }
-    if (!isValidCtl(state.zycs)) { log('主要参数未回填：未取到 ZYCS 控件'); return false; }
+    var ctl = zycsCtl();
+    if (!ctl) { log('主要参数未回填：页面上找不到 ZYCS 控件'); return false; }
     var s = String(v == null ? '' : v).replace(/^\s+|\s+$/g, '');
     if (!s) return false;
-    var lim = ctlLimit(state.zycs, CFG.zycsMaxLen);
+    var lim = ctlLimit(ctl, CFG.zycsMaxLen);
     if (s.length > lim) s = clipSmart(s, lim);
-    var ok = writeText(state.zycs, s);
+    var ok = writeText(ctl, s);
     if (ok) {
       fillMark.zycs = s;
       lockZycs();
@@ -521,10 +522,49 @@
     return ok;
   }
 
+  /**
+   * 取 ZYCS 控件。
+   *
+   * OnCreate 时 ZYCS 可能尚未渲染（该字段在未激活的 tab 里，平台按需渲染），
+   * GetControl 会返回 null 或 id=='' 的占位对象。所以每次用时重新探一次：
+   *   ① 缓存有效 → 直接用
+   *   ② 从当前 form page 再取一次
+   *   ③ 仍取不到 → 按 cid 找 DOM，包装成与控件同接口的对象（GetText/SetText）
+   * 三者都失败才返回 null，由调用方跳过并记日志。
+   */
+  function zycsCtl() {
+    if (isValidCtl(state.zycs)) return state.zycs;
+    try {
+      var pg = findFormPage();
+      if (pg && typeof pg.GetControl === 'function') {
+        var c = pg.GetControl(CFG.ctlZycs);
+        if (isValidCtl(c)) { state.zycs = c; log('ZYCS 控件已重新取到'); return c; }
+      }
+    } catch (e) { }
+    try {
+      var host = document.querySelector ? document.querySelector('[cid="' + CFG.ctlZycs + '"]') : null;
+      if (!host) return null;
+      var inp = (host.tagName === 'INPUT' || host.tagName === 'TEXTAREA')
+        ? host
+        : host.querySelector('input,textarea');
+      if (!inp) return null;
+      var wrap = {
+        id: CFG.ctlZycs,
+        GetText: function () { return inp.value; },
+        SetText: function (v) { inp.value = v; },
+        __el: inp,
+      };
+      state.zycs = wrap;
+      log('ZYCS 控件按 DOM 定位（' + inp.tagName + '）');
+      return wrap;
+    } catch (e) { return null; }
+  }
+
   /** ZYCS 回填后置灰只读：readonly 阻止键盘输入，样式给出视觉反馈 */
   function lockZycs() {
     try {
-      var el = domOf(state.zycs);
+      var c = zycsCtl();
+      var el = c && (c.__el || domOf(c));
       if (!el) return;
       el.readOnly = true;
       el.style.background = '#f2f2f2';
@@ -536,7 +576,7 @@
   /** 读 ZYCS 现有值（占位文字视为空），用于弹窗初始化 */
   function readZycsValue() {
     try {
-      var cur = readText(state.zycs);
+      var cur = readText(zycsCtl());
       if (!cur || cur === ZYCS_PLACEHOLDER) return '';
       return cur;
     } catch (e) { return ''; }
@@ -3421,6 +3461,22 @@
       state.ggxh = o.GetControl(CFG.ctlGgxh);
     try { bindSpecComplete(); } catch (e) { /* 控件 DOM 未就绪时，checkNow 会再试 */ }
       state.zycs = o.GetControl(CFG.ctlZycs);
+      // 诊断：ZYCS 控件取不到时，打印页面上所有含 ZYCS 的 cid，
+      // 用于区分是「字段名不对」还是「该页没有这个字段」。
+      if (!isValidCtl(state.zycs)) {
+        try {
+          var _zcEl = document.querySelector ? document.querySelector('[cid="' + CFG.ctlZycs + '"]') : null;
+          var _zcs = [];
+          var _els = document.querySelectorAll ? document.querySelectorAll('[cid]') : [];
+          for (var _i = 0; _i < _els.length; _i++) {
+            var _c = String(_els[_i].getAttribute('cid') || '');
+            if (_c.toUpperCase().indexOf('ZYCS') >= 0) _zcs.push(_c);
+          }
+          log('ZYCS 诊断：GetControl=' + (isValidCtl(state.zycs) ? 'ok' : 'null')
+            + '｜按 cid 找 DOM=' + (_zcEl ? _zcEl.tagName : 'null')
+            + '｜页面上含 ZYCS 的 cid=' + (_zcs.join(', ') || '（无）'));
+        } catch (e) { log('ZYCS 诊断异常', e && e.message); }
+      }
       state.ecode = o.GetControl(CFG.ctlEcode);
       state.itemtype = o.GetControl(CFG.ctlItemType);
       if (!isValidCtl(state.itemtype)) {

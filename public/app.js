@@ -2769,6 +2769,8 @@ function bindNmEvents() {
   $('#nmBig').onchange = onNmBigChange
   $('#nmMid').onchange = onNmMidChange
   $('#nmSub').onchange = onNmSubChange
+  // 用户一旦手动编辑（删改），后续改规格不再自动覆盖；切换小类时才重置
+  $('#nmParams') && $('#nmParams').addEventListener('input', () => { $('#nmParams').dataset.auto = '0' })
   // —— 主要参数框的联想：按「参数名 值」给候选 ——
 // 规格型号框只填型号，其余参数（额定电流、防护等级、附件…）都在这个框里，
 // 它需要自己的 IDE：输入参数名提示该参数的值，输入值反查参数名。
@@ -2843,6 +2845,8 @@ $('#nmSpec').addEventListener('input', () => {
 // 三条触发路径（切换小类 / 修改规格 / 进入页面）都只调这个函数，不再各写一份。
 async function nmFillExtras() {
   const el = $('#nmParams')
+  // 用户手动改过（含删空）就不再自动覆盖 —— 覆盖会把手写的删减冲掉。
+  if (el && el.dataset.auto === '0') return
   const sub = String(nm.cur.sub || '').trim()
   if (!el || !sub) return
 
@@ -3051,6 +3055,8 @@ function onNmSubPicked() {
   refreshNmCode()
   checkSelectAvailable()      // 该小类没有选型库时，按钮置灰
   loadNamingGuide(s ? s.sub : '')   // 显示该小类的国标写法参考
+  // 切小类：重置标记，允许按新小类重新填充
+  const _pEl = $('#nmParams'); if (_pEl) _pEl.dataset.auto = '1'
   nmFillExtras()
   }
 
@@ -3978,13 +3984,7 @@ async function nmShowSelect() {
       box.innerHTML = '<span class="muted">查询失败，请确认 3100 服务可访问</span>'
       return
     }
-    const rawItems = (r && r.items) || []
-    // 兜底：用规格串再过滤一次系列，防止 model 参数没传对时混入别家配件
-    const _specEl = $('#nmSpec')
-    const _specU = String((_specEl && _specEl.value) || '').toUpperCase()
-    const items = _specU
-      ? rawItems.filter((it) => !it.series || _specU.includes(String(it.series).toUpperCase()))
-      : rawItems
+    const items = (r && r.items) || []
     if (!items.length) { box.innerHTML = '<span class="muted">没有匹配的型号</span>'; return }
 
     // 按后端返回的 columns 动态出列（Excel 导入的系列有任意多个参数列）
@@ -4107,13 +4107,7 @@ async function nmShowSimilar(refresh, limitArg) {
     + '&spec=' + encodeURIComponent(spec) + '&code=' + encodeURIComponent(nm.cur.code || '')
     + '&limit=' + limit
     + (refresh === true ? '&refresh=1' : ''))
-  const rawItems = (r && r.items) || []
-    // 兜底：用规格串再过滤一次系列，防止 model 参数没传对时混入别家配件
-    const _specEl = $('#nmSpec')
-    const _specU = String((_specEl && _specEl.value) || '').toUpperCase()
-    const items = _specU
-      ? rawItems.filter((it) => !it.series || _specU.includes(String(it.series).toUpperCase()))
-      : rawItems
+  const items = (r && r.items) || []
   const total = (r && r.total) || { qty: 0, avbqty: 0 }
   const matchedTotal = (r && r.matchedTotal) || items.length
   let html = `<h3>类似型号明细 <span class="muted">（同小类相同/相似规格，共 ${matchedTotal} 条）</span></h3>`

@@ -256,7 +256,12 @@ for (const sub of SUBS) {
       // free 型（型号/脱扣器等）只给 Top5 参考值，但厂家系列必须一起给出 ——
       // 否则录入型号时看不到 MTZ3 / NSX630 / iC65N 这类系列，
       // 而"系列进型号参数"正是它们唯一该待的地方。
-      const ref = ranked.slice(0, 5).map(([value, count]) => ({ value, count }))
+      // free 型（型号/阻值/容值…）保留更多取值：
+      //   型号是"选哪个品牌系列"的依据，Top5 只够覆盖最高频的几个（GSB2 共 141 条却被 5 个名额挤掉）；
+      //   其余 free 型（阻值/容值）档位也多，给 20 个足够覆盖常见写法。
+      //   两者都只作参考值，不参与"标准值"判定，多留不会污染校验。
+      const FREE_LIMIT = name === '型号' ? 30 : 20
+      const ref = ranked.slice(0, FREE_LIMIT).map(([value, count]) => ({ value, count }))
       const seenFree = new Set(ref.map((x) => String(x.value)))
       const mfrFree = ((MFR.subs || {})[sub] || {})[name] || []
       const confFree = CONFIRMED[sub + '|' + name] || []
@@ -270,7 +275,7 @@ for (const sub of SUBS) {
       params[name] = {
         ...base,
         reference: ref,
-        note: '取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列',
+        note: '取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本',
       }
       continue
     }

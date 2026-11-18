@@ -34,6 +34,106 @@
               "count": 4
             },
             {
+              "value": "3WT2S20",
+              "count": 3
+            },
+            {
+              "value": "3WT1S08",
+              "count": 3
+            },
+            {
+              "value": "NSX630N",
+              "count": 3
+            },
+            {
+              "value": "3WT2S1600",
+              "count": 3
+            },
+            {
+              "value": "3WT2S25",
+              "count": 3
+            },
+            {
+              "value": "NSX400N",
+              "count": 3
+            },
+            {
+              "value": "3WT2S2000",
+              "count": 2
+            },
+            {
+              "value": "3WT1S16",
+              "count": 2
+            },
+            {
+              "value": "E1B800",
+              "count": 2
+            },
+            {
+              "value": "CW3-2500M/3",
+              "count": 2
+            },
+            {
+              "value": "3WT1S10",
+              "count": 2
+            },
+            {
+              "value": "MT12",
+              "count": 2
+            },
+            {
+              "value": "EVSS12H3F200",
+              "count": 2
+            },
+            {
+              "value": "EVSS32H3F200",
+              "count": 2
+            },
+            {
+              "value": "EVSS20H3F200",
+              "count": 2
+            },
+            {
+              "value": "NXA16N08-MF3-AC230",
+              "count": 2
+            },
+            {
+              "value": "GSW3-1600M/3",
+              "count": 2
+            },
+            {
+              "value": "GSW3-3200M/3",
+              "count": 2
+            },
+            {
+              "value": "NXA16N12-MF3-AC230",
+              "count": 2
+            },
+            {
+              "value": "CW1-1600/3",
+              "count": 2
+            },
+            {
+              "value": "3WT2S32",
+              "count": 2
+            },
+            {
+              "value": "CW1-3200/3",
+              "count": 2
+            },
+            {
+              "value": "MVS",
+              "count": 2
+            },
+            {
+              "value": "E2.2N",
+              "count": 2
+            },
+            {
+              "value": "CW3-2500H/3",
+              "count": 2
+            },
+            {
               "value": "MTZ1",
               "count": 0,
               "source": "manufacturer"
@@ -69,7 +169,7 @@
               "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "额定电流": {
           "type": "series",
@@ -782,6 +882,106 @@
               "count": 3
             },
             {
+              "value": "CW1-2000C/3",
+              "count": 3
+            },
+            {
+              "value": "MT32",
+              "count": 3
+            },
+            {
+              "value": "TGW1-2000/3P",
+              "count": 3
+            },
+            {
+              "value": "3WT8",
+              "count": 2
+            },
+            {
+              "value": "E6H",
+              "count": 2
+            },
+            {
+              "value": "E2S",
+              "count": 2
+            },
+            {
+              "value": "E1N",
+              "count": 2
+            },
+            {
+              "value": "EVSS25H3D200",
+              "count": 2
+            },
+            {
+              "value": "3WT2S20",
+              "count": 2
+            },
+            {
+              "value": "3WT2S1600",
+              "count": 2
+            },
+            {
+              "value": "GSW3-4000/3",
+              "count": 2
+            },
+            {
+              "value": "MT20",
+              "count": 2
+            },
+            {
+              "value": "NH1-2000",
+              "count": 2
+            },
+            {
+              "value": "MT12",
+              "count": 2
+            },
+            {
+              "value": "EVSS16H3D502",
+              "count": 2
+            },
+            {
+              "value": "MVS",
+              "count": 2
+            },
+            {
+              "value": "E2.2N",
+              "count": 1
+            },
+            {
+              "value": "3WT82025AV445AB1ZA04",
+              "count": 1
+            },
+            {
+              "value": "3WT80825AV445AB1ZA04",
+              "count": 1
+            },
+            {
+              "value": "E2N2000",
+              "count": 1
+            },
+            {
+              "value": "CW1-3200C/3",
+              "count": 1
+            },
+            {
+              "value": "CW1-2000/3P-2000A",
+              "count": 1
+            },
+            {
+              "value": "CW1-1600/3P-1250A",
+              "count": 1
+            },
+            {
+              "value": "NXA40N40-MD3-AC220",
+              "count": 1
+            },
+            {
+              "value": "E4S",
+              "count": 1
+            },
+            {
               "value": "MTZ1",
               "count": 0,
               "source": "manufacturer"
@@ -817,7 +1017,7 @@
               "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "额定电流": {
           "type": "series",
@@ -1423,6 +1623,106 @@
               "count": 17
             },
             {
+              "value": "XT1N160",
+              "count": 15
+            },
+            {
+              "value": "NSX160N",
+              "count": 14
+            },
+            {
+              "value": "NSX250N",
+              "count": 14
+            },
+            {
+              "value": "NSX100H",
+              "count": 14
+            },
+            {
+              "value": "XT2N160",
+              "count": 13
+            },
+            {
+              "value": "NSX400N",
+              "count": 12
+            },
+            {
+              "value": "GSM3-125L/32002",
+              "count": 12
+            },
+            {
+              "value": "NSX",
+              "count": 11
+            },
+            {
+              "value": "NSX160F",
+              "count": 11
+            },
+            {
+              "value": "CM3-63L/3300",
+              "count": 11
+            },
+            {
+              "value": "KFM5-250M",
+              "count": 11
+            },
+            {
+              "value": "NSX630N",
+              "count": 10
+            },
+            {
+              "value": "NM8N-250",
+              "count": 10
+            },
+            {
+              "value": "NDM3-63M/3300",
+              "count": 9
+            },
+            {
+              "value": "NXM-125S/3300",
+              "count": 9
+            },
+            {
+              "value": "CM3-100M/3300",
+              "count": 9
+            },
+            {
+              "value": "CM5-125L/3/3",
+              "count": 8
+            },
+            {
+              "value": "GSM3-63M/3300",
+              "count": 8
+            },
+            {
+              "value": "NXM-63H/3320",
+              "count": 8
+            },
+            {
+              "value": "CM3-100NB/3300",
+              "count": 8
+            },
+            {
+              "value": "NXM-63S/3300",
+              "count": 7
+            },
+            {
+              "value": "CM3-250L/3300",
+              "count": 7
+            },
+            {
+              "value": "NDM3-63M/33002",
+              "count": 7
+            },
+            {
+              "value": "GSM3-125L/3300",
+              "count": 7
+            },
+            {
+              "value": "CM3-250M/3300",
+              "count": 7
+            },
+            {
               "value": "NSX100",
               "count": 0,
               "source": "manufacturer"
@@ -1478,7 +1778,7 @@
               "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "壳架": {
           "type": "enum",
@@ -2181,6 +2481,66 @@
               "count": 9
             },
             {
+              "value": "TMA",
+              "count": 7
+            },
+            {
+              "value": "MIC",
+              "count": 7
+            },
+            {
+              "value": "MicroLogic",
+              "count": 5
+            },
+            {
+              "value": "TM-D",
+              "count": 5
+            },
+            {
+              "value": "mA",
+              "count": 5
+            },
+            {
+              "value": "TM100D",
+              "count": 4
+            },
+            {
+              "value": "TMA400",
+              "count": 4
+            },
+            {
+              "value": "MA100",
+              "count": 3
+            },
+            {
+              "value": "TM30H-100W",
+              "count": 3
+            },
+            {
+              "value": "TM240",
+              "count": 3
+            },
+            {
+              "value": "MA25",
+              "count": 3
+            },
+            {
+              "value": "TMDC",
+              "count": 3
+            },
+            {
+              "value": "MA12.5",
+              "count": 2
+            },
+            {
+              "value": "MA220",
+              "count": 2
+            },
+            {
+              "value": "MIC2.0",
+              "count": 2
+            },
+            {
               "value": "TM120M",
               "count": 0,
               "source": "manufacturer"
@@ -2192,11 +2552,6 @@
             },
             {
               "value": "TM220",
-              "count": 0,
-              "source": "manufacturer"
-            },
-            {
-              "value": "TM240",
               "count": 0,
               "source": "manufacturer"
             },
@@ -2241,7 +2596,7 @@
               "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "脱扣曲线": {
           "type": "enum",
@@ -2401,17 +2756,107 @@
               "count": 26
             },
             {
+              "value": "TGB1N-63",
+              "count": 22
+            },
+            {
+              "value": "CH3N-63",
+              "count": 20
+            },
+            {
+              "value": "CH3H-63",
+              "count": 20
+            },
+            {
+              "value": "GSB2-63M/3P",
+              "count": 16
+            },
+            {
+              "value": "GSB2-63M/2P",
+              "count": 14
+            },
+            {
+              "value": "GSB1-63M/3P",
+              "count": 14
+            },
+            {
+              "value": "NXBF-63",
+              "count": 13
+            },
+            {
+              "value": "NDB1-63",
+              "count": 12
+            },
+            {
+              "value": "NDB1-63C",
+              "count": 12
+            },
+            {
+              "value": "iC65N-D",
+              "count": 11
+            },
+            {
+              "value": "KFB3-63",
+              "count": 11
+            },
+            {
+              "value": "GSB1-63M/2P",
+              "count": 10
+            },
+            {
+              "value": "NYKB1H",
+              "count": 10
+            },
+            {
+              "value": "5SY6",
+              "count": 9
+            },
+            {
               "value": "iC65H",
-              "count": 0,
-              "source": "manufacturer"
+              "count": 8
+            },
+            {
+              "value": "GSB2-63L/2P",
+              "count": 8
+            },
+            {
+              "value": "GSB2-63M/1P",
+              "count": 7
             },
             {
               "value": "iC65L",
-              "count": 0,
-              "source": "manufacturer"
+              "count": 5
+            },
+            {
+              "value": "GSB2",
+              "count": 5
+            },
+            {
+              "value": "DZ47G-125",
+              "count": 5
+            },
+            {
+              "value": "GSB2L-63/D",
+              "count": 5
+            },
+            {
+              "value": "DZ47-125",
+              "count": 5
+            },
+            {
+              "value": "DZ47MA",
+              "count": 5
+            },
+            {
+              "value": "iC",
+              "count": 4
+            },
+            {
+              "value": "DZ47S",
+              "count": 4
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "极数": {
           "type": "enum",
@@ -3525,9 +3970,109 @@
             {
               "value": "AUX-C",
               "count": 2
+            },
+            {
+              "value": "AUX",
+              "count": 2
+            },
+            {
+              "value": "MX",
+              "count": 2
+            },
+            {
+              "value": "MN",
+              "count": 2
+            },
+            {
+              "value": "GSB-MX",
+              "count": 2
+            },
+            {
+              "value": "UVR",
+              "count": 2
+            },
+            {
+              "value": "3WT9855-1JK00",
+              "count": 1
+            },
+            {
+              "value": "3WL91110AT450AA0",
+              "count": 1
+            },
+            {
+              "value": "NSX630",
+              "count": 1
+            },
+            {
+              "value": "T4-T6",
+              "count": 1
+            },
+            {
+              "value": "LV432570",
+              "count": 1
+            },
+            {
+              "value": "MOE",
+              "count": 1
+            },
+            {
+              "value": "PA44936",
+              "count": 1
+            },
+            {
+              "value": "UVR-C",
+              "count": 1
+            },
+            {
+              "value": "3WT98631JK00",
+              "count": 1
+            },
+            {
+              "value": "YU-ISDAD038312R1",
+              "count": 1
+            },
+            {
+              "value": "LV426920",
+              "count": 1
+            },
+            {
+              "value": "220-250VDC",
+              "count": 1
+            },
+            {
+              "value": "DC",
+              "count": 1
+            },
+            {
+              "value": "LV429329",
+              "count": 1
+            },
+            {
+              "value": "IMN",
+              "count": 1
+            },
+            {
+              "value": "MOE220/250V",
+              "count": 1
+            },
+            {
+              "value": "3WL91110BA360AA0",
+              "count": 1
+            },
+            {
+              "value": "ABB",
+              "count": 1
+            },
+            {
+              "value": "100-250A",
+              "count": 1
+            },
+            {
+              "value": "OXT20x210X",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "附件类型": {
           "type": "enum",
@@ -4074,6 +4619,106 @@
               "count": 4
             },
             {
+              "value": "LC1G300KUEC",
+              "count": 4
+            },
+            {
+              "value": "LC1D09M7C",
+              "count": 3
+            },
+            {
+              "value": "NXC-85",
+              "count": 3
+            },
+            {
+              "value": "NXC-25",
+              "count": 3
+            },
+            {
+              "value": "GSC1-1810",
+              "count": 3
+            },
+            {
+              "value": "LC1D12M7C",
+              "count": 3
+            },
+            {
+              "value": "GSC2-225F",
+              "count": 3
+            },
+            {
+              "value": "NXC-16",
+              "count": 3
+            },
+            {
+              "value": "LC1D65M7C",
+              "count": 3
+            },
+            {
+              "value": "LC1",
+              "count": 3
+            },
+            {
+              "value": "NXC-38",
+              "count": 3
+            },
+            {
+              "value": "GSC1-9511",
+              "count": 3
+            },
+            {
+              "value": "LC1G245KUEC",
+              "count": 3
+            },
+            {
+              "value": "LC1G410KUEC",
+              "count": 3
+            },
+            {
+              "value": "LC1G205KUEC",
+              "count": 3
+            },
+            {
+              "value": "LC1G620KUEC",
+              "count": 3
+            },
+            {
+              "value": "NXC-18",
+              "count": 3
+            },
+            {
+              "value": "LC1D18Q7C",
+              "count": 2
+            },
+            {
+              "value": "LC1D32Q7C",
+              "count": 2
+            },
+            {
+              "value": "LC1D32M7",
+              "count": 2
+            },
+            {
+              "value": "GSC1-0910",
+              "count": 2
+            },
+            {
+              "value": "NXC-120",
+              "count": 2
+            },
+            {
+              "value": "LC1D09Q7C",
+              "count": 2
+            },
+            {
+              "value": "GSC1-3210",
+              "count": 2
+            },
+            {
+              "value": "LC1D25Q7C",
+              "count": 2
+            },
+            {
               "value": "LC1D12",
               "count": 0,
               "source": "manufacturer"
@@ -4129,7 +4774,7 @@
               "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "极数": {
           "type": "enum",
@@ -5004,9 +5649,109 @@
             {
               "value": "LADN11",
               "count": 1
+            },
+            {
+              "value": "FSZ-A11",
+              "count": 1
+            },
+            {
+              "value": "AX-3C/11",
+              "count": 1
+            },
+            {
+              "value": "LAD8N02",
+              "count": 1
+            },
+            {
+              "value": "FSZ-AS1",
+              "count": 1
+            },
+            {
+              "value": "CZ28-1600Q/10",
+              "count": 1
+            },
+            {
+              "value": "CAL18-11",
+              "count": 1
+            },
+            {
+              "value": "LAD8N11",
+              "count": 1
+            },
+            {
+              "value": "LAD-N22",
+              "count": 1
+            },
+            {
+              "value": "SK4-222d",
+              "count": 1
+            },
+            {
+              "value": "LADN22C",
+              "count": 1
+            },
+            {
+              "value": "NF1-22",
+              "count": 1
+            },
+            {
+              "value": "LADN20C",
+              "count": 1
+            },
+            {
+              "value": "AX-3X/31",
+              "count": 1
+            },
+            {
+              "value": "FSZ-A22",
+              "count": 1
+            },
+            {
+              "value": "CZH-1200/20",
+              "count": 1
+            },
+            {
+              "value": "3RH5921-1EA11",
+              "count": 1
+            },
+            {
+              "value": "3SU1400-1AA10-1DA0",
+              "count": 1
+            },
+            {
+              "value": "3KD91032",
+              "count": 1
+            },
+            {
+              "value": "3KD91035",
+              "count": 1
+            },
+            {
+              "value": "FSZ-AS2",
+              "count": 1
+            },
+            {
+              "value": "LAD4CM",
+              "count": 1
+            },
+            {
+              "value": "3RA1921-1DA00",
+              "count": 1
+            },
+            {
+              "value": "3RT6916-1CD00",
+              "count": 1
+            },
+            {
+              "value": "3RH6911-1HA22",
+              "count": 1
+            },
+            {
+              "value": "3RA2921-1AA00",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         }
       }
     },
@@ -6304,9 +7049,109 @@
             {
               "value": "HGL-125/3",
               "count": 1
+            },
+            {
+              "value": "HGL-250/4",
+              "count": 1
+            },
+            {
+              "value": "HGL-80/3",
+              "count": 1
+            },
+            {
+              "value": "HGL-400/3J",
+              "count": 1
+            },
+            {
+              "value": "TGH1N-125",
+              "count": 1
+            },
+            {
+              "value": "GL-63/3",
+              "count": 1
+            },
+            {
+              "value": "NH40-315/3",
+              "count": 1
+            },
+            {
+              "value": "NH40-400/3",
+              "count": 1
+            },
+            {
+              "value": "HH15AS-630/30",
+              "count": 1
+            },
+            {
+              "value": "HGL-400/3",
+              "count": 1
+            },
+            {
+              "value": "HGL-630/3",
+              "count": 1
+            },
+            {
+              "value": "HGL-630/3J",
+              "count": 1
+            },
+            {
+              "value": "3KD5040-0QE20-0",
+              "count": 1
+            },
+            {
+              "value": "NH40-400/4W",
+              "count": 1
+            },
+            {
+              "value": "3KD4840-0QE20-0",
+              "count": 1
+            },
+            {
+              "value": "NDG3-800/3K",
+              "count": 1
+            },
+            {
+              "value": "HYK-630A/3W",
+              "count": 1
+            },
+            {
+              "value": "HYK-1000A/3W",
+              "count": 1
+            },
+            {
+              "value": "HYK-400A/3W",
+              "count": 1
+            },
+            {
+              "value": "NH40-1000/3W",
+              "count": 1
+            },
+            {
+              "value": "NH40-400/3W",
+              "count": 1
+            },
+            {
+              "value": "NH40-630/3W",
+              "count": 1
+            },
+            {
+              "value": "GSG1-100",
+              "count": 1
+            },
+            {
+              "value": "3001R",
+              "count": 1
+            },
+            {
+              "value": "NYKG3-630/3P",
+              "count": 1
+            },
+            {
+              "value": "NYKG3-160/3P",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "额定电流": {
           "type": "series",
@@ -6558,6 +7403,106 @@
               "count": 8
             },
             {
+              "value": "3NE3",
+              "count": 5
+            },
+            {
+              "value": "RT28N-32/1P",
+              "count": 5
+            },
+            {
+              "value": "GSRT18-32X",
+              "count": 5
+            },
+            {
+              "value": "BUSSMANN",
+              "count": 4
+            },
+            {
+              "value": "RT18-32/0",
+              "count": 4
+            },
+            {
+              "value": "RT18-32X",
+              "count": 4
+            },
+            {
+              "value": "RS4-500/800",
+              "count": 3
+            },
+            {
+              "value": "RSF-3G",
+              "count": 3
+            },
+            {
+              "value": "RL5-16/06",
+              "count": 3
+            },
+            {
+              "value": "NRT28-32X",
+              "count": 3
+            },
+            {
+              "value": "RSF-4G",
+              "count": 2
+            },
+            {
+              "value": "RS8-500/1400",
+              "count": 2
+            },
+            {
+              "value": "XRNP1-10",
+              "count": 2
+            },
+            {
+              "value": "RSF-3",
+              "count": 2
+            },
+            {
+              "value": "RS",
+              "count": 2
+            },
+            {
+              "value": "RS4-1000V/800A",
+              "count": 2
+            },
+            {
+              "value": "RS711C",
+              "count": 2
+            },
+            {
+              "value": "RT28N-32",
+              "count": 2
+            },
+            {
+              "value": "RT18-32/1P",
+              "count": 2
+            },
+            {
+              "value": "NH1LSUB",
+              "count": 2
+            },
+            {
+              "value": "RT28-32/6A",
+              "count": 2
+            },
+            {
+              "value": "RS8-500/1600",
+              "count": 2
+            },
+            {
+              "value": "RT28",
+              "count": 2
+            },
+            {
+              "value": "RT14",
+              "count": 2
+            },
+            {
+              "value": "OSM",
+              "count": 2
+            },
+            {
               "value": "RT18-63",
               "count": 0,
               "source": "manufacturer"
@@ -6598,7 +7543,7 @@
               "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "外形尺寸": {
           "type": "enum",
@@ -7631,6 +8576,106 @@
               "count": 5
             },
             {
+              "value": "R015",
+              "count": 5
+            },
+            {
+              "value": "9F1",
+              "count": 4
+            },
+            {
+              "value": "RT36-00",
+              "count": 4
+            },
+            {
+              "value": "RS9A-690V",
+              "count": 4
+            },
+            {
+              "value": "3P",
+              "count": 4
+            },
+            {
+              "value": "R058",
+              "count": 3
+            },
+            {
+              "value": "R014",
+              "count": 3
+            },
+            {
+              "value": "GFA5",
+              "count": 3
+            },
+            {
+              "value": "RT36-2",
+              "count": 3
+            },
+            {
+              "value": "RS9A-A1110P-690V/4A",
+              "count": 2
+            },
+            {
+              "value": "RT14-10A",
+              "count": 2
+            },
+            {
+              "value": "RS711BC",
+              "count": 2
+            },
+            {
+              "value": "RT14-2A",
+              "count": 1
+            },
+            {
+              "value": "RS9A-A111OP-690V/25A",
+              "count": 1
+            },
+            {
+              "value": "RS9A-A1110-690V/4A",
+              "count": 1
+            },
+            {
+              "value": "RT14-20A",
+              "count": 1
+            },
+            {
+              "value": "RT28-500V/63A",
+              "count": 1
+            },
+            {
+              "value": "RT18-32/32A",
+              "count": 1
+            },
+            {
+              "value": "RT14-16A",
+              "count": 1
+            },
+            {
+              "value": "RS9A-A1110-690V/2A",
+              "count": 1
+            },
+            {
+              "value": "RS9A-A1110P-690V/10A",
+              "count": 1
+            },
+            {
+              "value": "RS9A-A1110P-690V/1A",
+              "count": 1
+            },
+            {
+              "value": "RL98B-32/2A",
+              "count": 1
+            },
+            {
+              "value": "RT14-4A",
+              "count": 1
+            },
+            {
+              "value": "RS9-660V/16A",
+              "count": 1
+            },
+            {
               "value": "RT18-32",
               "count": 0,
               "source": "manufacturer"
@@ -7661,7 +8706,7 @@
               "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "外形尺寸": {
           "type": "enum",
@@ -8356,9 +9401,109 @@
             {
               "value": "NXU-II",
               "count": 4
+            },
+            {
+              "value": "TGDY55II-40",
+              "count": 3
+            },
+            {
+              "value": "NU6-II",
+              "count": 2
+            },
+            {
+              "value": "NXU-IIG",
+              "count": 2
+            },
+            {
+              "value": "RXM041BN7",
+              "count": 1
+            },
+            {
+              "value": "NXU-II/F",
+              "count": 1
+            },
+            {
+              "value": "GSU1-40KA/1P",
+              "count": 1
+            },
+            {
+              "value": "DZ47Y-20kA",
+              "count": 1
+            },
+            {
+              "value": "RXM",
+              "count": 1
+            },
+            {
+              "value": "LAD8N20",
+              "count": 1
+            },
+            {
+              "value": "GSU1-40/420",
+              "count": 1
+            },
+            {
+              "value": "CU31-420/100-4",
+              "count": 1
+            },
+            {
+              "value": "GSU1",
+              "count": 1
+            },
+            {
+              "value": "NU210-40",
+              "count": 1
+            },
+            {
+              "value": "DZ47sY-I",
+              "count": 1
+            },
+            {
+              "value": "RMU3-B100/4P",
+              "count": 1
+            },
+            {
+              "value": "SDZ100-50/600",
+              "count": 1
+            },
+            {
+              "value": "TGDY55II-120",
+              "count": 1
+            },
+            {
+              "value": "HKPD-B80/420/4P",
+              "count": 1
+            },
+            {
+              "value": "HKPD-A50/420/4P",
+              "count": 1
+            },
+            {
+              "value": "CU31-420/80-4",
+              "count": 1
+            },
+            {
+              "value": "GDL-BC25/4P/Y",
+              "count": 1
+            },
+            {
+              "value": "GSU1-60kA/385V",
+              "count": 1
+            },
+            {
+              "value": "BU3-25/385/4P",
+              "count": 1
+            },
+            {
+              "value": "Cardrew",
+              "count": 1
+            },
+            {
+              "value": "JLSP-400/40/2P",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "极数": {
           "type": "enum",
@@ -8493,9 +9638,109 @@
             {
               "value": "LNFDH-200",
               "count": 3
+            },
+            {
+              "value": "NKB1-45",
+              "count": 3
+            },
+            {
+              "value": "NXSCB-II",
+              "count": 3
+            },
+            {
+              "value": "RS-211s",
+              "count": 2
+            },
+            {
+              "value": "OUVR-2",
+              "count": 2
+            },
+            {
+              "value": "LNFDH-210A",
+              "count": 2
+            },
+            {
+              "value": "GSG2-630/3J",
+              "count": 2
+            },
+            {
+              "value": "ARD2F-6.3",
+              "count": 2
+            },
+            {
+              "value": "ARD2F-250",
+              "count": 2
+            },
+            {
+              "value": "KLK23-8M",
+              "count": 1
+            },
+            {
+              "value": "N9-RP-P465",
+              "count": 1
+            },
+            {
+              "value": "MSC306E-40C0",
+              "count": 1
+            },
+            {
+              "value": "KFD2-CD-Ex1.32",
+              "count": 1
+            },
+            {
+              "value": "SVP-10",
+              "count": 1
+            },
+            {
+              "value": "SAKAP",
+              "count": 1
+            },
+            {
+              "value": "DGG2MHS012D",
+              "count": 1
+            },
+            {
+              "value": "RZS-1000",
+              "count": 1
+            },
+            {
+              "value": "SBK",
+              "count": 1
+            },
+            {
+              "value": "GVD1200",
+              "count": 1
+            },
+            {
+              "value": "GJC4",
+              "count": 1
+            },
+            {
+              "value": "LVG-S",
+              "count": 1
+            },
+            {
+              "value": "CZ2047",
+              "count": 1
+            },
+            {
+              "value": "EXLL",
+              "count": 1
+            },
+            {
+              "value": "SPK-C3-200-10/35-09",
+              "count": 1
+            },
+            {
+              "value": "CZ2067",
+              "count": 1
+            },
+            {
+              "value": "RMC-131D",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         }
       }
     },
@@ -8533,6 +9778,106 @@
               "count": 23
             },
             {
+              "value": "CJH-0.66",
+              "count": 16
+            },
+            {
+              "value": "LZZBJ9-10C2",
+              "count": 15
+            },
+            {
+              "value": "BH-0.66-60II",
+              "count": 11
+            },
+            {
+              "value": "CHL1-0.66",
+              "count": 8
+            },
+            {
+              "value": "LZZBJ9-10C6",
+              "count": 8
+            },
+            {
+              "value": "LMZJ1-0.5",
+              "count": 8
+            },
+            {
+              "value": "BH-0.66-30I",
+              "count": 7
+            },
+            {
+              "value": "CHL1",
+              "count": 6
+            },
+            {
+              "value": "BH-0.66-30",
+              "count": 6
+            },
+            {
+              "value": "BH-0.66-80",
+              "count": 6
+            },
+            {
+              "value": "BH-0.66-40II",
+              "count": 5
+            },
+            {
+              "value": "BH-0.66-60",
+              "count": 5
+            },
+            {
+              "value": "BH-0.66-80II",
+              "count": 5
+            },
+            {
+              "value": "BH-0.66-30II",
+              "count": 4
+            },
+            {
+              "value": "LMK2-0.66/30",
+              "count": 4
+            },
+            {
+              "value": "LMK3-0.66",
+              "count": 4
+            },
+            {
+              "value": "LMZ1-1.14",
+              "count": 4
+            },
+            {
+              "value": "Toroid",
+              "count": 4
+            },
+            {
+              "value": "BH-0.66-40I",
+              "count": 3
+            },
+            {
+              "value": "LMK2-0.66/30I",
+              "count": 3
+            },
+            {
+              "value": "SDH-01",
+              "count": 3
+            },
+            {
+              "value": "BH-0.66-100III",
+              "count": 3
+            },
+            {
+              "value": "LZZBJ9-12",
+              "count": 3
+            },
+            {
+              "value": "BH-0.66-50",
+              "count": 3
+            },
+            {
+              "value": "BH-0.66-100II",
+              "count": 2
+            },
+            {
               "value": "BH-0.66 30I",
               "count": 0,
               "source": "manufacturer"
@@ -8563,7 +9908,7 @@
               "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "变比": {
           "type": "series",
@@ -11020,9 +12365,109 @@
             {
               "value": "11kW",
               "count": 3
+            },
+            {
+              "value": "30kW",
+              "count": 3
+            },
+            {
+              "value": "18.5kW",
+              "count": 2
+            },
+            {
+              "value": "3kW",
+              "count": 2
+            },
+            {
+              "value": "GD220-1490A-0.013mH-6",
+              "count": 1
+            },
+            {
+              "value": "HSL119-3200A-0.00793mH",
+              "count": 1
+            },
+            {
+              "value": "AC600V/AC1230A",
+              "count": 1
+            },
+            {
+              "value": "GD220-1025A-0.017mH-6",
+              "count": 1
+            },
+            {
+              "value": "OCL-0011-ALU1200-1L",
+              "count": 1
+            },
+            {
+              "value": "OCL-0016-ALU900-1L",
+              "count": 1
+            },
+            {
+              "value": "OCL-00030-ALU2100-1L",
+              "count": 1
+            },
+            {
+              "value": "OCL-00050-ALU2000-1L",
+              "count": 1
+            },
+            {
+              "value": "OCL-00065-ALU1500-1L",
+              "count": 1
+            },
+            {
+              "value": "OCL-0020-ALU700-1L",
+              "count": 1
+            },
+            {
+              "value": "CHKSG-727.77-0.03445",
+              "count": 1
+            },
+            {
+              "value": "OCLSG-6/2.2",
+              "count": 1
+            },
+            {
+              "value": "OCLSG-15/2.2",
+              "count": 1
+            },
+            {
+              "value": "OCLSG-10/2.2",
+              "count": 1
+            },
+            {
+              "value": "OCLSG-5/2.2",
+              "count": 1
+            },
+            {
+              "value": "800A/0.2mH",
+              "count": 1
+            },
+            {
+              "value": "1400A/0.2mH",
+              "count": 1
+            },
+            {
+              "value": "ACL2-037-4",
+              "count": 1
+            },
+            {
+              "value": "OCL2-7R5-4",
+              "count": 1
+            },
+            {
+              "value": "OCL2-015-4",
+              "count": 1
+            },
+            {
+              "value": "OCL2-022-4",
+              "count": 1
+            },
+            {
+              "value": "OCL2-011-4",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "额定容量": {
           "type": "enum",
@@ -11337,9 +12782,109 @@
             {
               "value": "400VA",
               "count": 3
+            },
+            {
+              "value": "150kVA",
+              "count": 3
+            },
+            {
+              "value": "42kVA",
+              "count": 3
+            },
+            {
+              "value": "173kVA",
+              "count": 3
+            },
+            {
+              "value": "95kVA",
+              "count": 3
+            },
+            {
+              "value": "190kVA",
+              "count": 3
+            },
+            {
+              "value": "120kVA",
+              "count": 3
+            },
+            {
+              "value": "105kVA",
+              "count": 2
+            },
+            {
+              "value": "100kVA",
+              "count": 2
+            },
+            {
+              "value": "750VA/650VA/100VA",
+              "count": 2
+            },
+            {
+              "value": "15kVA",
+              "count": 2
+            },
+            {
+              "value": "420kVA",
+              "count": 2
+            },
+            {
+              "value": "52kVA",
+              "count": 2
+            },
+            {
+              "value": "2100kVA",
+              "count": 2
+            },
+            {
+              "value": "SCB14-1600/10",
+              "count": 2
+            },
+            {
+              "value": "65kVA/380V/380V",
+              "count": 2
+            },
+            {
+              "value": "1250kVA",
+              "count": 2
+            },
+            {
+              "value": "80kVA",
+              "count": 2
+            },
+            {
+              "value": "SCB",
+              "count": 2
+            },
+            {
+              "value": "JBK3-400",
+              "count": 2
+            },
+            {
+              "value": "190KVA",
+              "count": 2
+            },
+            {
+              "value": "240kVA",
+              "count": 2
+            },
+            {
+              "value": "205kVA",
+              "count": 2
+            },
+            {
+              "value": "116kVA",
+              "count": 2
+            },
+            {
+              "value": "25VA",
+              "count": 1
+            },
+            {
+              "value": "300VA",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "额定容量": {
           "type": "free",
@@ -11367,9 +12912,69 @@
             {
               "value": "400VA",
               "count": 4
+            },
+            {
+              "value": "100VA",
+              "count": 4
+            },
+            {
+              "value": "100kVA",
+              "count": 4
+            },
+            {
+              "value": "1250kVA",
+              "count": 4
+            },
+            {
+              "value": "65kVA",
+              "count": 3
+            },
+            {
+              "value": "750VA",
+              "count": 3
+            },
+            {
+              "value": "150kVA",
+              "count": 3
+            },
+            {
+              "value": "200kVA",
+              "count": 3
+            },
+            {
+              "value": "1000VA",
+              "count": 3
+            },
+            {
+              "value": "42kVA",
+              "count": 3
+            },
+            {
+              "value": "173kVA",
+              "count": 3
+            },
+            {
+              "value": "95kVA",
+              "count": 3
+            },
+            {
+              "value": "190kVA",
+              "count": 3
+            },
+            {
+              "value": "120kVA",
+              "count": 3
+            },
+            {
+              "value": "630kVA",
+              "count": 3
+            },
+            {
+              "value": "2000kVA",
+              "count": 3
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "电压比": {
           "type": "enum",
@@ -11537,9 +13142,109 @@
             {
               "value": "200VA",
               "count": 5
+            },
+            {
+              "value": "I/I-12",
+              "count": 4
+            },
+            {
+              "value": "JBK3-1000",
+              "count": 4
+            },
+            {
+              "value": "1000VA",
+              "count": 4
+            },
+            {
+              "value": "400VA",
+              "count": 3
+            },
+            {
+              "value": "480/220V",
+              "count": 2
+            },
+            {
+              "value": "JBK3-100",
+              "count": 2
+            },
+            {
+              "value": "JBK3-400",
+              "count": 2
+            },
+            {
+              "value": "630VA",
+              "count": 2
+            },
+            {
+              "value": "220V/220V",
+              "count": 2
+            },
+            {
+              "value": "BK-500VA",
+              "count": 2
+            },
+            {
+              "value": "JBK5-2500",
+              "count": 2
+            },
+            {
+              "value": "JBK5",
+              "count": 2
+            },
+            {
+              "value": "480V/115V",
+              "count": 2
+            },
+            {
+              "value": "JBK1-500VA",
+              "count": 2
+            },
+            {
+              "value": "220V/24V",
+              "count": 2
+            },
+            {
+              "value": "NDK-5000VA",
+              "count": 2
+            },
+            {
+              "value": "10kVA",
+              "count": 2
+            },
+            {
+              "value": "NDK-1000VA",
+              "count": 2
+            },
+            {
+              "value": "I-12",
+              "count": 1
+            },
+            {
+              "value": "220V/220V/220V",
+              "count": 1
+            },
+            {
+              "value": "YL.GPBG-17/0.54Z",
+              "count": 1
+            },
+            {
+              "value": "400/220V",
+              "count": 1
+            },
+            {
+              "value": "SG-1.2",
+              "count": 1
+            },
+            {
+              "value": "JBK3-63",
+              "count": 1
+            },
+            {
+              "value": "JBK3-50",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "额定容量": {
           "type": "semi",
@@ -12124,22 +13829,112 @@
               "count": 4
             },
             {
+              "value": "JZX-22F",
+              "count": 4
+            },
+            {
+              "value": "HH54P-FL",
+              "count": 4
+            },
+            {
+              "value": "JZX-22F/4Z",
+              "count": 4
+            },
+            {
+              "value": "RXM2LB2BD",
+              "count": 4
+            },
+            {
+              "value": "NXJ/2Z",
+              "count": 4
+            },
+            {
+              "value": "JZX54P/L",
+              "count": 3
+            },
+            {
+              "value": "RXM3AB",
+              "count": 3
+            },
+            {
+              "value": "RXZL420",
+              "count": 3
+            },
+            {
+              "value": "RXM3AB2BD",
+              "count": 3
+            },
+            {
+              "value": "RXM2AB2BD",
+              "count": 3
+            },
+            {
+              "value": "RXM4AB2BD",
+              "count": 3
+            },
+            {
+              "value": "TGJC1-54Z",
+              "count": 3
+            },
+            {
+              "value": "RXM2LB2P7",
+              "count": 3
+            },
+            {
+              "value": "CR-MX230AC4L",
+              "count": 3
+            },
+            {
+              "value": "JZX52P/L",
+              "count": 2
+            },
+            {
+              "value": "RXM040W",
+              "count": 2
+            },
+            {
+              "value": "G5V-1",
+              "count": 2
+            },
+            {
+              "value": "RJ2S-CL-D24/SJ2S-05B",
+              "count": 2
+            },
+            {
+              "value": "RXM2AB2F7",
+              "count": 2
+            },
+            {
+              "value": "RXG22BD",
+              "count": 2
+            },
+            {
+              "value": "NXJ-AC220V-4Z1",
+              "count": 2
+            },
+            {
+              "value": "RXM3AB2FD",
+              "count": 2
+            },
+            {
+              "value": "MY2NJ-D2",
+              "count": 2
+            },
+            {
+              "value": "CR-2C-DC24V-ZW",
+              "count": 2
+            },
+            {
+              "value": "JZX-22FD/4Z",
+              "count": 2
+            },
+            {
               "value": "RXM2AB1BD",
               "count": 0,
               "source": "manufacturer"
             },
             {
-              "value": "RXM2AB2BD",
-              "count": 0,
-              "source": "manufacturer"
-            },
-            {
               "value": "RXM4AB1BD",
-              "count": 0,
-              "source": "manufacturer"
-            },
-            {
-              "value": "RXM4AB2BD",
               "count": 0,
               "source": "manufacturer"
             },
@@ -12164,7 +13959,7 @@
               "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "线圈电压": {
           "type": "semi",
@@ -12609,6 +14404,106 @@
               "count": 5
             },
             {
+              "value": "CJR3-105B",
+              "count": 4
+            },
+            {
+              "value": "JRS1Ds-25/Z",
+              "count": 4
+            },
+            {
+              "value": "NXR-200",
+              "count": 3
+            },
+            {
+              "value": "NR2-25/Z",
+              "count": 3
+            },
+            {
+              "value": "NXR-100",
+              "count": 3
+            },
+            {
+              "value": "NXR-12",
+              "count": 3
+            },
+            {
+              "value": "LRD08C",
+              "count": 3
+            },
+            {
+              "value": "LRD12C",
+              "count": 2
+            },
+            {
+              "value": "LRD06C",
+              "count": 2
+            },
+            {
+              "value": "LRD16C",
+              "count": 2
+            },
+            {
+              "value": "LRD07C",
+              "count": 2
+            },
+            {
+              "value": "NXR-38",
+              "count": 2
+            },
+            {
+              "value": "LRD32C",
+              "count": 2
+            },
+            {
+              "value": "NDR2-9557",
+              "count": 2
+            },
+            {
+              "value": "LRD10C",
+              "count": 2
+            },
+            {
+              "value": "JRS1Ds-93/Z",
+              "count": 2
+            },
+            {
+              "value": "CJR3-105",
+              "count": 2
+            },
+            {
+              "value": "JR36-20",
+              "count": 2
+            },
+            {
+              "value": "LRD03C",
+              "count": 2
+            },
+            {
+              "value": "LR9D5569",
+              "count": 1
+            },
+            {
+              "value": "NR2-25",
+              "count": 1
+            },
+            {
+              "value": "NR2-93",
+              "count": 1
+            },
+            {
+              "value": "LRD350C",
+              "count": 1
+            },
+            {
+              "value": "LR9F",
+              "count": 1
+            },
+            {
+              "value": "JRS1-40-80/Z",
+              "count": 1
+            },
+            {
               "value": "LRD3355",
               "count": 0,
               "source": "manufacturer"
@@ -12629,7 +14524,7 @@
               "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "整定电流范围": {
           "type": "free",
@@ -12659,6 +14554,66 @@
               "count": 5
             },
             {
+              "value": "12~18A",
+              "count": 4
+            },
+            {
+              "value": "17-25A",
+              "count": 3
+            },
+            {
+              "value": "37-50A",
+              "count": 3
+            },
+            {
+              "value": "7-10A",
+              "count": 3
+            },
+            {
+              "value": "1.6-2.5A",
+              "count": 3
+            },
+            {
+              "value": "30-40A",
+              "count": 3
+            },
+            {
+              "value": "1-1.6A",
+              "count": 3
+            },
+            {
+              "value": "63~80A",
+              "count": 2
+            },
+            {
+              "value": "9~13A",
+              "count": 2
+            },
+            {
+              "value": "0.63-1A",
+              "count": 2
+            },
+            {
+              "value": "80-104A",
+              "count": 2
+            },
+            {
+              "value": "45-65A",
+              "count": 2
+            },
+            {
+              "value": "1.25-2A",
+              "count": 2
+            },
+            {
+              "value": "2.5-4A",
+              "count": 2
+            },
+            {
+              "value": "10~16A",
+              "count": 2
+            },
+            {
               "value": "30~38A",
               "count": 0,
               "source": "manufacturer"
@@ -12672,14 +14627,9 @@
               "value": "55~70A",
               "count": 0,
               "source": "manufacturer"
-            },
-            {
-              "value": "63~80A",
-              "count": 0,
-              "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         }
       }
     },
@@ -12717,6 +14667,106 @@
               "count": 4
             },
             {
+              "value": "LS-110",
+              "count": 4
+            },
+            {
+              "value": "CP-96-V",
+              "count": 3
+            },
+            {
+              "value": "DQ72-c",
+              "count": 3
+            },
+            {
+              "value": "PD204U-AD1",
+              "count": 3
+            },
+            {
+              "value": "PZ666-2S",
+              "count": 3
+            },
+            {
+              "value": "63C2",
+              "count": 2
+            },
+            {
+              "value": "KLY-C1101V",
+              "count": 2
+            },
+            {
+              "value": "SK284U-AL4",
+              "count": 2
+            },
+            {
+              "value": "PZ72-DV/J",
+              "count": 2
+            },
+            {
+              "value": "DQ96-C",
+              "count": 2
+            },
+            {
+              "value": "PY194U-3K4/M",
+              "count": 2
+            },
+            {
+              "value": "0-50V",
+              "count": 2
+            },
+            {
+              "value": "PD204U-AK1",
+              "count": 2
+            },
+            {
+              "value": "PKH800-3U",
+              "count": 2
+            },
+            {
+              "value": "CCZN200-PD1-U3",
+              "count": 2
+            },
+            {
+              "value": "44C2-V",
+              "count": 2
+            },
+            {
+              "value": "AMC96L-AV3",
+              "count": 2
+            },
+            {
+              "value": "KLY-C1101",
+              "count": 1
+            },
+            {
+              "value": "CL42-AV3",
+              "count": 1
+            },
+            {
+              "value": "42L1",
+              "count": 1
+            },
+            {
+              "value": "99C1-750/5",
+              "count": 1
+            },
+            {
+              "value": "CP72-DV",
+              "count": 1
+            },
+            {
+              "value": "42L1600V",
+              "count": 1
+            },
+            {
+              "value": "PZ194U-9X4",
+              "count": 1
+            },
+            {
+              "value": "PZ72-AV3/J",
+              "count": 1
+            },
+            {
               "value": "6L2",
               "count": 0,
               "source": "manufacturer"
@@ -12732,7 +14782,7 @@
               "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "量程": {
           "type": "semi",
@@ -12964,6 +15014,106 @@
               "count": 4
             },
             {
+              "value": "EQ96-X",
+              "count": 4
+            },
+            {
+              "value": "99T666-A",
+              "count": 3
+            },
+            {
+              "value": "EQ48-X",
+              "count": 3
+            },
+            {
+              "value": "42C1-V",
+              "count": 3
+            },
+            {
+              "value": "CL42-AI3",
+              "count": 3
+            },
+            {
+              "value": "SK284I-AL4",
+              "count": 3
+            },
+            {
+              "value": "42C3-A",
+              "count": 3
+            },
+            {
+              "value": "CP72-DA",
+              "count": 2
+            },
+            {
+              "value": "PZ72-DI/J",
+              "count": 2
+            },
+            {
+              "value": "FL39",
+              "count": 2
+            },
+            {
+              "value": "SK284I-AK1",
+              "count": 2
+            },
+            {
+              "value": "AMC72L-AI",
+              "count": 2
+            },
+            {
+              "value": "PA666-2S",
+              "count": 2
+            },
+            {
+              "value": "CCZN200-PD1-I",
+              "count": 2
+            },
+            {
+              "value": "AMC96L-AI3",
+              "count": 2
+            },
+            {
+              "value": "SK284I-3L4",
+              "count": 2
+            },
+            {
+              "value": "DM6056A",
+              "count": 1
+            },
+            {
+              "value": "EPD804I-DX1G",
+              "count": 1
+            },
+            {
+              "value": "99T1-A",
+              "count": 1
+            },
+            {
+              "value": "SK284I-9L4",
+              "count": 1
+            },
+            {
+              "value": "KLY-L801A",
+              "count": 1
+            },
+            {
+              "value": "99T10-400/5A",
+              "count": 1
+            },
+            {
+              "value": "ACR310E",
+              "count": 1
+            },
+            {
+              "value": "99T10-20/5A",
+              "count": 1
+            },
+            {
+              "value": "99T10-200/5A",
+              "count": 1
+            },
+            {
               "value": "6L2",
               "count": 0,
               "source": "manufacturer"
@@ -12979,7 +15129,7 @@
               "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "量程": {
           "type": "semi",
@@ -13714,9 +15864,109 @@
             {
               "value": "ZFL-4-H38-102.4BM-G05L-2m-J",
               "count": 1
+            },
+            {
+              "value": "A-ZKT-D120H38-102.4BM-C24F",
+              "count": 1
+            },
+            {
+              "value": "HTB-38L34C10-30FL1024BM-S8-C4",
+              "count": 1
+            },
+            {
+              "value": "BDEEX100HA301024D3",
+              "count": 1
+            },
+            {
+              "value": "EI100P38K-H6PR-1024",
+              "count": 1
+            },
+            {
+              "value": "ZFL-D6-102.4BM-G8-26F-4M-J",
+              "count": 1
+            },
+            {
+              "value": "ZFL-H38-102.4BM-G8-26FD-2M-J",
+              "count": 1
+            },
+            {
+              "value": "RVI70E-021K2A61N",
+              "count": 1
+            },
+            {
+              "value": "EI100P38K-H6TR-1024.6CY100",
+              "count": 1
+            },
+            {
+              "value": "HS35A",
+              "count": 1
+            },
+            {
+              "value": "RVI58N-011AAR61N-01250",
+              "count": 1
+            },
+            {
+              "value": "RSI58X-02AK1R61N-1024",
+              "count": 1
+            },
+            {
+              "value": "LF-204.8BM-C05F",
+              "count": 1
+            },
+            {
+              "value": "LF-500BM-C05L",
+              "count": 1
+            },
+            {
+              "value": "RHI90N-0IAAAR61N-1024",
+              "count": 1
+            },
+            {
+              "value": "RHI90N-0LAAAR61N-01024",
+              "count": 1
+            },
+            {
+              "value": "EI100P38K-H6PR-1024.6CY100",
+              "count": 1
+            },
+            {
+              "value": "1024DR",
+              "count": 1
+            },
+            {
+              "value": "ISD371024HL7102",
+              "count": 1
+            },
+            {
+              "value": "LF-150BM-C15E",
+              "count": 1
+            },
+            {
+              "value": "EC50D9-H6PR-1024",
+              "count": 1
+            },
+            {
+              "value": "RV170E-021K2A61N-01024",
+              "count": 1
+            },
+            {
+              "value": "RVI70E-021K2A61N-01024",
+              "count": 1
+            },
+            {
+              "value": "EV88R16Z-H6PR-1024",
+              "count": 1
+            },
+            {
+              "value": "EI58P14-H6PR-1024",
+              "count": 1
+            },
+            {
+              "value": "OCE-EIC1B-1213-F10S-HFZ-369",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "供电电压": {
           "type": "enum",
@@ -13770,6 +16020,106 @@
               "count": 3
             },
             {
+              "value": "PKH800",
+              "count": 3
+            },
+            {
+              "value": "ARTM8-JKTY",
+              "count": 2
+            },
+            {
+              "value": "PD606E-96T3Y",
+              "count": 2
+            },
+            {
+              "value": "DR72Y-E3",
+              "count": 2
+            },
+            {
+              "value": "DN100",
+              "count": 2
+            },
+            {
+              "value": "PD666-3S4",
+              "count": 2
+            },
+            {
+              "value": "DR96S-E3",
+              "count": 2
+            },
+            {
+              "value": "CCZN200",
+              "count": 2
+            },
+            {
+              "value": "MOD194E-9SY",
+              "count": 2
+            },
+            {
+              "value": "M1M",
+              "count": 2
+            },
+            {
+              "value": "CCZN200-VD1",
+              "count": 2
+            },
+            {
+              "value": "AMC",
+              "count": 2
+            },
+            {
+              "value": "PD204IU-9X4",
+              "count": 1
+            },
+            {
+              "value": "PM130",
+              "count": 1
+            },
+            {
+              "value": "DECS-100-A15",
+              "count": 1
+            },
+            {
+              "value": "PD1008-9S4",
+              "count": 1
+            },
+            {
+              "value": "VC890D",
+              "count": 1
+            },
+            {
+              "value": "VC3250F",
+              "count": 1
+            },
+            {
+              "value": "F17B",
+              "count": 1
+            },
+            {
+              "value": "WX4451",
+              "count": 1
+            },
+            {
+              "value": "FLUKE-F15B",
+              "count": 1
+            },
+            {
+              "value": "YDQ-0.2-10kV",
+              "count": 1
+            },
+            {
+              "value": "AMC72L-E4/KC",
+              "count": 1
+            },
+            {
+              "value": "PD666-3S3",
+              "count": 1
+            },
+            {
+              "value": "UT203",
+              "count": 1
+            },
+            {
               "value": "APM800",
               "count": 0,
               "source": "manufacturer"
@@ -13795,7 +16145,7 @@
               "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "精度": {
           "type": "enum",
@@ -14285,6 +16635,106 @@
               "count": 3
             },
             {
+              "value": "LA38-11MXS/203",
+              "count": 3
+            },
+            {
+              "value": "LAY3-22",
+              "count": 3
+            },
+            {
+              "value": "LAY5s-EA",
+              "count": 3
+            },
+            {
+              "value": "NP2",
+              "count": 3
+            },
+            {
+              "value": "LAY38-22/10",
+              "count": 2
+            },
+            {
+              "value": "LAY39-22MJ/R",
+              "count": 2
+            },
+            {
+              "value": "LA38-22/203",
+              "count": 2
+            },
+            {
+              "value": "LA38-11/209B",
+              "count": 2
+            },
+            {
+              "value": "XB2BA31C",
+              "count": 2
+            },
+            {
+              "value": "LAY39",
+              "count": 2
+            },
+            {
+              "value": "LAY3-11",
+              "count": 2
+            },
+            {
+              "value": "XB2BS542C",
+              "count": 2
+            },
+            {
+              "value": "NP2-EA45",
+              "count": 2
+            },
+            {
+              "value": "NP2-EA35",
+              "count": 2
+            },
+            {
+              "value": "ZB4BS844",
+              "count": 2
+            },
+            {
+              "value": "NP2-BA45",
+              "count": 2
+            },
+            {
+              "value": "NP2-BA35",
+              "count": 2
+            },
+            {
+              "value": "DC",
+              "count": 2
+            },
+            {
+              "value": "LA38-11",
+              "count": 2
+            },
+            {
+              "value": "NP2-BA65",
+              "count": 2
+            },
+            {
+              "value": "TGLA1-PE5",
+              "count": 2
+            },
+            {
+              "value": "LAY39-11P/RS",
+              "count": 1
+            },
+            {
+              "value": "LA39-A3-22/g",
+              "count": 1
+            },
+            {
+              "value": "LA38-20X2/208B",
+              "count": 1
+            },
+            {
+              "value": "LA38-22X3/10C",
+              "count": 1
+            },
+            {
               "value": "XB4-BA21",
               "count": 0,
               "source": "manufacturer"
@@ -14315,7 +16765,7 @@
               "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "额定电压": {
           "type": "series",
@@ -14750,6 +17200,106 @@
               "count": 2
             },
             {
+              "value": "XB2BD33C",
+              "count": 2
+            },
+            {
+              "value": "LA38-11X2/203",
+              "count": 2
+            },
+            {
+              "value": "LA38-22X2/203",
+              "count": 2
+            },
+            {
+              "value": "LW39-10",
+              "count": 2
+            },
+            {
+              "value": "K1F-003MLHC",
+              "count": 2
+            },
+            {
+              "value": "K1D-034MLHC",
+              "count": 2
+            },
+            {
+              "value": "LW112-16/4.0414.2",
+              "count": 2
+            },
+            {
+              "value": "XB5AD21C",
+              "count": 2
+            },
+            {
+              "value": "GSH2-16",
+              "count": 2
+            },
+            {
+              "value": "LW112-16/4/0723/3",
+              "count": 2
+            },
+            {
+              "value": "Z4.0344.2",
+              "count": 2
+            },
+            {
+              "value": "Z-15G",
+              "count": 1
+            },
+            {
+              "value": "K1D002ULHC",
+              "count": 1
+            },
+            {
+              "value": "K1B002NLHC",
+              "count": 1
+            },
+            {
+              "value": "LW39-16A-9OB-22/2",
+              "count": 1
+            },
+            {
+              "value": "LW39-16A-30F-101-5/3",
+              "count": 1
+            },
+            {
+              "value": "K1B-006TLH",
+              "count": 1
+            },
+            {
+              "value": "LW39-16A-4AB-CC/12",
+              "count": 1
+            },
+            {
+              "value": "K1A-001TLHC",
+              "count": 1
+            },
+            {
+              "value": "LW12-16YH3/3",
+              "count": 1
+            },
+            {
+              "value": "XB2BD45C",
+              "count": 1
+            },
+            {
+              "value": "K1B-001ULHC",
+              "count": 1
+            },
+            {
+              "value": "LW32-20/4",
+              "count": 1
+            },
+            {
+              "value": "LA38-11Xf3/203",
+              "count": 1
+            },
+            {
+              "value": "LW6A-2/C265",
+              "count": 1
+            },
+            {
               "value": "XB4-BD21",
               "count": 0,
               "source": "manufacturer"
@@ -14770,7 +17320,7 @@
               "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "安装孔径": {
           "type": "enum",
@@ -15567,6 +18117,106 @@
               "count": 7
             },
             {
+              "value": "AD11-16/20",
+              "count": 5
+            },
+            {
+              "value": "ND16-22B/4",
+              "count": 5
+            },
+            {
+              "value": "AD11-16/21-6GZC",
+              "count": 4
+            },
+            {
+              "value": "DC24V",
+              "count": 4
+            },
+            {
+              "value": "ND16-22D/4K2",
+              "count": 4
+            },
+            {
+              "value": "ND16-22D/2K2",
+              "count": 4
+            },
+            {
+              "value": "AD11-16/21-10C",
+              "count": 3
+            },
+            {
+              "value": "XB2BVB4LC",
+              "count": 3
+            },
+            {
+              "value": "LAY39-XDB/RS",
+              "count": 3
+            },
+            {
+              "value": "AD11-30ZH/2HD-6",
+              "count": 3
+            },
+            {
+              "value": "TGAD1-22DE",
+              "count": 3
+            },
+            {
+              "value": "ND16-22A/4",
+              "count": 3
+            },
+            {
+              "value": "ND16-22BS/4",
+              "count": 3
+            },
+            {
+              "value": "AD11-22/41-7GZ",
+              "count": 2
+            },
+            {
+              "value": "AD11-22/21",
+              "count": 2
+            },
+            {
+              "value": "AD11-16/21-6GZ",
+              "count": 2
+            },
+            {
+              "value": "XB2BVB5LC",
+              "count": 2
+            },
+            {
+              "value": "XB2BVM3LC",
+              "count": 2
+            },
+            {
+              "value": "AD11-25/21",
+              "count": 2
+            },
+            {
+              "value": "AD11-16/21",
+              "count": 2
+            },
+            {
+              "value": "LD11-22D/41",
+              "count": 2
+            },
+            {
+              "value": "AD11-22/21-S",
+              "count": 2
+            },
+            {
+              "value": "XB2BVB3LC",
+              "count": 2
+            },
+            {
+              "value": "LAY39-XDB/G",
+              "count": 2
+            },
+            {
+              "value": "PL1-D/r23",
+              "count": 2
+            },
+            {
               "value": "AD16-22I",
               "count": 0,
               "source": "manufacturer"
@@ -15582,7 +18232,7 @@
               "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "安装孔径": {
           "type": "enum",
@@ -15864,9 +18514,109 @@
             {
               "value": "GST",
               "count": 2
+            },
+            {
+              "value": "YS-BBJ",
+              "count": 1
+            },
+            {
+              "value": "UCZ4-75",
+              "count": 1
+            },
+            {
+              "value": "TBN-24D",
+              "count": 1
+            },
+            {
+              "value": "CBZ10",
+              "count": 1
+            },
+            {
+              "value": "JTY-GD-HA801",
+              "count": 1
+            },
+            {
+              "value": "BRJ-301AL",
+              "count": 1
+            },
+            {
+              "value": "XB2BSB4LC",
+              "count": 1
+            },
+            {
+              "value": "AD16-22SM/r23",
+              "count": 1
+            },
+            {
+              "value": "XR-3000",
+              "count": 1
+            },
+            {
+              "value": "GUJ30",
+              "count": 1
+            },
+            {
+              "value": "GQQ5",
+              "count": 1
+            },
+            {
+              "value": "XB5KS2B4",
+              "count": 1
+            },
+            {
+              "value": "RMC-131D",
+              "count": 1
+            },
+            {
+              "value": "TGBBJ-8W",
+              "count": 1
+            },
+            {
+              "value": "3SB6213-7AA20-1AA0",
+              "count": 1
+            },
+            {
+              "value": "GST-LD-N8401",
+              "count": 1
+            },
+            {
+              "value": "J-SAM-GSTN9311",
+              "count": 1
+            },
+            {
+              "value": "J-SAM-GSTN9313",
+              "count": 1
+            },
+            {
+              "value": "GST-FH-MC01",
+              "count": 1
+            },
+            {
+              "value": "ZD-02",
+              "count": 1
+            },
+            {
+              "value": "TS-GSTN602Pro",
+              "count": 1
+            },
+            {
+              "value": "JTW-ZOM-GSTN9812",
+              "count": 1
+            },
+            {
+              "value": "GST-GF300WA",
+              "count": 1
+            },
+            {
+              "value": "JTY-GM-GSTN9811",
+              "count": 1
+            },
+            {
+              "value": "GST-HX-MN120C",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "工作电压": {
           "type": "enum",
@@ -16762,9 +19512,109 @@
             {
               "value": "LW8-IS-P11",
               "count": 1
+            },
+            {
+              "value": "DKL-F083",
+              "count": 1
+            },
+            {
+              "value": "LW8-IS-H11-M46",
+              "count": 1
+            },
+            {
+              "value": "ECI-L2R",
+              "count": 1
+            },
+            {
+              "value": "LW6084-533",
+              "count": 1
+            },
+            {
+              "value": "WS1521C",
+              "count": 1
+            },
+            {
+              "value": "DKL-F041-A3",
+              "count": 1
+            },
+            {
+              "value": "LW8-IS-H11-M56",
+              "count": 1
+            },
+            {
+              "value": "LW6043-333",
+              "count": 1
+            },
+            {
+              "value": "DKL-F041-33",
+              "count": 1
+            },
+            {
+              "value": "DKL-F041-B3",
+              "count": 1
+            },
+            {
+              "value": "LW8-IS-G11-66",
+              "count": 1
+            },
+            {
+              "value": "LW6083-5A",
+              "count": 1
+            },
+            {
+              "value": "LW8-IS-P11-P6",
+              "count": 1
+            },
+            {
+              "value": "LW6083-10A",
+              "count": 1
+            },
+            {
+              "value": "UK-TG-1A11",
+              "count": 1
+            },
+            {
+              "value": "LW6043-P33",
+              "count": 1
+            },
+            {
+              "value": "LW8-IS-H12-M566",
+              "count": 1
+            },
+            {
+              "value": "UKZG-1A11",
+              "count": 1
+            },
+            {
+              "value": "LW5011",
+              "count": 1
+            },
+            {
+              "value": "LW6084-1033",
+              "count": 1
+            },
+            {
+              "value": "RET5VDC0",
+              "count": 1
+            },
+            {
+              "value": "LW8-IS-P12-P66",
+              "count": 1
+            },
+            {
+              "value": "LW6917-Z",
+              "count": 1
+            },
+            {
+              "value": "CZ2083",
+              "count": 1
+            },
+            {
+              "value": "KFA5-SR2-EX2.W",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "输入信号": {
           "type": "enum",
@@ -16932,6 +19782,106 @@
               "count": 3
             },
             {
+              "value": "10k",
+              "count": 3
+            },
+            {
+              "value": "3k",
+              "count": 3
+            },
+            {
+              "value": "10K/0.5W",
+              "count": 2
+            },
+            {
+              "value": "500R",
+              "count": 2
+            },
+            {
+              "value": "ZG11-100",
+              "count": 2
+            },
+            {
+              "value": "2.4k",
+              "count": 2
+            },
+            {
+              "value": "4.7k",
+              "count": 2
+            },
+            {
+              "value": "16k",
+              "count": 2
+            },
+            {
+              "value": "15k",
+              "count": 2
+            },
+            {
+              "value": "20k",
+              "count": 2
+            },
+            {
+              "value": "DTDZ2",
+              "count": 2
+            },
+            {
+              "value": "RXG20",
+              "count": 2
+            },
+            {
+              "value": "RX27-7",
+              "count": 1
+            },
+            {
+              "value": "10kW/40",
+              "count": 1
+            },
+            {
+              "value": "RJJ-2W-27",
+              "count": 1
+            },
+            {
+              "value": "RJJ",
+              "count": 1
+            },
+            {
+              "value": "RX218W",
+              "count": 1
+            },
+            {
+              "value": "RX20",
+              "count": 1
+            },
+            {
+              "value": "EBG/SiEmens",
+              "count": 1
+            },
+            {
+              "value": "A5E00705240",
+              "count": 1
+            },
+            {
+              "value": "RJ-8W",
+              "count": 1
+            },
+            {
+              "value": "TTDZ42-2/18kW",
+              "count": 1
+            },
+            {
+              "value": "RJ-2W",
+              "count": 1
+            },
+            {
+              "value": "RJ-0.5",
+              "count": 1
+            },
+            {
+              "value": "RXS-5K-0.48R",
+              "count": 1
+            },
+            {
               "value": "RX24",
               "count": 0,
               "source": "manufacturer"
@@ -16957,7 +19907,7 @@
               "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "阻值": {
           "type": "series",
@@ -17479,9 +20429,109 @@
             {
               "value": "RJJ-0.5",
               "count": 2
+            },
+            {
+              "value": "UXP250",
+              "count": 2
+            },
+            {
+              "value": "ESP62/20",
+              "count": 2
+            },
+            {
+              "value": "ESP62/14",
+              "count": 2
+            },
+            {
+              "value": "EE1/2",
+              "count": 2
+            },
+            {
+              "value": "EE1/8-20k-B-C3",
+              "count": 1
+            },
+            {
+              "value": "EE1/8-12k-B-C3",
+              "count": 1
+            },
+            {
+              "value": "EE1/8-680R-B-C3",
+              "count": 1
+            },
+            {
+              "value": "EE1/8-470R-B-C3",
+              "count": 1
+            },
+            {
+              "value": "INX",
+              "count": 1
+            },
+            {
+              "value": "EE1/4-250R-B-C3",
+              "count": 1
+            },
+            {
+              "value": "RJ20-2",
+              "count": 1
+            },
+            {
+              "value": "EE1/8-7.5k-B-C3",
+              "count": 1
+            },
+            {
+              "value": "EE1/8-30k-B-C3",
+              "count": 1
+            },
+            {
+              "value": "EE1/8-15k-B-C3",
+              "count": 1
+            },
+            {
+              "value": "EE1/8-10k-B-C3",
+              "count": 1
+            },
+            {
+              "value": "EE1/8-120k-B-C3",
+              "count": 1
+            },
+            {
+              "value": "EE1/8-4k-B-C3",
+              "count": 1
+            },
+            {
+              "value": "EE1/8-3.5k-B-C3",
+              "count": 1
+            },
+            {
+              "value": "EE1/8-8.5k-B-C3",
+              "count": 1
+            },
+            {
+              "value": "EE1/8-9k-B-C3",
+              "count": 1
+            },
+            {
+              "value": "EE1/8-200k-B-C3",
+              "count": 1
+            },
+            {
+              "value": "EE1/8-5k5-B-C3",
+              "count": 1
+            },
+            {
+              "value": "EE1/8-2.5k-B-C3",
+              "count": 1
+            },
+            {
+              "value": "RJJ-0.25W-100",
+              "count": 1
+            },
+            {
+              "value": "6SL3760-0GD00-0AA0",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "阻值": {
           "type": "series",
@@ -18927,9 +21977,109 @@
             {
               "value": "BZMJ",
               "count": 3
+            },
+            {
+              "value": "100uF",
+              "count": 3
+            },
+            {
+              "value": "330uF",
+              "count": 3
+            },
+            {
+              "value": "470uF",
+              "count": 3
+            },
+            {
+              "value": "CD135",
+              "count": 2
+            },
+            {
+              "value": "CD11B",
+              "count": 2
+            },
+            {
+              "value": "35V/100uF",
+              "count": 2
+            },
+            {
+              "value": "FE20400472M6C09T",
+              "count": 1
+            },
+            {
+              "value": "B43310B9688A001X08",
+              "count": 1
+            },
+            {
+              "value": "160WAS203M77100Y25B",
+              "count": 1
+            },
+            {
+              "value": "EPCOS",
+              "count": 1
+            },
+            {
+              "value": "250WAS10000M77100B",
+              "count": 1
+            },
+            {
+              "value": "6800uF",
+              "count": 1
+            },
+            {
+              "value": "B41231A9158M",
+              "count": 1
+            },
+            {
+              "value": "CD13",
+              "count": 1
+            },
+            {
+              "value": "Hicon",
+              "count": 1
+            },
+            {
+              "value": "B43310-B9478-A001",
+              "count": 1
+            },
+            {
+              "value": "CD29C",
+              "count": 1
+            },
+            {
+              "value": "BSMJS-2-0.45-30-3-M",
+              "count": 1
+            },
+            {
+              "value": "BSMJS-0-0.45-30-3-M",
+              "count": 1
+            },
+            {
+              "value": "LKME2501K331MF",
+              "count": 1
+            },
+            {
+              "value": "LKML3001K681MF",
+              "count": 1
+            },
+            {
+              "value": "LKME1251K101MF",
+              "count": 1
+            },
+            {
+              "value": "LKME0901K101MF",
+              "count": 1
+            },
+            {
+              "value": "LKML1601K331MF",
+              "count": 1
+            },
+            {
+              "value": "BKMJ",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "容值": {
           "type": "series",
@@ -20563,6 +23713,106 @@
               "count": 2
             },
             {
+              "value": "MKP",
+              "count": 2
+            },
+            {
+              "value": "400V/390",
+              "count": 2
+            },
+            {
+              "value": "6SY7000-0AD56",
+              "count": 2
+            },
+            {
+              "value": "MKP63",
+              "count": 2
+            },
+            {
+              "value": "CJ48-2",
+              "count": 2
+            },
+            {
+              "value": "BZMJ",
+              "count": 2
+            },
+            {
+              "value": "50V/0.22uF",
+              "count": 2
+            },
+            {
+              "value": "50V/4.7uF",
+              "count": 2
+            },
+            {
+              "value": "1uF/50V",
+              "count": 2
+            },
+            {
+              "value": "10uF/50V",
+              "count": 2
+            },
+            {
+              "value": "100nF",
+              "count": 2
+            },
+            {
+              "value": "FE20400123A6D091",
+              "count": 1
+            },
+            {
+              "value": "C878AF3",
+              "count": 1
+            },
+            {
+              "value": "2200pF",
+              "count": 1
+            },
+            {
+              "value": "3300pF",
+              "count": 1
+            },
+            {
+              "value": "FKP1",
+              "count": 1
+            },
+            {
+              "value": "DCLJ2SY",
+              "count": 1
+            },
+            {
+              "value": "0.47uF",
+              "count": 1
+            },
+            {
+              "value": "2uF",
+              "count": 1
+            },
+            {
+              "value": "6SY7000-0AD88",
+              "count": 1
+            },
+            {
+              "value": "4700pF",
+              "count": 1
+            },
+            {
+              "value": "6SY7000-0AD83",
+              "count": 1
+            },
+            {
+              "value": "AV",
+              "count": 1
+            },
+            {
+              "value": "TSACD-JC-BUCA",
+              "count": 1
+            },
+            {
+              "value": "GZLZK40G480P7T",
+              "count": 1
+            },
+            {
               "value": "BSMJ0.4-20-3",
               "count": 0,
               "source": "manufacturer"
@@ -20586,14 +23836,9 @@
               "value": "BCMJ",
               "count": 0,
               "source": "manufacturer"
-            },
-            {
-              "value": "BZMJ",
-              "count": 0,
-              "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "容值": {
           "type": "series",
@@ -20938,9 +24183,109 @@
             {
               "value": "SLA-400-50-64F6",
               "count": 1
+            },
+            {
+              "value": "SDD-8000-1.5-80F8",
+              "count": 1
+            },
+            {
+              "value": "SLA-800-50-64F8",
+              "count": 1
+            },
+            {
+              "value": "SDD-6000-2.0-90F8",
+              "count": 1
+            },
+            {
+              "value": "SHP-900-4400-FSSR-CH",
+              "count": 1
+            },
+            {
+              "value": "SHP-1200-3000-FSZR-CH",
+              "count": 1
+            },
+            {
+              "value": "SHF-500-275",
+              "count": 1
+            },
+            {
+              "value": "420uF",
+              "count": 1
+            },
+            {
+              "value": "SLA-400-50-50F8",
+              "count": 1
+            },
+            {
+              "value": "SHB-800-3.0-2VB1",
+              "count": 1
+            },
+            {
+              "value": "SHB-800-4.0-2VB1",
+              "count": 1
+            },
+            {
+              "value": "MKS2D031001A00KI00",
+              "count": 1
+            },
+            {
+              "value": "UKL1V101MPDANA",
+              "count": 1
+            },
+            {
+              "value": "FKS2D014701A00MA00",
+              "count": 1
+            },
+            {
+              "value": "MKS2C031001A00KSSD",
+              "count": 1
+            },
+            {
+              "value": "SR211C104KAR",
+              "count": 1
+            },
+            {
+              "value": "FKP0F011000B00KSSD",
+              "count": 1
+            },
+            {
+              "value": "R60DI4220AA30J",
+              "count": 1
+            },
+            {
+              "value": "FKP2C001001D00HN00",
+              "count": 1
+            },
+            {
+              "value": "R60DF4100AA6AJ",
+              "count": 1
+            },
+            {
+              "value": "MKS02/0.01/63/20",
+              "count": 1
+            },
+            {
+              "value": "MKS02/0.1/63/20",
+              "count": 1
+            },
+            {
+              "value": "63V-1uF",
+              "count": 1
+            },
+            {
+              "value": "63V-0.1uF",
+              "count": 1
+            },
+            {
+              "value": "63V-4700pF",
+              "count": 1
+            },
+            {
+              "value": "63V-33nF",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "容值": {
           "type": "series",
@@ -21163,9 +24508,109 @@
             {
               "value": "BZX85C5V11.3W",
               "count": 2
+            },
+            {
+              "value": "MDC1200",
+              "count": 2
+            },
+            {
+              "value": "IN4148",
+              "count": 1
+            },
+            {
+              "value": "IN4004",
+              "count": 1
+            },
+            {
+              "value": "MDO1201-22N1",
+              "count": 1
+            },
+            {
+              "value": "2CW107",
+              "count": 1
+            },
+            {
+              "value": "DZ3600S17K3",
+              "count": 1
+            },
+            {
+              "value": "DSEI2x61-12B",
+              "count": 1
+            },
+            {
+              "value": "BZX55",
+              "count": 1
+            },
+            {
+              "value": "MDC500-08",
+              "count": 1
+            },
+            {
+              "value": "SKKE",
+              "count": 1
+            },
+            {
+              "value": "BT204S2",
+              "count": 1
+            },
+            {
+              "value": "SQL",
+              "count": 1
+            },
+            {
+              "value": "2CW53",
+              "count": 1
+            },
+            {
+              "value": "QL",
+              "count": 1
+            },
+            {
+              "value": "1N4007",
+              "count": 1
+            },
+            {
+              "value": "BT",
+              "count": 1
+            },
+            {
+              "value": "MDC80",
+              "count": 1
+            },
+            {
+              "value": "2CW106",
+              "count": 1
+            },
+            {
+              "value": "CAD92-08",
+              "count": 1
+            },
+            {
+              "value": "2CN1A",
+              "count": 1
+            },
+            {
+              "value": "2CP23",
+              "count": 1
+            },
+            {
+              "value": "MDD26-16N1B",
+              "count": 1
+            },
+            {
+              "value": "BT304",
+              "count": 1
+            },
+            {
+              "value": "DZ1070N22K",
+              "count": 1
+            },
+            {
+              "value": "MDK63-08",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "额定电流": {
           "type": "series",
@@ -21858,9 +25303,109 @@
             {
               "value": "HFBR-1522",
               "count": 1
+            },
+            {
+              "value": "EBL-7501",
+              "count": 1
+            },
+            {
+              "value": "HFBR-2522",
+              "count": 1
+            },
+            {
+              "value": "6SL3055-0AA00-2TA0",
+              "count": 1
+            },
+            {
+              "value": "6ES7",
+              "count": 1
+            },
+            {
+              "value": "6SL3352-6BH00-0AA1",
+              "count": 1
+            },
+            {
+              "value": "E-ISOM527-AD01",
+              "count": 1
+            },
+            {
+              "value": "PT100-100-100",
+              "count": 1
+            },
+            {
+              "value": "RMT",
+              "count": 1
+            },
+            {
+              "value": "SL1500-PU3-FEB20N28204",
+              "count": 1
+            },
+            {
+              "value": "6SL3352-1AG41-3FA1",
+              "count": 1
+            },
+            {
+              "value": "USB3.0HUB4",
+              "count": 1
+            },
+            {
+              "value": "MIEN1203-S-SC20-AD220",
+              "count": 1
+            },
+            {
+              "value": "MWF201-S-SC-KG",
+              "count": 1
+            },
+            {
+              "value": "AC220V///HG140-150W",
+              "count": 1
+            },
+            {
+              "value": "6SL3055-0AA00-4CA5",
+              "count": 1
+            },
+            {
+              "value": "BA",
+              "count": 1
+            },
+            {
+              "value": "TSACD-JC-BUDM01",
+              "count": 1
+            },
+            {
+              "value": "KFD18",
+              "count": 1
+            },
+            {
+              "value": "KJJ12",
+              "count": 1
+            },
+            {
+              "value": "6SE7041-2UL84-1GG0",
+              "count": 1
+            },
+            {
+              "value": "PC01",
+              "count": 1
+            },
+            {
+              "value": "14D560K",
+              "count": 1
+            },
+            {
+              "value": "RH-5000",
+              "count": 1
+            },
+            {
+              "value": "RH-5001",
+              "count": 1
+            },
+            {
+              "value": "HCLP-2631",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         }
       }
     },
@@ -22250,9 +25795,109 @@
             {
               "value": "SD-50B-24",
               "count": 2
+            },
+            {
+              "value": "W7915",
+              "count": 2
+            },
+            {
+              "value": "URB2424LD-30WR3A2S",
+              "count": 2
+            },
+            {
+              "value": "W7824",
+              "count": 2
+            },
+            {
+              "value": "SE-450-24",
+              "count": 2
+            },
+            {
+              "value": "4NIC-X144",
+              "count": 2
+            },
+            {
+              "value": "6EP1333-3BA10",
+              "count": 2
+            },
+            {
+              "value": "PRO",
+              "count": 2
+            },
+            {
+              "value": "PR0",
+              "count": 2
+            },
+            {
+              "value": "URB2409LD-30WR3",
+              "count": 1
+            },
+            {
+              "value": "LRS-50-24",
+              "count": 1
+            },
+            {
+              "value": "ISO5125I-100",
+              "count": 1
+            },
+            {
+              "value": "KDYA-DG30-24K",
+              "count": 1
+            },
+            {
+              "value": "4NIC-X120.9",
+              "count": 1
+            },
+            {
+              "value": "URA2424LD-30WR3A2S",
+              "count": 1
+            },
+            {
+              "value": "LRS-350-24",
+              "count": 1
+            },
+            {
+              "value": "6SL3353-3AG41-8BA0",
+              "count": 1
+            },
+            {
+              "value": "LRS-50-15",
+              "count": 1
+            },
+            {
+              "value": "WRD24S24-30W",
+              "count": 1
+            },
+            {
+              "value": "KDYA-DG75-15",
+              "count": 1
+            },
+            {
+              "value": "PDB100-24S24-A",
+              "count": 1
+            },
+            {
+              "value": "4NIC-X60D15",
+              "count": 1
+            },
+            {
+              "value": "PDB40-1000S15-C4",
+              "count": 1
+            },
+            {
+              "value": "HF100W-D-L/A1",
+              "count": 1
+            },
+            {
+              "value": "LRS-150-24",
+              "count": 1
+            },
+            {
+              "value": "LRS-50-36",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "输入电压": {
           "type": "enum",
@@ -22367,9 +26012,109 @@
             {
               "value": "4NIC-Q",
               "count": 1
+            },
+            {
+              "value": "DNSP-AC-DC",
+              "count": 1
+            },
+            {
+              "value": "4NIC-K72",
+              "count": 1
+            },
+            {
+              "value": "KDYA-DG200F-01-1",
+              "count": 1
+            },
+            {
+              "value": "4NIC-Q99",
+              "count": 1
+            },
+            {
+              "value": "NES-100-24",
+              "count": 1
+            },
+            {
+              "value": "LI30-20B24PR2",
+              "count": 1
+            },
+            {
+              "value": "HDR-150-24",
+              "count": 1
+            },
+            {
+              "value": "D-74211",
+              "count": 1
+            },
+            {
+              "value": "RS-15-15V",
+              "count": 1
+            },
+            {
+              "value": "DNSP-T100",
+              "count": 1
+            },
+            {
+              "value": "4NIC-X48",
+              "count": 1
+            },
+            {
+              "value": "SD-25B-5",
+              "count": 1
+            },
+            {
+              "value": "PM70W",
+              "count": 1
+            },
+            {
+              "value": "C1KR",
+              "count": 1
+            },
+            {
+              "value": "MT1000",
+              "count": 1
+            },
+            {
+              "value": "C2K-2000VA",
+              "count": 1
+            },
+            {
+              "value": "NDR-480-48",
+              "count": 1
+            },
+            {
+              "value": "SD-50B-12",
+              "count": 1
+            },
+            {
+              "value": "4NIC-Q192",
+              "count": 1
+            },
+            {
+              "value": "KDYA-50C",
+              "count": 1
+            },
+            {
+              "value": "4NIC-K120",
+              "count": 1
+            },
+            {
+              "value": "4NIC-X50",
+              "count": 1
+            },
+            {
+              "value": "APC-1KB",
+              "count": 1
+            },
+            {
+              "value": "4NIC-X15",
+              "count": 1
+            },
+            {
+              "value": "4NIC-K75",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "电源类型": {
           "type": "enum",
@@ -22466,9 +26211,109 @@
             {
               "value": "2SP0115T2C0-17",
               "count": 2
+            },
+            {
+              "value": "2SP0320T2C0-17",
+              "count": 2
+            },
+            {
+              "value": "DPCS05-V3.0",
+              "count": 2
+            },
+            {
+              "value": "MAX232CSE",
+              "count": 2
+            },
+            {
+              "value": "DSP-AD",
+              "count": 2
+            },
+            {
+              "value": "LGCFB-10",
+              "count": 1
+            },
+            {
+              "value": "TX-DA962D2",
+              "count": 1
+            },
+            {
+              "value": "2SP0320T2B0-12",
+              "count": 1
+            },
+            {
+              "value": "FCP-M16G",
+              "count": 1
+            },
+            {
+              "value": "C98043-A7100-L3-1",
+              "count": 1
+            },
+            {
+              "value": "2SP0320V2A0-17",
+              "count": 1
+            },
+            {
+              "value": "SKYPER",
+              "count": 1
+            },
+            {
+              "value": "17S102-302L",
+              "count": 1
+            },
+            {
+              "value": "17S102-305L",
+              "count": 1
+            },
+            {
+              "value": "ECS8604-V",
+              "count": 1
+            },
+            {
+              "value": "2SP0115T2Cx-12",
+              "count": 1
+            },
+            {
+              "value": "6SL3352-3AG37-4AA0",
+              "count": 1
+            },
+            {
+              "value": "C98043-A7001-L2-4",
+              "count": 1
+            },
+            {
+              "value": "6SE7038-6WK84-1BH0",
+              "count": 1
+            },
+            {
+              "value": "17S102-301L",
+              "count": 1
+            },
+            {
+              "value": "6SL3352-3AG38-1AA0",
+              "count": 1
+            },
+            {
+              "value": "BUCB",
+              "count": 1
+            },
+            {
+              "value": "A1027-V1.0",
+              "count": 1
+            },
+            {
+              "value": "6SE7035-7GK84-1JC2",
+              "count": 1
+            },
+            {
+              "value": "2SP0115T2B0-12",
+              "count": 1
+            },
+            {
+              "value": "A1032",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "封装": {
           "type": "semi",
@@ -22883,9 +26728,109 @@
             {
               "value": "YX92G5-40A-SCP001157",
               "count": 1
+            },
+            {
+              "value": "NF211B3/01",
+              "count": 1
+            },
+            {
+              "value": "SJ360-100",
+              "count": 1
+            },
+            {
+              "value": "NF312C200/05",
+              "count": 1
+            },
+            {
+              "value": "FLHD53-6A",
+              "count": 1
+            },
+            {
+              "value": "FLHD32",
+              "count": 1
+            },
+            {
+              "value": "DL-6D1",
+              "count": 1
+            },
+            {
+              "value": "SJS460T-75A",
+              "count": 1
+            },
+            {
+              "value": "SJB920T-150",
+              "count": 1
+            },
+            {
+              "value": "NF216B10-JDWL",
+              "count": 1
+            },
+            {
+              "value": "NF314C200G/05-JDWL",
+              "count": 1
+            },
+            {
+              "value": "NF216B10/01-JDWL",
+              "count": 1
+            },
+            {
+              "value": "FLHD53",
+              "count": 1
+            },
+            {
+              "value": "SJS360-100-N5",
+              "count": 1
+            },
+            {
+              "value": "OSH-250",
+              "count": 1
+            },
+            {
+              "value": "OSH-110",
+              "count": 1
+            },
+            {
+              "value": "OSH-400",
+              "count": 1
+            },
+            {
+              "value": "OSH-80",
+              "count": 1
+            },
+            {
+              "value": "OSH-60",
+              "count": 1
+            },
+            {
+              "value": "OSH-15",
+              "count": 1
+            },
+            {
+              "value": "ZCAT2235-1030A-BK",
+              "count": 1
+            },
+            {
+              "value": "TEDRI-APF-400-100-4",
+              "count": 1
+            },
+            {
+              "value": "PD333-6",
+              "count": 1
+            },
+            {
+              "value": "ACM7060-701",
+              "count": 1
+            },
+            {
+              "value": "SMMS1770-680M",
+              "count": 1
+            },
+            {
+              "value": "OSH-300",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "额定电压": {
           "type": "series",
@@ -23376,6 +27321,106 @@
               "count": 11
             },
             {
+              "value": "SAKDU",
+              "count": 9
+            },
+            {
+              "value": "DEK5/5",
+              "count": 9
+            },
+            {
+              "value": "ZQV",
+              "count": 9
+            },
+            {
+              "value": "MC",
+              "count": 8
+            },
+            {
+              "value": "TM10.5/6H",
+              "count": 8
+            },
+            {
+              "value": "TM6.5/5H",
+              "count": 8
+            },
+            {
+              "value": "WS",
+              "count": 8
+            },
+            {
+              "value": "WQV",
+              "count": 7
+            },
+            {
+              "value": "SAKAP",
+              "count": 6
+            },
+            {
+              "value": "ST",
+              "count": 6
+            },
+            {
+              "value": "MSTB",
+              "count": 6
+            },
+            {
+              "value": "TM10.5/8H",
+              "count": 6
+            },
+            {
+              "value": "UK",
+              "count": 6
+            },
+            {
+              "value": "ZB8",
+              "count": 6
+            },
+            {
+              "value": "GMSTBVA",
+              "count": 5
+            },
+            {
+              "value": "SAKPE",
+              "count": 5
+            },
+            {
+              "value": "MKDS",
+              "count": 5
+            },
+            {
+              "value": "RMT2.5",
+              "count": 5
+            },
+            {
+              "value": "DEK5/6",
+              "count": 5
+            },
+            {
+              "value": "D-UK",
+              "count": 5
+            },
+            {
+              "value": "WDU",
+              "count": 5
+            },
+            {
+              "value": "SAKQ",
+              "count": 5
+            },
+            {
+              "value": "FBS",
+              "count": 5
+            },
+            {
+              "value": "XH2.54mm",
+              "count": 5
+            },
+            {
+              "value": "VF4/5",
+              "count": 4
+            },
+            {
               "value": "UK 1.5 N",
               "count": 0,
               "source": "manufacturer"
@@ -23426,7 +27471,7 @@
               "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "额定电压": {
           "type": "series",
@@ -24497,9 +28542,109 @@
             {
               "value": "15YT-3J",
               "count": 3
+            },
+            {
+              "value": "A2543H",
+              "count": 3
+            },
+            {
+              "value": "YGC-Ex8P1P-1000",
+              "count": 3
+            },
+            {
+              "value": "150YT-4J",
+              "count": 2
+            },
+            {
+              "value": "25YT-3J",
+              "count": 2
+            },
+            {
+              "value": "16YT-20J",
+              "count": 2
+            },
+            {
+              "value": "MM-014B",
+              "count": 2
+            },
+            {
+              "value": "YGC292-Ex4P5P-EMV",
+              "count": 2
+            },
+            {
+              "value": "LC2AM-3.81",
+              "count": 2
+            },
+            {
+              "value": "YGC-Ex4P27P",
+              "count": 2
+            },
+            {
+              "value": "YGC-Ex4P5P-10",
+              "count": 2
+            },
+            {
+              "value": "YGC-Ex4P5P-16",
+              "count": 2
+            },
+            {
+              "value": "YGC-Ex4P10P-6",
+              "count": 2
+            },
+            {
+              "value": "HMS3106BKY20",
+              "count": 1
+            },
+            {
+              "value": "GNT-10",
+              "count": 1
+            },
+            {
+              "value": "MVSTBR",
+              "count": 1
+            },
+            {
+              "value": "IC",
+              "count": 1
+            },
+            {
+              "value": "16YT-10J",
+              "count": 1
+            },
+            {
+              "value": "200YT-1J",
+              "count": 1
+            },
+            {
+              "value": "100YT-5J",
+              "count": 1
+            },
+            {
+              "value": "16YT-9J",
+              "count": 1
+            },
+            {
+              "value": "MSTB",
+              "count": 1
+            },
+            {
+              "value": "YGC-Ex3P4P-100",
+              "count": 1
+            },
+            {
+              "value": "PS-10A",
+              "count": 1
+            },
+            {
+              "value": "60YT-4J",
+              "count": 1
+            },
+            {
+              "value": "P20J9HQG",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "极数": {
           "type": "enum",
@@ -24884,9 +29029,109 @@
             {
               "value": "AC",
               "count": 3
+            },
+            {
+              "value": "YGC-Ex8S1R-1000",
+              "count": 3
+            },
+            {
+              "value": "YJX5008",
+              "count": 3
+            },
+            {
+              "value": "EA9X",
+              "count": 2
+            },
+            {
+              "value": "TYS2",
+              "count": 2
+            },
+            {
+              "value": "200GZ-4K",
+              "count": 2
+            },
+            {
+              "value": "16GZ-14K",
+              "count": 2
+            },
+            {
+              "value": "EA9XN",
+              "count": 2
+            },
+            {
+              "value": "AC220V",
+              "count": 2
+            },
+            {
+              "value": "DZ47X",
+              "count": 2
+            },
+            {
+              "value": "YGC-Ex4S27R-A",
+              "count": 2
+            },
+            {
+              "value": "YGC-Ex4S5R-M-16",
+              "count": 2
+            },
+            {
+              "value": "YGC-Ex4S10R-M-6",
+              "count": 2
+            },
+            {
+              "value": "RS",
+              "count": 2
+            },
+            {
+              "value": "J599/20KD05PHN",
+              "count": 1
+            },
+            {
+              "value": "150GZ-4K",
+              "count": 1
+            },
+            {
+              "value": "25GZ-3K",
+              "count": 1
+            },
+            {
+              "value": "15YZ-4K",
+              "count": 1
+            },
+            {
+              "value": "LC10N-5.08",
+              "count": 1
+            },
+            {
+              "value": "16GZ-10K",
+              "count": 1
+            },
+            {
+              "value": "AC30-110",
+              "count": 1
+            },
+            {
+              "value": "HMS25043BKY-18",
+              "count": 1
+            },
+            {
+              "value": "60GZ-5K",
+              "count": 1
+            },
+            {
+              "value": "IC",
+              "count": 1
+            },
+            {
+              "value": "15GZ-3K",
+              "count": 1
+            },
+            {
+              "value": "16YZ-14K",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "极数": {
           "type": "enum",
@@ -25395,9 +29640,109 @@
             {
               "value": "YGC-Ex3P4P-32",
               "count": 3
+            },
+            {
+              "value": "YG178-02-02-00",
+              "count": 3
+            },
+            {
+              "value": "YGC-Ex3P4P-16",
+              "count": 3
+            },
+            {
+              "value": "RS",
+              "count": 3
+            },
+            {
+              "value": "SAKQ",
+              "count": 3
+            },
+            {
+              "value": "JXZ-1",
+              "count": 3
+            },
+            {
+              "value": "Molex",
+              "count": 3
+            },
+            {
+              "value": "YGC-Exe17F2001S",
+              "count": 3
+            },
+            {
+              "value": "YGC-Exe13F2001P34",
+              "count": 3
+            },
+            {
+              "value": "YGC292-Ex4P5P-EMV",
+              "count": 2
+            },
+            {
+              "value": "150YT/YZ-4J/4K",
+              "count": 2
+            },
+            {
+              "value": "15YT/GZ-4J/4K",
+              "count": 2
+            },
+            {
+              "value": "YGC-Ex3P4P-63",
+              "count": 2
+            },
+            {
+              "value": "100YT/GZ-5J/5K",
+              "count": 2
+            },
+            {
+              "value": "FBI",
+              "count": 2
+            },
+            {
+              "value": "YGC-Ex6P5P-100",
+              "count": 2
+            },
+            {
+              "value": "60YT/GZ-3J/3K",
+              "count": 2
+            },
+            {
+              "value": "60YT/GZ-5J/5K",
+              "count": 2
+            },
+            {
+              "value": "YGC-EX5P12P-16",
+              "count": 2
+            },
+            {
+              "value": "M16",
+              "count": 2
+            },
+            {
+              "value": "J599/20KB02A1N-2SC-C5",
+              "count": 2
+            },
+            {
+              "value": "JS-555",
+              "count": 2
+            },
+            {
+              "value": "2P",
+              "count": 2
+            },
+            {
+              "value": "YGC-EX3P4P-63",
+              "count": 2
+            },
+            {
+              "value": "YGC-Ex4P10P-6",
+              "count": 2
+            },
+            {
+              "value": "T50WAS001-010SC",
+              "count": 2
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "芯数": {
           "type": "enum",
@@ -26292,9 +30637,109 @@
             {
               "value": "PMD2412PTB3-A",
               "count": 1
+            },
+            {
+              "value": "ZIEHL-ABEGG",
+              "count": 1
+            },
+            {
+              "value": "GFDD",
+              "count": 1
+            },
+            {
+              "value": "SF28080HA2B",
+              "count": 1
+            },
+            {
+              "value": "W2E250-HL06-01",
+              "count": 1
+            },
+            {
+              "value": "SNUON",
+              "count": 1
+            },
+            {
+              "value": "SF9225ATP/N2092HBL",
+              "count": 1
+            },
+            {
+              "value": "GFDD590-15O",
+              "count": 1
+            },
+            {
+              "value": "D2E146-AP47-02",
+              "count": 1
+            },
+            {
+              "value": "D2E",
+              "count": 1
+            },
+            {
+              "value": "AX1725HA2",
+              "count": 1
+            },
+            {
+              "value": "ME92252V1-000C-A99",
+              "count": 1
+            },
+            {
+              "value": "6SL3362-0AG00-0AA1",
+              "count": 1
+            },
+            {
+              "value": "W2E200-HK38-C01",
+              "count": 1
+            },
+            {
+              "value": "FDL-5b",
+              "count": 1
+            },
+            {
+              "value": "KA",
+              "count": 1
+            },
+            {
+              "value": "W2E200-HK38-01",
+              "count": 1
+            },
+            {
+              "value": "KA2208HA2",
+              "count": 1
+            },
+            {
+              "value": "BLOWER-600V",
+              "count": 1
+            },
+            {
+              "value": "RG28P-4EK-4I-1R",
+              "count": 1
+            },
+            {
+              "value": "SF1525HA2",
+              "count": 1
+            },
+            {
+              "value": "GFDD1020-120/A3",
+              "count": 1
+            },
+            {
+              "value": "GFDD-440-120",
+              "count": 1
+            },
+            {
+              "value": "T35-4-2",
+              "count": 1
+            },
+            {
+              "value": "EEC0252B1-000C-A99",
+              "count": 1
+            },
+            {
+              "value": "W2E250-HH06-01",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "功率": {
           "type": "enum",
@@ -26647,9 +31092,109 @@
             {
               "value": "TSACD-1100-C120-II",
               "count": 2
+            },
+            {
+              "value": "PNOZ",
+              "count": 2
+            },
+            {
+              "value": "SP600-R30-3-2",
+              "count": 1
+            },
+            {
+              "value": "20MHZ",
+              "count": 1
+            },
+            {
+              "value": "60MHZ",
+              "count": 1
+            },
+            {
+              "value": "60HZ",
+              "count": 1
+            },
+            {
+              "value": "E/UK",
+              "count": 1
+            },
+            {
+              "value": "L502",
+              "count": 1
+            },
+            {
+              "value": "RXZ410",
+              "count": 1
+            },
+            {
+              "value": "KLM-A",
+              "count": 1
+            },
+            {
+              "value": "BND",
+              "count": 1
+            },
+            {
+              "value": "OHB200J12PE011",
+              "count": 1
+            },
+            {
+              "value": "YB-MK60",
+              "count": 1
+            },
+            {
+              "value": "FU-9807A",
+              "count": 1
+            },
+            {
+              "value": "AQG7",
+              "count": 1
+            },
+            {
+              "value": "3WT98860JA00",
+              "count": 1
+            },
+            {
+              "value": "FU-9806A",
+              "count": 1
+            },
+            {
+              "value": "A9A26970",
+              "count": 1
+            },
+            {
+              "value": "LA7-D3064C",
+              "count": 1
+            },
+            {
+              "value": "TM8/6.5H",
+              "count": 1
+            },
+            {
+              "value": "NDM2-400",
+              "count": 1
+            },
+            {
+              "value": "6SL3054-0FC00-1BA0",
+              "count": 1
+            },
+            {
+              "value": "6SE7090-0XX84-0AB0",
+              "count": 1
+            },
+            {
+              "value": "BN-G500",
+              "count": 1
+            },
+            {
+              "value": "6SL3054-0FC30-1BA0",
+              "count": 1
+            },
+            {
+              "value": "FSZ-HE",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         }
       }
     },
@@ -27153,9 +31698,109 @@
             {
               "value": "6ES7",
               "count": 4
+            },
+            {
+              "value": "Dupline",
+              "count": 4
+            },
+            {
+              "value": "DN40",
+              "count": 4
+            },
+            {
+              "value": "YB2-2",
+              "count": 4
+            },
+            {
+              "value": "FLZ530",
+              "count": 3
+            },
+            {
+              "value": "LXQ",
+              "count": 3
+            },
+            {
+              "value": "YJK/F120",
+              "count": 2
+            },
+            {
+              "value": "6SE7041-1WL84-1BH0",
+              "count": 2
+            },
+            {
+              "value": "F4",
+              "count": 2
+            },
+            {
+              "value": "RS485",
+              "count": 2
+            },
+            {
+              "value": "FL-2",
+              "count": 2
+            },
+            {
+              "value": "PGB-7",
+              "count": 2
+            },
+            {
+              "value": "DS-C50K-L1708",
+              "count": 2
+            },
+            {
+              "value": "PF3W740-06-ET-M",
+              "count": 2
+            },
+            {
+              "value": "TR35",
+              "count": 2
+            },
+            {
+              "value": "D-ST2.5",
+              "count": 2
+            },
+            {
+              "value": "GT",
+              "count": 2
+            },
+            {
+              "value": "SXK-006-2TR",
+              "count": 2
+            },
+            {
+              "value": "ANAPF200-380/BCL",
+              "count": 2
+            },
+            {
+              "value": "HanhGk-2110065",
+              "count": 2
+            },
+            {
+              "value": "DN200",
+              "count": 2
+            },
+            {
+              "value": "DN80",
+              "count": 2
+            },
+            {
+              "value": "DN100",
+              "count": 2
+            },
+            {
+              "value": "WATSNA-63/50",
+              "count": 2
+            },
+            {
+              "value": "SAK",
+              "count": 2
+            },
+            {
+              "value": "Z45H-16C",
+              "count": 2
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         }
       }
     },
@@ -27693,9 +32338,109 @@
             {
               "value": "SINAMICS",
               "count": 3
+            },
+            {
+              "value": "Hope530G45T4",
+              "count": 2
+            },
+            {
+              "value": "ACS530-01-039A-4",
+              "count": 2
+            },
+            {
+              "value": "ATV630D75N4",
+              "count": 2
+            },
+            {
+              "value": "ACS880-04XT-1320A-7",
+              "count": 2
+            },
+            {
+              "value": "ACS530-01-169A-4",
+              "count": 2
+            },
+            {
+              "value": "ATV9A0C40Q4",
+              "count": 2
+            },
+            {
+              "value": "ATV930C13N4C",
+              "count": 2
+            },
+            {
+              "value": "FC-302N315T5E20H2XGCA0C4",
+              "count": 1
+            },
+            {
+              "value": "6SL3210-1SE31-1UA0",
+              "count": 1
+            },
+            {
+              "value": "ACS580-01-018A-4",
+              "count": 1
+            },
+            {
+              "value": "ACS580-01-03A4-4",
+              "count": 1
+            },
+            {
+              "value": "ACS580-01-04A1-4",
+              "count": 1
+            },
+            {
+              "value": "ACS580-01-05A7-4",
+              "count": 1
+            },
+            {
+              "value": "ACS580-01-09A5-4",
+              "count": 1
+            },
+            {
+              "value": "ACS580-01-07A3-4",
+              "count": 1
+            },
+            {
+              "value": "ACS580-01-12A7-4",
+              "count": 1
+            },
+            {
+              "value": "6SL32101PE311UL0",
+              "count": 1
+            },
+            {
+              "value": "RDUM-01",
+              "count": 1
+            },
+            {
+              "value": "6SL3255-0AA00-4JA2",
+              "count": 1
+            },
+            {
+              "value": "6SL3320-1TG38",
+              "count": 1
+            },
+            {
+              "value": "6SL3320-1TG34",
+              "count": 1
+            },
+            {
+              "value": "6SL3246-0BA22-1FA0",
+              "count": 1
+            },
+            {
+              "value": "6SL3060-4AA50-0AA0",
+              "count": 1
+            },
+            {
+              "value": "6SL3244-0BB12-1FA0",
+              "count": 1
+            },
+            {
+              "value": "ACS880-04-330A-7",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "功率": {
           "type": "enum",
@@ -28512,9 +33257,109 @@
             {
               "value": "XJCK600C",
               "count": 3
+            },
+            {
+              "value": "A1123",
+              "count": 3
+            },
+            {
+              "value": "KH2600B",
+              "count": 3
+            },
+            {
+              "value": "A1136-V2.0",
+              "count": 2
+            },
+            {
+              "value": "EVD-60-750",
+              "count": 2
+            },
+            {
+              "value": "A1134-V2.0",
+              "count": 2
+            },
+            {
+              "value": "A1137-V2.0",
+              "count": 2
+            },
+            {
+              "value": "DPMP-02",
+              "count": 2
+            },
+            {
+              "value": "A1052-V2.0",
+              "count": 2
+            },
+            {
+              "value": "A1084-V1.0",
+              "count": 2
+            },
+            {
+              "value": "DC",
+              "count": 2
+            },
+            {
+              "value": "A1136-V3.0",
+              "count": 2
+            },
+            {
+              "value": "CCZN301",
+              "count": 2
+            },
+            {
+              "value": "WGB-871A",
+              "count": 2
+            },
+            {
+              "value": "TSDC-V61",
+              "count": 2
+            },
+            {
+              "value": "A1052",
+              "count": 2
+            },
+            {
+              "value": "NSR612RF-D",
+              "count": 2
+            },
+            {
+              "value": "A5E02630232",
+              "count": 1
+            },
+            {
+              "value": "PDB30-80/500-T380",
+              "count": 1
+            },
+            {
+              "value": "6SL3040-1MA01-0AA0",
+              "count": 1
+            },
+            {
+              "value": "6SL3350-6TK00-0EA0",
+              "count": 1
+            },
+            {
+              "value": "MK40",
+              "count": 1
+            },
+            {
+              "value": "MK60",
+              "count": 1
+            },
+            {
+              "value": "A1135-V1.0",
+              "count": 1
+            },
+            {
+              "value": "N6-01RP-A010P465",
+              "count": 1
+            },
+            {
+              "value": "XC-NK-SJ-1000",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         }
       }
     },
@@ -28664,9 +33509,109 @@
             {
               "value": "6ES7590-1AJ30-0AA0",
               "count": 2
+            },
+            {
+              "value": "6GK7",
+              "count": 2
+            },
+            {
+              "value": "6SL3055-0AA00-5CA2",
+              "count": 2
+            },
+            {
+              "value": "6ES7972-0BB42-0XA0",
+              "count": 2
+            },
+            {
+              "value": "6ES7590-0BL00-0AA0",
+              "count": 2
+            },
+            {
+              "value": "6ES7541-1AB00-0AB0",
+              "count": 2
+            },
+            {
+              "value": "6EP1964-2BA00",
+              "count": 2
+            },
+            {
+              "value": "6ES7155-5AA00-0AC0",
+              "count": 2
+            },
+            {
+              "value": "6ES7590-0CA00-0AA0",
+              "count": 2
+            },
+            {
+              "value": "6ES7954-8LF03-0AA0",
+              "count": 2
+            },
+            {
+              "value": "6ES7135-6HD00-0BA1",
+              "count": 2
+            },
+            {
+              "value": "6ES7131-6BH01-0BA0",
+              "count": 2
+            },
+            {
+              "value": "6ES7954-8LE03-0AA0",
+              "count": 2
+            },
+            {
+              "value": "6ES7223",
+              "count": 2
+            },
+            {
+              "value": "F3X26Q",
+              "count": 2
+            },
+            {
+              "value": "Logitech",
+              "count": 2
+            },
+            {
+              "value": "CM",
+              "count": 2
+            },
+            {
+              "value": "iSmartGate",
+              "count": 2
+            },
+            {
+              "value": "6AV63812BS073AV0",
+              "count": 1
+            },
+            {
+              "value": "6ES79720AA020XA0",
+              "count": 1
+            },
+            {
+              "value": "6ES7193-6BP00-0BA0",
+              "count": 1
+            },
+            {
+              "value": "6SE7038-6WK84-1BHO",
+              "count": 1
+            },
+            {
+              "value": "6ED1052-1FB00-0BA6",
+              "count": 1
+            },
+            {
+              "value": "6SE7038-6GL84-1BG2",
+              "count": 1
+            },
+            {
+              "value": "6ES7972-0BA12-0XA0",
+              "count": 1
+            },
+            {
+              "value": "6ES7321-1BH02-0AA0",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "内存": {
           "type": "enum",
@@ -28920,9 +33865,109 @@
             {
               "value": "EC-PG101-24",
               "count": 1
+            },
+            {
+              "value": "KYL-803",
+              "count": 1
+            },
+            {
+              "value": "6GK5005-0BA00-1AA3",
+              "count": 1
+            },
+            {
+              "value": "DSE8610",
+              "count": 1
+            },
+            {
+              "value": "ARC-10",
+              "count": 1
+            },
+            {
+              "value": "GZ5200",
+              "count": 1
+            },
+            {
+              "value": "RVC-10",
+              "count": 1
+            },
+            {
+              "value": "EASYGEN-3200-5",
+              "count": 1
+            },
+            {
+              "value": "KYL-805",
+              "count": 1
+            },
+            {
+              "value": "EGCP-2",
+              "count": 1
+            },
+            {
+              "value": "UKTB-DI-8",
+              "count": 1
+            },
+            {
+              "value": "TIDM-1000",
+              "count": 1
+            },
+            {
+              "value": "JKGF-10",
+              "count": 1
+            },
+            {
+              "value": "DGC-2020HD",
+              "count": 1
+            },
+            {
+              "value": "6SX7010-0KB00",
+              "count": 1
+            },
+            {
+              "value": "STM32F407",
+              "count": 1
+            },
+            {
+              "value": "DS-D40-CON1",
+              "count": 1
+            },
+            {
+              "value": "SK3110.000",
+              "count": 1
+            },
+            {
+              "value": "InteliGen",
+              "count": 1
+            },
+            {
+              "value": "GRM533YW-CWX",
+              "count": 1
+            },
+            {
+              "value": "PN-G-CAN",
+              "count": 1
+            },
+            {
+              "value": "ZQWL",
+              "count": 1
+            },
+            {
+              "value": "ATS022",
+              "count": 1
+            },
+            {
+              "value": "SWP-MD806-80",
+              "count": 1
+            },
+            {
+              "value": "JC6000-XY-HC2-M-S-NL-N-JL1-A60B-SPL",
+              "count": 1
+            },
+            {
+              "value": "JC6000-XY-HC2-M-S-NL-N-JR1-A60B-SPL",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "通讯接口": {
           "type": "enum",
@@ -29809,9 +34854,69 @@
             {
               "value": "40*4",
               "count": 3
+            },
+            {
+              "value": "2*2",
+              "count": 3
+            },
+            {
+              "value": "15*3",
+              "count": 3
+            },
+            {
+              "value": "5*20",
+              "count": 2
+            },
+            {
+              "value": "10*120",
+              "count": 2
+            },
+            {
+              "value": "5*50",
+              "count": 2
+            },
+            {
+              "value": "4*40",
+              "count": 2
+            },
+            {
+              "value": "8*60",
+              "count": 2
+            },
+            {
+              "value": "10*80",
+              "count": 2
+            },
+            {
+              "value": "10*30",
+              "count": 2
+            },
+            {
+              "value": "10*50",
+              "count": 2
+            },
+            {
+              "value": "3*15",
+              "count": 2
+            },
+            {
+              "value": "10*60",
+              "count": 2
+            },
+            {
+              "value": "8*80",
+              "count": 2
+            },
+            {
+              "value": "3*25",
+              "count": 2
+            },
+            {
+              "value": "3*20",
+              "count": 2
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         }
       }
     },
@@ -30028,9 +35133,109 @@
             {
               "value": "CBYJR",
               "count": 21
+            },
+            {
+              "value": "UL",
+              "count": 13
+            },
+            {
+              "value": "ZR-RVVP",
+              "count": 10
+            },
+            {
+              "value": "RVVP",
+              "count": 9
+            },
+            {
+              "value": "ZR-BVR-0.6/1kV",
+              "count": 8
+            },
+            {
+              "value": "RV",
+              "count": 7
+            },
+            {
+              "value": "JBQ",
+              "count": 6
+            },
+            {
+              "value": "ZC-RVVP",
+              "count": 6
+            },
+            {
+              "value": "YCW",
+              "count": 5
+            },
+            {
+              "value": "ZC",
+              "count": 5
+            },
+            {
+              "value": "EV",
+              "count": 5
+            },
+            {
+              "value": "AGG",
+              "count": 4
+            },
+            {
+              "value": "ZC-RVV",
+              "count": 4
+            },
+            {
+              "value": "BV",
+              "count": 4
+            },
+            {
+              "value": "450V/750V",
+              "count": 3
+            },
+            {
+              "value": "ZC-VVR",
+              "count": 3
+            },
+            {
+              "value": "RVV",
+              "count": 3
+            },
+            {
+              "value": "ZR-BVR2.5",
+              "count": 3
+            },
+            {
+              "value": "ZC-RVVP-2",
+              "count": 3
+            },
+            {
+              "value": "ZC-BV-2.5mm",
+              "count": 3
+            },
+            {
+              "value": "JBQ1",
+              "count": 2
+            },
+            {
+              "value": "ZR-BVR6",
+              "count": 2
+            },
+            {
+              "value": "CBYJR/DC",
+              "count": 2
+            },
+            {
+              "value": "BV-2.5",
+              "count": 2
+            },
+            {
+              "value": "ZR-RVV",
+              "count": 2
+            },
+            {
+              "value": "JBQ-1140V",
+              "count": 2
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "芯数": {
           "type": "enum",
@@ -30443,9 +35648,109 @@
             {
               "value": "ZC-KVVP-450/750V",
               "count": 28
+            },
+            {
+              "value": "ZC-VVR",
+              "count": 25
+            },
+            {
+              "value": "IEEE45/LSZH-60",
+              "count": 22
+            },
+            {
+              "value": "YJV-0.6/1kV",
+              "count": 21
+            },
+            {
+              "value": "ZR-YJV",
+              "count": 19
+            },
+            {
+              "value": "YGU/D-50",
+              "count": 17
+            },
+            {
+              "value": "CJPF86/SC",
+              "count": 15
+            },
+            {
+              "value": "WDZ-OIL-125",
+              "count": 14
+            },
+            {
+              "value": "ZR-YJV-0.6/1kV-3",
+              "count": 14
+            },
+            {
+              "value": "ZC-YJV-0.6/1kV",
+              "count": 12
+            },
+            {
+              "value": "YJV-0.6/1kV-3",
+              "count": 11
+            },
+            {
+              "value": "YJV-1kV-3",
+              "count": 11
+            },
+            {
+              "value": "EFR",
+              "count": 11
+            },
+            {
+              "value": "YJV",
+              "count": 10
+            },
+            {
+              "value": "CEPF86/SC",
+              "count": 10
+            },
+            {
+              "value": "RVVP",
+              "count": 10
+            },
+            {
+              "value": "EFRP",
+              "count": 10
+            },
+            {
+              "value": "ZR-YJV-0.6/1kV-4",
+              "count": 9
+            },
+            {
+              "value": "ZC-KVVRP-450/750V",
+              "count": 9
+            },
+            {
+              "value": "ZR-KVVP-500V",
+              "count": 9
+            },
+            {
+              "value": "YJV-0.6/1kV-4",
+              "count": 9
+            },
+            {
+              "value": "ORNM-2000V",
+              "count": 8
+            },
+            {
+              "value": "ZRC-VVR-0.6/1kV",
+              "count": 8
+            },
+            {
+              "value": "ERF",
+              "count": 8
+            },
+            {
+              "value": "YCW-450/750V",
+              "count": 7
+            },
+            {
+              "value": "ZC-DJYPVP-300/500V",
+              "count": 7
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "额定电压": {
           "type": "series",
@@ -30804,9 +36109,69 @@
             {
               "value": "1.0",
               "count": 45
+            },
+            {
+              "value": "4",
+              "count": 43
+            },
+            {
+              "value": "70",
+              "count": 32
+            },
+            {
+              "value": "10",
+              "count": 29
+            },
+            {
+              "value": "35+16",
+              "count": 28
+            },
+            {
+              "value": "50+25",
+              "count": 27
+            },
+            {
+              "value": "25+16",
+              "count": 26
+            },
+            {
+              "value": "185",
+              "count": 25
+            },
+            {
+              "value": "6",
+              "count": 24
+            },
+            {
+              "value": "50",
+              "count": 24
+            },
+            {
+              "value": "16+10",
+              "count": 23
+            },
+            {
+              "value": "0.5",
+              "count": 23
+            },
+            {
+              "value": "25+10",
+              "count": 22
+            },
+            {
+              "value": "10+6",
+              "count": 22
+            },
+            {
+              "value": "25",
+              "count": 18
+            },
+            {
+              "value": "95+50",
+              "count": 18
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         }
       }
     },
@@ -30842,9 +36207,109 @@
             {
               "value": "ZR-RVSP",
               "count": 2
+            },
+            {
+              "value": "HDMI",
+              "count": 2
+            },
+            {
+              "value": "U21",
+              "count": 2
+            },
+            {
+              "value": "J599/20KB02A1N-2ST-C5",
+              "count": 2
+            },
+            {
+              "value": "J599/20KB02A1N-2BFOC-C5",
+              "count": 2
+            },
+            {
+              "value": "MHYV",
+              "count": 2
+            },
+            {
+              "value": "MGTSV",
+              "count": 2
+            },
+            {
+              "value": "6XV1830-0EH10",
+              "count": 1
+            },
+            {
+              "value": "CHJPFP86/SC",
+              "count": 1
+            },
+            {
+              "value": "DB25",
+              "count": 1
+            },
+            {
+              "value": "wDz-DC-B-ZP-H-105",
+              "count": 1
+            },
+            {
+              "value": "LIYCY",
+              "count": 1
+            },
+            {
+              "value": "RS",
+              "count": 1
+            },
+            {
+              "value": "6XV1830-0ET20",
+              "count": 1
+            },
+            {
+              "value": "6SL3060-4AA10-0AA0",
+              "count": 1
+            },
+            {
+              "value": "DS-1DVI1PB",
+              "count": 1
+            },
+            {
+              "value": "DS-1HD2PB",
+              "count": 1
+            },
+            {
+              "value": "MGTSV-8B1",
+              "count": 1
+            },
+            {
+              "value": "GYXTW-4B1",
+              "count": 1
+            },
+            {
+              "value": "UL2651-1.0-28AWG-10P-R1",
+              "count": 1
+            },
+            {
+              "value": "RJ11-6P6C",
+              "count": 1
+            },
+            {
+              "value": "UL2651-1.0-28AWG-16P-R1",
+              "count": 1
+            },
+            {
+              "value": "8m-16",
+              "count": 1
+            },
+            {
+              "value": "MHYV1",
+              "count": 1
+            },
+            {
+              "value": "BOC-G-ZO-6A1b",
+              "count": 1
+            },
+            {
+              "value": "CM291-RX",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "类别": {
           "type": "enum",
@@ -32959,9 +38424,109 @@
             {
               "value": "OTZ",
               "count": 9
+            },
+            {
+              "value": "DT",
+              "count": 7
+            },
+            {
+              "value": "DBV",
+              "count": 4
+            },
+            {
+              "value": "GT",
+              "count": 3
+            },
+            {
+              "value": "DT-300",
+              "count": 2
+            },
+            {
+              "value": "M12",
+              "count": 2
+            },
+            {
+              "value": "BV2",
+              "count": 2
+            },
+            {
+              "value": "G1",
+              "count": 2
+            },
+            {
+              "value": "M4",
+              "count": 2
+            },
+            {
+              "value": "UT1.5-4",
+              "count": 1
+            },
+            {
+              "value": "OT4-6",
+              "count": 1
+            },
+            {
+              "value": "TE1.0",
+              "count": 1
+            },
+            {
+              "value": "OTZ25-8",
+              "count": 1
+            },
+            {
+              "value": "OT16-12",
+              "count": 1
+            },
+            {
+              "value": "OT1.5-10",
+              "count": 1
+            },
+            {
+              "value": "OT1.5-4",
+              "count": 1
+            },
+            {
+              "value": "OT1.5-8",
+              "count": 1
+            },
+            {
+              "value": "OTZ16-8",
+              "count": 1
+            },
+            {
+              "value": "OT1.5-12",
+              "count": 1
+            },
+            {
+              "value": "OTZ25-12",
+              "count": 1
+            },
+            {
+              "value": "OT6-10",
+              "count": 1
+            },
+            {
+              "value": "OTZ95-10",
+              "count": 1
+            },
+            {
+              "value": "OTZ70-10",
+              "count": 1
+            },
+            {
+              "value": "OTZ10-8",
+              "count": 1
+            },
+            {
+              "value": "OTZ25-10",
+              "count": 1
+            },
+            {
+              "value": "OTZ35-10",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "截面": {
           "type": "semi",
@@ -34973,9 +40538,109 @@
             {
               "value": "6GK5",
               "count": 2
+            },
+            {
+              "value": "DS-3E1510-S",
+              "count": 2
+            },
+            {
+              "value": "100AH",
+              "count": 2
+            },
+            {
+              "value": "TMY-3",
+              "count": 2
+            },
+            {
+              "value": "A4",
+              "count": 2
+            },
+            {
+              "value": "M20",
+              "count": 2
+            },
+            {
+              "value": "DS-3E1518P-S",
+              "count": 1
+            },
+            {
+              "value": "Mport3102-I",
+              "count": 1
+            },
+            {
+              "value": "E810-DTU-V2.0",
+              "count": 1
+            },
+            {
+              "value": "KDW380/24B",
+              "count": 1
+            },
+            {
+              "value": "DS-D4037SI-M",
+              "count": 1
+            },
+            {
+              "value": "DS-8664NX-I16",
+              "count": 1
+            },
+            {
+              "value": "DN65/DN20",
+              "count": 1
+            },
+            {
+              "value": "DS-D2A461LE",
+              "count": 1
+            },
+            {
+              "value": "TEDRI-ASVG-600-600",
+              "count": 1
+            },
+            {
+              "value": "14kW",
+              "count": 1
+            },
+            {
+              "value": "TWA250ANDFVN",
+              "count": 1
+            },
+            {
+              "value": "GN-806D",
+              "count": 1
+            },
+            {
+              "value": "VRP-R22",
+              "count": 1
+            },
+            {
+              "value": "VMG-2-R22-B",
+              "count": 1
+            },
+            {
+              "value": "MT-7063",
+              "count": 1
+            },
+            {
+              "value": "TAM8701",
+              "count": 1
+            },
+            {
+              "value": "DS-3D201T/R-A",
+              "count": 1
+            },
+            {
+              "value": "FLUKE-F15BMAX-01",
+              "count": 1
+            },
+            {
+              "value": "PBSTUDIO",
+              "count": 1
+            },
+            {
+              "value": "TEDRI-DC-ADE-240",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         }
       }
     },
@@ -35011,9 +40676,109 @@
             {
               "value": "DN65",
               "count": 14
+            },
+            {
+              "value": "DN100",
+              "count": 12
+            },
+            {
+              "value": "DN50",
+              "count": 11
+            },
+            {
+              "value": "DN150",
+              "count": 11
+            },
+            {
+              "value": "M20",
+              "count": 8
+            },
+            {
+              "value": "DQM-I/II-D",
+              "count": 8
+            },
+            {
+              "value": "DN40",
+              "count": 8
+            },
+            {
+              "value": "DQM",
+              "count": 8
+            },
+            {
+              "value": "FR4",
+              "count": 7
+            },
+            {
+              "value": "Z45H-16C",
+              "count": 7
+            },
+            {
+              "value": "DN32",
+              "count": 7
+            },
+            {
+              "value": "M16",
+              "count": 6
+            },
+            {
+              "value": "Q235",
+              "count": 5
+            },
+            {
+              "value": "S2023175",
+              "count": 4
+            },
+            {
+              "value": "FC",
+              "count": 4
+            },
+            {
+              "value": "DN125",
+              "count": 4
+            },
+            {
+              "value": "DN250",
+              "count": 4
+            },
+            {
+              "value": "LC-LC",
+              "count": 4
+            },
+            {
+              "value": "FC-SC",
+              "count": 4
+            },
+            {
+              "value": "M4",
+              "count": 3
+            },
+            {
+              "value": "M3",
+              "count": 3
+            },
+            {
+              "value": "SC-SC",
+              "count": 3
+            },
+            {
+              "value": "M6",
+              "count": 3
+            },
+            {
+              "value": "PN16",
+              "count": 3
+            },
+            {
+              "value": "Z41H-16",
+              "count": 3
+            },
+            {
+              "value": "H44H-16C",
+              "count": 3
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         }
       }
     },
@@ -35049,9 +40814,109 @@
             {
               "value": "CAC-400ZW3ST",
               "count": 2
+            },
+            {
+              "value": "CAC-700ZV3VC2",
+              "count": 2
+            },
+            {
+              "value": "KFR-35GW",
+              "count": 1
+            },
+            {
+              "value": "CAC-250ZW3SC",
+              "count": 1
+            },
+            {
+              "value": "CAC-500ZV3V",
+              "count": 1
+            },
+            {
+              "value": "HASE2-350TLT",
+              "count": 1
+            },
+            {
+              "value": "CAC-125NV3DPM",
+              "count": 1
+            },
+            {
+              "value": "CAC-125ZE3DPM3",
+              "count": 1
+            },
+            {
+              "value": "DKC85WSC343857",
+              "count": 1
+            },
+            {
+              "value": "TWA075ADFNVN",
+              "count": 1
+            },
+            {
+              "value": "TWE075SDNFKBXNX",
+              "count": 1
+            },
+            {
+              "value": "HASD2-350TLT",
+              "count": 1
+            },
+            {
+              "value": "YLS-550W-6P",
+              "count": 1
+            },
+            {
+              "value": "YDW0.32-4",
+              "count": 1
+            },
+            {
+              "value": "DKC75WSC343857",
+              "count": 1
+            },
+            {
+              "value": "EBK1.5P/35",
+              "count": 1
+            },
+            {
+              "value": "KFR-35GW/NhLa1BAj",
+              "count": 1
+            },
+            {
+              "value": "YW290J1-100",
+              "count": 1
+            },
+            {
+              "value": "JT335D-YL",
+              "count": 1
+            },
+            {
+              "value": "HASD2-350-TLT-00-C",
+              "count": 1
+            },
+            {
+              "value": "HAS1R-350-TD-00",
+              "count": 1
+            },
+            {
+              "value": "CAC-650ZT4T",
+              "count": 1
+            },
+            {
+              "value": "YW290J1",
+              "count": 1
+            },
+            {
+              "value": "RZLC6-7.0",
+              "count": 1
+            },
+            {
+              "value": "TWA080AEDEBBN/TWE080SEDNEBBNK",
+              "count": 1
+            },
+            {
+              "value": "CAC-160ZW3S",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "制冷量": {
           "type": "enum",
@@ -35164,9 +41029,109 @@
             {
               "value": "RG-ES116G",
               "count": 1
+            },
+            {
+              "value": "DS-2CD3T47WDA4-L",
+              "count": 1
+            },
+            {
+              "value": "DS-2CD2T6MSTC-TS",
+              "count": 1
+            },
+            {
+              "value": "iDS-2DE742MSTS-DC",
+              "count": 1
+            },
+            {
+              "value": "DS-2FA1210-DC-CH",
+              "count": 1
+            },
+            {
+              "value": "DS-1602ZJ",
+              "count": 1
+            },
+            {
+              "value": "KBA127",
+              "count": 1
+            },
+            {
+              "value": "DS-8632NX-I9",
+              "count": 1
+            },
+            {
+              "value": "EB29",
+              "count": 1
+            },
+            {
+              "value": "HJ-QY8",
+              "count": 1
+            },
+            {
+              "value": "HJ3000-B",
+              "count": 1
+            },
+            {
+              "value": "DS-K4DC103",
+              "count": 1
+            },
+            {
+              "value": "DS-3E0508SP-S",
+              "count": 1
+            },
+            {
+              "value": "DS-K1F100A-D8E",
+              "count": 1
+            },
+            {
+              "value": "DS-8616N-K8-V2",
+              "count": 1
+            },
+            {
+              "value": "DS-3E2520P-H",
+              "count": 1
+            },
+            {
+              "value": "DS-K4H218DC",
+              "count": 1
+            },
+            {
+              "value": "DS-K1109MKF",
+              "count": 1
+            },
+            {
+              "value": "DS-K2618",
+              "count": 1
+            },
+            {
+              "value": "DS-K1F320-F",
+              "count": 1
+            },
+            {
+              "value": "DS-K1108AMK",
+              "count": 1
+            },
+            {
+              "value": "DS-2CD2245CV8-L",
+              "count": 1
+            },
+            {
+              "value": "DS-K7M101",
+              "count": 1
+            },
+            {
+              "value": "DS-K4H218DC-LZ",
+              "count": 1
+            },
+            {
+              "value": "DS-2CD6B55FWD-PLT1",
+              "count": 1
+            },
+            {
+              "value": "DS-2TD1217-2/QA",
+              "count": 1
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
         },
         "供电电压": {
           "type": "enum",
@@ -35222,7 +41187,7 @@
   },
   "meta": {
     "version": "0.2.0",
-    "generatedAt": "2026-11-18T01:07:42.864Z",
+    "generatedAt": "2026-11-18T01:38:59.671Z",
     "draft": true,
     "structure": "subs[小类] → params[参数] → {type, accepted, pending, suspected, aliases}",
     "principle": "参数值按小类隔离：某小类的候选只来自该小类的存量，不跨小类共用",

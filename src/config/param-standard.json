@@ -1817,8 +1817,8 @@
         "分断能力": {
           "type": "series",
           "series": "断路器分断值",
-          "rawCount": 2,
-          "normCount": 2,
+          "rawCount": 3,
+          "normCount": 3,
           "aliases": {},
           "accepted": [
             {
@@ -1966,6 +1966,10 @@
           "suspected": [
             {
               "value": "4.5",
+              "count": 1
+            },
+            {
+              "value": "3",
               "count": 1
             },
             {
@@ -7159,8 +7163,8 @@
         "分断能力": {
           "type": "series",
           "series": "断路器分断值",
-          "rawCount": 4,
-          "normCount": 3,
+          "rawCount": 5,
+          "normCount": 4,
           "aliases": {},
           "accepted": [
             {
@@ -7266,6 +7270,10 @@
           ],
           "pending": [],
           "suspected": [
+            {
+              "value": "333",
+              "count": 1
+            },
             {
               "value": "120",
               "count": 1
@@ -17009,61 +17017,7 @@
               "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列",
-          "accepted": [
-            {
-              "value": "EBG",
-              "count": 5,
-              "source": "reference"
-            },
-            {
-              "value": "RJ",
-              "count": 30,
-              "source": "reference"
-            },
-            {
-              "value": "RX24",
-              "count": 0,
-              "source": "manufacturer"
-            },
-            {
-              "value": "RXC",
-              "count": 0,
-              "source": "manufacturer"
-            },
-            {
-              "value": "RXCB",
-              "count": 0,
-              "source": "manufacturer"
-            },
-            {
-              "value": "RXG24",
-              "count": 0,
-              "source": "manufacturer"
-            },
-            {
-              "value": "RXLG",
-              "count": 0,
-              "source": "manufacturer"
-            }
-          ],
-          "removed": [
-            {
-              "value": "1k",
-              "count": 0,
-              "source": "manual"
-            },
-            {
-              "value": "1.5k",
-              "count": 0,
-              "source": "manual"
-            },
-            {
-              "value": "2k",
-              "count": 0,
-              "source": "manual"
-            }
-          ]
+          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
         },
         "阻值": {
           "type": "series",
@@ -35328,7 +35282,7 @@
   },
   "meta": {
     "version": "0.2.0",
-    "generatedAt": "2026-11-17T15:40:36.966Z",
+    "generatedAt": "2026-11-18T00:53:40.641Z",
     "draft": true,
     "structure": "subs[小类] → params[参数] → {type, accepted, pending, suspected, aliases}",
     "principle": "参数值按小类隔离：某小类的候选只来自该小类的存量，不跨小类共用",
@@ -35451,8 +35405,6 @@
         "1000V",
         "0.6/1.0KV"
       ]
-    },
-    "updatedAt": "2026-11-17T15:48:47.445Z",
-    "editedAt": "2026-11-17T15:48:47.445Z"
+    }
   }
 }

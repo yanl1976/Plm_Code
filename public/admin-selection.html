@@ -264,11 +264,28 @@ function buildSpecPreview() {
   return parts.join(' ');
 }
 
+// 主要参数预览：与后端 buildRowParams 同逻辑（未勾「进规格」的列拼成参数文本）
+function buildParamsPreview() {
+  var cols = STATE.columns || [];
+  var row = (STATE.rows || [])[0] || {};
+  var parts = [];
+  cols.forEach(function (c) {
+    if (c.role === 'model' || c.key === '小类号') return;
+    if (c.specPart !== false) return;
+    var v = String(row[c.key] == null ? '' : row[c.key]).trim();
+    if (!v || v === '—' || v === '-') return;
+    parts.push(c.key + ' ' + (c.unit && /^-?\d+(\.\d+)?$/.test(v) ? v + c.unit : v));
+  });
+  return parts.join('；');
+}
+
 function refreshSampleSpec() {
   var tip = document.getElementById('specSampleTip');
   if (!tip) return;
   var s = buildSpecPreview();
-  tip.textContent = s ? '规格回填示例（第一行）：' + s : '';
+  var p = buildParamsPreview();
+  tip.innerHTML = (s ? '<div>规格回填示例（第一行）：' + esc(s) + '</div>' : '')
+    + (p ? '<div>主要参数示例：' + esc(p) + '</div>' : '');
 }
 
 function renderPreview() {

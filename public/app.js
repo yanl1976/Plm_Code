@@ -4100,11 +4100,14 @@ async function nmSave() {
     const r = await apiPost('/api/new-material', {
       name, spec, unit: ($('#nmUnit').value || '').trim(), sub: nm.cur.sub,
       remark: ($('#nmRemark').value || '').trim(), by: 'web',
+      // 主要参数：规格型号以外的内容（额定电流、防护等级、附件说明…），与规格分开提交
+      params: ($('#nmParams').value || '').trim(),
     })
     if (r && r.error) { msg('保存失败：' + r.error); return }
     const tidy = r.specTidy
     msg('已加入待新增清单，编码 ' + r.item.code)
     $('#nmName').value = ''; $('#nmSpec').value = ''; $('#nmUnit').value = ''; $('#nmRemark').value = ''
+    if ($('#nmParams')) $('#nmParams').value = ''
     $('#nmSuggest').innerHTML = ''; $('#nmSpecCheck').innerHTML = ''
     // 清掉上一条查询到的库存/参考库存，避免残留误导下一条录入
     const invEl = $('#nmInv'); if (invEl) invEl.innerHTML = ''
@@ -4130,11 +4133,12 @@ async function nmSave() {
 function renderNmList() {
   const tb = document.querySelector('#nmTable tbody')
   if (!tb) return
-  if (!nm.items.length) { tb.innerHTML = '<tr><td colspan="8" class="muted">暂无待新增物料</td></tr>'; return }
+  if (!nm.items.length) { tb.innerHTML = '<tr><td colspan="9" class="muted">暂无待新增物料</td></tr>'; return }
   tb.innerHTML = nm.items.map((d) => `<tr>
     <td class="mono">${escapeHtml(d.code)}</td>
     <td>${escapeHtml(d.name)}</td>
     <td>${escapeHtml(d.spec)}</td>
+    <td class="nm-td-params">${escapeHtml(d.params || '')}</td>
     <td>${escapeHtml(d.sub)} ${escapeHtml(d.subName || '')}</td>
     <td>${escapeHtml(d.unit || '')}</td>
     <td>${escapeHtml(d.wh || '')}</td>

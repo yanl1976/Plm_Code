@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ERP 物料主数据治理 · 一物多号清洗</title>
-  <link rel="stylesheet" href="/style.css?v=20261117v" />
+  <link rel="stylesheet" href="/style.css?v=20261118a" />
 </head>
 <body>
   <header class="topbar">
@@ -319,6 +319,12 @@
             <span id="nmSpecStock" class="nm-spec-stock">现有库存 -</span>
             <button id="nmSimilar" class="ghost nm-similar-btn">类似型号</button>
           </div>
+          <div class="nm-row nm-params"><label>主要参数</label>
+            <div class="nm-params-wrap">
+              <textarea id="nmParams" rows="2" placeholder="规格型号以外的参数，如 额定电流 630A、防护等级 IP54、附件 辅助触头"></textarea>
+              <div id="nmParamsSuggest" class="nm-suggest"></div>
+            </div>
+          </div>
           <div class="nm-row"><label>单位</label><input id="nmUnit" placeholder="如 台 / 个 / 米" /></div>
           <div class="nm-row"><label>备注</label><input id="nmRemark" placeholder="选填" /></div>
           <div id="nmGuideTip" class="nm-guide"></div>
@@ -337,7 +343,7 @@
           </div>
           <div class="hint">加入清单时规格会自动整理空格（首尾空格 / 连续空格 / 全角空格），写入与导出均以整理后的写法为准；有改动时会在下方提示。</div>
           <table id="nmTable" class="mat">
-            <thead><tr><th>编码</th><th>名称</th><th>规格型号</th><th>小类</th><th>单位</th><th>仓库</th><th>时间</th><th></th></tr></thead>
+            <thead><tr><th>编码</th><th>名称</th><th>规格型号</th><th>主要参数</th><th>小类</th><th>单位</th><th>仓库</th><th>时间</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -383,6 +389,6 @@
     </div>
   </div>
 
-  <script src="/app.js?v=20261117v"></script>
+  <script src="/app.js?v=20261118a"></script>
 </body>
 </html>

@@ -3044,6 +3044,9 @@ const server = http.createServer(async (req, res) => {
           id: code, code, name, spec, sub, subName: info.subName || '',
           midKey: info.big + info.mid, midName: info.midName || '', big: info.big, bigName: info.bigName || '',
           wh: info.wh || '', unit: String(b.unit || '').trim(), remark: String(b.remark || '').trim(),
+          // 主要参数：规格型号以外的参数（额定电流、防护等级、附件说明等），
+          // 写入 ERP 时对应 F_ZXCV_ZYCS，与 FSPECIFICATION 分开存
+          params: String(b.params || '').trim(),
           by: String(b.by || 'web'), createdAt: new Date().toISOString(),
         }
         d.items.push(item)
@@ -3068,13 +3071,14 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/new-material/export') {
       const d = readNewMats()
       const rows = d.items.map((x) => ({
-        '物料编码': x.code, '物料名称': x.name, '规格型号': x.spec, '单位': x.unit || '',
+        '物料编码': x.code, '物料名称': x.name, '规格型号': x.spec,
+        '主要参数': x.params || '', '单位': x.unit || '',
         '小类编码': x.sub, '小类名称': x.subName || '', '中类名称': x.midName || '', '大类名称': x.bigName || '',
         '默认仓库': x.wh || '', '备注': x.remark || '',
         '创建时间': String(x.createdAt || '').replace('T', ' ').slice(0, 19),
       }))
-      const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ '物料编码': '', '物料名称': '', '规格型号': '' }])
-      ws['!cols'] = [{ wch: 14 }, { wch: 20 }, { wch: 30 }, { wch: 8 }, { wch: 10 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 20 }, { wch: 20 }]
+      const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ '物料编码': '', '物料名称': '', '规格型号': '', '主要参数': '' }])
+      ws['!cols'] = [{ wch: 14 }, { wch: 20 }, { wch: 26 }, { wch: 30 }, { wch: 8 }, { wch: 10 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 20 }, { wch: 20 }]
       const wb = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(wb, ws, '待新增物料')
       const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })

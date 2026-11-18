@@ -406,12 +406,17 @@ function parseExcelBase64(base64) {
 
   // 回填示例：让导入时就能看到规格会长什么样
   const sampleSpec = modelColTmp ? buildRowSpec(rows[0] || {}, columns, modelColTmp) : ''
+  // 不进规格的列 → 主要参数（对应 ERP 的 F_ZXCV_ZYCS）
+  // 与规格互补：勾了「进规格」的拼进规格型号，其余按「列名 值」的形式进主要参数，
+  // 这样规格只留型号、其余参数不丢
+  const sampleParams = modelColTmp ? buildRowParams(rows[0] || {}, columns) : ''
 
   return {
     ok: true, sheetName, headerRow: headerRow + 1, columns, rows,
     total: body.length,
     halfWidthConverted,     // 本次自动转换的全角字符数
     sampleSpec,             // 第一行按当前「进规格」勾选回填后的样子
+    sampleParams,           // 同一行里「不进规格」的列拼成的主要参数
   }
 }
 
@@ -584,6 +589,24 @@ function composeSpecByGuide(sub, row, cols) {
   // 基本合法性：不以分隔符结尾、不出现连续分隔符
   if (!fixed || /-\s*$|--/.test(fixed)) return null
   return fixed
+}
+
+/**
+ * 主要参数：把「未勾进规格」的列拼成一段文本，写入 ERP 的 F_ZXCV_ZYCS。
+ * 与 buildRowSpec 正好互补 —— 进规格的不重复写，跳过小类号与占位符。
+ */
+function buildRowParams(row, cols) {
+  const parts = []
+  for (const c of cols) {
+    const k = String(c.key || '')
+    if (c.role === 'model') continue
+    if (k === '小类号') continue
+    if (c.specPart !== false) continue            // 进规格的列不再重复
+    const v = String(row[c.key] == null ? '' : row[c.key]).trim()
+    if (!v || v === '—' || v === '-') continue    // 纯占位符跳过
+    parts.push(k + ' ' + (c.unit && /^-?\d+(\.\d+)?$/.test(v) ? v + c.unit : v))
+  }
+  return parts.join('；')
 }
 
 function buildRowSpec(row, cols, modelCol) {

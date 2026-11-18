@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.26';
+  var PLUGIN_VERSION = '2.27';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1175,26 +1175,59 @@
     } catch (e) { }
   }
 
+  /**
+   * 规格分段补全的候选区 HTML —— 页面输入框浮层与录入助手弹窗共用，
+   * 与看板前端（public/app.js renderNmComplete + style.css .nm-complete）保持同一效果：
+   *   一行 = 左侧参数名（型号/额定电流…） + 两列候选网格（已输入前缀加粗）+ 右侧「Tab 补全」。
+   * 颜色参数化：页面浮层用浅色，弹窗跟随主题。
+   */
+  function specCompHtml(r, selIdx, c) {
+    c = c || {};
+    var line = c.line || '#d8dee6';
+    var accent = c.accent || '#2f8cff';
+    var muted = c.muted || '#8a939e';
+    var onBg = c.onBg || '#eef5ff';
+    var seg = r.unit ? (r.param + '（' + r.unit + '）') : (r.param || '');
+    var pf = String(r.prefix || '').toLowerCase();
+    var opts = (r.options || []).slice(0, 8).map(function (o, i) {
+      var v = String(o.value || '');
+      var hit = pf && v.toLowerCase().indexOf(pf) === 0;
+      var txt = hit
+        ? '<b style="font-weight:600">' + esc(v.slice(0, pf.length)) + '</b>' + esc(v.slice(pf.length))
+        : esc(v);
+      var on = (i === selIdx);
+      return '<span class="plm-copt" data-cv="' + esc(v) + '" title="' + esc(v) + '"'
+        + ' style="min-width:0;padding:1px 7px;border-radius:4px;border:1px solid ' + (on ? accent : line) + ';'
+        + 'cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:18px;'
+        + (on ? 'background:' + onBg + ';color:' + accent + ';' : '') + '">' + txt + '</span>';
+    }).join('');
+    return '<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-bottom:1px dashed ' + line + ';">'
+      + '<span style="flex:none;max-width:74px;color:' + muted + ';font-size:11px;line-height:20px;'
+      + 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + esc(seg) + '">' + esc(seg) + '</span>'
+      + '<span style="flex:1;min-width:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;">'
+      + opts + '</span>'
+      + '<span style="flex:none;align-self:center;color:' + muted + ';font-size:11px;opacity:.75;">Tab 补全</span>'
+      + '</div>';
+  }
+
+  /** 采用分段候选后的规格值：替换输入尾部的 prefix 段（大小写不敏感，页面与弹窗共用） */
+  function compNextValue(cur, r, v) {
+    var s = String(cur == null ? '' : cur);
+    var tail = '';
+    if (r && r.prefix) {
+      var pf = String(r.prefix);
+      if (s.slice(s.length - pf.length).toLowerCase() === pf.toLowerCase()) tail = s.slice(s.length - pf.length);
+    }
+    var head = tail ? s.slice(0, s.length - tail.length) : s;
+    var base = head.replace(/\s+$/, '');
+    return base ? base + ' ' + v : v;
+  }
+
   function renderComp(r) {
     var p = ensureCompPanel();
     if (!p) return;
-    var seg = r.unit ? r.param + '（' + r.unit + '）' : r.param;
-    var pf = String(r.prefix || '').toLowerCase();
-    var cells = (r.options || []).slice(0, 8).map(function (o, i) {
-      var v = String(o.value || '');
-      var txt = esc(v);
-      if (pf && v.toLowerCase().indexOf(pf) === 0) {
-        txt = '<b>' + esc(v.slice(0, pf.length)) + '</b>' + esc(v.slice(pf.length));
-      }
-      var on = (i === 0);
-      return '<div data-cv="' + esc(v) + '" title="' + esc(v) + '" style="cursor:pointer;padding:1px 6px;'
-        + 'border:1px solid ' + (on ? '#2f8cff' : '#d8dee6') + ';border-radius:3px;'
-        + 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'
-        + (on ? 'background:#eef5ff;color:#1a6fd4' : '') + '">' + txt + '</div>';
-    }).join('');
-    p.innerHTML = '<div style="padding:4px 8px;border-bottom:1px dashed #e2e6ea;font-size:11px;color:#8a939e">'
-      + esc(seg) + '<span style="float:right">Tab 补全 / Alt+序号</span></div>'
-      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:5px">' + cells + '</div>';
+    // 与看板前端同一套布局；页面浮层用浅色系（保持原视觉）
+    p.innerHTML = specCompHtml(r, 0, { line: '#d8dee6', accent: '#2f8cff', muted: '#8a939e', onBg: '#eef5ff' });
     p.style.display = 'block';
     placeCompPanel(state.ggxh);
     var items = p.querySelectorAll('[data-cv]');
@@ -1208,10 +1241,7 @@
     if (!r || !r.options || !r.options[i]) return;
     var v = String(r.options[i].value || '');
     var cur = readText(state.ggxh) || '';
-    var tail = (r.prefix && cur.slice(cur.length - r.prefix.length) === r.prefix) ? r.prefix : '';
-    var head = tail ? cur.slice(0, cur.length - tail.length) : cur;
-    var base = head.replace(/\s+$/, '');
-    var next = base ? base + ' ' + v : v;
+    var next = compNextValue(cur, r, v);
     if (!writeText(state.ggxh, next)) return;
     hideComp();
     fireBlur(state.ggxh);
@@ -2288,6 +2318,13 @@
     specIn.value = readRaw(state.ggxh);
     specWrap.appendChild(specIn);
 
+    // 输入框内灰色续写（IDE 式，与看板前端 .nm-ghost 同效果）：
+    // 已输入部分透明、剩余候选灰色；pointer-events:none 不拦截输入与点击
+    var ghost = dlgEl('div', 'position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;'
+      + 'overflow:hidden;box-sizing:border-box;white-space:pre;color:transparent;');
+    ghost.className = 'plm-smart-dlg-ghost';
+    specWrap.appendChild(ghost);
+
     // 库存徽标：绝对定位在输入框内部右侧，不占按钮行宽度
     var invWrap = dlgEl('span', 'position:absolute;right:8px;top:50%;transform:translateY(-50%);'
       + 'display:none;align-items:center;gap:4px;font-size:11px;pointer-events:none;');
@@ -2366,7 +2403,7 @@
       + 'box-shadow:0 8px 22px rgba(0,0,0,.28);max-height:264px;overflow-y:auto;font-size:12px;');
     idePanel.className = 'plm-smart-ide-panel';
     document.body.appendChild(idePanel);
-    var ideItems = [];      // [{ value, note }]
+    var ideComp = null;     // 最近一次 spec-complete 结果（{param,unit,prefix,options}）
     var ideSel = -1;        // 当前高亮下标
     var ideSeq = 0;         // 请求序号：丢弃过期响应
     var ideTimer = null;
@@ -3729,113 +3766,103 @@
     }
 
     function hideIde() {
-      ideItems = [];
+      ideComp = null;
       ideSel = -1;
       if (idePanel) { idePanel.style.display = 'none'; idePanel.innerHTML = ''; }
+      if (ghost) ghost.innerHTML = '';
+    }
+
+    /** 输入框内灰色续写：已输入部分透明、剩余候选灰色（与看板 updateNmGhost 同逻辑） */
+    function updateIdeGhost() {
+      try {
+        if (!ghost) return;
+        var r = ideComp;
+        var v = String(specIn.value || '');
+        if (!r || !(r.options || []).length) { ghost.innerHTML = ''; return; }
+        var cand = String(r.options[0].value || '');
+        var pf = String(r.prefix || '');
+        var rest = cand.slice(pf.length);
+        if (!rest) { ghost.innerHTML = ''; return; }
+        // 只有光标在末尾时续写（中途编辑时续写会错位）
+        if (specIn.selectionStart != null && specIn.selectionStart !== v.length) { ghost.innerHTML = ''; return; }
+        // 与输入框的排版对齐（字体/内边距/边框）
+        var cs = null;
+        try { cs = window.getComputedStyle ? window.getComputedStyle(specIn) : null; } catch (e0) { cs = null; }
+        if (cs) {
+          ghost.style.font = cs.font || '';
+          ghost.style.lineHeight = cs.lineHeight || '';
+          ghost.style.padding = cs.padding || '';
+          ghost.style.letterSpacing = cs.letterSpacing || '';
+          ghost.style.textIndent = cs.textIndent || '';
+          ghost.style.borderWidth = cs.borderWidth || '0';
+        }
+        ghost.innerHTML = '<span style="color:transparent">' + escHtml(v) + '</span>'
+          + '<span style="color:#8a939e;opacity:.85">' + escHtml(rest) + '</span>';
+      } catch (e) { }
     }
 
     function renderIde() {
-      if (!ideItems.length) { hideIde(); return; }
-      var qn = String(specIn.value || '').trim().toLowerCase();
-      var html = '<div style="padding:4px 8px;opacity:.6;border-bottom:' + C_LINE + ';font-size:11px;">'
-        + 'Tab/Enter 补全 · ↑↓ 选择 · Alt+序号直选 · Esc 关闭</div>';
-      for (var i = 0; i < ideItems.length; i++) {
-        var it = ideItems[i];
-        var s = String(it.value == null ? '' : it.value);
-        var idx = qn ? s.toLowerCase().indexOf(qn) : -1;
-        var body = idx >= 0
-          ? escHtml(s.slice(0, idx + qn.length))
-          + '<b style="color:' + th.accent + '">' + escHtml(s.slice(idx + qn.length)) + '</b>'
-          : escHtml(s);
-        html += '<div class="plm-smart-ide-item" data-idx="' + i + '"'
-          + ' style="padding:5px 8px;cursor:pointer;display:flex;gap:8px;align-items:center;'
-          + (i === ideSel ? 'background:rgba(64,158,255,.16);' : '')
-          + 'border-bottom:1px solid rgba(127,127,127,.12);">'
-          + '<span style="opacity:.45;min-width:14px;">' + (i < 8 ? (i + 1) : '·') + '</span>'
-          + '<span style="flex:1 1 auto;word-break:break-all;">' + body + '</span>'
-          + (it.note ? '<span style="opacity:.6;white-space:nowrap;">' + escHtml(it.note) + '</span>' : '')
-          + '</div>';
-      }
-      idePanel.innerHTML = html;
+      if (!ideComp || !(ideComp.options || []).length) { hideIde(); return; }
+      // 与看板前端 / 页面输入框同一套渲染（specCompHtml）：参数名 + 两列网格 + Tab 补全
+      idePanel.innerHTML = specCompHtml(ideComp, ideSel, {
+        line: C_LINE, accent: th.accent, muted: C_MUTE, onBg: 'rgba(62,166,255,.14)'
+      });
       placeIde();
       idePanel.style.display = 'block';
-      // 用 mousedown（早于输入框 blur）应用，避免点候选时面板先被收起
-      var rows = idePanel.children || [];
-      for (var k = 0; k < rows.length; k++) {
-        (function (row) {
-          if (String(row.className || '').indexOf('plm-smart-ide-item') < 0) return;
-          row.onmousedown = function (ev) {
-            if (ev && ev.preventDefault) ev.preventDefault();
-            applyIde(parseInt(row.getAttribute('data-idx'), 10));
-          };
-        })(rows[k]);
-      }
+      bindIdeRows();
+    }
+
+    /** 候选行点击：用 mousedown（早于输入框 blur）应用，避免点候选时面板先被收起 */
+    function bindIdeRows() {
+      try {
+        var items = idePanel.querySelectorAll ? idePanel.querySelectorAll('[data-cv]') : [];
+        for (var i = 0; i < items.length; i++) {
+          (function (el, idx) {
+            el.onmousedown = function (ev) {
+              if (ev && ev.preventDefault) ev.preventDefault();
+              applyIde(idx);
+            };
+          })(items[i], i);
+        }
+      } catch (e) { }
     }
 
     function applyIde(i) {
-      if (!(i >= 0) || i >= ideItems.length) return;
-      var v = String(ideItems[i].value == null ? '' : ideItems[i].value);
+      if (!ideComp || !(ideComp.options || []).length) return;
+      if (!(i >= 0) || i >= ideComp.options.length) return;
+      var v = String(ideComp.options[i].value || '');
       if (!v) return;
-      specIn.value = v;
+      specIn.value = compNextValue(String(specIn.value || ''), ideComp, v);
       hideIde();
       checkNow();
     }
 
     /**
-     * 输入即联想：3130 同型号系列（带库存/型号段）优先，3100 存量写法补充，
-     * 归一化去重后前缀命中置顶，最多 8 条（Alt+1..8 与页面输入框一致）。
+     * 输入即联想：与看板前端同源（3130 /api/new-material/spec-complete，
+     * 未配置 inventoryBase 时回退 3100 /api/plm/spec-complete），
+     * 返回 { param, unit, prefix, options:[{value}] }，恰好支撑「分段候选 + ghost 续写 + Tab 补全」。
      */
     function loadIde() {
       if (!dlg) return;
+      if (ghost) ghost.innerHTML = '';   // 输入变化：旧续写先清
       var q = String(specIn.value || '').trim();
       if (q.length < 2) { hideIde(); return; }
       var seq = ++ideSeq;
-      var qn = q.toLowerCase();
-      var out = [], seen = {};
-      function add(v, note) {
-        var s = String(v == null ? '' : v).trim();
-        if (!s || s.toLowerCase() === qn) return;
-        var k = normKey(s);
-        if (!k || seen[k]) return;
-        seen[k] = 1;
-        out.push({ value: s, note: note || '' });
-      }
       var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
-      var pending = 1;   // 3100 一次；配置了 3130 再加一次
-      function flush() {
-        if (pending > 0 || seq !== ideSeq || !dlg) return;
-        var qk = normKey(q);
-        out.sort(function (a, b) {
-          var pa = normKey(a.value).indexOf(qk) === 0 ? 0 : 1;
-          var pb = normKey(b.value).indexOf(qk) === 0 ? 0 : 1;
-          return pa - pb;
-        });
-        ideItems = out.slice(0, 8);
-        ideSel = ideItems.length ? 0 : -1;
+      function onData(r) {
+        if (seq !== ideSeq || !dlg) return;
+        ideComp = (r && r.ok !== false && r.options && r.options.length) ? r : null;
+        if (!ideComp) { hideIde(); return; }
+        ideSel = 0;
+        updateIdeGhost();
         renderIde();
       }
       if (base) {
-        pending++;
-        apiAbsolute(base + '/api/new-material/spec-suggest?sub=' + encodeURIComponent(currentSub())
-          + '&q=' + encodeURIComponent(q), function (r) {
-          if (seq !== ideSeq) return;
-          var items = (r && r.items) || [];
-          for (var i = 0; i < items.length; i++) {
-            var it = items[i];
-            var note = [];
-            if (it.seriesSpecs > 1) note.push('型号段 ' + it.seriesSpecs + ' 条');
-            if (it.qty != null) note.push('库存 ' + it.qty);
-            add(it.spec, note.join(' · '));
-          }
-          pending--; flush();
-        });
+        apiAbsolute(base + '/api/new-material/spec-complete?sub=' + encodeURIComponent(currentSub())
+          + '&q=' + encodeURIComponent(q), onData);
+      } else {
+        apiAsync('/api/plm/spec-complete', { sub: currentSub(), q: q }, onData);
       }
-      apiAsync('/api/plm/suggest', { field: 'spec', value: q, sub: currentSub() }, function (r) {
-        if (seq !== ideSeq) return;
-        var list = (r && r.suggestions) || [];
-        for (var j = 0; j < list.length; j++) add(list[j] && list[j].value, '');
-        pending--; flush();
-      });
     }
 
     var timer = null;
@@ -3871,7 +3898,7 @@
     specIn.onkeydown = function (e) {
       e = e || window.event;
       if (!e || e.isComposing) return;
-      var vis = idePanel.style.display !== 'none' && ideItems.length > 0;
+      var vis = idePanel.style.display !== 'none' && !!(ideComp && (ideComp.options || []).length);
       if (e.key === 'Escape' && vis) {
         if (e.preventDefault) e.preventDefault();
         hideIde();
@@ -3885,7 +3912,7 @@
       }
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         if (e.preventDefault) e.preventDefault();
-        var n = ideItems.length;
+        var n = ideComp.options.length;
         ideSel = e.key === 'ArrowDown'
           ? (ideSel < 0 ? 0 : Math.min(ideSel + 1, n - 1))
           : (ideSel < 0 ? n - 1 : Math.max(ideSel - 1, 0));

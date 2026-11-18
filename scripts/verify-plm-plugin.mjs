@@ -1383,15 +1383,15 @@ async function run() {
       'got=' + JSON.stringify(q.ctl['FLSXHB_Value'].__text))
   }
 
-  // S44 弹窗内规格型号 IDE 联想：输入出候选 / Tab 补全 / ↑↓+Enter / Alt+序号 / Esc 关闭
+  // S44 弹窗内规格型号联想：与看板前端同款（spec-complete 分段候选 + ghost 续写 + Tab 补全）
   {
-    console.log('[S44] 弹窗内规格型号 IDE 联想与键盘补全')
-    const SPEC_SUG_3130 = {
-      ok: true,
-      modelSummary: { model: 'IC65N', specCount: 5, itemCount: 3 },
-      items: [
-        { spec: 'IC65N C10A/2P', model: 'IC65N', seriesSpecs: 5, qty: 12 },
-        { spec: 'IC65N C16 3P', model: 'IC65N', seriesSpecs: 5, qty: 3 },
+    console.log('[S44] 弹窗内规格型号 IDE 联想与键盘补全（看板同款）')
+    const SPEC_COMPLETE = {
+      ok: true, param: '型号', unit: '', prefix: 'ic',
+      options: [
+        { value: 'IC65N C10A/2P' },
+        { value: 'IC65N C16 3P' },
+        { value: 'IC65N C32 4P' },
       ],
     }
     const p = newPage({
@@ -1399,7 +1399,7 @@ async function run() {
       ajaxHandler: router({
         '/health': HEALTH_OK,
         '/check': CHECK_CLEAN,
-        'spec-suggest': SPEC_SUG_3130,
+        'spec-complete': SPEC_COMPLETE,
         '/suggest': SUGGEST_SPEC,
       }),
       globalCfg: { inventoryBase: 'http://127.0.0.1:3130', fillSpecToParams: true },
@@ -1415,28 +1415,33 @@ async function run() {
     await sleep(80)
     const specEl = findByClass(p, 'plm-smart-dlg-spec')
     const ideEl = findByClass(p, 'plm-smart-ide-panel')
+    const ghostEl = findByClass(p, 'plm-smart-dlg-ghost')
     ok('弹窗内规格输入框存在', !!specEl)
     ok('联想浮层已创建（挂 body 上）', !!ideEl)
+    ok('输入框内续写层已创建（ghost）', !!ghostEl)
 
     const key = (el, k, extra) => el.onkeydown(Object.assign({ key: k, preventDefault() { }, stopPropagation() { } }, extra || {}))
 
-    // ① 输入 ic → 出候选（3130 同型号 + 3100 存量合并，前缀命中置顶）
+    // ① 输入 ic → 出候选（spec-complete 分段候选；mock innerHTML 只存字符串，按渲染结果断言）
     specEl.value = 'ic'
     specEl.oninput({})
     await sleep(650)
     ok('输入 2 字后浮层展开', !!ideEl && ideEl.style.display === 'block',
       'display=' + (ideEl && ideEl.style.display))
-    // mock 的 innerHTML 只存字符串（真实浏览器会生成 DOM），这里按渲染结果断言。
-    // 注意候选值会按「已输入前缀 + 加粗后缀」拆成两段，不能整串匹配。
     const ideHtml = String(ideEl.innerHTML || '')
-    ok('候选行已渲染（含 3130 数据）',
-      ideHtml.indexOf('plm-smart-ide-item') >= 0 && ideHtml.indexOf('65N C10A/2P') >= 0,
-      'html=' + ideHtml.slice(0, 100))
+    ok('候选区含参数名与 Tab 补全提示',
+      ideHtml.indexOf('型号') >= 0 && ideHtml.indexOf('Tab 补全') >= 0, 'html=' + ideHtml.slice(0, 100))
+    ok('两列网格候选已渲染（前缀高亮拆段显示）',
+      ideHtml.indexOf('plm-copt') >= 0 && ideHtml.indexOf('65N C10A/2P') >= 0,
+      'html=' + ideHtml.slice(0, 120))
+    ok('ghost 灰色续写已生成', String(ghostEl.innerHTML || '').indexOf('65N C10A/2P') >= 0,
+      'ghost=' + String(ghostEl.innerHTML || '').slice(0, 100))
 
-    // ② Tab 补全第一个（前缀命中优先）
+    // ② Tab 补全第一个（compNextValue：替换尾部 prefix 段）
     key(specEl, 'Tab')
     ok('Tab 补全为第一个候选', specEl.value === 'IC65N C10A/2P', 'got=' + JSON.stringify(specEl.value))
-    ok('补全后浮层收起', ideEl.style.display === 'none')
+    ok('补全后浮层与续写收起',
+      ideEl.style.display === 'none' && String(ghostEl.innerHTML || '') === '')
 
     // ③ ↑↓ + Enter：选第二个
     specEl.value = 'ic'

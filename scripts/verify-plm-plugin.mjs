@@ -188,6 +188,10 @@ function newPage({ ctrls, ajaxHandler, confirmReturn = true, globalCfg = null, d
       ConfirmBox: (t, m) => { doc.__confirmCalls = (doc.__confirmCalls || 0) + 1; return confirmReturn },
     },
     Language: { Lang: (k) => k },
+    // 业务页定位：findFormPage 按页面名逐个探测，这里统一返回同一套控件
+    Page: {
+      InstanceByName: () => ({ GetControl: (id) => ctl[id] || { id: '' } }),
+    },
   }
 
   const sandbox = {}
@@ -1328,6 +1332,55 @@ async function run() {
     mem.heal()
     ok('记忆清空后不自愈（不串场）', p.ctl['ZYCS_Value'].__text === PLACEHOLDER,
       'got=' + JSON.stringify(p.ctl['ZYCS_Value'].__text))
+  }
+
+  // S43 FLSXHB 真实载体：保存时主要参数 ← 分类属性合并（现场 1111 标记实证）
+  {
+    console.log('[S43] FLSXHB 载体：参数优先 / 规格不覆盖 / 手改保留 / 无参数时规格桥接')
+    const p = newPage({
+      ctrls: Object.assign(baseCtrl(), { FLSXHB_Value: { text: '' } }),
+      ajaxHandler: router({ '/health': HEALTH_OK, '/check': CHECK_CLEAN }),
+      globalCfg: { fillSpecToParams: true },
+    })
+    p.OnCreate()
+    const mem = p.sandbox.__plmSmartZycsMem
+
+    // ① 助手参数回填：ZYCS 镜像 + FLSXHB 载体（122 字符 > 100 上限 → 截断）
+    const params = '型号:3WT11N04 4P LSI/LSIG400A 55kA 500V 额定电流400A 极数4P ' + 'x'.repeat(80)
+    ok('参数长度超 FLSXHB 上限', params.length > 100, 'len=' + params.length)
+    mem.sync(params)
+    const carrier = p.ctl['FLSXHB_Value'].__text
+    ok('ZYCS 镜像写入完整参数', p.ctl['ZYCS_Value'].__text === params,
+      'got=' + JSON.stringify(p.ctl['ZYCS_Value'].__text.slice(0, 30)) + '…')
+    ok('FLSXHB 载体已写参数且 ≤100 字符', carrier.length > 0 && carrier.length <= 100 && carrier !== 'NXB-63 C16 3P',
+      'len=' + carrier.length)
+    ok('载体内容为参数前缀（非规格）', carrier === params.slice(0, carrier.length),
+      'got=' + JSON.stringify(carrier.slice(0, 40)) + '…')
+
+    // ② 业务页 OnCreate 再触发（翻页/重建场景）：参数保持，不被规格桥接覆盖
+    p.sandbox.InforCenter_PSEITEMCISFORM_CreatePage_OnCreate(p.pageEvent, {})
+    ok('业务页 OnCreate 后载体仍为参数', p.ctl['FLSXHB_Value'].__text === carrier,
+      'got=' + JSON.stringify(p.ctl['FLSXHB_Value'].__text.slice(0, 40)) + '…')
+
+    // ③ 用户手改载体（如现场加 1111 标记）→ 不得被覆盖，且记忆同步为手改值
+    const edited = carrier + '1111'
+    p.ctl['FLSXHB_Value'].__text = edited
+    p.sandbox.InforCenter_PSEITEMCISFORM_CreatePage_OnCreate(p.pageEvent, {})
+    mem.heal()
+    ok('用户手改载体不被覆盖', p.ctl['FLSXHB_Value'].__text === edited,
+      'got=' + JSON.stringify(p.ctl['FLSXHB_Value'].__text.slice(0, 40)) + '…')
+
+    // ④ 无参数时规格桥接兜底（老行为保留）
+    const q = newPage({
+      ctrls: Object.assign(baseCtrl(), { FLSXHB_Value: { text: '' } }),
+      ajaxHandler: router({ '/health': HEALTH_OK, '/check': CHECK_CLEAN }),
+      globalCfg: { fillSpecToParams: true },
+    })
+    q.OnCreate()
+    q.ctl['GGXH_Value'].__text = 'NXB-63 C16 3P'
+    q.sandbox.InforCenter_PSEITEMCISFORM_CreatePage_OnCreate(q.pageEvent, {})
+    ok('无参数时规格桥接写入载体', q.ctl['FLSXHB_Value'].__text === 'NXB-63 C16 3P',
+      'got=' + JSON.stringify(q.ctl['FLSXHB_Value'].__text))
   }
 
   console.log('\n----------------------------------------')

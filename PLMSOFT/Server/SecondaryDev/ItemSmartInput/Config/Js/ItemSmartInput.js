@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.24';
+  var PLUGIN_VERSION = '2.25';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -403,7 +403,7 @@
   }
 
   /** 本脚本在当前页面已写入的值：用于区分「我写的（可继续更新）」与「业务值（不动）」 */
-  var fillMark = { zycs: '', flsxhb: '' };
+  var fillMark = { zycs: '', flsxhb: '', flsxhbFromParams: false };
 
   /**
    * 可填判断：
@@ -462,6 +462,11 @@
   }
 
   function syncFlsxhb(spec, page) {
+    if (CFG.fillParamsToZycs && fillMark.flsxhbFromParams && fillMark.flsxhb) {
+      // 载体里已是助手主要参数：规格晚到（输入事件/桥接）不得覆盖，否则主要参数被规格顶掉
+      log('分类属性合并已写入助手主要参数，跳过规格桥接');
+      return false;
+    }
     var p = page || findFormPage();
     if (!p || !p.GetControl) return false;
     var c = null;
@@ -483,6 +488,43 @@
       log('已同步 分类属性合并(FLSXHB) <= 规格型号（上限 ' + lim + ' 字符）');
     }
     return ok;
+  }
+
+  /**
+   * 主要参数 → 分类属性合并(FLSXHB)：这是保存时「主要参数」的【真实载体】。
+   * 2026-11-18 现场实证（用户在 FLSXHB 手加 1111 标记，保存后原样出现在物料主要参数里）：
+   * 向导 finish 时平台把业务页 FLSXHB 的内容写入物料主要参数，
+   * 第 1 页的 ZYCS 只是展示镜像（会被向导销毁/重建，不参与保存）。
+   * 特性：不置灰（允许步骤 2 手工微调）；超 100 字符截断并明确记日志；
+   *       用户已手改的值一律不覆盖；成功后写入作用域记忆供自愈。
+   */
+  function writeParamsToFlsxhb(pv, page) {
+    try {
+      if (!CFG.enabled || !CFG.fillParamsToZycs) return false;
+      var text = String(pv == null ? '' : pv).replace(/^\s+|\s+$/g, '');
+      if (!text) return false;
+      var p = page || findFormPage();
+      var c = null;
+      if (p && p.GetControl) { try { c = p.GetControl(CFG.ctlFlsxhb); } catch (e0) { c = null; } }
+      if (!isValidCtl(c)) c = flsxhbCtl();
+      if (!isValidCtl(c)) return false;
+      if (!isFillable(c, '', fillMark.flsxhb)) {
+        log('分类属性合并已有值（用户已填/已手改），不覆盖');
+        return false;
+      }
+      var lim = ctlLimit(c, CFG.flsxhbMaxLen);
+      var s = text.length > lim ? clipSmart(text, lim) : text;
+      if (!writeText(c, s)) return false;
+      fillMark.flsxhb = s;
+      fillMark.flsxhbFromParams = true;
+      writeFlsxhbMemory(s);
+      if (s.length < text.length) {
+        log('主要参数 ' + text.length + ' 字符 > 分类属性合并上限 ' + lim + '，已按上限写入（可在步骤 2 手工补全）');
+      } else {
+        log('已回填 分类属性合并(FLSXHB) <= 助手主要参数（' + s.length + ' 字符）');
+      }
+      return true;
+    } catch (e) { return false; }
   }
 
   /** 统一入口：缓存规格 + 同步两个字段（幂等，可重复调用） */
@@ -536,19 +578,9 @@
       }
     }
 
-    // ② FLSXHB —— 只有基础页 PSEITEM-CREATE 有，业务页面通常没有；
-    //    存在就一起写，不存在就跳过（不报错）。
-    var c2 = flsxhbCtl();
-    if (c2) {
-      var lim2 = ctlLimit(c2, CFG.flsxhbMaxLen);
-      var s2 = text.length > lim2 ? clipSmart(text, lim2) : text;
-      if (writeText(c2, s2)) {
-        fillMark.flsxhb = s2;
-        lockCtl(c2, CFG.flsxhbMaxLen);
-        ok = true;
-        log('已回填 分类属性合并(FLSXHB) 并置只读（' + s2.length + '/' + lim2 + ' 字符）');
-      }
-    }
+    // ② FLSXHB —— 业务页面「分类属性合并」是保存时主要参数的真实载体（不置灰，允许手改）；
+    //    基础页没有该字段，写不进去就跳过（不报错）。
+    if (writeParamsToFlsxhb(text)) ok = true;
 
     if (!ok) log('主要参数未回填：ZYCS 与 FLSXHB 都写不进去');
     return ok;
@@ -674,9 +706,9 @@
   //   向导关闭/新开向导   → 根节点随页销毁（且 PageOnCreate/PageOnClose 主动清标记）→ 绝不串场。
   var ZYCS_MEM_TTL = 2 * 60 * 60 * 1000;   // 兜底有效期：防缓存页残留旧值（正常会被开关钩子清掉）
 
-  function zycsScopeEl() {
+  /** 从控件 DOM 向上找【向导对话框根节点】（最外层 [pagepagename] 祖先）——记忆就挂在它身上 */
+  function scopeElOf(c) {
     try {
-      var c = zycsCtl();
       var el = c && (c.__el || domOf(c));
       if (!el) return null;
       var scope = null, p = el, hop = 0;
@@ -688,21 +720,29 @@
     } catch (e) { return null; }
   }
 
-  function writeZycsMemory(v) {
+  function zycsScopeEl() { try { return scopeElOf(zycsCtl()); } catch (e) { return null; } }
+  function flsxhbScopeEl() { try { return scopeElOf(flsxhbCtl()); } catch (e) { return null; } }
+
+  function writeParamMemory(key, v) {
     try {
-      var el = zycsScopeEl();
-      if (el) el.__plmSmartZycs = { value: v, at: Date.now() };
+      var el = key === '__plmSmartFlsxhb' ? flsxhbScopeEl() : zycsScopeEl();
+      if (el) el[key] = { value: v, at: Date.now() };
     } catch (e) { }
   }
 
-  function readZycsMemory() {
+  function readParamMemory(key) {
     try {
-      var el = zycsScopeEl();
-      var m = el && el.__plmSmartZycs;
+      var el = key === '__plmSmartFlsxhb' ? flsxhbScopeEl() : zycsScopeEl();
+      var m = el && el[key];
       if (m && m.value && (Date.now() - m.at) < ZYCS_MEM_TTL) return String(m.value);
     } catch (e) { }
     return '';
   }
+
+  function writeZycsMemory(v) { writeParamMemory('__plmSmartZycs', v); }
+  function readZycsMemory() { return readParamMemory('__plmSmartZycs'); }
+  function writeFlsxhbMemory(v) { writeParamMemory('__plmSmartFlsxhb', v); }
+  function readFlsxhbMemory() { return readParamMemory('__plmSmartFlsxhb'); }
 
   /** 向导页打开/关闭（GuideManagement PageOnCreate/PageOnClose）时清理记忆，防串场 */
   function clearZycsMemoryByPage(pageEvent) {
@@ -727,23 +767,48 @@
   }
 
   /**
-   * 自愈：ZYCS 是占位文字/空而作用域记忆存在 → 写回。
-   * 挂在 watchDialog 轮询里每 800ms 执行一次，兜住一切未知的覆盖/重建路径
-   * （包括框架回放中断导致整表重建的场景）。仅在「助手在本向导内写过参数」时生效。
+   * 自愈（挂在 watchDialog 轮询里每 800ms 执行，另挂业务页 OnCreate/OnOK）：
+   *   ① ZYCS 展示镜像：占位文字/空 + 记忆存在 → 写回；
+   *   ② FLSXHB 真实载体：空 + 记忆存在 → 写回；用户手改过（非本脚本写入值）→ 以手改值为准更新记忆。
+   * 兜住一切未知的覆盖/重建路径（包括框架回放中断导致整表重建的场景）。
+   * 仅在「助手在本向导内写过参数」时生效。
    */
-  function healZycsIfWiped() {
+  function healParamsIfWiped() {
     try {
       if (!CFG.enabled || !CFG.fillParamsToZycs) return;
-      var mem = readZycsMemory();
-      if (!mem) return;
       invalidateStaleZycs();
-      var c = zycsCtl();
-      if (!c) return;
-      var cur = readText(c);
-      if (cur === ZYCS_PLACEHOLDER || !cur) {
-        if (writeText(c, mem)) {
-          fillMark.zycs = mem;
-          log('自愈恢复主要参数：表单被重建/占位文字覆盖 → 写回助手值（' + mem.length + ' 字符）');
+      // ① ZYCS 展示镜像
+      var memZ = readZycsMemory();
+      if (memZ) {
+        var c = zycsCtl();
+        if (c) {
+          var cur = readText(c);
+          if (cur === ZYCS_PLACEHOLDER || !cur) {
+            if (writeText(c, memZ)) {
+              fillMark.zycs = memZ;
+              log('自愈恢复 主要参数(ZYCS)：表单被重建/占位文字覆盖 → 助手值（' + memZ.length + ' 字符）');
+            }
+          }
+        }
+      }
+      // ② FLSXHB 真实载体
+      var memF = readFlsxhbMemory();
+      if (memF) {
+        var c2 = flsxhbCtl();
+        if (c2) {
+          var curF = readText(c2);
+          if (!curF) {
+            if (writeText(c2, memF)) {
+              fillMark.flsxhb = memF;
+              fillMark.flsxhbFromParams = true;
+              log('自愈恢复 分类属性合并(FLSXHB)：表单被重建 → 助手值（' + memF.length + ' 字符）');
+            }
+          } else if (fillMark.flsxhbFromParams && curF !== fillMark.flsxhb) {
+            // 用户在载体上手工微调过（如追加标记）→ 以手改值为准，覆盖记忆
+            fillMark.flsxhb = curF;
+            writeFlsxhbMemory(curF);
+            log('分类属性合并已被手工修改（' + curF.length + ' 字符），记忆已同步为手改值');
+          }
         }
       }
     } catch (e) { }
@@ -806,11 +871,15 @@
     return done === names.length;
   }
 
-  /** 向导翻页会重建页面 DOM：缓存的 ZYCS 控件若已脱离文档，清掉让 zycsCtl() 重新定位 */
+  /** 向导翻页会重建页面 DOM：缓存的 ZYCS/FLSXHB 控件若已脱离文档，清掉让 ctl 解析重新定位 */
   function invalidateStaleZycs() {
     try {
       var el = state.zycs && (state.zycs.__el || domOf(state.zycs));
       if (el && el.isConnected === false) state.zycs = null;
+    } catch (e) { }
+    try {
+      var el2 = state.flsxhb && (state.flsxhb.__el || domOf(state.flsxhb));
+      if (el2 && el2.isConnected === false) state.flsxhb = null;
     } catch (e) { }
   }
 
@@ -3757,7 +3826,7 @@
       state.quietKey = '';
       if (state.typeTimer) { clearInterval(state.typeTimer); state.typeTimer = null; }
       state.itemtype = null;
-      fillMark.zycs = ''; fillMark.flsxhb = '';   // 新实例：清空"本脚本已写入值"标记
+      fillMark.zycs = ''; fillMark.flsxhb = ''; fillMark.flsxhbFromParams = false;   // 新实例：清空"本脚本已写入值"标记
       window.__PLM_SMART_SPEC = '';   // 新实例：清空上一页缓存的规格型号
       hidePanel();
 
@@ -3834,23 +3903,44 @@
   };
 
   /**
-   * 步骤2「设计属性」页面渲染完成（PSEITEMCISFORM-CREATE.page 固化钩子）
-   * 该页由向导第二步动态加载，这里把第一步录入的规格型号同步到「分类属性合并(FLSXHB)」。
-   * 已有值（含平台合并结果）一律不覆盖。
+   * 步骤2「设计属性」页面渲染完成（PSEITEMCISFORM/PSEITEMFIXTUREFORM/PSEITEMSTANDARDFORM 共用）。
+   * 2026-11-18 现场实证：保存时「主要参数」的真实载体是本页的「分类属性合并(FLSXHB)」，
+   * 平台 finish 时把 FLSXHB 内容写入物料主要参数（用户以 1111 标记实验证实）。
+   * 因此本页加载时：
+   *   ① 有助手主要参数 → 写入 FLSXHB（优先，规格不再参与）；
+   *   ② 无参数且 fillSpecToParams 开 → 规格桥接（老行为兜底）；
+   *   ③ 入口先自愈一次（框架回放中断时表单为空值）。
    */
-  window.InforCenter_PSEITEMCISFORM_CreatePage_OnCreate = function (pageEvent, data) {
+  function bizFormOnCreate(pageEvent, data) {
     try {
-      if (!CFG.enabled || !CFG.fillSpecToParams) return;
-
+      if (!CFG.enabled) return;
+      healParamsIfWiped();
+      var pv = fillMark.zycs || readZycsMemory() || '';
+      if (pv && writeParamsToFlsxhb(pv, pageEvent && pageEvent.o)) return;
+      if (!CFG.fillSpecToParams) return;
       var spec = window.__PLM_SMART_SPEC || '';
       if (!spec && isValidCtl(state.ggxh)) spec = readText(state.ggxh);
       if (!spec) { log('步骤2：未取到规格型号，跳过 FLSXHB 回填'); return; }
-
-      if (CFG.fillSpecToParams) syncFlsxhb(spec, pageEvent && pageEvent.o);
+      syncFlsxhb(spec, pageEvent && pageEvent.o);
     } catch (e) {
-      log('PSEITEMCISFORM OnCreate 异常（已忽略）', e && e.message);
+      log('业务页 OnCreate 异常（已忽略）', e && e.message);
     }
-  };
+  }
+  window.InforCenter_PSEITEMCISFORM_CreatePage_OnCreate = bizFormOnCreate;      // 电气元件
+  window.InforCenter_PSEITEMFIXTUREFORM_CreatePage_OnCreate = bizFormOnCreate;  // 原材料/工装
+  window.InforCenter_PSEITEMSTANDARDFORM_CreatePage_OnCreate = bizFormOnCreate; // 外购标准件
+
+  /**
+   * 业务页保存校验（OnSaveCheck 固化钩子）：最后时刻自愈，随后放行交 PLM 原生校验。
+   * 平台顺序 OnSaveCheck → OnGetDataFromPage，这里恢复的数据会被本页收集进保存报文。
+   */
+  function bizFormOnOK() {
+    try { healParamsIfWiped(); } catch (e) { }
+    return true;
+  }
+  window.InforCenter_PSEITEMCISFORM_CreatePage_OnOK = bizFormOnOK;
+  window.InforCenter_PSEITEMFIXTUREFORM_CreatePage_OnOK = bizFormOnOK;
+  window.InforCenter_PSEITEMSTANDARDFORM_CreatePage_OnOK = bizFormOnOK;
 
   /**
    * 点"确定"保存前（PAGE-CREATE.generator 固化钩子）
@@ -3885,13 +3975,17 @@
         if (CFG.warnOnOverflow && spec.length > CFG.ggxhMaxLen) {
           log('规格型号长度 ' + spec.length + ' 超过 PLM 上限 ' + CFG.ggxhMaxLen + '，PLM 原生校验可能拦截');
         }
+        // 2026-11-18 现场实证：FLSXHB（分类属性合并）才是保存时主要参数的真实载体。
+        // 有助手参数 → 参数优先；没有 → 规格桥接（老行为）。
+        var pv = fillMark.zycs || readZycsMemory() || '';
+        var src = pv || spec;
         var zLim = ctlLimit(cZycs, CFG.zycsMaxLen);
-        var zVal = clipSmart(spec, zLim);
+        var zVal = clipSmart(src, zLim);
         if (isFillable(cZycs, ZYCS_PLACEHOLDER, fillMark.zycs) && writeText(cZycs, zVal)) {
           fillMark.zycs = zVal;
-          log('保存前兜底同步 主要参数(ZYCS) <= 规格型号（上限 ' + zLim + ' 字符）');
+          log('保存前兜底同步 主要参数(ZYCS) <= ' + (pv ? '助手参数' : '规格型号') + '（上限 ' + zLim + ' 字符）');
         }
-        if (CFG.fillSpecToParams) syncFlsxhb(spec);
+        if (pv) writeParamsToFlsxhb(pv); else syncFlsxhb(spec);
       }
 
       var ecode = readEcode(cEcode);
@@ -4365,8 +4459,8 @@
         domWatchTimer = setTimeout(tick, 1500);
         return;
       }
-      // 主要参数自愈：向导销毁/重建表单或占位文字覆盖后，每轮轮询检查并写回
-      healZycsIfWiped();
+      // 主要参数自愈（ZYCS 镜像 + FLSXHB 载体）：向导销毁/重建表单或占位文字覆盖后，每轮轮询检查并写回
+      healParamsIfWiped();
       try {
         // 当前该接管的目标输入框（弹窗关闭时为空）
         var specNow = findInput('GGXH_Value') || findInputByLabel(['规格型号'], { noDropdown: true });
@@ -4418,9 +4512,14 @@
 
   // 版本号挂在全局：控制台默认静默后，用 __plmVersion 即可确认插件是否加载、是哪个版本
   try { window.__plmVersion = pluginVersion() } catch (e5) { }
-  // 主要参数记忆句柄（排查/测试用）：write 写入作用域记忆、read 读取、heal 手动触发自愈
+  // 主要参数记忆句柄（排查/测试用）：write/read 操作 ZYCS 镜像记忆，writeFlsxhb/readFlsxhb
+  // 操作 FLSXHB 载体记忆，sync 直调回填入口，heal 手动触发双字段自愈
   try {
-    window.__plmSmartZycsMem = { write: writeZycsMemory, read: readZycsMemory, heal: healZycsIfWiped };
+    window.__plmSmartZycsMem = {
+      write: writeZycsMemory, read: readZycsMemory,
+      writeFlsxhb: writeFlsxhbMemory, readFlsxhb: readFlsxhbMemory,
+      sync: syncParamsToZycs, heal: healParamsIfWiped
+    };
   } catch (e5b) { }
 
   log('脚本已加载 v' + pluginVersion() + '（api=' + apiUrl('')

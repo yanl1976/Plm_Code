@@ -61,6 +61,23 @@ const VOLT_CABLE = ['300/500V', '450/750V', '0.6/1KV', '3.6/6KV', '6/10KV', '8.7
 const RATIO = ['50/5', '75/5', '100/5', '150/5', '200/5', '250/5', '300/5', '400/5', '500/5', '600/5',
   '750/5', '800/5', '1000/5', '1200/5', '1500/5', '2000/5', '2500/5', '3000/5', '4000/5', '5000/5', '6000/5']
 const E24 = [1.0, 1.1, 1.2, 1.3, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.7, 3.0, 3.3, 3.6, 3.9, 4.3, 4.7, 5.1, 5.6, 6.2, 6.8, 7.5, 8.2, 9.1]
+// 常用枚举序列：这些参数在存量里写得少（很多小类只有 1~2 个值），
+// 但值域是国标/行业固定的，补进来让补全有像样的候选，而不是回落到杂乱的存量统计。
+const POLES = ['1P', '2P', '3P', '4P', '1P+N', '2P+N', '3P+N']
+const HOLE_MM = ['16mm', '22mm', '25mm', '30mm']
+const ACCURACY = ['0.1', '0.2', '0.5', '1', '1.5', '2.5']        // 准确度等级（GB/T 7676 / 仪表）
+const TRIP_CURVE = ['B', 'C', 'D']                                  // GB 10963.1 脱扣特性
+const CORES = ['1', '2', '3', '4', '5', '3+1', '3+2', '4+1']
+const KVA = [1, 2, 3, 5, 10, 20, 30, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500]
+const OUT_SIG = ['4-20mA', '0-20mA', '0-5V', '0-10V', '1-5V', 'RS485']
+const SUPPLY_V = ['24V', '48V', '110V', '220V', '380V', 'AC220V', 'DC24V', 'AC/DC220V']
+const MATERIALS = ['不锈钢', '碳钢', '镀锌钢', '铜', '铝', '工程塑料', '尼龙', '聚碳酸酯', '玻璃钢']
+const MEM_GB = ['4G', '8G', '16G', '32G', '64G']
+const DISK = ['128G', '256G', '512G', '1T', '2T', '4T']
+const FREQ = ['50Hz', '60Hz']
+const POWER_W = ['1W', '2W', '5W', '10W', '20W', '25W', '50W', '100W', '200W', '300W', '500W', '1000W']
+const POWER_KW = ['0.75KW', '1.5KW', '2.2KW', '3KW', '4KW', '5.5KW', '7.5KW', '11KW', '15KW', '18.5KW', '22KW', '30KW', '37KW', '45KW', '55KW', '75KW']
+
 const E6 = [1.0, 1.5, 2.2, 3.3, 4.7, 6.8]
 const E12 = [1.0, 1.2, 1.5, 1.8, 2.2, 2.7, 3.3, 3.9, 4.7, 5.6, 6.8, 8.2]
 
@@ -99,6 +116,40 @@ function seriesOf(param, sub) {
       if (/^1103/.test(s6)) return { list: VOLT_CABLE, series: '电缆电压等级' }   // 300/500V…26/35kV
       return { list: VOLT_GRID, series: 'GB/T 156' }                             // 24V…220kV
     }
+    case '极数':
+      return { list: POLES, series: '极数' }
+    case '安装孔径':
+      return { list: HOLE_MM, series: 'Ø16/22/25/30' }
+    case '精度':
+      return { list: ACCURACY, series: '准确度等级' }
+    case '脱扣曲线':
+      return { list: TRIP_CURVE, series: 'GB 10963.1' }
+    case '芯数':
+      return { list: CORES, series: '电缆芯数' }
+    case '额定容量':
+      return { list: KVA.map(String), series: '变压器容量档' }
+    case '输出信号':
+      return { list: OUT_SIG, series: '变送器输出' }
+    case '供电电压':
+      return { list: SUPPLY_V, series: '控制电源电压' }
+    case '材质': {
+      // 金属材料小类的「材质」就是材料本身（铜/铝/锌…），不能给它补别的金属
+      if (/^1102/.test(s6)) return null
+      if (/^1104/.test(s6)) return null
+      return { list: MATERIALS, series: '常用材质' }
+    }
+    case '内存':
+      return { list: MEM_GB, series: '内存容量' }
+    case '硬盘':
+      return { list: DISK, series: '硬盘容量' }
+    case '频率':
+      return { list: FREQ, series: '工频' }
+    case '功率': {
+      // 电阻/散热类用 W，变频/配电类用 kW —— 混用会让候选出现"1W"和"55KW"并列
+      if (/^10(19|20)/.test(s6)) return { list: POWER_KW, series: '功率档(kW)' }
+      if (/^10(13|18)/.test(s6)) return { list: POWER_W, series: '功率档(W)' }
+      return null
+    }
     // E 系列（阻值/容值）是「基准 × 数量级」，组合无穷，不能枚举补充 —— 只校验不扩展
     case '阻值':
       return { list: [], series: 'E24', testOnly: true }
@@ -123,6 +174,37 @@ function checkSeries(param, value, sub) {
       if (/^1014/.test(s6)) return { ok: VOLT_CAP.includes(String(value)), series: '电容耐压' }
       if (/^1103/.test(s6)) return { ok: VOLT_CABLE.includes(String(value)), series: '电缆电压等级' }
       return { ok: VOLT_GRID.includes(String(value)), series: 'GB/T 156' }
+    }
+    case '极数':
+      return { ok: POLES.includes(String(value).toUpperCase()), series: '极数' }
+    case '安装孔径':
+      return { ok: HOLE_MM.includes(String(value).toLowerCase()), series: 'Ø16/22/25/30' }
+    case '精度':
+      return { ok: ACCURACY.includes(String(value)), series: '准确度等级' }
+    case '脱扣曲线':
+      return { ok: TRIP_CURVE.includes(String(value).toUpperCase()), series: 'GB 10963.1' }
+    case '芯数':
+      return { ok: CORES.includes(String(value)), series: '电缆芯数' }
+    case '额定容量':
+      return { ok: KVA.includes(parseFloat(value)), series: '变压器容量档' }
+    case '输出信号':
+      return { ok: OUT_SIG.map((x) => x.toUpperCase()).includes(String(value).toUpperCase()), series: '变送器输出' }
+    case '供电电压':
+      return { ok: SUPPLY_V.map((x) => x.toUpperCase()).includes(String(value).toUpperCase()), series: '控制电源电压' }
+    case '材质': {
+      if (/^1102/.test(s6) || /^1104/.test(s6)) return null
+      return { ok: MATERIALS.includes(String(value)), series: '常用材质' }
+    }
+    case '内存':
+      return { ok: MEM_GB.map((x) => x.toUpperCase()).includes(String(value).toUpperCase()), series: '内存容量' }
+    case '硬盘':
+      return { ok: DISK.map((x) => x.toUpperCase()).includes(String(value).toUpperCase()), series: '硬盘容量' }
+    case '频率':
+      return { ok: FREQ.map((x) => x.toUpperCase()).includes(String(value).toUpperCase()), series: '工频' }
+    case '功率': {
+      if (/^10(19|20)/.test(s6)) return { ok: POWER_KW.map((x) => x.toUpperCase()).includes(String(value).toUpperCase()), series: '功率档(kW)' }
+      if (/^10(13|18)/.test(s6)) return { ok: POWER_W.map((x) => x.toUpperCase()).includes(String(value).toUpperCase()), series: '功率档(W)' }
+      return null
     }
     case '阻值':
       return { ok: inE(E24)(value), series: 'E24' }

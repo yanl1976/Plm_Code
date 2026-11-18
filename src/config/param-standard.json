@@ -17009,7 +17009,61 @@
               "source": "manufacturer"
             }
           ],
-          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列"
+          "note": "取值过多，不推荐值；给出本小类常见写法 + 已采集的厂家系列",
+          "accepted": [
+            {
+              "value": "EBG",
+              "count": 5,
+              "source": "reference"
+            },
+            {
+              "value": "RJ",
+              "count": 30,
+              "source": "reference"
+            },
+            {
+              "value": "RX24",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "RXC",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "RXCB",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "RXG24",
+              "count": 0,
+              "source": "manufacturer"
+            },
+            {
+              "value": "RXLG",
+              "count": 0,
+              "source": "manufacturer"
+            }
+          ],
+          "removed": [
+            {
+              "value": "1k",
+              "count": 0,
+              "source": "manual"
+            },
+            {
+              "value": "1.5k",
+              "count": 0,
+              "source": "manual"
+            },
+            {
+              "value": "2k",
+              "count": 0,
+              "source": "manual"
+            }
+          ]
         },
         "阻值": {
           "type": "series",
@@ -35397,6 +35451,8 @@
         "1000V",
         "0.6/1.0KV"
       ]
-    }
+    },
+    "updatedAt": "2026-11-17T15:48:47.445Z",
+    "editedAt": "2026-11-17T15:48:47.445Z"
   }
 }

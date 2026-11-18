@@ -1309,7 +1309,18 @@ const server = http.createServer(async (req, res) => {
         const md = cachedModel(spec)
         return md && normalize(md).startsWith(qn) ? 1 : 2
       }
+      // 剔除「与已输入内容只差空格 / 连字符 / 大小写」的规格：
+      // 那要么就是用户正在写的这一条，要么是同一个型号的另一种写法，
+      // 推荐它等于让用户把同一串再选一遍（实测输入「NM8N -250」时首项推荐「NM8N-250」）。
+      const looseKey = (s) => String(s == null ? '' : s)
+        .toLowerCase()
+        .replace(/\s+/g, '')
+        .replace(/[－—–_]/g, '-')
+        .replace(/[．。]/g, '.')
+        .replace(/[／]/g, '/')
+      const qLoose = looseKey(q)
       const top = [...counter.entries()]
+        .filter(([spec]) => looseKey(spec) !== qLoose)
         .sort((a, b) => specScore(a[0]) - specScore(b[0]) || b[1].count - a[1].count || a[0].length - b[0].length)
         .slice(0, limit)
       let items = top.map(([spec, g]) => {

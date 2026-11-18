@@ -400,8 +400,16 @@ export function complete(sub, q, items, depth = 0) {
   // 用户已经把这一段写完了，再把它推荐给自己毫无意义；更糟的是按 Tab 会把同一值再插一遍，
   // 表现为「候选里重复显示自己」（实测 101001 型号段把 LA38-11/203 推荐给它自己）。
   if (prefix) {
-    const k = String(prefix).trim().toLowerCase()
-    opts = opts.filter((x) => String(x.value).trim().toLowerCase() !== k)
+    // 宽松归一后比较：只差空格/连字符/大小写的，视为同一个值。
+    // 典型：输入「NM8N -250」时不该再推荐「NM8N-250」——
+    // 严格相等比较时两者不同，候选里就会出现"自己推荐自己"。
+    const loose = (s) => String(s == null ? '' : s)
+      .toLowerCase()
+      .replace(/\s+/g, '')            // 去掉所有空白
+      .replace(/[－—–_]/g, '-')        // 全角/长横线统一成半角连字符
+      .replace(/[．。]/g, '.').replace(/[／]/g, '/')
+    const k = loose(prefix)
+    opts = opts.filter((x) => loose(x.value) !== k)
 
     // —— 写完整后自动推进到下一段 ——
     // prefix 与本小类某个存量值完全一致 → 说明这一段已写完，直接给出下一段的候选。

@@ -1708,8 +1708,13 @@ const server = http.createServer(async (req, res) => {
           const mergeFree = () => {
             const seen = new Set()
             const out = []
+            // 已删除（removed）的值必须排除：free 型的值同时来自 accepted 与 reference，
+            // 只从 accepted 删掉时，reference 里那份仍会让它显示出来 ——
+            // 表现为"手工删了 iC / Pro，重开又出现"。
+            const gone = new Set((d.removed || []).map((x) => String(x.value)))
             for (const v of [...(d.accepted || []), ...(d.reference || [])]) {
               const k = String(v.value)
+              if (gone.has(k)) continue
               if (seen.has(k)) continue
               seen.add(k)
               out.push(v)

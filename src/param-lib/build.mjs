@@ -413,6 +413,32 @@ try {
   }
 } catch (e) { console.warn('  合并旧库失败（将只写本次范围）:', e.message) }
 
+// 收尾：保留人工删除记录（params[x].removed），并把这些值从本轮结果里剔除。
+// 否则重建后 deleted 值会复活 —— free 型的值同时存在于 accepted 与 reference，
+// 只从界面删掉时，下一次 build 又会把它们统计回来（实测 100105 的 iC / Pro 反复出现）。
+try {
+  const prev = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/param-standard.json'), 'utf8'))
+  let kept = 0
+  for (const [sub, node] of Object.entries(out.subs || {})) {
+    const oldNode = (prev.subs || {})[sub]
+    if (!oldNode) continue
+    for (const [name, d] of Object.entries(node.params || {})) {
+      const rm = (oldNode.params && oldNode.params[name] && oldNode.params[name].removed) || []
+      if (!rm.length) continue
+      const gone = new Set(rm.map((x) => String(x && x.value != null ? x.value : x)))
+      d.removed = rm
+      if (Array.isArray(d.accepted)) d.accepted = d.accepted.filter((v) => !gone.has(String(v.value)))
+      if (Array.isArray(d.reference)) d.reference = d.reference.filter((v) => !gone.has(String(v.value)))
+      if (Array.isArray(d.pending)) d.pending = d.pending.filter((v) => !gone.has(String(v.value)))
+      if (Array.isArray(d.suspected)) d.suspected = d.suspected.filter((v) => !gone.has(String(v.value)))
+      kept++
+    }
+  }
+  if (kept) console.log('  保留人工删除记录:', kept, '个参数')
+} catch (e) {
+  console.warn('  读取旧删除记录失败（跳过）:', e.message)
+}
+
 out.meta = {
   version: '0.2.0',
   generatedAt: new Date().toISOString(),

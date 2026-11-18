@@ -2748,14 +2748,6 @@
               "count": 35
             },
             {
-              "value": "IC65N",
-              "count": 28
-            },
-            {
-              "value": "Pro",
-              "count": 26
-            },
-            {
               "value": "TGB1N-63",
               "count": 22
             },
@@ -2790,10 +2782,6 @@
             {
               "value": "NDB1-63C",
               "count": 12
-            },
-            {
-              "value": "iC65N-D",
-              "count": 11
             },
             {
               "value": "KFB3-63",
@@ -2848,15 +2836,33 @@
               "count": 5
             },
             {
-              "value": "iC",
-              "count": 4
-            },
-            {
               "value": "DZ47S",
               "count": 4
             }
           ],
-          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本"
+          "note": "取值过多，不推荐值；保留本小类常见写法（型号 30 个、其余 20 个）+ 厂家样本",
+          "removed": [
+            {
+              "value": "Pro",
+              "count": 0,
+              "source": "manual"
+            },
+            {
+              "value": "iC",
+              "count": 0,
+              "source": "manual"
+            },
+            {
+              "value": "iC65N-D",
+              "count": 0,
+              "source": "manual"
+            },
+            {
+              "value": "IC65N",
+              "count": 0,
+              "source": "manual"
+            }
+          ]
         },
         "极数": {
           "type": "enum",
@@ -41187,7 +41193,7 @@
   },
   "meta": {
     "version": "0.2.0",
-    "generatedAt": "2026-11-18T01:38:59.671Z",
+    "generatedAt": "2026-11-18T01:48:31.168Z",
     "draft": true,
     "structure": "subs[小类] → params[参数] → {type, accepted, pending, suspected, aliases}",
     "principle": "参数值按小类隔离：某小类的候选只来自该小类的存量，不跨小类共用",

@@ -1286,33 +1286,40 @@ const server = http.createServer(async (req, res) => {
       if (!sub) return sendJson(res, 200, { ok: false, options: [] })
       const defs = paramLibSubParams(sub) || {}
       const tl = q.toLowerCase()
-      const out = []
+      // 分两档：前缀命中优先、包含命中兜底。
+      // 只用 includes 时，输入 "10" 会把「额定电压 110V」「分断能力 100」全刷出来，候选很乱。
+      const strong = []
+      const weak = []
+      const push = (arr, name, v, kind) => arr.push({ value: name + ' ' + v, param: name, kind })
       for (const [name, d] of Object.entries(defs)) {
-        if (name === '型号') continue            // 型号归规格框，不在主要参数里重复
+        if (name === '型号') continue            // 型号归规格框
         const vals = [...(d.accepted || []), ...(d.reference || [])]
-          .map((v) => String(v && v.value != null ? v.value : v))
+          .map((x) => String(x && x.value != null ? x.value : x))
           .filter(Boolean)
           .slice(0, 12)
-        const nameHit = !tl || name.toLowerCase().includes(tl)
-        if (nameHit) {
-          // 输入的是参数名（或还没输入）→ 给「参数名 值」
-          for (const v of vals) out.push({ value: name + ' ' + v, param: name, kind: 'param' })
-          if (!vals.length) out.push({ value: name, param: name, kind: 'name' })
+        const lname = name.toLowerCase()
+        // ① 输入是参数名（或还没输入）→ 给该参数的值
+        if (!tl || lname.includes(tl)) {
+          if (!vals.length) strong.push({ value: name, param: name, kind: 'name' })
+          for (const v of vals) push(strong, name, v, 'param')
           continue
         }
-        // 输入的可能是值 → 反查出参数名，一起给出
+        // ② 输入像参数值 → 前缀优先，包含次之
         for (const v of vals) {
-          if (v.toLowerCase().includes(tl)) out.push({ value: name + ' ' + v, param: name, kind: 'value' })
+          const lv = v.toLowerCase()
+          if (lv.startsWith(tl)) push(strong, name, v, 'value')
+          else if (lv.includes(tl)) push(weak, name, v, 'value')
         }
       }
       const seen = new Set()
-      const uniq = []
-      for (const o of out) {
+      const out = []
+      for (const o of [...strong, ...weak]) {
         if (seen.has(o.value)) continue
         seen.add(o.value)
-        uniq.push(o)
+        out.push(o)
+        if (out.length >= 8) break        // 候选太多反而难选
       }
-      return sendJson(res, 200, { ok: true, q, options: uniq.slice(0, 12) })
+      return sendJson(res, 200, { ok: true, q, options: out })
     }
 
     if (p === '/api/new-material/spec-suggest') {

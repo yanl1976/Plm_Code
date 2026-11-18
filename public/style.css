@@ -887,10 +887,15 @@ button:disabled { opacity:.45; cursor:not-allowed; }
    textarea 的 flex:1 只对 .nm-row 的直接子元素生效，导致框缩成一小块。 */
 .nm-row.nm-params { align-items:flex-start; }
 .nm-row.nm-params > label { padding-top:8px; }
-/* 与规格型号同宽：两行各自 flex 基准不同（规格行右侧还有库存/按钮），
-   改用同一组固定基准值，保证像素级一致 */
+/* 主要参数框：与「规格型号」同宽同高。
+   用百分比而非固定像素 —— 固定 560px 在窄屏会撑破表单容器（实测页面变形）。
+   两行都取 60%，基准是各自 .nm-row，宽度天然一致且不溢出。 */
+.nm-row.nm-params { align-items:flex-start; }
+.nm-row.nm-params > label { padding-top:8px; }
 .nm-row.nm-spec .nm-spec-wrap,
-.nm-params-wrap { flex:0 0 560px; max-width:560px; min-width:0; }
+.nm-params-wrap { flex:0 1 60%; max-width:60%; min-width:0; }
 .nm-params-wrap { position:relative; }
 .nm-params-wrap textarea { width:100%; min-height:56px; }
+/* 主要参数的候选浮层：限高 + 不与下方行重叠太多 */
+#nmParamsSuggest { max-height:200px; }
 

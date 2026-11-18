@@ -632,6 +632,70 @@ function buildRowSpec(row, cols, modelCol) {
   return cols.map((c) => String(row[c.key] == null ? '' : row[c.key]).trim()).filter(Boolean).join(' ')
 }
 
+// 附加参数字典（接线能力 / 可选配件）：由 src/accessory-dict.js 从选型库生成，
+// 按 mtime 缓存。选型助手回填时要带上它，否则插件只能回填规格、主要参数永远空。
+let accDictCache = null
+let accDictMtime = 0
+function loadAccDict() {
+  const f = path.join(ROOT, 'src', 'config', 'accessory-dict.json')
+  try {
+    const st = fs.statSync(f)
+    if (accDictCache && accDictMtime === st.mtimeMs) return accDictCache
+    accDictCache = JSON.parse(fs.readFileSync(f, 'utf8'))
+    accDictMtime = st.mtimeMs
+    return accDictCache
+  } catch (e) {
+    return { wiring: [], accessories: [] }
+  }
+}
+
+/**
+ * 按「小类 + 型号」取附加参数文本（与看板技术参数框同口径）。
+ * 系列匹配规则：空 series 视为通用；型号匹配不到任何系列 → 返回空。
+ */
+function accessoryText(sub, model) {
+  const d = loadAccDict()
+  const s6 = String(sub || '').slice(0, 6)
+  const M = String(model || '').trim().split(/\s+/)[0].toUpperCase()
+  const wiring = (d.wiring || []).filter((w) => String(w.sub || '') === s6)
+  const acc = (d.accessories || []).filter((a) => String(a.sub || '') === s6)
+  if (!wiring.length && !acc.length) return ''
+
+  const seriesSet = new Set([
+    ...wiring.map((w) => String(w.series || '')),
+    ...acc.map((a) => String(a.series || '')),
+  ])
+  const hit = (se) => {
+    const S = String(se || '').toUpperCase()
+    if (!S) return true
+    if (!M) return false
+    return M.includes(S) || S.includes(M)
+  }
+  const matched = M ? [...seriesSet].filter(hit) : [...seriesSet]
+
+  const out = []
+  const seen = new Set()
+  for (const se of matched) {
+    for (const w of wiring.filter((x) => String(x.series || '') === se)) {
+      for (const v of w.values || []) {
+        const k = 'w|' + v
+        if (seen.has(k)) continue
+        seen.add(k)
+        out.push(String(v))
+      }
+    }
+    for (const a of acc.filter((x) => String(x.series || '') === se)) {
+      const label = (a.code ? a.code + ' ' + a.cn : a.cn).trim()
+      if (!label) continue
+      const k = 'a|' + label
+      if (seen.has(k)) continue
+      seen.add(k)
+      out.push(label)
+    }
+  }
+  return out.join('、')
+}
+
 // 命名范式（国标命名与规格写法）：按 mtime 缓存，改文件即生效
 let namingGuideCache = null
 let namingGuideMtime = 0
@@ -742,6 +806,9 @@ function handleSelect(body) {
         series: s.id, brand: s.brand || '', name: s.name || '',
         model,                                   // 纯型号，表格首列显示
         spec: fullSpec,                          // 回填进「规格型号」的完整文本
+        // 主要参数：接线能力 + 可选配件（与看板技术参数框同口径）
+        // 插件回填时写进弹窗的「主要参数」框，再同步到 PLM 的 ZYCS
+        params: accessoryText(seriesSub, rawModel),
         guided: !!guided,                        // 是否按范式拼装（前端可标注）
         cells: row,
         poles: row['极数'] || '', current: row['额定电流'] || '',

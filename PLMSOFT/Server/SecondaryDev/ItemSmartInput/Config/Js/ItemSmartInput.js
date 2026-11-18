@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.15';
+  var PLUGIN_VERSION = '2.16';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -2937,6 +2937,11 @@
             // 名称由使用者手工输入（配合同义词点选）；只在为空且系列带名称时补全
             if (!String(nameIn.value || '').trim() && it2.name) nameIn.value = it2.name;
             specIn.value = it2.spec || it2.model || '';
+            // 主要参数：选型结果里带出的接线能力 + 可选配件（程序赋值不触发 oninput，需手动同步）
+            if (it2.params) {
+              paramsIn.value = it2.params;
+              syncParamsToZycs(it2.params);
+            }
             closeSelectModal();
             checkNow();
           };
@@ -3043,6 +3048,10 @@
           pjCells.push(c4);
           tr.onclick = function () {
             specIn.value = it.spec;
+            if (it.params) {
+              paramsIn.value = it.params;
+              syncParamsToZycs(it.params);
+            }
             closeSimilarModal();
             checkNow();
           };

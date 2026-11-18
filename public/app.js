@@ -2761,8 +2761,7 @@ async function loadNewMat() {
   if (!nm.bound) bindNmEvents()
   renderNmSelectors()
   renderNmList()
-  // 兜底：小类若是「恢复上次选择」而来，onNmSubPicked 不会触发，这里补一次填充
-  setTimeout(() => { if (typeof nmFillExtras === 'function') nmFillExtras() }, 300)
+  nmFillExtras()
 }
 
 function bindNmEvents() {
@@ -2787,41 +2786,6 @@ $('#nmSave').onclick = nmSave
   const nmSelBtn = $('#nmSelect')
   if (nmSelBtn) nmSelBtn.onclick = () => nmShowSelect()
   $('#nmExport').onclick = () => window.open('/api/new-material/export', '_blank')
-  // —— 从规格里自动提取「附加说明 / 可选配件」填到技术参数框 ——
-// 规格是查重的依据，必须完整；技术参数只放规格之外的那部分（配件代号、中文说明）。
-// 只在该框为空或内容来自上次自动提取时才覆盖，避免冲掉用户手工补充的内容。
-// —— 技术参数整体填充 ——
-// 第二类参数（接线能力 / 可选配件）不参与规格补全，也不做候选，
-// 直接把该小类的全部条目写进技术参数框，由人工删减和增补。
-async function nmFillExtras() {
-  const el = $('#nmParams')
-  if (!el || !nm.cur.sub) return
-  // 型号决定配件属于哪个系列（100105 下 3WT 与 NB8-40J 的配件完全不同）
-  const _model = String(($('#nmSpec').value || '').trim().split(/\s+/)[0] || '')
-  const r = await api('/api/new-material/accessory-complete?sub=' + encodeURIComponent(nm.cur.sub)
-    + '&model=' + encodeURIComponent(_model) + '&q=')
-    .catch(() => null)
-  const rawItems = (r && r.items) || []
-    // 兜底：用规格串再过滤一次系列，防止 model 参数没传对时混入别家配件
-    const _specEl = $('#nmSpec')
-    const _specU = String((_specEl && _specEl.value) || '').toUpperCase()
-    const items = _specU
-      ? rawItems.filter((it) => !it.series || _specU.includes(String(it.series).toUpperCase()))
-      : rawItems
-  if (!items.length) return
-  const byParam = new Map()
-  for (const it of items) {
-    const p = it.param || '附加参数'
-    if (!byParam.has(p)) byParam.set(p, [])
-    byParam.get(p).push(it.label)
-  }
-  el.value = [...byParam.values()]
-    .map((list) => list.map((x) => String(x).trim()).join('、'))
-    .join('；')
-    .replace(/[\r\n]+/g, '')
-    .replace(/\s{2,}/g, ' ')
-  el.dataset.auto = '1'
-}
 
 
 function nmExtractExtras(spec) {
@@ -2852,7 +2816,7 @@ $('#nmParams') && $('#nmParams').addEventListener('input', () => { $('#nmParams'
 
 $('#nmSpec').addEventListener('input', () => {
     clearTimeout(nm.timer)
-    nm.timer = setTimeout(() => { nmSpecInput(); if (typeof nmFillExtras === 'function') nmFillExtras() }, 180)   // 型号变了要重算配件
+    nm.timer = setTimeout(() => { nmFillExtras(); nmSpecInput() }, 180)   // 先填技术参数，再跑补全
     nm.complete = null      // 输入一变就撤掉旧续写，避免显示过期候选
     updateNmGhost()
     nmRuleTick()
@@ -2891,6 +2855,56 @@ $('#nmSpec').addEventListener('input', () => {
     const tip = $('#nmNameTip'), nInp = $('#nmName')
     if (tip && nInp && !tip.contains(e.target) && e.target !== nInp) hideNmNameTip()
   })
+}
+
+  // —— 从规格里自动提取「附加说明 / 可选配件」填到技术参数框 ——
+// 规格是查重的依据，必须完整；技术参数只放规格之外的那部分（配件代号、中文说明）。
+// 只在该框为空或内容来自上次自动提取时才覆盖，避免冲掉用户手工补充的内容。
+// —— 技术参数整体填充 ——
+// 第二类参数（接线能力 / 可选配件）不参与规格补全，也不做候选，
+// 直接把该小类的全部条目写进技术参数框，由人工删减和增补。
+// 技术参数填充（唯一实现）
+// 第二类参数 = 接线能力 + 可选配件，按物料型号所属系列过滤，整体写入后由人工删减增补。
+// 三条触发路径（切换小类 / 修改规格 / 进入页面）都只调这个函数，不再各写一份。
+async function nmFillExtras() {
+  const el = $('#nmParams')
+  const sub = String(nm.cur.sub || '').trim()
+  if (!el || !sub) return
+
+  // 型号 = 规格的第一个词；配件按型号所属系列过滤（100105 下 3WT 与 NB8-40J 完全不同）
+  const spec = String($('#nmSpec').value || '').trim()
+  const model = (() => {
+    for (let p = 0; p < spec.length; p++) {
+      const c = spec.charCodeAt(p)
+      if (c === 32 || c === 9 || c === 12288) return spec.slice(0, p)   // 空格 / Tab / 全角空格
+    }
+    return spec
+  })()
+
+  const r = await api('/api/new-material/accessory-complete?sub=' + encodeURIComponent(sub)
+    + '&model=' + encodeURIComponent(model) + '&q=').catch(() => null)
+  // 选型库里「型号 → 可配附件」是一一对应的（3WT11N04 只对应西门子那套），
+  // 所以必须按型号所属系列取；型号还没填时只填与型号无关的接线能力。
+  const rawItems = (r && r.items) || []
+  const items = model ? rawItems : rawItems.filter((it) => it.kind === 'wiring')
+
+  // 没有可填内容时清空，而不是保留上一次的结果 ——
+  // 否则换型号后看到的是旧配件，会被误认为"过滤没生效"。
+  if (!items.length) { el.value = ''; el.dataset.auto = '1'; return }
+
+  const byParam = new Map()
+  for (const it of items) {
+    const p = it.param || '附加参数'
+    if (!byParam.has(p)) byParam.set(p, [])
+    byParam.get(p).push(String(it.label || '').trim())
+  }
+
+  // 只回填值（参数名是表头）：参数之间「；」，同一参数内「、」
+  el.value = [...byParam.values()]
+    .map((list) => list.filter(Boolean).join('、'))
+    .filter(Boolean)
+    .join('；')
+  el.dataset.auto = '1'
 }
 
 // ---- 名称同义词即时提示（浮层贴在名称输入框下方，只在有建议时弹出） ----
@@ -3061,39 +3075,7 @@ function onNmSubPicked() {
   refreshNmCode()
   checkSelectAvailable()      // 该小类没有选型库时，按钮置灰
   loadNamingGuide(s ? s.sub : '')   // 显示该小类的国标写法参考
-  // 技术参数：把小类的第二类参数（接线能力 / 可选配件）整体填入，人工删减增补。
-  // 内联在这里而不是调外部函数 —— 避免"函数是否存在/谁先定义"这类时序问题。
-  ;(async () => {
-    const el = $('#nmParams')
-    const sub = String($('#nmSub').value || '').trim()
-    if (!el || !sub) return
-    // 型号决定配件属于哪个系列（100105 下 3WT 与 NB8-40J 的配件完全不同）
-    const _model = String(($('#nmSpec').value || '').trim().split(/\s+/)[0] || '')
-    const r = await api('/api/new-material/accessory-complete?sub=' + encodeURIComponent(String($('#nmSub').value || '').trim())
-      + '&model=' + encodeURIComponent(_model) + '&q=')
-    const rawItems = (r && r.items) || []
-    // 兜底：用规格串再过滤一次系列，防止 model 参数没传对时混入别家配件
-    const _specEl = $('#nmSpec')
-    const _specU = String((_specEl && _specEl.value) || '').toUpperCase()
-    const items = _specU
-      ? rawItems.filter((it) => !it.series || _specU.includes(String(it.series).toUpperCase()))
-      : rawItems
-    if (!items.length) return
-    const byParam = new Map()
-    for (const it of items) {
-      const p = it.param || '附加参数'
-      if (!byParam.has(p)) byParam.set(p, [])
-      byParam.get(p).push(it.label)
-    }
-    // 只回填值：参数名（接线能力 / 可选配件）是表头，不写进内容。
-    // 参数之间的值用「；」分隔，同一参数内的值用「、」。
-    el.value = [...byParam.values()]
-      .map((list) => list.map((x) => String(x).trim()).join('、'))
-      .join('；')
-      .replace(/[\r\n]+/g, '')
-      .replace(/\s{2,}/g, ' ')
-    el.dataset.auto = '1'
-  })()
+  nmFillExtras()
   }
 
 async function refreshNmCode() {
@@ -3125,7 +3107,7 @@ function nmSpecInput() {
   const seq = ++nm.sugSeq
   nm.complete = null
   // ① 分段补全（参数级）：推断"当前在填哪一段"，给该段的取值候选
-  api('/api/new-material/spec-complete?sub=' + sub + '&q=' + encodeURIComponent(q))
+  api('/api/new-material/spec-complete?sub=' + sub + '&q=' + encodeURIComponent(q)).catch(() => null)
     .then((c) => {
       if (seq !== nm.sugSeq) return
       nm.complete = (c && c.ok) ? c : null
@@ -3133,7 +3115,7 @@ function nmSpecInput() {
       renderNmSuggest(q, nm.lastItems || [], nm.lastSummary)
     })
   // ② 整条规格联想（存量写法）：与①并发，各自渲染时都会带上补全区
-  api('/api/new-material/spec-suggest?sub=' + sub + '&q=' + encodeURIComponent(q))
+  api('/api/new-material/spec-suggest?sub=' + sub + '&q=' + encodeURIComponent(q)).catch(() => null)
     .then((r) => {
       // 期间已选中某项/已失焦/已改输入 → 在途结果作废，不能把下拉又弹回来
       if (seq !== nm.sugSeq) return
@@ -3141,7 +3123,7 @@ function nmSpecInput() {
       nm.lastSummary = (r && r.modelSummary) || null
       renderNmSuggest(q, nm.lastItems, nm.lastSummary)
     })
-  api('/api/new-material/spec-check?sub=' + sub + '&spec=' + encodeURIComponent(q))
+  api('/api/new-material/spec-check?sub=' + sub + '&spec=' + encodeURIComponent(q)).catch(() => null)
     .then((r) => { if (seq !== nm.sugSeq) return; renderNmSpecCheck(r || {}) }) // 与联想同seq：旧响应不得覆盖新输入
   renderNmInv() // 规格变化后刷新「同规格参考库存」
 }
@@ -3396,6 +3378,7 @@ function renderNmRule(r) {
 
 // 只刷新查重提示与参考库存，不查联想（选中某个联想项后调用，避免下拉再次弹出）
 function nmSpecCheckOnly() {
+  nmFillExtras()   // 程序化改规格不触发 input 事件，技术参数在这里同步
   const q = ($('#nmSpec').value || '').trim()
   const el = $('#nmSuggest')
   if (el) { el.innerHTML = ''; el.classList.remove('show') }
@@ -4092,7 +4075,7 @@ async function nmShowSelect() {
           // 回填不是「打字」，清掉 300ms 后要弹的规格联想，避免挡住页面
           setTimeout(() => {
             try {
-              clearTimeout(nm.timer)
+              nm.sugSeq++   // 作废在途联想（不能 clearTimeout(nm.timer)，那里还有填技术参数）
               const sug = $('#nmSuggest')
               if (sug) sug.innerHTML = ''
             } catch (e) { }

@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.19';
+  var PLUGIN_VERSION = '2.23';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -77,7 +77,7 @@
     suggestDebounce: 300,        // 输入防抖(ms)
     minLen: 2,                   // 触发联想的最少字符数
     autoFillZycs: false,         // 旧逻辑：用结构化建议回填 ZYCS（现由 fillSpecToParams 统一处理，默认关闭）
-    fillSpecToParams: true,      // 将「规格型号」同步回填到 分类属性合并(FLSXHB)
+    fillSpecToParams: false,     // 已停用：FLSXHB 现在是「主要参数」载体，不能再被规格覆盖
   fillParamsToZycs: true,      // 将弹窗里的「主要参数」回填到 ZYCS（与规格解耦，回填后置灰只读）
 
     // 字段宽度：必须与 PLM 元数据/数据库一致（运行时还会与控件 maxlength 取小值）
@@ -218,7 +218,7 @@
   var LOG_TAG = '[ItemSmartInput]';
   var state = {
     pageKey: '',            // 当前页面实例标识，用于识别"新开了一个新增页"
-    ename: null, ggxh: null, zycs: null, ecode: null,
+    ename: null, ggxh: null, zycs: null, flsxhb: null, ecode: null,
     panel: null,
     panelOwner: null,
     lastCheckKey: '',
@@ -289,7 +289,13 @@
     try { if (typeof ctrl.SetText === 'function') { ctrl.SetText(v); return true; } } catch (e) { }
     try {
       var el = domOf(ctrl);
-      if (el) { el.value = v; return true; }
+      if (!el) return false;
+      el.value = v;
+      // 直接改 value 不会触发平台的双向绑定/脏检查，补发事件让 PLM 感知到变更，
+      // 否则界面上看得到、保存时却按旧值提交。
+      try { el.dispatchEvent(new Event('input', { bubbles: true })); } catch (e2) { }
+      try { el.dispatchEvent(new Event('change', { bubbles: true })); } catch (e3) { }
+      return true;
     } catch (e) { }
     return false;
   }
@@ -507,19 +513,99 @@
    */
   function syncParamsToZycs(v) {
     if (!CFG.enabled || !CFG.fillParamsToZycs) { log('主要参数未回填：开关关闭'); return false; }
-    var ctl = zycsCtl();
-    if (!ctl) { log('主要参数未回填：页面上找不到 ZYCS 控件'); return false; }
-    var s = String(v == null ? '' : v).replace(/^\s+|\s+$/g, '');
-    if (!s) return false;
-    var lim = ctlLimit(ctl, CFG.zycsMaxLen);
-    if (s.length > lim) s = clipSmart(s, lim);
-    var ok = writeText(ctl, s);
-    if (ok) {
-      fillMark.zycs = s;
-      lockZycs();
-      log('已回填 主要参数(ZYCS) 并置只读（上限 ' + lim + ' 字符）');
+    var text = String(v == null ? '' : v).replace(/^\s+|\s+$/g, '');
+    if (!text) return false;
+
+    var ok = false;
+
+    // ① ZYCS —— 页面上「主要参数」就是这个字段。
+    //    控制台探查（2026-11-18）：
+    //      cid=ZYCS_Value  label=主要参数  readonly=false  maxlength=-1（无上限）
+    //    它由二开动态插入，平台的 GetControl 取不到引用（返回 id=='' 的占位对象），
+    //    但 DOM 真实存在且可写 —— 所以 zycsCtl() 的第三级（按 cid 找 DOM）是主路径。
+    var c1 = zycsCtl();
+    if (c1) {
+      var lim1 = ctlLimit(c1, CFG.zycsMaxLen);
+      var s1 = text.length > lim1 ? clipSmart(text, lim1) : text;
+      if (writeText(c1, s1)) {
+        fillMark.zycs = s1;
+        lockCtl(c1, CFG.zycsMaxLen);
+        ok = true;
+        log('已回填 主要参数(ZYCS) 并置只读（' + s1.length + ' 字符）');
+      }
     }
+
+    // ② FLSXHB —— 只有基础页 PSEITEM-CREATE 有，业务页面通常没有；
+    //    存在就一起写，不存在就跳过（不报错）。
+    var c2 = flsxhbCtl();
+    if (c2) {
+      var lim2 = ctlLimit(c2, CFG.flsxhbMaxLen);
+      var s2 = text.length > lim2 ? clipSmart(text, lim2) : text;
+      if (writeText(c2, s2)) {
+        fillMark.flsxhb = s2;
+        lockCtl(c2, CFG.flsxhbMaxLen);
+        ok = true;
+        log('已回填 分类属性合并(FLSXHB) 并置只读（' + s2.length + '/' + lim2 + ' 字符）');
+      }
+    }
+
+    if (!ok) log('主要参数未回填：ZYCS 与 FLSXHB 都写不进去');
     return ok;
+  }
+
+  /** 通用置灰只读（ZYCS / FLSXHB 共用） */
+  function lockCtl(c, maxLen) {
+    try {
+      var el = c && (c.__el || domOf(c));
+      if (!el) return;
+      el.readOnly = true;
+      el.style.background = '#f2f2f2';
+      el.style.color = '#888';
+      el.title = '已由录入助手回填'
+        + (maxLen ? '（字段上限 ' + maxLen + ' 字符）' : '')
+        + '；需要修改请重新打开助手';
+    } catch (e) { }
+  }
+
+  /**
+   * 取「分类属性合并」(FLSXHB) 控件。
+   *
+   * 关键事实（来自 PSEITEM*-CREATE.page 的实际定义）：
+   *   电气元件   PSEITEMCISFORM-CREATE      ZYCS=0  FLSXHB=1
+   *   原材料     PSEITEMFIXTUREFORM-CREATE  ZYCS=0  FLSXHB=1
+   *   外购标准件 PSEITEMSTANDARDFORM-CREATE ZYCS=0  FLSXHB=1
+   *   基础页     PSEITEM-CREATE             ZYCS=1  FLSXHB=0
+   * 三个业务页面都没有 ZYCS，「主要参数」在界面上就是 FLSXHB（分类属性合并），
+   * 上限 STRING100（100 字符）。所以回填主参数必须写它。
+   */
+  function flsxhbCtl() {
+    if (isValidCtl(state.flsxhb)) return state.flsxhb;
+    try {
+      var pg = findFormPage();
+      if (pg && typeof pg.GetControl === 'function') {
+        var c = pg.GetControl(CFG.ctlFlsxhb);
+        if (isValidCtl(c)) { state.flsxhb = c; return c; }
+      }
+    } catch (e) { }
+    try {
+      var host = document.querySelector ? document.querySelector('[cid="' + CFG.ctlFlsxhb + '"]') : null;
+      if (!host) return null;
+      var inp = (host.tagName === 'INPUT' || host.tagName === 'TEXTAREA')
+        ? host
+        : host.querySelector('input,textarea');
+      if (!inp) return null;
+      state.flsxhb = {
+        id: CFG.ctlFlsxhb,
+        GetText: function () { return inp.value; },
+        SetText: function (v) {
+          inp.value = v;
+          try { inp.dispatchEvent(new Event('input', { bubbles: true })); } catch (e1) { }
+          try { inp.dispatchEvent(new Event('change', { bubbles: true })); } catch (e2) { }
+        },
+        __el: inp,
+      };
+      return state.flsxhb;
+    } catch (e) { return null; }
   }
 
   /**
@@ -551,7 +637,11 @@
       var wrap = {
         id: CFG.ctlZycs,
         GetText: function () { return inp.value; },
-        SetText: function (v) { inp.value = v; },
+        SetText: function (v) {
+          inp.value = v;
+          try { inp.dispatchEvent(new Event('input', { bubbles: true })); } catch (e1) { }
+          try { inp.dispatchEvent(new Event('change', { bubbles: true })); } catch (e2) { }
+        },
         __el: inp,
       };
       state.zycs = wrap;
@@ -572,6 +662,93 @@
       el.title = '已由录入助手回填；需要修改请重新打开助手';
     } catch (e) { }
   }
+
+  /**
+   * 防止「主要参数」被平台的占位文字覆盖。
+   *
+   * 二开在 TSDC/PSE/Js/PSEItem.js 里，当物料类型属于
+   * CreateItemGGXHCanNotEditType（原材料/电气元件/外购标准件）时，
+   * 每次 ITEMTYPE 变化都会无条件执行：
+   *     zycsCtrl.Disable();
+   *     zycsCtrl.SetText("填写分类属性后合并自动生成");
+   * 向导从第 1 页走到第 2/3 页时会再次触发，把助手回填的内容冲掉。
+   *
+   * 做法：包装该函数 —— 先记住调用前的有效值，平台逻辑跑完后
+   * 若发现被占位文字覆盖，立即把有效值写回。
+   */
+  function guardZycsFromPlaceholder() {
+    var names = [
+      'InforCenter_PSEITEM_ITEMTYPE_SubDataModelValue'
+    ];
+    var done = 0;
+    for (var i = 0; i < names.length; i++) {
+      var nm = names[i];
+      var orig = window[nm];
+      if (typeof orig !== 'function') continue;   // 平台脚本未加载 → 外层重试
+      if (orig.__plmGuard) { done++; continue; }  // 幂等：已包装
+      (function (fn, name) {
+        var wrapped = function (e) {
+          var before = '';
+          try { invalidateStaleZycs(); var c0 = zycsCtl(); if (c0) before = readText(c0); } catch (er) { }
+          var r = fn.apply(this, arguments);
+          try {
+            invalidateStaleZycs();
+            var c = zycsCtl();
+            var after = c ? readText(c) : '';
+            if (before && before !== ZYCS_PLACEHOLDER
+              && (after === ZYCS_PLACEHOLDER || !after)) {
+              if (writeText(c, before)) {
+                fillMark.zycs = before;
+                log('主要参数被平台占位文字覆盖，已自动写回（' + before.length + ' 字符）');
+              }
+            }
+          } catch (er2) { }
+          return r;
+        };
+        wrapped.__plmGuard = true;
+        window[name] = wrapped;
+        log('已包装 ' + name + '，防止主要参数被占位文字覆盖');
+      })(orig, nm);
+      done++;
+    }
+    return done === names.length;
+  }
+
+  /** 向导翻页会重建页面 DOM：缓存的 ZYCS 控件若已脱离文档，清掉让 zycsCtl() 重新定位 */
+  function invalidateStaleZycs() {
+    try {
+      var el = state.zycs && (state.zycs.__el || domOf(state.zycs));
+      if (el && el.isConnected === false) state.zycs = null;
+    } catch (e) { }
+  }
+
+  /**
+   * 保存/翻页前兜底（独立于查重、宽度开关）：
+   * ZYCS 当前是占位文字或空、而助手此前写过值 → 写回，防止占位文字随单据落库。
+   * 覆盖 wrap 之外的路径：PSEItem.js 晚于本文件加载、向导重建 DOM 等。
+   */
+  function restoreZycsBeforeSave(where) {
+    try {
+      if (!CFG.enabled || !CFG.fillParamsToZycs || !fillMark.zycs) return;
+      invalidateStaleZycs();
+      var c = zycsCtl();
+      if (!c) return;
+      var cur = readText(c);
+      if (cur === ZYCS_PLACEHOLDER || !cur) {
+        if (writeText(c, fillMark.zycs)) {
+          log('保存前恢复主要参数（' + (where || '') + '）：占位文字/空 → 助手值（' + fillMark.zycs.length + ' 字符）');
+        }
+      }
+    } catch (e) { }
+  }
+
+  // PSEItem.js（TSDC/PSE/Js）可能晚于本文件加载：延迟包装，幂等，最多重试 20 秒
+  var guardTries = 0;
+  (function installZycsGuard() {
+    if (!CFG.enabled) return;
+    if (guardZycsFromPlaceholder()) return;
+    if (++guardTries < 40) setTimeout(installZycsGuard, 500);
+  })();
 
   /** 读 ZYCS 现有值（占位文字视为空），用于弹窗初始化 */
   function readZycsValue() {
@@ -628,6 +805,8 @@
     if (typeof orig !== 'function' || orig.__smartWidthWrapped) return false;
     var wrapped = function (pages, curpage) {
       try {
+        // 主要参数防覆盖兜底：在平台读取页面数据/翻页前恢复（独立于宽度开关逻辑）
+        restoreZycsBeforeSave(where);
         if (!blockIfOverflow(specFromPages(pages, curpage), where)) return false;
       } catch (e) { log('宽度校验异常（放行）', e && e.message); }
       return orig.apply(this, arguments);
@@ -2977,9 +3156,10 @@
             // 名称由使用者手工输入（配合同义词点选）；只在为空且系列带名称时补全
             if (!String(nameIn.value || '').trim() && it2.name) nameIn.value = it2.name;
             specIn.value = it2.spec || it2.model || '';
-            // 主要参数：选型结果里带出的接线能力 + 可选配件（程序赋值不触发 oninput，需手动同步）
-            if (it2.params) {
-              paramsIn.value = it2.params;
+            // 主要参数：选型结果里带出的接线能力 + 可选配件。
+            // paramsIn 属于 openEditor 的局部变量，这里（openSelectModal）只能通过 dlg 访问。
+            if (it2.params && dlg && dlg.paramsIn) {
+              dlg.paramsIn.value = it2.params;
               syncParamsToZycs(it2.params);
             }
             closeSelectModal();
@@ -3088,8 +3268,8 @@
           pjCells.push(c4);
           tr.onclick = function () {
             specIn.value = it.spec;
-            if (it.params) {
-              paramsIn.value = it.params;
+            if (it.params && dlg && dlg.paramsIn) {
+              dlg.paramsIn.value = it.params;
               syncParamsToZycs(it.params);
             }
             closeSimilarModal();
@@ -3408,7 +3588,7 @@
     foot.appendChild(saveBtn);
     document.body.appendChild(mask);
     dlg = {
-      mask: mask, panel: panel, nameIn: nameIn, specIn: specIn,
+      mask: mask, panel: panel, nameIn: nameIn, specIn: specIn, paramsIn: paramsIn,
       nameTip: nameTip, specTip: specTip, invWrap: invWrap, invBadge: invBadge, simBtn: simBtn
     };
 
@@ -3539,7 +3719,7 @@
       if (!spec && isValidCtl(state.ggxh)) spec = readText(state.ggxh);
       if (!spec) { log('步骤2：未取到规格型号，跳过 FLSXHB 回填'); return; }
 
-      syncFlsxhb(spec, pageEvent && pageEvent.o);
+      if (CFG.fillSpecToParams) syncFlsxhb(spec, pageEvent && pageEvent.o);
     } catch (e) {
       log('PSEITEMCISFORM OnCreate 异常（已忽略）', e && e.message);
     }
@@ -3551,6 +3731,9 @@
    */
   window.InforCenter_PSEITEM_CreatePage_OnOK = function (pageEvent) {
     try {
+      // 保存前兜底（独立于查重开关）：主要参数是占位文字/空而助手写过值 → 恢复，防止占位文字落库
+      restoreZycsBeforeSave('CreatePage OnOK');
+
       if (!CFG.enabled || !CFG.blockOnDuplicate) return true;
 
       // 兜底：OnCreate 未执行或状态丢失时，直接从页面取控件，避免"静默放行"
@@ -3581,7 +3764,7 @@
           fillMark.zycs = zVal;
           log('保存前兜底同步 主要参数(ZYCS) <= 规格型号（上限 ' + zLim + ' 字符）');
         }
-        syncFlsxhb(spec);
+        if (CFG.fillSpecToParams) syncFlsxhb(spec);
       }
 
       var ecode = readEcode(cEcode);

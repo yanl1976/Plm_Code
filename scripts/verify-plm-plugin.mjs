@@ -1238,6 +1238,42 @@ async function run() {
     }
   }
 
+  // S41 主要参数防覆盖：平台类型联动写占位文字 → 包装函数自动写回 + 保存前兜底恢复
+  {
+    console.log('[S41] 主要参数防占位文字覆盖（类型联动包装 + 保存前兜底）')
+    const PLACEHOLDER = '填写分类属性后合并自动生成'
+    const p = newPage({
+      ctrls: baseCtrl(),
+      ajaxHandler: router({ '/health': HEALTH_OK, '/check': CHECK_CLEAN }),
+    })
+    p.OnCreate()
+
+    // 模拟二开 PSEItem.js 的 ITEMTYPE 联动（平台脚本晚于插件加载）
+    p.sandbox.InforCenter_PSEITEM_ITEMTYPE_SubDataModelValue = function (ev) {
+      var c = ev.o.OtherControl('ZYCS_Value')
+      if (c.id !== '') c.SetText(PLACEHOLDER)
+    }
+    // 模拟助手已回填主要参数
+    const params = '型号:3WT11N04；额定电流:400A；极数:3P'
+    p.ctl['ZYCS_Value'].SetText(params)
+
+    await sleep(600)                       // 等延迟包装重试（500ms 一轮）
+    ok('平台类型联动函数已被包装', p.sandbox.InforCenter_PSEITEM_ITEMTYPE_SubDataModelValue.__plmGuard === true)
+
+    // 向导翻页/类型变化再次触发联动 → 占位文字写入后被自动写回
+    p.sandbox.InforCenter_PSEITEM_ITEMTYPE_SubDataModelValue({
+      o: { OtherControl: (id) => p.ctl[id] || { id: '' }, GetSelectedValue: () => 'PSEITEMCISFORM' },
+    })
+    ok('联动触发后主要参数自动写回', p.ctl['ZYCS_Value'].__text === params,
+      'got=' + JSON.stringify(p.ctl['ZYCS_Value'].__text))
+
+    // 保存前兜底：绕过包装直接把占位文字塞进控件（模拟其他覆盖路径）→ OnOK 恢复
+    p.ctl['ZYCS_Value'].SetText(PLACEHOLDER)
+    p.OnOK()
+    ok('保存前兜底恢复主要参数', p.ctl['ZYCS_Value'].__text === params,
+      'got=' + JSON.stringify(p.ctl['ZYCS_Value'].__text))
+  }
+
   console.log('\n----------------------------------------')
   console.log(`结果: ${pass} 通过 / ${fail} 失败`)
   if (fail) console.log('失败项: ' + failures.join(' | '))

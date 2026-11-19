@@ -179,6 +179,32 @@
         <div id="bkList" class="bk-list"></div>
         </div>
 
+        <!-- 用户与角色（本页仅系统管理员可见；后端 /api/users 同样只放行 admin） -->
+        <div class="settings-card" id="usersCard">
+          <h3>用户与角色
+            <span style="font-weight:normal;font-size:12px;opacity:.7">仅管理员可管理 · 修改即时生效</span>
+          </h3>
+          <p class="muted">
+            <b>系统管理员</b>：全部权限，含所有删除、备份恢复、系统设置；
+            <b>标准化员</b>：规则与库的编辑/导入，不能删除、不能进系统设置；
+            <b>设计</b>：只读浏览 + 新增物料提交。
+            停用或删除后该账号立即无法登录；修改角色后下次请求即按新角色判定。
+          </p>
+          <div class="users-bar">
+            <input id="nuUser" placeholder="用户名（2-20 位字母数字）" autocomplete="off" />
+            <input id="nuName" placeholder="姓名 / 显示名" autocomplete="off" />
+            <select id="nuRole">
+              <option value="std">标准化员</option>
+              <option value="design">设计</option>
+              <option value="admin">系统管理员</option>
+            </select>
+            <input id="nuPw" type="password" placeholder="初始密码（≥6 位）" autocomplete="new-password" />
+            <button id="btnAddUser" class="primary">新建用户</button>
+            <span id="usersMsg" class="muted"></span>
+          </div>
+          <div id="usersList" class="users-list"></div>
+        </div>
+
         </section>
 
     <!-- 命名规范：名称同义词字典 + 国标命名范式库 -->

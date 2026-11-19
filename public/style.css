@@ -854,6 +854,20 @@ button:disabled { opacity:.45; cursor:not-allowed; }
 .no-delete .pl-col-del,
 .no-delete .pl-x { display:none !important; }
 
+/* 用户与角色管理（系统设置页，仅管理员可见） */
+.users-bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:10px 0 12px; }
+.users-bar input, .users-bar select {
+  padding:5px 8px; border:1px solid var(--line); border-radius:4px;
+  background:var(--panel); color:var(--text); font-size:12.5px;
+}
+.users-bar input { width:180px; }
+.users-list { overflow-x:auto; }
+.users-table { width:100%; border-collapse:collapse; font-size:12.5px; }
+.users-table th, .users-table td { border-bottom:1px solid var(--line); padding:6px 8px; text-align:left; white-space:nowrap; }
+.users-table th { color:var(--muted); font-weight:normal; }
+.users-table select { padding:3px 6px; border:1px solid var(--line); border-radius:4px; background:var(--panel); color:var(--text); }
+.users-table button { margin-right:4px; }
+
 /* 只读抽屉不显示「+ 参数」 */
 .pl-drawer-foot.readonly #plAddParam { display:none; }
 

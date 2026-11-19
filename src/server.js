@@ -42,6 +42,7 @@ import { pickAccessoryPool } from './accessory-dict.js'
 import {
   authEnabled, ensureUsers, login, changePassword, readSession,
   cookieHeader, clearCookieHeader, can, pagesOf, ROLE_NAMES,
+  listUsers, createUser, updateUser, resetPassword, deleteUser,
 } from './auth.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -958,6 +959,44 @@ const server = http.createServer(async (req, res) => {
     // ---------- 鉴权：页面 + 接口（关闭鉴权时视为管理员）----------
     const gate = await authGate(req, res, p)
     if (gate === false) return
+    if (gate && gate.u) req.__user = gate   // 供后续接口取当前用户（用户管理的 by）
+
+    // ---------- 用户与角色管理（仅管理员；权限由 auth.js 的 can() 限定）----------
+    if (p === '/api/users' && req.method === 'GET') {
+      return sendJson(res, 200, {
+        ok: true,
+        users: listUsers(),
+        roles: [
+          { key: 'admin', name: ROLE_NAMES.admin, desc: '全部权限，含所有删除、备份恢复、系统设置' },
+          { key: 'std', name: ROLE_NAMES.std, desc: '规则与库的编辑/导入，不能删除，不能进系统设置' },
+          { key: 'design', name: ROLE_NAMES.design, desc: '只读浏览 + 新增物料提交' },
+        ],
+      })
+    }
+    if (p === '/api/users' && req.method === 'POST') {
+      const b = await readBody(req)
+      const r = createUser({ u: b.u, name: b.name, role: b.role, pw: b.pw, by: req.__user && req.__user.u })
+      return sendJson(res, r.ok ? 200 : 400, r)
+    }
+    if (p.startsWith('/api/users/')) {
+      const rest = decodeURIComponent(p.slice('/api/users/'.length))
+      const by = req.__user && req.__user.u
+      if (rest.endsWith('/password') && req.method === 'POST') {
+        const u = rest.slice(0, rest.length - '/password'.length)
+        const b = await readBody(req)
+        const r = resetPassword(u, b.pw, by)
+        return sendJson(res, r.ok ? 200 : 400, r)
+      }
+      if (req.method === 'PUT') {
+        const b = await readBody(req)
+        const r = updateUser(rest, { name: b.name, role: b.role, enabled: b.enabled }, by)
+        return sendJson(res, r.ok ? 200 : 400, r)
+      }
+      if (req.method === 'DELETE') {
+        const r = deleteUser(rest, by)
+        return sendJson(res, r.ok ? 200 : 400, r)
+      }
+    }
 
     if (p === '/api/overview') {
       const stats = readDataJson('stats.json') || {}

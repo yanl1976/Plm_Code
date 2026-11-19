@@ -159,11 +159,19 @@ function cookieValue(req) {
   return m ? decodeURIComponent(m[1]) : ''
 }
 
-/** 读取当前会话；未登录/过期返回 null */
+/**
+ * 读取当前会话；未登录/过期/账号被停用或删除 → null。
+ * 2026-11-19：每次请求回查用户表，保证「改角色 / 停用 / 删除」即时生效
+ * （签名 Cookie 是无状态的，否则要等 12 小时过期）。
+ */
 export function readSession(req) {
   const p = verifyToken(cookieValue(req))
   if (!p) return null
-  return { u: p.u, name: p.n || p.u, role: p.r, roleName: ROLE_NAMES[p.r] }
+  const d = readUsersRaw()
+  const user = d && Array.isArray(d.users) ? d.users.find((x) => x.u === p.u) : null
+  if (!user) return null
+  if (user.enabled === false) return null
+  return { u: user.u, name: user.name, role: user.role, roleName: ROLE_NAMES[user.role] }
 }
 
 export function cookieHeader(token) {
@@ -201,6 +209,7 @@ export function login(username, password) {
     markFail(u)
     return { ok: false, error: '用户名或密码错误' }
   }
+  if (user.enabled === false) return { ok: false, error: '该账号已停用，请联系系统管理员' }
   const token = signToken({ u: user.u, n: user.name, r: user.role, exp: Date.now() + TTL_MS })
   return {
     ok: true, token,
@@ -256,6 +265,8 @@ export function can(role, method, pathname) {
   const p = String(pathname || '')
 
   if (m === 'DELETE' || /\/delete$/i.test(p)) return isAdmin
+  // 用户与角色管理：读写都只放行系统管理员（必须放在 GET 放行之前）
+  if (/^\/api\/users(\/|$)/.test(p)) return isAdmin
   if (/^\/api\/backup\//.test(p)) return isAdmin
   if (p === '/api/settings') return m === 'GET' ? isWriter : isAdmin
   if (p === '/api/new-material' && m === 'POST') return true
@@ -279,4 +290,133 @@ export function canPlm(role, method, pathname) {
   if (/^\/api\/plm\/snapshot\/(merge|reset)$/.test(p)) return isAdmin
   if (m === 'GET' || m === 'HEAD') return true
   return isAdmin || role === 'std'
+}
+
+// ---------------- 用户管理（仅管理员：can() 中 /api/users 前缀只放 admin） ----------------
+
+const AUDIT_FILE = path.join(ROOT, 'data', 'auth-audit.ndjson')
+
+/** 操作审计（追加写；data/* 已在 .gitignore 忽略） */
+function audit(action, by, target) {
+  try {
+    fs.mkdirSync(path.dirname(AUDIT_FILE), { recursive: true })
+    fs.appendFileSync(AUDIT_FILE,
+      JSON.stringify({ at: new Date().toISOString(), action, by: String(by || ''), target: String(target || '') }) + '\n',
+      'utf8')
+  } catch (e) { }
+}
+
+/** 用户列表（脱敏：不含 salt/hash） */
+export function listUsers() {
+  ensureUsers()
+  const d = readUsersRaw() || { users: [] }
+  return (d.users || []).map((x) => ({
+    u: x.u,
+    name: x.name,
+    role: x.role,
+    roleName: ROLE_NAMES[x.role] || x.role,
+    enabled: x.enabled !== false,
+    mustChange: !!x.mustChange,
+    createdAt: x.createdAt || '',
+    pwChangedAt: x.pwChangedAt || '',
+  }))
+}
+
+function saveUsers(d) {
+  fs.writeFileSync(USERS_FILE, JSON.stringify(d, null, 2) + '\n', 'utf8')
+}
+
+/** 启用状态的系统管理员数量（"最后一个管理员"保护用） */
+function aliveAdmins(users) {
+  return (users || []).filter((x) => x.role === 'admin' && x.enabled !== false).length
+}
+
+/** 新建用户（管理员） */
+export function createUser({ u, name, role, pw, by }) {
+  ensureUsers()
+  const un = String(u || '').trim()
+  if (!/^[A-Za-z0-9_.-]{2,20}$/.test(un)) return { ok: false, error: '用户名需为 2-20 位字母、数字、下划线、点或横线' }
+  if (!ROLE_NAMES[role]) return { ok: false, error: '角色不合法' }
+  const np = String(pw || '')
+  if (np.length < 6) return { ok: false, error: '初始密码至少 6 位' }
+  const d = readUsersRaw() || { users: [] }
+  d.users = Array.isArray(d.users) ? d.users : []
+  if (d.users.some((x) => x.u === un)) return { ok: false, error: '用户名已存在' }
+  const salt = crypto.randomBytes(12).toString('hex')
+  d.users.push({
+    u: un, name: String(name || un).trim(), role,
+    salt, hash: hashPw(np, salt),
+    enabled: true, mustChange: true,
+    createdAt: new Date().toISOString(),
+  })
+  saveUsers(d)
+  audit('user.create', by, un + ' / ' + role)
+  return { ok: true }
+}
+
+/**
+ * 修改用户（姓名 / 角色 / 停用启用）。
+ * 自我保护：不能改自己的角色、不能停用自己、不能删/停用/降级最后一个系统管理员。
+ */
+export function updateUser(u, patch, by) {
+  const d = readUsersRaw()
+  if (!d || !Array.isArray(d.users)) return { ok: false, error: '用户表不存在' }
+  const user = d.users.find((x) => x.u === u)
+  if (!user) return { ok: false, error: '用户不存在' }
+  const p = patch || {}
+  if (p.role !== undefined) {
+    if (!ROLE_NAMES[p.role]) return { ok: false, error: '角色不合法' }
+    if (u === by && p.role !== user.role) return { ok: false, error: '不能修改自己的角色' }
+    if (user.role === 'admin' && p.role !== 'admin' && aliveAdmins(d.users) <= 1) {
+      return { ok: false, error: '不能降级最后一个系统管理员' }
+    }
+    user.role = p.role
+  }
+  if (p.enabled !== undefined) {
+    const en = !!p.enabled
+    if (u === by && !en) return { ok: false, error: '不能停用自己的账号' }
+    if (!en && user.role === 'admin' && aliveAdmins(d.users) <= 1) {
+      return { ok: false, error: '不能停用最后一个系统管理员' }
+    }
+    user.enabled = en
+  }
+  if (p.name !== undefined) user.name = String(p.name || '').trim() || user.u
+  user.updatedAt = new Date().toISOString()
+  saveUsers(d)
+  audit('user.update', by, u)
+  return { ok: true }
+}
+
+/** 重置密码（管理员；重置后强制下次登录改密） */
+export function resetPassword(u, newPw, by) {
+  const d = readUsersRaw()
+  if (!d || !Array.isArray(d.users)) return { ok: false, error: '用户表不存在' }
+  const user = d.users.find((x) => x.u === u)
+  if (!user) return { ok: false, error: '用户不存在' }
+  const np = String(newPw || '')
+  if (np.length < 6) return { ok: false, error: '新密码至少 6 位' }
+  const salt = crypto.randomBytes(12).toString('hex')
+  user.salt = salt
+  user.hash = hashPw(np, salt)
+  user.mustChange = true
+  user.pwChangedAt = new Date().toISOString()
+  saveUsers(d)
+  audit('user.resetPassword', by, u)
+  return { ok: true }
+}
+
+/** 删除用户（管理员；不能删自己、不能删最后一个启用管理员） */
+export function deleteUser(u, by) {
+  const d = readUsersRaw()
+  if (!d || !Array.isArray(d.users)) return { ok: false, error: '用户表不存在' }
+  const user = d.users.find((x) => x.u === u)
+  if (!user) return { ok: false, error: '用户不存在' }
+  if (u === by) return { ok: false, error: '不能删除自己的账号' }
+  if (user.role === 'admin' && aliveAdmins(d.users) <= 1) {
+    return { ok: false, error: '不能删除最后一个系统管理员' }
+  }
+  d.users = d.users.filter((x) => x.u !== u)
+  saveUsers(d)
+  audit('user.delete', by, u)
+  return { ok: true }
 }

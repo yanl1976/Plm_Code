@@ -4329,3 +4329,129 @@ function renderNmList() {
 // 应用角色界面（隐藏无权限的页面与删除按钮；DOM 已在此脚本执行前就绪）
 applyAuthUI()
 
+// ======================= 用户与角色管理（仅系统管理员） =======================
+const ROLE_LABELS = { admin: '系统管理员', std: '标准化员', design: '设计' }
+
+function escU(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+}
+
+function usersMsg(r) {
+  const el = document.getElementById('usersMsg')
+  if (!el) return
+  el.textContent = r && r.ok ? '已保存' : ((r && r.error) || '操作失败')
+  el.style.color = r && r.ok ? '' : '#ff7b7b'
+  clearTimeout(usersMsg.__t)
+  usersMsg.__t = setTimeout(() => { el.textContent = '' }, 4000)
+}
+
+async function apiWrite(url, method, body) {
+  const resp = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+  try { return await resp.json() } catch (e) { return { ok: false, error: '响应解析失败（HTTP ' + resp.status + '）' } }
+}
+
+async function loadUsers() {
+  if (!AUTH.isAdmin) return
+  const box = document.getElementById('usersList')
+  if (!box) return
+  box.innerHTML = '<div class="muted">加载中…</div>'
+  const r = await api('/api/users').catch(() => null)
+  if (!r || !r.ok) {
+    box.innerHTML = '<div class="muted">加载失败：' + escU((r && r.error) || '无权限或网络异常') + '</div>'
+    return
+  }
+  renderUsers(r.users || [])
+}
+
+function renderUsers(list) {
+  const box = document.getElementById('usersList')
+  if (!box) return
+  if (!list.length) { box.innerHTML = '<div class="muted">暂无用户</div>'; return }
+  let html = '<table class="users-table"><thead><tr>'
+    + '<th>用户名</th><th>姓名</th><th>角色</th><th>状态</th><th>最近改密</th><th>操作</th>'
+    + '</tr></thead><tbody>'
+  for (const u of list) {
+    const self = AUTH.user && u.u === AUTH.user.u
+    const opts = ['admin', 'std', 'design'].map((k) =>
+      '<option value="' + k + '"' + (u.role === k ? ' selected' : '') + '>' + ROLE_LABELS[k] + '</option>').join('')
+    html += '<tr>'
+      + '<td>' + escU(u.u) + (self ? ' <span class="muted">(我)</span>' : '') + '</td>'
+      + '<td>' + escU(u.name) + '</td>'
+      + '<td><select data-role="' + escU(u.u) + '"' + (self ? ' disabled title="不能修改自己的角色"' : '') + '>' + opts + '</select></td>'
+      + '<td>' + (u.enabled ? '启用' : '<span style="color:#ff7b7b">停用</span>')
+      + (u.mustChange ? ' <span class="muted">待改密</span>' : '') + '</td>'
+      + '<td class="muted">' + escU(String(u.pwChangedAt || '').slice(0, 10)) + '</td>'
+      + '<td>'
+      + '<button class="ghost" data-pwd="' + escU(u.u) + '">重置密码</button> '
+      + '<button class="ghost" data-toggle="' + escU(u.u) + '" data-enabled="' + (u.enabled ? '0' : '1') + '">'
+      + (u.enabled ? '停用' : '启用') + '</button> '
+      + (self ? '' : '<button class="danger" data-deluser="' + escU(u.u) + '">删除</button>')
+      + '</td></tr>'
+  }
+  html += '</tbody></table>'
+  box.innerHTML = html
+
+  box.querySelectorAll('[data-role]').forEach((sel) => {
+    sel.onchange = async () => {
+      const r = await apiWrite('/api/users/' + encodeURIComponent(sel.dataset.role), 'PUT', { role: sel.value })
+      usersMsg(r)
+      loadUsers()
+    }
+  })
+  box.querySelectorAll('[data-pwd]').forEach((btn) => {
+    btn.onclick = async () => {
+      const pw = window.prompt('为「' + btn.dataset.pwd + '」设置新密码（至少 6 位）：')
+      if (pw == null) return
+      if (String(pw).length < 6) { usersMsg({ ok: false, error: '新密码至少 6 位' }); return }
+      const r = await apiWrite('/api/users/' + encodeURIComponent(btn.dataset.pwd) + '/password', 'POST', { pw })
+      usersMsg(r)
+      loadUsers()
+    }
+  })
+  box.querySelectorAll('[data-toggle]').forEach((btn) => {
+    btn.onclick = async () => {
+      const en = btn.dataset.enabled === '1'
+      if (!window.confirm((en ? '启用' : '停用') + '账号「' + btn.dataset.toggle + '」？')) return
+      const r = await apiWrite('/api/users/' + encodeURIComponent(btn.dataset.toggle), 'PUT', { enabled: en })
+      usersMsg(r)
+      loadUsers()
+    }
+  })
+  box.querySelectorAll('[data-deluser]').forEach((btn) => {
+    btn.onclick = async () => {
+      if (!window.confirm('删除账号「' + btn.dataset.deluser + '」？删除后该账号立即失效，不可恢复。')) return
+      const r = await apiWrite('/api/users/' + encodeURIComponent(btn.dataset.deluser), 'DELETE')
+      usersMsg(r)
+      loadUsers()
+    }
+  })
+}
+
+function bindUsersUI() {
+  const btn = document.getElementById('btnAddUser')
+  if (!btn) return
+  btn.onclick = async () => {
+    const u = (document.getElementById('nuUser').value || '').trim()
+    const name = (document.getElementById('nuName').value || '').trim()
+    const role = document.getElementById('nuRole').value
+    const pw = document.getElementById('nuPw').value
+    if (!u || !pw) { usersMsg({ ok: false, error: '请填写用户名与初始密码' }); return }
+    const r = await apiWrite('/api/users', 'POST', { u, name, role, pw })
+    usersMsg(r)
+    if (r && r.ok) {
+      document.getElementById('nuUser').value = ''
+      document.getElementById('nuName').value = ''
+      document.getElementById('nuPw').value = ''
+      loadUsers()
+    }
+  }
+}
+
+if (AUTH.isAdmin) { bindUsersUI(); loadUsers() }
+

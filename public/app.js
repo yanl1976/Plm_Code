@@ -2869,15 +2869,29 @@ async function nmFillExtras() {
   // 请求期间用户可能已经手动编辑过；改过就不覆盖（否则会把手写的删减冲掉）
   if (el.dataset.auto === '0') return
   const items = (r && r.items) || []
+  const raw = r && r.raw
 
   // 没有可填内容时清空，而不是保留上一次的结果 ——
   // 否则换型号后看到的是旧配件，会被误认为"过滤没生效"。
-  if (!items.length) { el.value = ''; el.dataset.auto = '1'; return }
+  if (!items.length && !raw) { el.value = ''; el.dataset.auto = '1'; return }
 
-  // 输出规则（2026-11-19 调整）：参数名仍不写进值（「接线能力：」是表头），
-  // 但保留「标配 / 可选」语义，与 Excel 原文一致：
-  //   接线能力值；标配说明/纯描述逐句；连续的选配件合并为一段并加「可选：」前缀
-  // 旧后端没有 type 字段时用 param 里的「(标配)」兜底，保证升级期间不回归。
+  // 【方案 B：原文保真】后端按型号行返回 raw（该行「接线能力」「可配附件」原文），
+  // 这里只整理空白（换行/连续空格压成单个空格），其余标点、「；」「、」「：」一律保留。
+  // 好处：Excel 内容怎么变（新增前缀、改用词、改分隔符）都不需要改前端代码，也不会歧义。
+  if (raw) {
+    const tidy = (s) => String(s || '').replace(/\s+/g, ' ').trim()
+    const parts = []
+    if (tidy(raw.wiring)) parts.push(tidy(raw.wiring))
+    if (tidy(raw.accessories)) parts.push(tidy(raw.accessories))
+    if (parts.length) {
+      el.value = parts.join('；')
+      el.dataset.auto = '1'
+      return
+    }
+  }
+
+  // 【回退：旧后端 / 旧字典无 raw】结构化拼接（按 type 分组，保留「标配 / 可选」语义）。
+  // 旧后端没有 type 字段时用 param 里的「(标配)」兜底。
   const segs = []
   const wiringVals = []
   let optBuf = []

@@ -1301,7 +1301,15 @@ const server = http.createServer(async (req, res) => {
             label: (code ? code + ' ' + cn : cn).trim(),
           })
         }
-        return sendJson(res, 200, { ok: true, model, sub, source: 'model-row', items: rowItems })
+        // 原文保真（方案 B）：raw 为该型号行的原始单元格文本，展示层优先原样输出；
+        // items 保留供内部/兼容使用（结构化条目，不参与展示格式）。
+        return sendJson(res, 200, {
+          ok: true, model, sub, source: 'model-row',
+          raw: pool.raw
+            ? { wiring: String(pool.raw.wiring || ''), accessories: String(pool.raw.accessories || '') }
+            : null,
+          items: rowItems,
+        })
       }
 
       // ② 回退：旧结构（按小类+系列汇总；旧字典或型号未收录时使用）

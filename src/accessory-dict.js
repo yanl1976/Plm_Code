@@ -6,10 +6,15 @@
  * 输出：
  *   src/config/accessory-dict.json
  *
- * 结构（2026-11-19 升级，方案 A）：
- *   pools:    [{ wiring:[...], accessories:[{code,cn,type}] }]   按「行内容组合」池化去重
+ * 结构（2026-11-19，方案 A + B）：
+ *   pools:    [{ wiring:[...], accessories:[{code,cn,type}], raw:{wiring,accessories} }]
+ *             按「行内容组合」池化去重；raw 保留该行原文，供展示层原样输出
  *   models:   { "小类|型号大写": poolId }                        型号行 → 池
  *   wiring / accessories                                          旧「按小类+系列」汇总，仅作回退
+ *
+ * 展示层约定（方案 B）：接口优先返回 raw，前端原样输出（仅整理空白），不再按
+ * type 重组格式 —— 结构化条目只服务于去重/过滤，不参与展示。这样 Excel 内容
+ * 怎么变（新增前缀、改用词、改分隔符）都不需要改代码，也不会产生歧义。
  *
  * 为什么加 pools/models：
  *   旧实现按「小类 + 系列」汇总整列取值，而 series 名含中文时会被判为「通用」
@@ -157,16 +162,17 @@ export function buildAccessoryDict() {
         if (!model) continue
         const wv = wiringKey ? String(r[wiringKey] || '').trim() : ''
         const at = accKey ? String(r[accKey] || '').trim() : ''
+        if (!wv && !at) continue
         const w = wv ? [wv] : []
         const a = at ? parseAccessories(at) : []
-        if (!w.length && !a.length) continue
-        // 池签名：接线能力 + 配件条目（代号优先、其次中文 + 类型），内容相同即复用同一池
-        const sig = JSON.stringify(w) + '#' + String(sub) + '#'
-          + a.map((x) => (x.type || '') + '|' + (x.code ? 'c:' + x.code.toUpperCase() : 'n:' + x.cn)).join(',')
+        // 池签名改用【原文】：原文相同才复用同一池，保证展示层能 100% 还原该行原文。
+        // 结构化条目（wiring/accessories）仅作内部使用，不参与展示格式 ——
+        // 这样 Excel 内容怎么变（新增前缀/改分隔符/改用词）都不需要改代码，也不会歧义。
+        const sig = JSON.stringify({ sub, w: wv, a: at })
         let id = poolSig.get(sig)
         if (id == null) {
           id = pools.length
-          pools.push({ wiring: w, accessories: a })
+          pools.push({ wiring: w, accessories: a, raw: { wiring: wv, accessories: at } })
           poolSig.set(sig, id)
         }
         models[String(sub) + '|' + model.toUpperCase()] = id
@@ -186,8 +192,9 @@ export function buildAccessoryDict() {
 
   const dict = {
     meta: {
-      note: '附加参数（接线能力 / 可选配件）：pools+models 为「按型号行」精确取值（优先），' +
+      note: '附加参数（接线能力 / 可选配件）：pools+models 为「按型号行」精确取值（优先，含 raw 原文），' +
         'wiring/accessories 为「按小类+系列」汇总（仅在型号未命中时回退）。' +
+        '展示层优先输出 raw 原文（仅整理空白），结构化条目仅作内部使用。' +
         '由 src/accessory-dict.js 从 data/selection 自动生成，选型库导入后会自动重建，请勿手工编辑。',
       updatedAt: new Date().toISOString(),
     },

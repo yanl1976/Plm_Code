@@ -150,6 +150,12 @@
           <span class="scn-desc">新建用户 / 改角色 / 停用<br />重置密码 / 删除（仅管理员）</span>
           <span class="scn-go">打开设置 →</span>
         </button>
+        <button class="set-card-btn" data-set="roles">
+          <span class="scn-badge">04</span>
+          <span class="scn-title">角色权限</span>
+          <span class="scn-desc">角色 × 功能点矩阵<br />勾选保存，即时生效</span>
+          <span class="scn-go">打开设置 →</span>
+        </button>
       </div>
 
       <!-- 设置弹窗：三个面板共用，切换时只改显示 -->
@@ -225,6 +231,20 @@
                 <span id="usersMsg" class="muted"></span>
               </div>
               <div id="usersList" class="users-list"></div>
+            </div>
+
+            <!-- 04 角色权限矩阵 -->
+            <div class="set-pane" data-pane="roles">
+              <p class="muted">
+                勾选每个角色可用的功能点（页面访问 / 数据操作 / 管理），保存后<b>即时生效</b>。
+                系统管理员固定全权（不可取消，防止把管理员自己锁在外面）。
+              </p>
+              <div id="permMatrix" class="perm-matrix"></div>
+              <div class="perm-actions">
+                <button id="btnSavePerms" class="primary">保存权限</button>
+                <button id="btnResetPerms" class="ghost">恢复默认</button>
+                <span id="permsMsg" class="muted"></span>
+              </div>
             </div>
           </div>
         </div>

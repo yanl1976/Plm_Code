@@ -4458,13 +4458,98 @@ function bindUsersUI() {
   }
 }
 
-if (AUTH.isAdmin) { bindUsersUI(); loadUsers() }
+if (AUTH.isAdmin) { bindUsersUI(); loadUsers(); bindPermsUI(); loadPerms() }
+
+// ======================= 角色权限矩阵（仅系统管理员） =======================
+function permMsg(r) {
+  const el = document.getElementById('permsMsg')
+  if (!el) return
+  el.textContent = r && r.ok ? '已保存' : ((r && r.error) || '操作失败')
+  el.style.color = r && r.ok ? '' : '#ff7b7b'
+  clearTimeout(permMsg.__t)
+  permMsg.__t = setTimeout(() => { el.textContent = '' }, 4000)
+}
+
+async function loadPerms() {
+  if (!AUTH.isAdmin) return
+  const box = document.getElementById('permMatrix')
+  if (!box) return
+  box.innerHTML = '<div class="muted">加载中…</div>'
+  const r = await api('/api/perms').catch(() => null)
+  if (!r || !r.ok) {
+    box.innerHTML = '<div class="muted">加载失败：' + escU((r && r.error) || '无权限或网络异常') + '</div>'
+    return
+  }
+  renderPerms(r)
+}
+
+function renderPerms(data) {
+  const box = document.getElementById('permMatrix')
+  if (!box) return
+  const defs = data.defs || []
+  const roles = data.roles || []
+  const head = '<tr><th style="text-align:left">功能点</th>'
+    + roles.map((r) => '<th>' + escU(r.name) + (r.locked ? '<br /><span class="muted" style="font-size:11px">固定全权</span>' : '') + '</th>').join('')
+    + '</tr>'
+  let rows = ''
+  let lastGroup = ''
+  for (const d of defs) {
+    if (d.group !== lastGroup) {
+      lastGroup = d.group
+      rows += '<tr class="perm-group"><td colspan="' + (roles.length + 1) + '">' + escU(d.group) + '</td></tr>'
+    }
+    rows += '<tr><td>' + escU(d.name)
+      + '<span class="muted" style="margin-left:6px;font-size:11px">' + escU(d.key) + '</span></td>'
+    for (const r of roles) {
+      const perms = r.perms || []
+      const checked = r.locked || perms.indexOf('*') >= 0 || perms.indexOf(d.key) >= 0
+        || (d.key.indexOf('.') > 0 && perms.indexOf(d.key.split('.')[0] + '.*') >= 0)
+      rows += '<td><input type="checkbox" data-role="' + escU(r.key) + '" data-perm="' + escU(d.key) + '"'
+        + (checked ? ' checked' : '') + (r.locked ? ' disabled' : '') + ' /></td>'
+    }
+    rows += '</tr>'
+  }
+  box.innerHTML = '<table class="perm-table"><thead>' + head + '</thead><tbody>' + rows + '</tbody></table>'
+}
+
+function collectPerms() {
+  const box = document.getElementById('permMatrix')
+  const byRole = {}
+  box.querySelectorAll('input[data-role]').forEach((el) => {
+    const k = el.dataset.role
+    if (!byRole[k]) byRole[k] = []
+    if (el.checked) byRole[k].push(el.dataset.perm)
+  })
+  return Object.keys(byRole).map((k) => ({ key: k, perms: byRole[k] }))
+}
+
+function bindPermsUI() {
+  const save = document.getElementById('btnSavePerms')
+  if (save) {
+    save.onclick = async () => {
+      const roles = collectPerms()
+      const r = await apiWrite('/api/perms', 'PUT', { roles })
+      permMsg(r)
+      loadPerms()
+    }
+  }
+  const reset = document.getElementById('btnResetPerms')
+  if (reset) {
+    reset.onclick = async () => {
+      if (!window.confirm('恢复默认权限（各角色回到系统初始配置）？')) return
+      const r = await apiWrite('/api/perms/reset', 'POST')
+      permMsg(r)
+      loadPerms()
+    }
+  }
+}
 
 // ======================= 系统设置：卡片 → 弹窗 =======================
 const SET_PANE_TITLES = {
   range: '提取物料范围与筛查组织',
   backup: '系统数据备份与恢复',
   users: '用户与角色',
+  roles: '角色权限配置',
 }
 
 function closeSetModal() {
@@ -4485,6 +4570,7 @@ function openSetPane(key) {
   try {
     if (key === 'backup') loadBackupList()
     if (key === 'users' && AUTH.isAdmin) loadUsers()
+    if (key === 'roles' && AUTH.isAdmin) loadPerms()
   } catch (e) { }
 }
 

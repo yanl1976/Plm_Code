@@ -1,0 +1,48 @@
+{
+  "meta": {
+    "note": "角色 × 功能点权限（系统设置 → 角色权限）；admin 固定全权，防锁死。",
+    "updatedAt": "2026-11-19T09:20:26.225Z"
+  },
+  "roles": {
+    "admin": {
+      "name": "系统管理员",
+      "perms": [
+        "*"
+      ]
+    },
+    "std": {
+      "name": "标准化员",
+      "perms": [
+        "page.overview",
+        "page.classify",
+        "page.rules",
+        "page.newmat",
+        "page.selection",
+        "data.write",
+        "data.import",
+        "data.run",
+        "biz.submit"
+      ]
+    },
+    "design": {
+      "name": "设计",
+      "perms": [
+        "page.overview",
+        "page.classify",
+        "page.newmat",
+        "biz.submit"
+      ]
+    },
+    "test": {
+      "name": "测试（只读）",
+      "perms": [
+        "page.overview",
+        "page.classify",
+        "page.rules",
+        "page.newmat",
+        "page.selection",
+        "biz.submit"
+      ]
+    }
+  }
+}

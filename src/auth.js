@@ -255,69 +255,220 @@ export function changePassword(username, oldPw, newPw) {
   return { ok: true }
 }
 
-// ---------------- 权限 ----------------
+// ---------------- 可配置权限（角色 × 功能点） ----------------
 
-/** 该角色可见的页面 key 列表 */
+/** 功能点定义（系统设置 → 角色权限 的矩阵行；key 用于权限判断） */
+export const PERM_DEFS = [
+  // 页面访问
+  { key: 'page.overview', group: '页面访问', name: '概览' },
+  { key: 'page.materials', group: '页面访问', name: '物料特征' },
+  { key: 'page.dedup', group: '页面访问', name: '一物多号查重' },
+  { key: 'page.classify', group: '页面访问', name: '分类树' },
+  { key: 'page.cleanup', group: '页面访问', name: '存量清洗' },
+  { key: 'page.rules', group: '页面访问', name: '命名规范（同义词/范式/参数库）' },
+  { key: 'page.feature', group: '页面访问', name: '特征参数录入' },
+  { key: 'page.newmat', group: '页面访问', name: '新增物料' },
+  { key: 'page.selection', group: '页面访问', name: '选型库' },
+  { key: 'page.settings', group: '页面访问', name: '系统设置' },
+  // 数据操作
+  { key: 'data.write', group: '数据操作', name: '编辑规则 / 参数库 / 选型库' },
+  { key: 'data.import', group: '数据操作', name: '导入（Excel / 批量）' },
+  { key: 'data.run', group: '数据操作', name: '重跑提取 / 查重 / 快照刷新' },
+  { key: 'data.delete', group: '数据操作', name: '删除（记录 / 文件 / 规则）' },
+  { key: 'biz.submit', group: '业务', name: '新增物料提交（待新增清单）' },
+  // 管理
+  { key: 'admin.backup', group: '管理', name: '备份与恢复' },
+  { key: 'admin.users', group: '管理', name: '用户与角色管理' },
+  { key: 'admin.roles', group: '管理', name: '角色权限配置' },
+]
+
+/** 默认权限（= 2026-11-19 之前写死的行为；用于首次生成 roles.json 与「恢复默认」） */
+export const DEFAULT_ROLE_PERMS = {
+  admin: ['*'],
+  std: ['page.overview', 'page.materials', 'page.dedup', 'page.classify', 'page.cleanup',
+    'page.rules', 'page.feature', 'page.newmat', 'page.selection',
+    'data.write', 'data.import', 'data.run', 'biz.submit'],
+  design: ['page.overview', 'page.materials', 'page.dedup', 'page.classify', 'page.newmat', 'biz.submit'],
+  test: ['page.overview', 'page.materials', 'page.dedup', 'page.classify', 'page.cleanup',
+    'page.rules', 'page.feature', 'page.newmat', 'page.selection'],
+}
+
+const ROLES_FILE = path.join(ROOT, 'src', 'config', 'roles.json')
+let rolesCache = { at: -1, data: null }
+
+/** 读取角色权限配置（mtime 缓存；缺文件时写默认值） */
+export function loadRolePerms() {
+  try {
+    const st = fs.statSync(ROLES_FILE)
+    if (rolesCache.data && rolesCache.at === st.mtimeMs) return rolesCache.data
+    const j = JSON.parse(fs.readFileSync(ROLES_FILE, 'utf8'))
+    rolesCache = { at: st.mtimeMs, data: (j && j.roles) || {} }
+    return rolesCache.data
+  } catch (e) {
+    const init = {}
+    for (const k of Object.keys(ROLE_NAMES)) init[k] = { name: ROLE_NAMES[k], perms: (DEFAULT_ROLE_PERMS[k] || []).slice() }
+    try {
+      fs.mkdirSync(path.dirname(ROLES_FILE), { recursive: true })
+      fs.writeFileSync(ROLES_FILE, JSON.stringify({
+        meta: { note: '角色 × 功能点权限（系统设置 → 角色权限）；admin 固定全权，防锁死。', updatedAt: new Date().toISOString() },
+        roles: init,
+      }, null, 2) + '\n', 'utf8')
+    } catch (e2) { /* 写失败用内存默认 */ }
+    rolesCache = { at: 0, data: init }
+    return init
+  }
+}
+
+/** 角色当前权限列表（配置缺失时回退默认） */
+function rolePerms(role) {
+  const all = loadRolePerms()
+  const r = all && all[role]
+  return (r && Array.isArray(r.perms)) ? r.perms : (DEFAULT_ROLE_PERMS[role] || [])
+}
+
+/** 是否拥有某功能点权限（支持 * 与组通配 page.*） */
+export function hasPerm(role, key) {
+  if (!ROLE_NAMES[role]) return false
+  if (role === 'admin') return true             // 管理员始终全权（防锁死）
+  const list = rolePerms(role)
+  if (list.indexOf('*') >= 0) return true
+  if (list.indexOf(key) >= 0) return true
+  const dot = String(key).indexOf('.')
+  if (dot > 0 && list.indexOf(key.slice(0, dot) + '.*') >= 0) return true
+  return false
+}
+
+/** 该角色可见的页面 key 列表（按功能点计算） */
 export function pagesOf(role) {
   const out = []
-  for (const k of Object.keys(PAGE_ROLES)) {
-    if (PAGE_ROLES[k].indexOf(role) >= 0) out.push(k)
+  for (const d of PERM_DEFS) {
+    if (d.key.indexOf('page.') !== 0) continue
+    if (hasPerm(role, d.key)) out.push(d.key.slice(5))
   }
   return out
 }
 
+/** GET 接口 → 所需页面权限（未命中的只读接口：登录即可） */
+const GET_PERM_RULES = [
+  [/^\/api\/overview/, 'page.overview'],
+  [/^\/api\/(materials|filters|orgs)/, 'page.materials'],
+  [/^\/api\/(dedup|unified)/, 'page.dedup'],
+  [/^\/api\/classification/, 'page.classify'],
+  [/^\/api\/(mapping|freeze)/, 'page.cleanup'],
+  [/^\/api\/(name-synonyms|naming-guide|param-lib|std-watch)/, 'page.rules'],
+  [/^\/api\/feature/, 'page.feature'],
+  [/^\/api\/new-material/, 'page.newmat'],
+  [/^\/api\/settings/, 'page.settings'],
+  [/^\/api\/(select|selection)/, 'page.selection'],
+  [/^\/api\/(jobs|stats|health)/, 'page.overview'],
+]
+
+/** 写接口 → 所需操作权限（按顺序首个命中；null = 只读语义，不额外要求） */
+const WRITE_PERM_RULES = [
+  // 校验/联想/导出类 POST 实际是只读，只要求页面可见
+  [/^\/api\/new-material\/(validate|spec-check|spec-suggest|spec-complete|accessory-complete|similar-models|inventory|next-code|export)$/, null],
+  [/^\/api\/new-material$/, 'biz.submit'],
+  [/import/i, 'data.import'],
+  [/^\/api\/(run|rerun|snapshot|jobs|dedup|extract)/, 'data.run'],
+  [/.*/, 'data.write'],
+]
+
 /**
- * 接口权限（3130）：
- *   · 所有删除（DELETE 方法或路径以 /delete 结尾）→ 仅 admin
- *   · 备份与恢复 → 仅 admin
- *   · 系统设置：读 = admin/std，写 = admin
- *   · 新增物料提交 → 三角色（设计的核心操作）
- *   · 其余只读 GET → 登录即可（design 可看）
- *   · 其余写操作 → admin + std（design 只读）
+ * 接口权限（3130）：基于「角色 × 功能点」配置判断
+ *   · 删除类 → data.delete
+ *   · 用户/权限/备份 → admin.users / admin.roles / admin.backup
+ *   · 写接口 → data.write / data.import / data.run / biz.submit
+ *   · 读接口 → 对应页面权限（page.*）
  */
 export function can(role, method, pathname) {
   if (!ROLE_NAMES[role]) return false
-  const isAdmin = role === 'admin'
-  const isWriter = isAdmin || role === 'std'
   const m = String(method || 'GET').toUpperCase()
   const p = String(pathname || '')
 
-  // 测试角色：只读 —— 所有写操作禁止；用户/备份/系统设置属管理面，读也不开放
-  if (role === 'test') {
-    if (!(m === 'GET' || m === 'HEAD')) return false
-    if (/^\/api\/(users|backup)(\/|$)/.test(p)) return false
-    if (p === '/api/settings') return false
+  // 管理面（各自独立功能点）
+  if (/^\/api\/users(\/|$)/.test(p)) return hasPerm(role, 'admin.users')
+  if (/^\/api\/perms(\/|$)/.test(p)) return hasPerm(role, 'admin.roles')
+  if (/^\/api\/backup(\/|$)/.test(p)) return hasPerm(role, 'admin.backup')
+
+  // 删除类
+  if (m === 'DELETE' || /\/delete$/i.test(p)) return hasPerm(role, 'data.delete')
+
+  // 写操作
+  if (m !== 'GET' && m !== 'HEAD') {
+    let need = 'data.write'
+    for (const [re, perm] of WRITE_PERM_RULES) {
+      if (re.test(p)) { need = perm; break }
+    }
+    if (need && !hasPerm(role, need)) return false
+    for (const [re, perm] of GET_PERM_RULES) {
+      if (re.test(p)) { if (perm && !hasPerm(role, perm)) return false; break }
+    }
     return true
   }
 
-  if (m === 'DELETE' || /\/delete$/i.test(p)) return isAdmin
-  // 用户与角色管理：读写都只放行系统管理员（必须放在 GET 放行之前）
-  if (/^\/api\/users(\/|$)/.test(p)) return isAdmin
-  if (/^\/api\/backup\//.test(p)) return isAdmin
-  if (p === '/api/settings') return m === 'GET' ? isWriter : isAdmin
-  if (p === '/api/new-material' && m === 'POST') return true
-  if (m === 'GET' || m === 'HEAD') return true
-  return isWriter
+  // 读操作：按页面权限
+  for (const [re, perm] of GET_PERM_RULES) {
+    if (re.test(p)) return hasPerm(role, perm)
+  }
+  return true
 }
 
 /**
  * 3100 管理页接口权限：
- *   · 删除类 / reload / snapshot merge|reset → 仅 admin
- *   · 其余写（导入、启用停用、上传等）→ admin + std
- *   · 只读 → 登录即可
+ *   · 读 → 需要「选型库」页面权限
+ *   · 写（导入/启停/上传）→ 需要「选型库」+「编辑规则/参数库/选型库」
+ *   · 删除 → 还需要「删除」权限
  */
 export function canPlm(role, method, pathname) {
   if (!ROLE_NAMES[role]) return false
-  const isAdmin = role === 'admin'
   const m = String(method || 'GET').toUpperCase()
   const p = String(pathname || '')
-  // 测试角色：3100 管理页只读（导入/删除/启停等写操作一律禁止）
-  if (role === 'test') return m === 'GET' || m === 'HEAD'
-  if (m === 'DELETE' || /\/delete$/i.test(p)) return isAdmin
-  if (/^\/api\/plm\/reload$/.test(p)) return isAdmin
-  if (/^\/api\/plm\/snapshot\/(merge|reset)$/.test(p)) return isAdmin
+  if (!hasPerm(role, 'page.selection')) return false
   if (m === 'GET' || m === 'HEAD') return true
-  return isAdmin || role === 'std'
+  if (m === 'DELETE' || /\/delete$/i.test(p)) return hasPerm(role, 'data.delete')
+  return hasPerm(role, 'data.write')
+}
+
+/** 权限矩阵（供系统设置 → 角色权限页使用） */
+export function getPermMatrix() {
+  return {
+    defs: PERM_DEFS,
+    roles: Object.keys(ROLE_NAMES).map((k) => ({
+      key: k,
+      name: ROLE_NAMES[k],
+      perms: rolePerms(k).slice(),
+      locked: k === 'admin',      // 管理员固定全权，界面不可编辑
+    })),
+  }
+}
+
+/** 保存权限矩阵（仅管理员调用；admin 强制 *，防锁死） */
+export function savePermMatrix(roles, by) {
+  const next = {}
+  for (const k of Object.keys(ROLE_NAMES)) {
+    const src = (roles || []).find((x) => x && x.key === k)
+    const raw = src && Array.isArray(src.perms) ? src.perms : rolePerms(k)
+    const valid = raw.filter((x) => typeof x === 'string')
+      .filter((x) => x === '*' || PERM_DEFS.some((d) => d.key === x))
+    next[k] = { name: ROLE_NAMES[k], perms: k === 'admin' ? ['*'] : valid }
+  }
+  try {
+    fs.mkdirSync(path.dirname(ROLES_FILE), { recursive: true })
+    fs.writeFileSync(ROLES_FILE, JSON.stringify({
+      meta: { note: '角色 × 功能点权限（系统设置 → 角色权限）；admin 固定全权，防锁死。', updatedAt: new Date().toISOString() },
+      roles: next,
+    }, null, 2) + '\n', 'utf8')
+  } catch (e) { return { ok: false, error: '写入失败：' + ((e && e.message) || e) } }
+  rolesCache = { at: 0, data: next }
+  audit('perms.save', by, Object.keys(next).join(','))
+  return { ok: true }
+}
+
+/** 恢复默认权限（admin 仍固定全权） */
+export function resetPermMatrix(by) {
+  const roles = Object.keys(ROLE_NAMES).map((k) => ({ key: k, perms: (DEFAULT_ROLE_PERMS[k] || []).slice() }))
+  const r = savePermMatrix(roles, by)
+  return r.ok ? { ok: true } : r
 }
 
 // ---------------- 用户管理（仅管理员：can() 中 /api/users 前缀只放 admin） ----------------

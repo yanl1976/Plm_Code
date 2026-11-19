@@ -929,6 +929,16 @@ button:disabled { opacity:.45; cursor:not-allowed; }
 .readonly-mode [data-delmap],
 .readonly-mode [data-delfrz] { display:none !important; }
 
+/* 角色权限矩阵 */
+.perm-matrix { overflow-x:auto; }
+.perm-table { width:100%; border-collapse:collapse; font-size:12.5px; }
+.perm-table th, .perm-table td { border-bottom:1px solid var(--line); padding:6px 8px; text-align:center; }
+.perm-table th:first-child, .perm-table td:first-child { text-align:left; white-space:nowrap; }
+.perm-table th { color:var(--muted); font-weight:normal; }
+.perm-table tr.perm-group td { background:rgba(255,255,255,.03); color:var(--accent); font-size:12px; text-align:left; }
+.perm-table input[type="checkbox"] { width:15px; height:15px; cursor:pointer; }
+.perm-actions { margin-top:12px; display:flex; gap:8px; align-items:center; }
+
 /* 只读抽屉不显示「+ 参数」 */
 .pl-drawer-foot.readonly #plAddParam { display:none; }
 

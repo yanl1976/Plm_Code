@@ -43,6 +43,7 @@ import {
   authEnabled, ensureUsers, login, changePassword, readSession,
   cookieHeader, clearCookieHeader, can, pagesOf, ROLE_NAMES,
   listUsers, createUser, updateUser, resetPassword, deleteUser,
+  getPermMatrix, savePermMatrix, resetPermMatrix,
 } from './auth.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -999,6 +1000,20 @@ const server = http.createServer(async (req, res) => {
         const r = deleteUser(rest, by)
         return sendJson(res, r.ok ? 200 : 400, r)
       }
+    }
+
+    // ---------- 角色权限矩阵（仅管理员；can() 中 /api/perms → admin.roles）----------
+    if (p === '/api/perms' && req.method === 'GET') {
+      return sendJson(res, 200, { ok: true, ...getPermMatrix() })
+    }
+    if (p === '/api/perms' && req.method === 'PUT') {
+      const b = await readBody(req)
+      const r = savePermMatrix(b && b.roles, req.__user && req.__user.u)
+      return sendJson(res, r.ok ? 200 : 400, r)
+    }
+    if (p === '/api/perms/reset' && req.method === 'POST') {
+      const r = resetPermMatrix(req.__user && req.__user.u)
+      return sendJson(res, r.ok ? 200 : 400, r)
     }
 
     if (p === '/api/overview') {

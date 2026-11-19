@@ -129,6 +129,9 @@ export function buildAccessoryDict() {
     const list = Array.isArray(j.series) ? j.series : (j.series ? Object.values(j.series) : [])
     for (const s of list) {
       if (!s || !Array.isArray(s.columns)) continue
+      // 停用的系列（/api/plm/select/toggle → enabled=false）不参与字典生成：
+      // 「停用」在选型助手里不再出现，主要参数也不应再自动填它的接线能力/配件。
+      if (s.enabled === false) continue
       const sub = String(s.sub || '').slice(0, 6)
       // 系列名含中文（如「螺栓选型清单」）说明不是型号前缀 → 视为通用，置空
       const rawSeries = String(s.id || s.name || '')

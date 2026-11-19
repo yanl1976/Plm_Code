@@ -49,7 +49,7 @@ const HOST = env('PLM_API_HOST', '0.0.0.0')
 // 版本号必须随「影响接口返回结构/判定逻辑」的改动递增 ——
 // 否则现场无法从返回里判断进程跑的是新代码还是旧代码（曾因此排查了半天：
 // 生产 3100 缺 subMismatch 字段，但 version 一直是 1.4.0，看不出差异）。
-const VERSION = '1.5.3'
+const VERSION = '1.5.4'
 // 构建指纹：现场用它判断「跑的是不是新代码」。
 // VERSION 只在接口结构 / 判定逻辑变化时递增，日常修 bug 不一定升；
 // codeMtime 取关键源文件的最新修改时间，每次部署同步都会变，可据此确认已生效。
@@ -1378,7 +1378,11 @@ const server = http.createServer(async (req, res) => {
     }
     if (p === '/api/plm/select/toggle' && req.method === 'POST') {
       const body = await readBody(req)
-      return send(res, 200, toggleSeries(body.file, body.enabled))
+      const out = toggleSeries(body.file, body.enabled)
+      // 停用/启用会改变该系列是否参与附加参数（buildAccessoryDict 跳过 enabled=false）
+      // → 切换成功后重建字典，保证主要参数与选型助手的可用范围一致。
+      if (out && out.ok) rebuildAccessoryDictSafe('select-toggle')
+      return send(res, 200, out)
     }
     if (p === '/api/plm/select/delete' && req.method === 'POST') {
       const body = await readBody(req)

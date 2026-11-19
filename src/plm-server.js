@@ -49,7 +49,18 @@ const HOST = env('PLM_API_HOST', '0.0.0.0')
 // 版本号必须随「影响接口返回结构/判定逻辑」的改动递增 ——
 // 否则现场无法从返回里判断进程跑的是新代码还是旧代码（曾因此排查了半天：
 // 生产 3100 缺 subMismatch 字段，但 version 一直是 1.4.0，看不出差异）。
-const VERSION = '1.5.1'
+const VERSION = '1.5.2'
+// 构建指纹：现场用它判断「跑的是不是新代码」。
+// VERSION 只在接口结构 / 判定逻辑变化时递增，日常修 bug 不一定升；
+// codeMtime 取关键源文件的最新修改时间，每次部署同步都会变，可据此确认已生效。
+const STARTED_AT = new Date().toISOString()
+function buildFingerprint() {
+  let t = 0
+  for (const f of ['plm-server.js', 'plm-index.js', 'spec-complete.js', 'material-rules.js', 'block-gate.js']) {
+    try { t = Math.max(t, fs.statSync(path.join(ROOT, 'src', f)).mtimeMs) } catch (e) { /* 文件缺失忽略 */ }
+  }
+  return { version: VERSION, startedAt: STARTED_AT, codeMtime: t ? new Date(t).toISOString() : '' }
+}
 
 /**
  * 构建自检：返回本进程实际具备的能力与索引状态。
@@ -1263,6 +1274,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, {
         ok: true,
         version: VERSION,
+        build: buildFingerprint(),   // 部署自检：启动时间 + 关键源文件 mtime，确认跑的是新代码
         features: buildFeatures(),   // 部署自检：subMismatch / nameDist / indexAt
         ...st,
         listen: {

@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.29';
+  var PLUGIN_VERSION = '2.30';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -2376,7 +2376,7 @@
     paramsRow.appendChild(dlgEl('div', 'flex:0 0 112px;'));   // 与上面两行右边界对齐
     body.appendChild(paramsRow);
 
-    // 技术参数只在「保存并回填」时写入（与名称/规格一致）。
+    // 主要参数只在「保存并回填」时写入（与名称/规格一致）。
     // 2026-11-19 修正：原实现输入即写回（300ms 防抖 + 失焦写回），点「取消」也会改掉
     // 页面上的 主要参数(ZYCS)/分类属性合并(FLSXHB) 并置灰只读，用户以为放弃的内容
     // 会被后续保存写进 PLM。「取消」必须等于放弃，因此这里不再监听输入。
@@ -4092,7 +4092,10 @@
         svc.ok = h.ready !== false;
         try { syncLock(); } catch (e) { }
         if (h.ready === false) { log('治理服务索引未就绪，联想暂不可用'); return; }
-        log('治理服务就绪：索引 ' + h.count + ' 条 / ' + h.subs + ' 个小类');
+        log('治理服务就绪：索引 ' + h.count + ' 条 / ' + h.subs + ' 个小类'
+          + '；后端 v' + (h.version || '?')
+          + (h.build && h.build.codeMtime
+            ? '（代码 ' + String(h.build.codeMtime).slice(0, 16).replace('T', ' ') + '）' : ''));
         // 服务端会把本机所有可用地址回传，便于确认 apiBase 是否填对
         if (h.listen && h.listen.urls && h.listen.urls.length > 1) {
           log('服务端可用地址：' + h.listen.urls.join('   '));

@@ -2865,7 +2865,7 @@ async function nmFillExtras() {
   if (!model) { el.value = ''; el.dataset.auto = '1'; return }
 
   const r = await api('/api/new-material/accessory-complete?sub=' + encodeURIComponent(sub)
-    + '&model=' + encodeURIComponent(model) + '&q=').catch(() => null)
+    + '&model=' + encodeURIComponent(model)).catch(() => null)
   // 请求期间用户可能已经手动编辑过；改过就不覆盖（否则会把手写的删减冲掉）
   if (el.dataset.auto === '0') return
   const items = (r && r.items) || []
@@ -4162,11 +4162,11 @@ async function nmSave() {
   const spec = ($('#nmSpec').value || '')
   if (!name) { msg('请填写物料名称'); return }
   if (!spec.trim()) { msg('请填写规格型号'); return }
-  // 技术参数最终写入 PLM「主要参数」(STRING1000)：与插件侧 zycsMaxLen 同口径，
+  // 主要参数最终写入 PLM F_ZXCV_ZYCS (STRING1000)：与插件侧 zycsMaxLen 同口径，
   // 录入端先提示，避免到 PLM 导入时才失败（后端同样会拒绝）
   const paramsVal = ($('#nmParams').value || '').trim()
   if (paramsVal.length > 1000) {
-    msg(`技术参数 ${paramsVal.length} 字符，超过 PLM「主要参数」1000 字符上限，请精简后再提交`)
+    msg(`主要参数 ${paramsVal.length} 字符，超过 1000 字符上限（PLM 主要参数字段），请精简后再提交`)
     return
   }
   // 参数顺序不同但参数集合完全相同 → 疑似同一规格，必须勾选确认才能继续

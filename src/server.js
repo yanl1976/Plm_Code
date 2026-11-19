@@ -1247,15 +1247,6 @@ const server = http.createServer(async (req, res) => {
       })
     }
 
-    if (p === '/api/new-material/check-code') {
-      const code = (url.searchParams.get('code') || '').trim()
-      return sendJson(res, 200, {
-        code,
-        exists: allDocs().some((d) => d.fnumber === code),
-        inDraft: readNewMats().items.some((d) => d.code === code),
-      })
-    }
-
     // 型号规格联想：返回同小类历史规格中包含输入内容的完整规格，并带出该规格现有库存数量
     // 规格分段补全：按范式模板推断"当前在填哪个参数"，给出该参数的取值候选（带频次）。
     // 只对模板能对齐到参数库的段给候选；对不上（如 设备类型/关键参数）返回 ok:false，前端不弹。
@@ -3034,12 +3025,12 @@ const server = http.createServer(async (req, res) => {
       if (!spec) return sendJson(res, 400, { error: '规格型号不能为空' })
       const info = subInfo(sub)
       if (!info) return sendJson(res, 400, { error: '小类不存在' })
-      // 技术参数最终写入 PLM「主要参数」(F_ZXCV_ZYCS, STRING1000)：
+      // 主要参数最终写入 PLM F_ZXCV_ZYCS (STRING1000)：
       // 与插件侧 zycsMaxLen 同口径，超限在录入端直接拒绝，避免到 PLM 导入时才失败。
       const paramsText = String(b.params || '').trim()
       if (paramsText.length > 1000) {
         return sendJson(res, 400, {
-          error: `技术参数 ${paramsText.length} 字符，超过 PLM「主要参数」1000 字符上限，请精简后再提交`,
+          error: `主要参数 ${paramsText.length} 字符，超过 1000 字符上限，请精简后再提交`,
         })
       }
       // 录入规则兜底：硬错误直接拒绝；提示项允许保存但随结果返回，便于前端展示

@@ -4176,14 +4176,14 @@ async function nmSave() {
   try {
     const r = await apiPost('/api/new-material', {
       name, spec, unit: ($('#nmUnit').value || '').trim(), sub: nm.cur.sub,
-      remark: ($('#nmRemark').value || '').trim(), by: 'web',
+      remark: '', by: 'web',   // 备注栏已移除（2026-11-19）：字段保留但不再采集
       // 主要参数：规格型号以外的内容（额定电流、防护等级、附件说明…），与规格分开提交
       params: ($('#nmParams').value || '').trim(),
     })
     if (r && r.error) { msg('保存失败：' + r.error); return }
     const tidy = r.specTidy
     msg('已加入待新增清单，编码 ' + r.item.code)
-    $('#nmName').value = ''; $('#nmSpec').value = ''; $('#nmUnit').value = ''; $('#nmRemark').value = ''
+    $('#nmName').value = ''; $('#nmSpec').value = ''; $('#nmUnit').value = ''
     if ($('#nmParams')) { $('#nmParams').value = ''; $('#nmParams').dataset.auto = '1' }   // 重置标记，下一条仍可自动填
     $('#nmSuggest').innerHTML = ''; $('#nmSpecCheck').innerHTML = ''
     // 清掉上一条查询到的库存/参考库存，避免残留误导下一条录入

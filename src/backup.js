@@ -55,6 +55,8 @@ export const LIBS = [
       'src/config/guide-field-map.json',
       'src/config/extract-cases.json',
       'src/config/select-field-alias.json',
+      // 2026-11-19 补：param:build 构建参数库的制造商参数输入，缺失会导致重建参数库缺数据
+      'src/config/manufacturer-params.json',
     ],
     // templates 的键是中类，一个中类算一套模板；canonicalOrder 是字段顺序表，不算业务条目
     count: (files) => {
@@ -78,10 +80,28 @@ export const LIBS = [
     kind: 'files',
     paths: ['src/config/param-standard.json', 'src/config/param-lib-rules.json'],
   },
+  {
+    key: 'accessory', name: '附加参数字典',
+    desc: '按型号行的接线能力 / 可配附件原文（生成物；缺失时可重新导入选型库自动重建）',
+    kind: 'file', path: 'src/config/accessory-dict.json',
+    // 一条 = 一个型号；pools/models 的内部结构不代表业务规模
+    count: (files) => Object.keys((files['accessory-dict.json'] || {}).models || {}).length,
+  },
   { key: 'selection', name: '选型库', desc: '按小类组织的选型手册与系列数据', kind: 'dir', path: 'data/selection' },
   {
     key: 'settings', name: '系统设置', desc: '提取范围、筛查组织、数据源开关',
     kind: 'files', paths: ['src/config/settings.json', 'src/config/datasource.json'],
+  },
+  {
+    key: 'business', name: '业务数据',
+    desc: '人工填报覆盖、待新增清单、编码归并映射、参数库待确认清单（非规则，但丢失不可恢复）',
+    kind: 'files',
+    paths: [
+      'data/feature-overrides.json',      // 人工填报层：人工核对过的参数值，重跑提取不会产生
+      'data/new-materials.json',          // 待新增清单（内部工作记录）
+      'data/mapping.json',                // 编码归并映射
+      'data/param-standard-pending.json', // 参数库待人工确认清单（param:build 产物，含确认进度）
+    ],
   },
 ]
 
@@ -93,6 +113,7 @@ function libByKey(key) {
 const UNIT = {
   synonyms: '条', guide: '个小类', rules: '条', classify: '个小类',
   feature: '项', std: '个标准', selection: '个文件', settings: '项',
+  accessory: '个型号', business: '条',
 }
 
 /** 库涉及的文件绝对路径列表 */
@@ -271,8 +292,11 @@ export function createBackup(keys, opt) {
     if (lib.kind === 'dir') {
       const abs = path.join(ROOT, lib.path)
       const out = []
-      walkFiles(abs, out, path.join(ROOT, lib.path))
-      for (const f of out) copyInto(dir, f.abs, f.rel)
+      walkFiles(abs, out, abs)
+      // 2026-11-19 修复：备份内必须保留完整相对路径（data/selection/...）。
+      // 原先用 f.rel（相对库目录，如 series/100101/x.json），而 restore 按库前缀
+      // 「data/selection/」匹配 → 选型库一直备份成功却永远恢复不了（dryRun 会少掉这部分）。
+      for (const f of out) copyInto(dir, f.abs, path.relative(ROOT, f.abs))
     } else {
       for (const abs of filesOf(lib)) {
         if (!fs.existsSync(abs)) continue
@@ -362,13 +386,21 @@ export function restore(id, keys, opt) {
     const lib = libByKey(k)
     if (lib.kind === 'dir') {
       const prefix = lib.path.replace(/\\/g, '/') + '/'
+      const base = lib.path.replace(/\\/g, '/')
       const out = []
       walkFiles(srcDir, out, srcDir)
       for (const f of out) {
         const rel = f.rel.replace(/\\/g, '/')
-        if (!rel.startsWith(prefix)) continue
-        const dest = path.join(ROOT, rel)
-        plan.push({ key: k, rel, dest, bytes: (() => { try { return fs.statSync(f.abs).size } catch (e) { return 0 } })() })
+        if (rel === 'manifest.json') continue
+        // 新结构：备份内保留完整路径（data/selection/...）；
+        // 旧结构（2026-11-19 之前生成的备份）：相对库目录（series/...），
+        // 用「目标位置已存在同名文件」判断，避免把其它库的文件误挂到选型库下。
+        let relTarget = ''
+        if (rel.startsWith(prefix)) relTarget = rel
+        else if (fs.existsSync(path.join(ROOT, base, rel))) relTarget = base + '/' + rel
+        if (!relTarget) continue
+        const dest = path.join(ROOT, relTarget)
+        plan.push({ key: k, rel: relTarget, dest, bytes: (() => { try { return fs.statSync(f.abs).size } catch (e) { return 0 } })() })
         allTargets.push(dest)
       }
     } else {

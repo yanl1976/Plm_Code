@@ -1416,9 +1416,13 @@ async function run() {
     const specEl = findByClass(p, 'plm-smart-dlg-spec')
     const ideEl = findByClass(p, 'plm-smart-ide-panel')
     const ghostEl = findByClass(p, 'plm-smart-dlg-ghost')
+    const paramsEl = findByClass(p, 'plm-smart-dlg-params')
     ok('弹窗内规格输入框存在', !!specEl)
     ok('联想浮层已创建（挂 body 上）', !!ideEl)
     ok('输入框内续写层已创建（ghost）', !!ghostEl)
+    ok('技术参数占位提示为新文案',
+      !!paramsEl && paramsEl.placeholder === '支持自动填入可选配件或手工输入，可按实际删减增补。',
+      'got=' + (paramsEl && paramsEl.placeholder))
 
     const key = (el, k, extra) => el.onkeydown(Object.assign({ key: k, preventDefault() { }, stopPropagation() { } }, extra || {}))
 

@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.27';
+  var PLUGIN_VERSION = '2.28';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -2370,7 +2370,7 @@
       + 'font-family:inherit;line-height:1.5;');
     paramsIn.className = 'plm-smart-dlg-params';
     paramsIn.value = readZycsValue();
-    paramsIn.placeholder = '附加说明、可选配件等，如：MO 电动操作机构、UVR 欠压线圈（回填后 PLM 中该框置灰只读）';
+    paramsIn.placeholder = '支持自动填入可选配件或手工输入，可按实际删减增补。';
     paramsWrap.appendChild(paramsIn);
     paramsRow.appendChild(paramsWrap);
     paramsRow.appendChild(dlgEl('div', 'flex:0 0 112px;'));   // 与上面两行右边界对齐

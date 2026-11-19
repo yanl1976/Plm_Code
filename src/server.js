@@ -3034,6 +3034,14 @@ const server = http.createServer(async (req, res) => {
       if (!spec) return sendJson(res, 400, { error: '规格型号不能为空' })
       const info = subInfo(sub)
       if (!info) return sendJson(res, 400, { error: '小类不存在' })
+      // 技术参数最终写入 PLM「主要参数」(F_ZXCV_ZYCS, STRING1000)：
+      // 与插件侧 zycsMaxLen 同口径，超限在录入端直接拒绝，避免到 PLM 导入时才失败。
+      const paramsText = String(b.params || '').trim()
+      if (paramsText.length > 1000) {
+        return sendJson(res, 400, {
+          error: `技术参数 ${paramsText.length} 字符，超过 PLM「主要参数」1000 字符上限，请精简后再提交`,
+        })
+      }
       // 录入规则兜底：硬错误直接拒绝；提示项允许保存但随结果返回，便于前端展示
       // 空格整理：与 PLM 插件、录入页同一口径（首尾 / 连续 / 全角空格）。
       // 必须以【原文】判断：上面已 trim，用 trim 后的值永远看不出首尾空格。
@@ -3114,7 +3122,7 @@ const server = http.createServer(async (req, res) => {
           wh: info.wh || '', unit: String(b.unit || '').trim(), remark: String(b.remark || '').trim(),
           // 主要参数：规格型号以外的参数（额定电流、防护等级、附件说明等），
           // 写入 ERP 时对应 F_ZXCV_ZYCS，与 FSPECIFICATION 分开存
-          params: String(b.params || '').trim(),
+          params: paramsText,
           by: String(b.by || 'web'), createdAt: new Date().toISOString(),
         }
         d.items.push(item)

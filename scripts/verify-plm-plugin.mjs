@@ -1471,6 +1471,42 @@ async function run() {
       'display=' + ideEl.style.display + ' value=' + JSON.stringify(specEl.value))
   }
 
+  // S45 技术参数只在「保存并回填」时写入：输入不点保存不影响页面主要参数（取消=放弃）
+  {
+    console.log('[S45] 技术参数不输入即写回，仅保存时写入')
+    const p = newPage({
+      ctrls: baseCtrl(),
+      ajaxHandler: router({ '/health': HEALTH_OK, '/check': CHECK_CLEAN }),
+    })
+    p.ctl['ECODE_Value'].__text = '10010500435'
+    p.ctl['ECODE_Value'].__tag = { value: '10010500435' }
+    p.ctl['ENAME_Value'].__text = '微型断路器'
+    p.ctl['GGXH_Value'].__text = 'IC65N C10A/2P'
+    p.OnCreate()
+
+    const btn = findBtn(p)
+    if (btn) btn.onclick({ preventDefault() { }, stopPropagation() { } })
+    await sleep(60)
+    const paramsEl = findByClass(p, 'plm-smart-dlg-params')
+    ok('技术参数输入框存在', !!paramsEl)
+
+    const before = p.ctl['ZYCS_Value'].__text
+    // 模拟用户输入（含失焦），但不点「保存并回填」
+    paramsEl.value = 'MO 电动操作机构、UVR 欠压线圈'
+    if (paramsEl.oninput) paramsEl.oninput({})
+    if (paramsEl.onblur) paramsEl.onblur({})
+    await sleep(500)
+    ok('输入技术参数未保存 → 页面主要参数不变', p.ctl['ZYCS_Value'].__text === before,
+      'got=' + JSON.stringify(p.ctl['ZYCS_Value'].__text))
+
+    const saveBtn = findByClass(p, 'plm-smart-dlg-save')
+    ok('保存按钮可用', !!saveBtn && saveBtn.disabled !== true)
+    if (saveBtn) saveBtn.onclick({ preventDefault() { }, stopPropagation() { } })
+    await sleep(100)
+    ok('保存并回填后主要参数写入', p.ctl['ZYCS_Value'].__text === 'MO 电动操作机构、UVR 欠压线圈',
+      'got=' + JSON.stringify(p.ctl['ZYCS_Value'].__text))
+  }
+
   console.log('\n----------------------------------------')
   console.log(`结果: ${pass} 通过 / ${fail} 失败`)
   if (fail) console.log('失败项: ' + failures.join(' | '))

@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.28';
+  var PLUGIN_VERSION = '2.29';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -2376,19 +2376,10 @@
     paramsRow.appendChild(dlgEl('div', 'flex:0 0 112px;'));   // 与上面两行右边界对齐
     body.appendChild(paramsRow);
 
-    // 输入即写回（防抖 300ms）：边写边同步，避免用户忘记点保存
-    var paramsTimer = null;
-    paramsIn.oninput = function () {
-      if (paramsTimer) clearTimeout(paramsTimer);
-      paramsTimer = setTimeout(function () {
-        if (String(paramsIn.value || '').trim()) syncParamsToZycs(paramsIn.value);
-      }, 300);
-    };
-    // 失焦时立即写回，避免防抖未触发就关闭弹窗
-    paramsIn.onblur = function () {
-      if (paramsTimer) { clearTimeout(paramsTimer); paramsTimer = null; }
-      if (String(paramsIn.value || '').trim()) syncParamsToZycs(paramsIn.value);
-    };
+    // 技术参数只在「保存并回填」时写入（与名称/规格一致）。
+    // 2026-11-19 修正：原实现输入即写回（300ms 防抖 + 失焦写回），点「取消」也会改掉
+    // 页面上的 主要参数(ZYCS)/分类属性合并(FLSXHB) 并置灰只读，用户以为放弃的内容
+    // 会被后续保存写进 PLM。「取消」必须等于放弃，因此这里不再监听输入。
 
     // 规格输入下方的「同型号系列」近似联想（看板同款，数据来自 3130）
     var specSug = dlgEl('div', 'display:none;margin-top:4px;border:' + C_LINE + ';border-radius:4px;'

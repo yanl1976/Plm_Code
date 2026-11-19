@@ -4162,6 +4162,13 @@ async function nmSave() {
   const spec = ($('#nmSpec').value || '')
   if (!name) { msg('请填写物料名称'); return }
   if (!spec.trim()) { msg('请填写规格型号'); return }
+  // 技术参数最终写入 PLM「主要参数」(STRING1000)：与插件侧 zycsMaxLen 同口径，
+  // 录入端先提示，避免到 PLM 导入时才失败（后端同样会拒绝）
+  const paramsVal = ($('#nmParams').value || '').trim()
+  if (paramsVal.length > 1000) {
+    msg(`技术参数 ${paramsVal.length} 字符，超过 PLM「主要参数」1000 字符上限，请精简后再提交`)
+    return
+  }
   // 参数顺序不同但参数集合完全相同 → 疑似同一规格，必须勾选确认才能继续
   if (document.querySelector('.nm-hit-order')) {
     const ck = document.getElementById('nmConfirmOrder')
@@ -4178,7 +4185,7 @@ async function nmSave() {
       name, spec, unit: ($('#nmUnit').value || '').trim(), sub: nm.cur.sub,
       remark: '', by: 'web',   // 备注栏已移除（2026-11-19）：字段保留但不再采集
       // 主要参数：规格型号以外的内容（额定电流、防护等级、附件说明…），与规格分开提交
-      params: ($('#nmParams').value || '').trim(),
+      params: paramsVal,
     })
     if (r && r.error) { msg('保存失败：' + r.error); return }
     const tidy = r.specTidy

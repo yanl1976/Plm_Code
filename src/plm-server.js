@@ -49,7 +49,7 @@ const HOST = env('PLM_API_HOST', '0.0.0.0')
 // 版本号必须随「影响接口返回结构/判定逻辑」的改动递增 ——
 // 否则现场无法从返回里判断进程跑的是新代码还是旧代码（曾因此排查了半天：
 // 生产 3100 缺 subMismatch 字段，但 version 一直是 1.4.0，看不出差异）。
-const VERSION = '1.5.0'
+const VERSION = '1.5.1'
 
 /**
  * 构建自检：返回本进程实际具备的能力与索引状态。
@@ -1404,9 +1404,20 @@ const server = http.createServer(async (req, res) => {
     // 规格分段补全（插件端）：与看板 /api/new-material/spec-complete 同一套逻辑，
     // 数据取本进程已加载的该小类物料（bucketItems），不额外读盘。
     if (p === '/api/plm/spec-complete') {
-      const q = url.searchParams
-      const sub = String(q.get('sub') || '').slice(0, 6)
-      const value = q.get('q') || ''
+      // 兼容两种调用方式：
+      //   GET  ?sub=&q=          —— 浏览器直连 / 看板同款
+      //   POST form-urlencoded   —— 插件 apiAsync（一直是 POST body）
+      // 此前只读 query，插件的 POST 永远拿不到 sub/q，导致 PLM 页面规格补全
+      // 「绑定成功但永无候选」、弹窗的 3100 回退路径同样失效（2026-11-19 修复）。
+      let sub = String(url.searchParams.get('sub') || '').slice(0, 6)
+      let value = url.searchParams.get('q') || ''
+      if ((!sub || !value) && req.method === 'POST') {
+        try {
+          const b = await readBody(req)
+          if (!sub) sub = String(b.sub || '').slice(0, 6)
+          if (!value) value = String(b.q || '')
+        } catch (e) { /* 空 body：按未传处理 */ }
+      }
       try {
         return send(res, 200, sub ? specComplete(sub, value, bucketItems(sub)) : { ok: false, options: [] })
       } catch (e) {

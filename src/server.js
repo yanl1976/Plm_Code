@@ -930,6 +930,8 @@ async function authGate(req, res, p) {
   if (p === '/api/auth/password' && req.method === 'POST') {
     const u = readSession(req)
     if (!u) { sendJson(res, 401, { error: '未登录' }); return false }
+    // 测试账号为共享只读演示账号：密码固定（登录页公开提示），不允许改密
+    if (u.role === 'test') { sendJson(res, 403, { error: '测试账号不支持修改密码' }); return false }
     const b = await readBody(req)
     const r = changePassword(u.u, b.old, b.next)
     sendJson(res, r.ok ? 200 : 400, r)
@@ -970,6 +972,7 @@ const server = http.createServer(async (req, res) => {
           { key: 'admin', name: ROLE_NAMES.admin, desc: '全部权限，含所有删除、备份恢复、系统设置' },
           { key: 'std', name: ROLE_NAMES.std, desc: '规则与库的编辑/导入，不能删除，不能进系统设置' },
           { key: 'design', name: ROLE_NAMES.design, desc: '只读浏览 + 新增物料提交' },
+          { key: 'test', name: ROLE_NAMES.test, desc: '所有功能只读（演示账号，登录页公开提示）' },
         ],
       })
     }

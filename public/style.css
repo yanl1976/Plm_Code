@@ -900,6 +900,35 @@ button:disabled { opacity:.45; cursor:not-allowed; }
 .set-pane { display:none; }
 .set-pane .set-row { margin:8px 0; }
 
+/* 测试角色：只读演示 —— 隐藏主要写入口（安全边界在后端：所有写接口 403） */
+.au-ro { color:#ffb454 !important; border-color:rgba(255,180,84,.45) !important; }
+.readonly-mode #btnRerunDedup,
+.readonly-mode #btnRerunExtract,
+.readonly-mode #btnSaveSettings,
+.readonly-mode #btnAddInclude,
+.readonly-mode #btnAddExclude,
+.readonly-mode #btnBackupSel,
+.readonly-mode #btnBackupAll,
+.readonly-mode #btnBkToggleAll,
+.readonly-mode #btnAddSyn,
+.readonly-mode #btnImportSyn,
+.readonly-mode #btnAddNg,
+.readonly-mode #btnImportNg,
+.readonly-mode #nmSave,
+.readonly-mode .syn-save,
+.readonly-mode .ng-edit,
+.readonly-mode .ng-del,
+.readonly-mode .ng-fdel,
+.readonly-mode .pl-col-del,
+.readonly-mode .pl-x,
+.readonly-mode .pl-mv,
+.readonly-mode .pl-editbtn,
+.readonly-mode .pl-undel,
+.readonly-mode .bk-btn.danger,
+.readonly-mode #nmTable [data-del],
+.readonly-mode [data-delmap],
+.readonly-mode [data-delfrz] { display:none !important; }
+
 /* 只读抽屉不显示「+ 参数」 */
 .pl-drawer-foot.readonly #plAddParam { display:none; }
 

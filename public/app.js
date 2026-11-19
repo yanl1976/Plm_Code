@@ -9,6 +9,7 @@ const AUTH = (function () {
     user: u,
     pages: boot.pages || [],
     isAdmin: !!(u && u.role === 'admin'),
+    isTest: !!(u && u.role === 'test'),
     roleName: u ? (u.roleName || u.role) : '',
     canDelete: !!(u && u.role === 'admin'),
   }
@@ -20,7 +21,9 @@ function applyAuthUI() {
   if (box && AUTH.user) {
     box.innerHTML = '<span class="au-name">' + AUTH.user.name + '</span>'
       + '<span class="au-role">' + AUTH.roleName + '</span>'
-      + '<button class="au-btn" id="auPwd">修改密码</button>'
+      + (AUTH.isTest ? '<span class="au-role au-ro">只读</span>' : '')
+      // 测试账号密码固定（登录页公开提示），不提供改密入口
+      + (AUTH.isTest ? '' : '<button class="au-btn" id="auPwd">修改密码</button>')
       + '<button class="au-btn" id="auOut">退出</button>'
     const pwd = document.getElementById('auPwd')
     if (pwd) pwd.onclick = changeMyPassword
@@ -43,6 +46,8 @@ function applyAuthUI() {
   }
   // 删除类按钮仅管理员可见（后端同样会拦截）
   if (!AUTH.canDelete) document.body.classList.add('no-delete')
+  // 测试角色：整站只读（隐藏主要写入口；所有写接口后端同样返回 403）
+  if (AUTH.isTest) document.body.classList.add('readonly-mode')
 }
 
 async function logoutAuth() {
@@ -4330,7 +4335,7 @@ function renderNmList() {
 applyAuthUI()
 
 // ======================= 用户与角色管理（仅系统管理员） =======================
-const ROLE_LABELS = { admin: '系统管理员', std: '标准化员', design: '设计' }
+const ROLE_LABELS = { admin: '系统管理员', std: '标准化员', design: '设计', test: '测试（只读）' }
 
 function escU(s) {
   return String(s == null ? '' : s)
@@ -4378,7 +4383,7 @@ function renderUsers(list) {
     + '</tr></thead><tbody>'
   for (const u of list) {
     const self = AUTH.user && u.u === AUTH.user.u
-    const opts = ['admin', 'std', 'design'].map((k) =>
+    const opts = ['admin', 'std', 'design', 'test'].map((k) =>
       '<option value="' + k + '"' + (u.role === k ? ' selected' : '') + '>' + ROLE_LABELS[k] + '</option>').join('')
     html += '<tr>'
       + '<td>' + escU(u.u) + (self ? ' <span class="muted">(我)</span>' : '') + '</td>'

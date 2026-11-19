@@ -34,6 +34,7 @@ export const ROLE_NAMES = {
   admin: '系统管理员',
   std: '标准化员',
   design: '设计',
+  test: '测试（只读）',
 }
 
 /**
@@ -43,16 +44,17 @@ export const ROLE_NAMES = {
  * 系统设置（含备份/恢复）只对管理员开放。
  */
 export const PAGE_ROLES = {
-  overview: ['admin', 'std', 'design'],
-  materials: ['admin', 'std', 'design'],
-  dedup: ['admin', 'std', 'design'],
-  classify: ['admin', 'std', 'design'],
-  cleanup: ['admin', 'std'],
-  rules: ['admin', 'std'],
-  feature: ['admin', 'std'],
+  // test（测试）为只读演示角色：除「系统设置」外全部可看，所有写操作由 can() 拦截
+  overview: ['admin', 'std', 'design', 'test'],
+  materials: ['admin', 'std', 'design', 'test'],
+  dedup: ['admin', 'std', 'design', 'test'],
+  classify: ['admin', 'std', 'design', 'test'],
+  cleanup: ['admin', 'std', 'test'],
+  rules: ['admin', 'std', 'test'],
+  feature: ['admin', 'std', 'test'],
   settings: ['admin'],
-  newmat: ['admin', 'std', 'design'],
-  selection: ['admin', 'std'],
+  newmat: ['admin', 'std', 'design', 'test'],
+  selection: ['admin', 'std', 'test'],
 }
 
 export function authEnabled() {
@@ -79,20 +81,36 @@ function makeUser(u, name, role, pw) {
   }
 }
 
-/** 首次启动自动生成账号（幂等）；返回用户数组 */
+/** 测试（只读演示）账号的初始密码：与管理员初始密码分开，避免登录页提示泄露管理员口令 */
+export const INITIAL_TEST_PW = 'Test@2026'
+
+/** 首次启动自动生成账号（幂等）；已有部署会自动补建 test 只读账号 */
 export function ensureUsers() {
   const cur = readUsersRaw()
-  if (cur && Array.isArray(cur.users) && cur.users.length) return cur.users
+  if (cur && Array.isArray(cur.users) && cur.users.length) {
+    // 2026-11-19：已有部署补建「测试（只读）」账号（幂等，不覆盖已有密码）
+    if (!cur.users.some((x) => x.u === 'test')) {
+      const t = makeUser('test', '测试（只读）', 'test', process.env.AUTH_TEST_PW || INITIAL_TEST_PW)
+      t.mustChange = false          // 共享演示账号：固定密码，不强制改密
+      cur.users.push(t)
+      try { saveUsers(cur) } catch (e) { }
+    }
+    return cur.users
+  }
   const pw = String(process.env.AUTH_INIT_PW || INITIAL_PW)
   const users = [
     makeUser('admin', '系统管理员', 'admin', pw),
     makeUser('std', '标准化员', 'std', pw),
     makeUser('design', '设计', 'design', pw),
   ]
+  const t = makeUser('test', '测试（只读）', 'test', process.env.AUTH_TEST_PW || INITIAL_TEST_PW)
+  t.mustChange = false
+  users.push(t)
   const data = {
     meta: {
-      note: '本地账号。角色：admin 系统管理员 / std 标准化员 / design 设计。' +
-        '首次自动生成，初始密码为 AUTH_INIT_PW（默认 Plm@2026），请登录后立即修改。',
+      note: '本地账号。角色：admin 系统管理员 / std 标准化员 / design 设计 / test 测试（只读）。' +
+        '首次自动生成：管理员等账号初始密码为 AUTH_INIT_PW（默认 Plm@2026），' +
+        'test 账号初始密码为 AUTH_TEST_PW（默认 Test@2026，登录页会提示）。',
       updatedAt: new Date().toISOString(),
     },
     users,
@@ -264,6 +282,14 @@ export function can(role, method, pathname) {
   const m = String(method || 'GET').toUpperCase()
   const p = String(pathname || '')
 
+  // 测试角色：只读 —— 所有写操作禁止；用户/备份/系统设置属管理面，读也不开放
+  if (role === 'test') {
+    if (!(m === 'GET' || m === 'HEAD')) return false
+    if (/^\/api\/(users|backup)(\/|$)/.test(p)) return false
+    if (p === '/api/settings') return false
+    return true
+  }
+
   if (m === 'DELETE' || /\/delete$/i.test(p)) return isAdmin
   // 用户与角色管理：读写都只放行系统管理员（必须放在 GET 放行之前）
   if (/^\/api\/users(\/|$)/.test(p)) return isAdmin
@@ -285,6 +311,8 @@ export function canPlm(role, method, pathname) {
   const isAdmin = role === 'admin'
   const m = String(method || 'GET').toUpperCase()
   const p = String(pathname || '')
+  // 测试角色：3100 管理页只读（导入/删除/启停等写操作一律禁止）
+  if (role === 'test') return m === 'GET' || m === 'HEAD'
   if (m === 'DELETE' || /\/delete$/i.test(p)) return isAdmin
   if (/^\/api\/plm\/reload$/.test(p)) return isAdmin
   if (/^\/api\/plm\/snapshot\/(merge|reset)$/.test(p)) return isAdmin

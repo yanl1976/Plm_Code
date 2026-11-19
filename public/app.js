@@ -4455,3 +4455,45 @@ function bindUsersUI() {
 
 if (AUTH.isAdmin) { bindUsersUI(); loadUsers() }
 
+// ======================= 系统设置：卡片 → 弹窗 =======================
+const SET_PANE_TITLES = {
+  range: '提取物料范围与筛查组织',
+  backup: '系统数据备份与恢复',
+  users: '用户与角色',
+}
+
+function closeSetModal() {
+  const m = document.getElementById('setModal')
+  if (m) m.style.display = 'none'
+}
+
+function openSetPane(key) {
+  const m = document.getElementById('setModal')
+  if (!m) return
+  m.querySelectorAll('.set-pane').forEach((p) => {
+    p.style.display = p.getAttribute('data-pane') === key ? 'block' : 'none'
+  })
+  const t = document.getElementById('setModalTitle')
+  if (t) t.textContent = SET_PANE_TITLES[key] || '设置'
+  m.style.display = 'flex'
+  // 打开时刷新（列表可能已被其他人修改）
+  try {
+    if (key === 'backup') loadBackupList()
+    if (key === 'users' && AUTH.isAdmin) loadUsers()
+  } catch (e) { }
+}
+
+document.querySelectorAll('.set-card-btn').forEach((b) => {
+  b.onclick = () => openSetPane(b.dataset.set)
+})
+
+const setModalEl = document.getElementById('setModal')
+if (setModalEl) {
+  setModalEl.querySelectorAll('[data-setclose]').forEach((el) => { el.onclick = closeSetModal })
+  const closeBtn = document.getElementById('setModalClose')
+  if (closeBtn) closeBtn.onclick = closeSetModal
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && setModalEl.style.display !== 'none') closeSetModal()
+  })
+}
+

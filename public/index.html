@@ -129,83 +129,106 @@
         </div>
       </div>
     </section>
-    <!-- 系统设置 -->
+    <!-- 系统设置：三张正方形卡片 → 点击打开对应弹窗 -->
     <section class="panel" id="tab-settings">
-      <div class="settings-card">
-        <h3>提取物料范围（编码前缀过滤）</h3>
-        <p class="muted">仅提取「包含前缀」开头的物料；「排除前缀」在包含结果上再剔除。修改后需<strong>重新提取</strong>（顶部「重跑提取」）方可生效。</p>
-        <div class="set-row">
-          <label>包含前缀（白名单，留空=全部）</label>
-          <div id="setInclude" class="chips"></div>
-          <input id="setIncludeInput" placeholder="如 13" />
-          <button id="btnAddInclude">添加</button>
-        </div>
-        <div class="set-row">
-          <label>排除前缀（黑名单）</label>
-          <div id="setExclude" class="chips"></div>
-          <input id="setExcludeInput" placeholder="如 20" />
-          <button id="btnAddExclude">添加</button>
-        </div>
-        <h3 style="margin-top:22px">筛查组织</h3>
-        <p class="muted">仅提取「使用组织」为该组织的物料（按 FUSEORGID 过滤）。留空 = 不过滤（全部组织）。修改后需<strong>重新提取</strong>生效。</p>
-        <div class="set-row">
-          <label>筛查组织</label>
-          <select id="setOrg"></select>
-        </div>
-        <button id="btnSaveSettings" class="primary">保存设置</button>
-        <span id="settingsMsg" class="muted"></span>
-        </div>
+      <div class="settings-cards">
+        <button class="set-card-btn" data-set="range">
+          <span class="scn-badge">01</span>
+          <span class="scn-title">提取物料范围</span>
+          <span class="scn-desc">编码前缀白名单 / 黑名单<br />筛查组织（FUSEORGID）</span>
+          <span class="scn-go">打开设置 →</span>
+        </button>
+        <button class="set-card-btn" data-set="backup">
+          <span class="scn-badge">02</span>
+          <span class="scn-title">系统数据备份</span>
+          <span class="scn-desc">按库备份 / 选择性恢复<br />备份记录与恢复前快照</span>
+          <span class="scn-go">打开设置 →</span>
+        </button>
+        <button class="set-card-btn" data-set="users">
+          <span class="scn-badge">03</span>
+          <span class="scn-title">用户与角色</span>
+          <span class="scn-desc">新建用户 / 改角色 / 停用<br />重置密码 / 删除（仅管理员）</span>
+          <span class="scn-go">打开设置 →</span>
+        </button>
+      </div>
 
-        <!-- 系统数据备份：各类库可选择性备份与恢复 -->
-        <div class="settings-card" id="backupCard">
-        <h3>系统数据备份
-          <span style="font-weight:normal;font-size:12px;opacity:.7">备份各类库，可按库选择性恢复</span>
-        </h3>
-        <p class="muted">
-          备份保存在服务器 <code style="font-family:Consolas,Monaco,monospace">data/backups/</code>，不进入版本库。
-          恢复前会自动再做一次「恢复前快照」，误操作可回退。
-        </p>
-
-        <div id="bkLibs" class="bk-libs"></div>
-
-        <div class="bk-actions">
-          <button id="btnBackupSel" class="primary">备份选中</button>
-          <button id="btnBackupAll">备份全部</button>
-          <button id="btnBkToggleAll">全选 / 反选</button>
-          <span id="bkMsg" class="muted"></span>
-        </div>
-
-        <h3 style="margin-top:24px">备份记录</h3>
-        <div id="bkList" class="bk-list"></div>
-        </div>
-
-        <!-- 用户与角色（本页仅系统管理员可见；后端 /api/users 同样只放行 admin） -->
-        <div class="settings-card" id="usersCard">
-          <h3>用户与角色
-            <span style="font-weight:normal;font-size:12px;opacity:.7">仅管理员可管理 · 修改即时生效</span>
-          </h3>
-          <p class="muted">
-            <b>系统管理员</b>：全部权限，含所有删除、备份恢复、系统设置；
-            <b>标准化员</b>：规则与库的编辑/导入，不能删除、不能进系统设置；
-            <b>设计</b>：只读浏览 + 新增物料提交。
-            停用或删除后该账号立即无法登录；修改角色后下次请求即按新角色判定。
-          </p>
-          <div class="users-bar">
-            <input id="nuUser" placeholder="用户名（2-20 位字母数字）" autocomplete="off" />
-            <input id="nuName" placeholder="姓名 / 显示名" autocomplete="off" />
-            <select id="nuRole">
-              <option value="std">标准化员</option>
-              <option value="design">设计</option>
-              <option value="admin">系统管理员</option>
-            </select>
-            <input id="nuPw" type="password" placeholder="初始密码（≥6 位）" autocomplete="new-password" />
-            <button id="btnAddUser" class="primary">新建用户</button>
-            <span id="usersMsg" class="muted"></span>
+      <!-- 设置弹窗：三个面板共用，切换时只改显示 -->
+      <div class="set-modal" id="setModal" style="display:none">
+        <div class="set-modal-mask" data-setclose="1"></div>
+        <div class="set-modal-panel" role="dialog" aria-modal="true">
+          <div class="set-modal-head">
+            <h3 id="setModalTitle">设置</h3>
+            <button class="ghost" id="setModalClose">关闭</button>
           </div>
-          <div id="usersList" class="users-list"></div>
-        </div>
+          <div class="set-modal-body">
+            <!-- 01 提取范围 + 筛查组织 -->
+            <div class="set-pane" data-pane="range">
+              <p class="muted">仅提取「包含前缀」开头的物料；「排除前缀」在包含结果上再剔除。修改后需<strong>重新提取</strong>（顶部「重跑提取」）方可生效。</p>
+              <div class="set-row">
+                <label>包含前缀（白名单，留空=全部）</label>
+                <div id="setInclude" class="chips"></div>
+                <input id="setIncludeInput" placeholder="如 13" />
+                <button id="btnAddInclude">添加</button>
+              </div>
+              <div class="set-row">
+                <label>排除前缀（黑名单）</label>
+                <div id="setExclude" class="chips"></div>
+                <input id="setExcludeInput" placeholder="如 20" />
+                <button id="btnAddExclude">添加</button>
+              </div>
+              <h3 style="margin-top:22px">筛查组织</h3>
+              <p class="muted">仅提取「使用组织」为该组织的物料（按 FUSEORGID 过滤）。留空 = 不过滤（全部组织）。修改后需<strong>重新提取</strong>生效。</p>
+              <div class="set-row">
+                <label>筛查组织</label>
+                <select id="setOrg"></select>
+              </div>
+              <button id="btnSaveSettings" class="primary">保存设置</button>
+              <span id="settingsMsg" class="muted"></span>
+            </div>
 
-        </section>
+            <!-- 02 系统数据备份 -->
+            <div class="set-pane" data-pane="backup">
+              <p class="muted">
+                备份保存在服务器 <code style="font-family:Consolas,Monaco,monospace">data/backups/</code>，不进入版本库。
+                恢复前会自动再做一次「恢复前快照」，误操作可回退。
+              </p>
+              <div id="bkLibs" class="bk-libs"></div>
+              <div class="bk-actions">
+                <button id="btnBackupSel" class="primary">备份选中</button>
+                <button id="btnBackupAll">备份全部</button>
+                <button id="btnBkToggleAll">全选 / 反选</button>
+                <span id="bkMsg" class="muted"></span>
+              </div>
+              <h3 style="margin-top:24px">备份记录</h3>
+              <div id="bkList" class="bk-list"></div>
+            </div>
+
+            <!-- 03 用户与角色（仅管理员；后端 /api/users 同样只放行 admin） -->
+            <div class="set-pane" data-pane="users">
+              <p class="muted">
+                <b>系统管理员</b>：全部权限，含所有删除、备份恢复、系统设置；
+                <b>标准化员</b>：规则与库的编辑/导入，不能删除、不能进系统设置；
+                <b>设计</b>：只读浏览 + 新增物料提交。
+                停用或删除后该账号立即无法登录；修改角色后下次请求即按新角色判定。
+              </p>
+              <div class="users-bar">
+                <input id="nuUser" placeholder="用户名（2-20 位字母数字）" autocomplete="off" />
+                <input id="nuName" placeholder="姓名 / 显示名" autocomplete="off" />
+                <select id="nuRole">
+                  <option value="std">标准化员</option>
+                  <option value="design">设计</option>
+                  <option value="admin">系统管理员</option>
+                </select>
+                <input id="nuPw" type="password" placeholder="初始密码（≥6 位）" autocomplete="new-password" />
+                <button id="btnAddUser" class="primary">新建用户</button>
+                <span id="usersMsg" class="muted"></span>
+              </div>
+              <div id="usersList" class="users-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- 命名规范：名称同义词字典 + 国标命名范式库 -->
     <section class="panel" id="tab-rules">

@@ -40,3 +40,6 @@ src/config/std-watch.json
 
 # 参数标准库导入前的自动备份（按时间戳累积，属运行时文件，不入库）
 src/config/_backup/
+
+# 本地账号（含密码哈希）与签名密钥：首次启动自动生成，不入库
+src/config/users.json

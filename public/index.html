@@ -16,6 +16,7 @@
       <button id="btnRerunDedup">重跑查重</button>
       <button id="btnRerunExtract">重跑提取</button>
       <span id="jobStatus" class="job"></span>
+      <span id="authUser" class="auth-bar"></span>
     </div>
   </header>
 
@@ -387,6 +388,22 @@
     </div>
   </div>
 
-  <script src="/app.js?v=20261119q"></script>
+  <!-- 先鉴权、再加载主脚本：未登录直接跳登录页，避免各页面接口先发出一轮 401 -->
+  <script>
+    (async function () {
+      try {
+        var r = await fetch('/api/auth/me', { credentials: 'same-origin' })
+        if (r.status === 401) { location.replace('/login.html'); return }
+        var j = await r.json()
+        window.__AUTH_BOOT = { user: j.user, pages: j.pages || [] }
+      } catch (e) {
+        // 网络异常时继续加载（后端仍会拦截），避免白屏
+        window.__AUTH_BOOT = { user: null, pages: [] }
+      }
+      var s = document.createElement('script')
+      s.src = '/app.js?v=20261119r'
+      document.body.appendChild(s)
+    })()
+  </script>
 </body>
 </html>

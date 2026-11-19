@@ -39,6 +39,10 @@ import * as nameSyn from './name-synonyms.js'
 import { snapshotStatus, invalidateSnapshotStatus, erpSubDocs, invalidateErpSub } from './snapshot.js'
 import { plmStock, plmProbe, plmConfigured } from './plm-inventory.js'
 import { pickAccessoryPool } from './accessory-dict.js'
+import {
+  authEnabled, ensureUsers, login, changePassword, readSession,
+  cookieHeader, clearCookieHeader, can, pagesOf, ROLE_NAMES,
+} from './auth.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const PUBLIC = path.join(ROOT, 'public')
@@ -123,6 +127,10 @@ function saveConfigJson(name, data) {
   cache.delete('cfg:' + name)
   return true
 }
+
+// 鉴权：首次启动自动生成三个本地账号（admin 系统管理员 / std 标准化员 / design 设计）
+// 初始密码见 src/auth.js INITIAL_PW（可用环境变量 AUTH_INIT_PW 覆盖），登录后请立即修改。
+try { ensureUsers() } catch (e) { console.error('[auth] 用户表初始化失败：', e && e.message) }
 
 const PORT = envPort('PORT', 3000)
 // 监听地址留空 = Node 默认（所有网卡，含 IPv6）；需要只绑 IPv4 时在 .env 设 WEB_HOST=0.0.0.0
@@ -868,10 +876,89 @@ async function similarModels(sub, spec, excludeCode, opts = {}) {
 }
 
 // ---- 路由 ----
+/**
+ * 插件（PLM 页面内脚本）跨站只读白名单：
+ * 请求不带 Cookie（跨站），只放行只读查询；写接口一律要求登录。
+ * 注意：accessory-complete 由看板前端调用（需登录），不在白名单内。
+ */
+const PLUGIN_READ_RE = /^\/api\/(new-material\/(spec-complete|spec-suggest|spec-check|similar-models|inventory)|name-synonyms\/suggest)$/
+function isPluginRead(method, p) {
+  return String(method).toUpperCase() === 'GET' && PLUGIN_READ_RE.test(p)
+}
+
+const STATIC_RE = /\.(?:css|js|mjs|png|jpe?g|gif|svg|ico|webp|woff2?|ttf|map)$/i
+
+/**
+ * 鉴权入口（页面 + 接口）：
+ *   返回 user → 放行；返回 null → 匿名插件只读；返回 true → 静态放行；
+ *   返回 false → 已直接响应（401/403/302/登录结果）。
+ */
+async function authGate(req, res, p) {
+  if (!authEnabled()) return { u: 'auth-off', name: '鉴权已关闭', role: 'admin', roleName: ROLE_NAMES.admin }
+  // 登录页与静态资源放行（登录页自身要能加载 js/css）
+  if (p === '/login.html' || STATIC_RE.test(p)) return true
+
+  // ---- 会话相关接口（不要求已登录）----
+  if (p === '/api/auth/login' && req.method === 'POST') {
+    const b = await readBody(req)
+    const r = login(b.u || b.username, b.p || b.password)
+    if (!r.ok) { sendJson(res, 401, { error: r.error }); return false }
+    res.writeHead(200, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Set-Cookie': cookieHeader(r.token),
+      'Cache-Control': 'no-store',
+    })
+    res.end(JSON.stringify({ ok: true, user: r.user }))
+    return false
+  }
+  if (p === '/api/auth/me') {
+    const u = readSession(req)
+    if (!u) { sendJson(res, 401, { error: '未登录' }); return false }
+    sendJson(res, 200, { ok: true, user: u, pages: pagesOf(u.role) })
+    return false
+  }
+  if (p === '/api/auth/logout' && req.method === 'POST') {
+    res.writeHead(200, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Set-Cookie': clearCookieHeader(),
+      'Cache-Control': 'no-store',
+    })
+    res.end(JSON.stringify({ ok: true }))
+    return false
+  }
+  if (p === '/api/auth/password' && req.method === 'POST') {
+    const u = readSession(req)
+    if (!u) { sendJson(res, 401, { error: '未登录' }); return false }
+    const b = await readBody(req)
+    const r = changePassword(u.u, b.old, b.next)
+    sendJson(res, r.ok ? 200 : 400, r)
+    return false
+  }
+
+  // ---- 插件跨站只读白名单 ----
+  if (isPluginRead(req.method, p)) return null
+
+  // ---- 其余：必须登录 + 有权限 ----
+  const user = readSession(req)
+  if (!user) {
+    if (p.startsWith('/api/')) { sendJson(res, 401, { error: '未登录或会话已过期' }); return false }
+    res.writeHead(302, { Location: '/login.html' }); res.end(); return false
+  }
+  if (!can(user.role, req.method, p)) {
+    sendJson(res, 403, { error: '无权限：' + (ROLE_NAMES[user.role] || user.role) + ' 不能执行该操作' })
+    return false
+  }
+  return user
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`)
   const p = url.pathname
   try {
+    // ---------- 鉴权：页面 + 接口（关闭鉴权时视为管理员）----------
+    const gate = await authGate(req, res, p)
+    if (gate === false) return
+
     if (p === '/api/overview') {
       const stats = readDataJson('stats.json') || {}
       const report = readDataJson('dedup-report.json') || {}

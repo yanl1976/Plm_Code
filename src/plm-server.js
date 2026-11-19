@@ -41,15 +41,23 @@ import {
 } from './plm-snapshot.js'
 import { extractParams } from './struct-spec.js'
 import { env, envPort, logEnvSource } from './env.js'
+import {
+  authEnabled, ensureUsers, login, readSession, cookieHeader, clearCookieHeader,
+  canPlm, ROLE_NAMES,
+} from './auth.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const SELECT_DIR = path.join(ROOT, 'data', 'selection')
+// 鉴权：与 3130 共用同一份用户表（src/config/users.json）与签名密钥（data/auth-secret），
+// 首次启动若用户表不存在会自动生成三个账号（与 3130 一致）。
+try { ensureUsers() } catch (e) { console.error('[auth] 用户表初始化失败：', e && e.message) }
+
 const PORT = envPort('PLM_API_PORT', 3100)
 const HOST = env('PLM_API_HOST', '0.0.0.0')
 // 版本号必须随「影响接口返回结构/判定逻辑」的改动递增 ——
 // 否则现场无法从返回里判断进程跑的是新代码还是旧代码（曾因此排查了半天：
 // 生产 3100 缺 subMismatch 字段，但 version 一直是 1.4.0，看不出差异）。
-const VERSION = '1.5.4'
+const VERSION = '1.6.0'
 // 构建指纹：现场用它判断「跑的是不是新代码」。
 // VERSION 只在接口结构 / 判定逻辑变化时递增，日常修 bug 不一定升；
 // codeMtime 取关键源文件的最新修改时间，每次部署同步都会变，可据此确认已生效。
@@ -1269,6 +1277,102 @@ function handleCheck(body) {
   return result
 }
 
+/**
+ * 插件（PLM 页面内脚本）跨站白名单：请求不带 Cookie，放行只读查询与快照上报。
+ * 管理类接口（select/parse|import|delete|toggle、reload、snapshot merge|reset 等）一律要求登录。
+ */
+const PLUGIN_API_RE = [
+  /^\/api\/plm\/health$/,
+  /^\/api\/plm\/suggest$/,
+  /^\/api\/plm\/check$/,
+  /^\/api\/plm\/spec-complete$/,
+  /^\/api\/plm\/select$/,
+  /^\/api\/plm\/select\/series$/,
+  /^\/api\/plm\/snapshot\/(plan|status|upload|done)$/,
+]
+function isPluginApi(p) {
+  return PLUGIN_API_RE.some((re) => re.test(p))
+}
+
+/** 管理页最小登录页（3100 独立部署时无需跳到 3130） */
+function adminLoginHtml() {
+  return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><title>登录 · PLM 治理服务</title>
+<style>
+body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0d12;color:#eef3f8;font:14px/1.6 "Microsoft YaHei",Arial,sans-serif}
+.box{width:320px;padding:24px;background:#141a25;border:1px solid #243043;border-radius:8px}
+h2{margin:0 0 16px;font-size:16px}
+label{display:block;margin:10px 0 4px;color:#9aa9bd;font-size:12px}
+input{width:100%;box-sizing:border-box;padding:7px 9px;background:#1b232f;border:1px solid #243043;border-radius:4px;color:#eef3f8}
+button{width:100%;margin-top:16px;padding:8px;border:none;border-radius:4px;background:#3ea6ff;color:#04121f;font-weight:700;cursor:pointer}
+.msg{margin-top:10px;color:#ff7b7b;font-size:12px;min-height:16px}
+</style></head><body>
+<div class="box"><h2>PLM 治理服务 · 登录</h2>
+<label>用户名</label><input id="u" autocomplete="username" />
+<label>密码</label><input id="p" type="password" autocomplete="current-password" />
+<button id="go">登录</button><div class="msg" id="m"></div></div>
+<script>
+async function go(){
+  const m=document.getElementById('m'); m.textContent='正在登录…'
+  try{
+    const r=await fetch('/api/plm/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({u:document.getElementById('u').value,p:document.getElementById('p').value})})
+    const j=await r.json()
+    if(!r.ok||!j.ok){ m.textContent=j.error||'登录失败'; return }
+    location.href='/admin/selection'
+  }catch(e){ m.textContent='请求失败：'+e.message }
+}
+document.getElementById('go').onclick=go
+document.getElementById('p').addEventListener('keydown',(e)=>{ if(e.key==='Enter') go() })
+</script></body></html>`
+}
+
+/**
+ * 3100 鉴权入口：返回 user=放行；null=匿名插件接口；false=已响应（401/403/302/登录结果）。
+ */
+async function plmAuthGate(req, res, p) {
+  if (!authEnabled()) return { u: 'auth-off', name: '鉴权已关闭', role: 'admin', roleName: ROLE_NAMES.admin }
+  if (p === '/admin/login' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' })
+    res.end(adminLoginHtml())
+    return false
+  }
+  if (p === '/api/plm/auth/login' && req.method === 'POST') {
+    const b = await readBody(req)
+    const r = login(b.u || b.username, b.p || b.password)
+    if (!r.ok) { send(res, 401, { ok: false, error: r.error }); return false }
+    res.writeHead(200, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Set-Cookie': cookieHeader(r.token),
+      'Cache-Control': 'no-store',
+    })
+    res.end(JSON.stringify({ ok: true, user: r.user }))
+    return false
+  }
+  if (p === '/api/plm/auth/me') {
+    const u = readSession(req)
+    if (!u) { send(res, 401, { ok: false, error: '未登录' }); return false }
+    send(res, 200, { ok: true, user: u })
+    return false
+  }
+  if (p === '/api/plm/auth/logout' && req.method === 'POST') {
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Set-Cookie': clearCookieHeader() })
+    res.end(JSON.stringify({ ok: true }))
+    return false
+  }
+  // 插件跨站白名单（只读 + 快照上报）
+  if (isPluginApi(p)) return null
+
+  const user = readSession(req)
+  if (!user) {
+    if (p.startsWith('/api/')) { send(res, 401, { ok: false, error: '未登录或会话已过期' }); return false }
+    res.writeHead(302, { Location: '/admin/login' }); res.end(); return false
+  }
+  if (!canPlm(user.role, req.method, p)) {
+    send(res, 403, { ok: false, error: '无权限：' + (ROLE_NAMES[user.role] || user.role) + ' 不能执行该操作' })
+    return false
+  }
+  return user
+}
+
 // ---------- 路由 ----------
 const server = http.createServer(async (req, res) => {
   // 204 不能带响应体，单独回，避免 Content-Length 与实际不符
@@ -1285,6 +1389,10 @@ const server = http.createServer(async (req, res) => {
   const p = url.pathname
 
   try {
+    // ---------- 鉴权：管理页 + 接口（插件只读白名单豁免）----------
+    const gate = await plmAuthGate(req, res, p)
+    if (gate === false) return
+
     if (p === '/api/plm/health') {
       const st = indexStatus()
       // 数据源开关一并返回，便于确认是否已全切 PLM

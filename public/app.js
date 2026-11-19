@@ -1,4 +1,71 @@
-﻿// 注意：必须把第二个参数透传给 fetch，否则带 method/body 的调用会退化成 GET，
+﻿// ======================= 鉴权与角色（2026-11-19） =======================
+// 角色：admin 系统管理员 / std 标准化员 / design 设计
+// 权限来源：/api/auth/me。index.html 已先鉴权并通过 window.__AUTH_BOOT 传入，避免重复请求；
+// 页面级权限由 pages 控制（隐藏无权限的 tab），删除类操作仅 admin（后端同样会 403）。
+const AUTH = (function () {
+  const boot = window.__AUTH_BOOT || { user: null, pages: [] }
+  const u = boot.user || null
+  return {
+    user: u,
+    pages: boot.pages || [],
+    isAdmin: !!(u && u.role === 'admin'),
+    roleName: u ? (u.roleName || u.role) : '',
+    canDelete: !!(u && u.role === 'admin'),
+  }
+})()
+window.__AUTH = AUTH
+
+function applyAuthUI() {
+  const box = document.getElementById('authUser')
+  if (box && AUTH.user) {
+    box.innerHTML = '<span class="au-name">' + AUTH.user.name + '</span>'
+      + '<span class="au-role">' + AUTH.roleName + '</span>'
+      + '<button class="au-btn" id="auPwd">修改密码</button>'
+      + '<button class="au-btn" id="auOut">退出</button>'
+    const pwd = document.getElementById('auPwd')
+    if (pwd) pwd.onclick = changeMyPassword
+    const out = document.getElementById('auOut')
+    if (out) out.onclick = logoutAuth
+  }
+  // 页面级权限：隐藏无权限的 tab
+  document.querySelectorAll('.tabs .tab').forEach((b) => {
+    const k = b.dataset.tab
+    const allowed = !AUTH.pages.length || AUTH.pages.indexOf(k) >= 0
+    b.dataset.noAuth = allowed ? '' : '1'
+    if (!allowed) b.style.display = 'none'
+  })
+  // 当前页无权限 → 切到第一个有权限的页面
+  const active = document.querySelector('.tabs .tab.active')
+  if (active && active.dataset.noAuth === '1') {
+    const first = Array.prototype.slice.call(document.querySelectorAll('.tabs .tab'))
+      .find((b) => b.dataset.noAuth !== '1')
+    if (first) first.click()
+  }
+  // 删除类按钮仅管理员可见（后端同样会拦截）
+  if (!AUTH.canDelete) document.body.classList.add('no-delete')
+}
+
+async function logoutAuth() {
+  try { await fetch('/api/auth/logout', { method: 'POST' }) } catch (e) { }
+  location.href = '/login.html'
+}
+
+async function changeMyPassword() {
+  const oldPw = window.prompt('请输入当前密码：')
+  if (oldPw == null) return
+  const next = window.prompt('请输入新密码（至少 6 位）：')
+  if (next == null) return
+  if (String(next).length < 6) { window.alert('新密码至少 6 位'); return }
+  const r = await fetch('/api/auth/password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ old: oldPw, next: next }),
+  })
+  const j = await r.json().catch(() => ({}))
+  window.alert(j.ok ? '密码已修改' : ('修改失败：' + (j.error || r.status)))
+}
+
+// 注意：必须把第二个参数透传给 fetch，否则带 method/body 的调用会退化成 GET，
 // 导致「保存设置」「修改同义词」「重跑提取」等写操作静默失效（只读不写）。
 const api = (p, opts) => fetch(p, opts).then((r) => r.json())
 const $ = (s) => document.querySelector(s)
@@ -4258,4 +4325,7 @@ function renderNmList() {
     renderNmList()
   })
 }
+
+// 应用角色界面（隐藏无权限的页面与删除按钮；DOM 已在此脚本执行前就绪）
+applyAuthUI()
 

@@ -837,6 +837,23 @@ button:disabled { opacity:.45; cursor:not-allowed; }
 .pl-pchip i { font-style:normal; font-size:10px; opacity:.7; }
 .pl-view, .pl-editbtn { padding:2px 11px; font-size:11.5px; border-radius:11px; }
 
+/* ======================= 鉴权（2026-11-19） ======================= */
+/* 顶栏用户区：用户名 + 角色 + 改密/退出 */
+.auth-bar { display:inline-flex; align-items:center; gap:8px; margin-left:10px; font-size:12px; }
+.auth-bar .au-name { color:var(--text); font-weight:600; }
+.auth-bar .au-role { color:var(--accent); border:1px solid rgba(62,166,255,.4); border-radius:10px; padding:0 7px; font-size:11px; }
+.auth-bar .au-btn { background:transparent; color:var(--muted); border:1px solid var(--line); border-radius:4px; padding:2px 8px; font-size:12px; cursor:pointer; }
+.auth-bar .au-btn:hover { color:var(--text); border-color:var(--accent); }
+/* 非管理员：隐藏所有删除类按钮（后端同样会 403，这里只是不让用户误点） */
+.no-delete .bk-btn.danger,
+.no-delete .syn-del,
+.no-delete .ng-del,
+.no-delete #nmTable [data-del],
+.no-delete [data-delmap],
+.no-delete [data-delfrz],
+.no-delete .pl-col-del,
+.no-delete .pl-x { display:none !important; }
+
 /* 只读抽屉不显示「+ 参数」 */
 .pl-drawer-foot.readonly #plAddParam { display:none; }
 

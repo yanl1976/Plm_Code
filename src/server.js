@@ -38,6 +38,7 @@ import { checkMaterial, fixSpecFormat, rules as materialRules, resolveNameFix, d
 import * as nameSyn from './name-synonyms.js'
 import { snapshotStatus, invalidateSnapshotStatus, erpSubDocs, invalidateErpSub } from './snapshot.js'
 import { plmStock, plmProbe, plmConfigured } from './plm-inventory.js'
+import { pickAccessoryPool } from './accessory-dict.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const PUBLIC = path.join(ROOT, 'public')
@@ -1279,6 +1280,30 @@ const server = http.createServer(async (req, res) => {
         dict = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/config/accessory-dict.json'), 'utf8'))
       } catch (e) { /* 字典缺失时返回空 */ }
 
+      // ① 新结构（2026-11-19，方案 A）：按「型号行」精确取值。
+      //    同一型号行里写什么就返回什么，避免整列汇总导致的：
+      //      · 同一条接线能力两种写法并列（水平后连接 / 水平后连接（可选择垂直后连接））
+      //      · 固定式型号混入抽屉式配件（抽架位置触点/VSPD/VPEC/VPOC）
+      const pool = pickAccessoryPool(dict, sub, model)
+      if (pool) {
+        const rowItems = []
+        for (const v of pool.wiring || []) {
+          rowItems.push({ kind: 'wiring', param: '接线能力', code: '', cn: String(v), series: '', label: String(v) })
+        }
+        for (const a of pool.accessories || []) {
+          const code = String(a.code || '')
+          const cn = String(a.cn || '')
+          rowItems.push({
+            kind: 'accessory',
+            param: a.type === '标配' ? '可选配件(标配)' : '可选配件',
+            code, cn, series: '',
+            label: (code ? code + ' ' + cn : cn).trim(),
+          })
+        }
+        return sendJson(res, 200, { ok: true, model, sub, source: 'model-row', items: rowItems })
+      }
+
+      // ② 回退：旧结构（按小类+系列汇总；旧字典或型号未收录时使用）
       // 附加参数按「小类 + 系列」存储：
       //   100105 下 3WT 与 NB8-40J 的接线能力/配件各不相同；
       //   不同小类之间也互不影响（早期版本漏了小类维度，导致任意小类都返回 100105 的内容）。

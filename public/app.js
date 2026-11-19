@@ -2874,18 +2874,26 @@ async function nmFillExtras() {
   // 否则换型号后看到的是旧配件，会被误认为"过滤没生效"。
   if (!items.length) { el.value = ''; el.dataset.auto = '1'; return }
 
-  const byParam = new Map()
+  // 输出规则（2026-11-19 调整）：参数名仍不写进值（「接线能力：」是表头），
+  // 但保留「标配 / 可选」语义，与 Excel 原文一致：
+  //   接线能力值；标配说明/纯描述逐句；连续的选配件合并为一段并加「可选：」前缀
+  // 旧后端没有 type 字段时用 param 里的「(标配)」兜底，保证升级期间不回归。
+  const segs = []
+  const wiringVals = []
+  let optBuf = []
+  const flushOpt = () => { if (optBuf.length) { segs.push('可选：' + optBuf.join('、')); optBuf = [] } }
   for (const it of items) {
-    const p = it.param || '附加参数'
-    if (!byParam.has(p)) byParam.set(p, [])
-    byParam.get(p).push(String(it.label || '').trim())
+    const label = String(it.label || '').trim()
+    if (!label) continue
+    const param = String(it.param || '')
+    if (param === '接线能力') { wiringVals.push(label); continue }
+    const type = it.type != null ? String(it.type) : (param.indexOf('(标配)') >= 0 ? '标配' : '')
+    if (type === '选配') { optBuf.push(label); continue }
+    flushOpt()
+    segs.push(type === '标配' ? '标配：' + label : label)
   }
-
-  // 只回填值（参数名是表头）：参数之间「；」，同一参数内「、」
-  el.value = [...byParam.values()]
-    .map((list) => list.filter(Boolean).join('、'))
-    .filter(Boolean)
-    .join('；')
+  flushOpt()
+  el.value = [wiringVals.join('、')].concat(segs).filter(Boolean).join('；')
   el.dataset.auto = '1'
 }
 

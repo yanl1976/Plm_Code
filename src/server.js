@@ -1296,6 +1296,7 @@ const server = http.createServer(async (req, res) => {
           rowItems.push({
             kind: 'accessory',
             param: a.type === '标配' ? '可选配件(标配)' : '可选配件',
+            type: a.type || '',            // 标配 / 选配 / ''（纯描述）——前端据此保留「可选：」语义
             code, cn, series: '',
             label: (code ? code + ' ' + cn : cn).trim(),
           })
@@ -1344,6 +1345,7 @@ const server = http.createServer(async (req, res) => {
           items.push({
             kind: 'accessory',
             param: a.type === '标配' ? '可选配件(标配)' : '可选配件',
+            type: a.type || '',            // 与按行分支同口径；旧字典无 type 时为 ''
             code, cn, series: se,
             label: (code ? code + ' ' + cn : cn).trim(),
           })

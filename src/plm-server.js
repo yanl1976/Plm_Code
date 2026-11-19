@@ -49,7 +49,7 @@ const HOST = env('PLM_API_HOST', '0.0.0.0')
 // 版本号必须随「影响接口返回结构/判定逻辑」的改动递增 ——
 // 否则现场无法从返回里判断进程跑的是新代码还是旧代码（曾因此排查了半天：
 // 生产 3100 缺 subMismatch 字段，但 version 一直是 1.4.0，看不出差异）。
-const VERSION = '1.5.2'
+const VERSION = '1.5.3'
 // 构建指纹：现场用它判断「跑的是不是新代码」。
 // VERSION 只在接口结构 / 判定逻辑变化时递增，日常修 bug 不一定升；
 // codeMtime 取关键源文件的最新修改时间，每次部署同步都会变，可据此确认已生效。
@@ -980,6 +980,24 @@ function appendImportLog(rec) {
   } catch (e) { /* 忽略 */ }
 }
 
+/**
+ * 重建附加参数字典（src/config/accessory-dict.json）。
+ * 选型库的任何落盘变更（导入 / 删除）后都必须调用，否则主要参数会继续用旧配件：
+ *   · 导入后不重建 → 新系列的接线能力 / 可配附件不生效；
+ *   · 删除后不重建 → 已删除的系列仍会填进主要参数（残留旧数据）。
+ * 失败只记日志，不影响导入/删除本身。
+ */
+function rebuildAccessoryDictSafe(where) {
+  try {
+    const st = buildAccessoryDict()
+    log('[accessory-dict] 已重建（' + (where || '') + '）', JSON.stringify(st))
+    return st
+  } catch (e) {
+    log('[accessory-dict] 重建失败（' + (where || '') + '）', String((e && e.message) || e))
+    return null
+  }
+}
+
 /** 导入一个系列（列驱动）：写 data/selection/series/<sub>_<id>.json */
 function importSeries(body) {
   const sub = String(body.sub || '').trim()
@@ -1320,15 +1338,8 @@ const server = http.createServer(async (req, res) => {
       const out = importSeries(body)
       log('[select-import]', out.ok ? 'ok' : out.error, out.file || '')
       // 选型库更新后，附加参数字典必须跟着重建，
-      // 否则录入页的技术参数还是导入前的旧配件。
-      if (out.ok) {
-        try {
-          const st = buildAccessoryDict()
-          log('[accessory-dict] 已重建', JSON.stringify(st))
-        } catch (e) {
-          log('[accessory-dict] 重建失败', String((e && e.message) || e))
-        }
-      }
+      // 否则录入页的主要参数还是导入前的旧配件。
+      if (out.ok) rebuildAccessoryDictSafe('select-import')
       return send(res, 200, out)
     }
     if (p === '/api/plm/select/list' && req.method === 'GET') {
@@ -1371,7 +1382,11 @@ const server = http.createServer(async (req, res) => {
     }
     if (p === '/api/plm/select/delete' && req.method === 'POST') {
       const body = await readBody(req)
-      return send(res, 200, deleteSelectionFile(body.file, body.id))
+      const out = deleteSelectionFile(body.file, body.id)
+      // 删除后必须重建字典：否则已删除系列的接线能力 / 可配附件仍会填进主要参数
+      // （2026-11-19 补：此前只有导入会重建，删除后字典保留旧内容）
+      if (out && out.ok) rebuildAccessoryDictSafe('select-delete')
+      return send(res, 200, out)
     }
     if (p === '/api/plm/select/series' && req.method === 'GET') {
       const info = loadSelection()

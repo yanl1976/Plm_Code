@@ -296,12 +296,12 @@
       <div class="nm-grid">
         <div class="nm-form">
           <h3>新增物料</h3>
-          <p class="muted">编码规则：小类6位 + 5位流水（与存量一致）。规格型号会做同小类查重，并支持输入联想。</p>
+          <p class="muted">编码为草稿预分配（小类6位 + 5位流水，与存量一致）；<b>正式编号由 PLM 编码器统一分配</b>。规格型号会做同小类查重，并支持输入联想。</p>
           <div id="nmSnapTip" class="nm-snap"></div>
           <div class="nm-row"><label>大类</label><select id="nmBig"></select></div>
           <div class="nm-row"><label>中类</label><select id="nmMid"></select></div>
           <div class="nm-row"><label>小类</label><select id="nmSub"></select></div>
-          <div class="nm-row"><label>物料编码</label><span id="nmCode" class="nm-code">-</span><span id="nmCodeMsg" class="muted"></span></div>
+          <div class="nm-row"><label>预分配编码</label><span id="nmCode" class="nm-code">-</span><span id="nmCodeMsg" class="muted"></span></div>
           <div class="nm-row"><label>默认仓库</label><span id="nmWh" class="muted">-</span></div>
           <div class="nm-row"><label>物料名称</label>
             <div class="nm-name-wrap">
@@ -341,7 +341,7 @@
           </div>
           <div class="hint">加入清单时规格会自动整理空格（首尾空格 / 连续空格 / 全角空格），写入与导出均以整理后的写法为准；有改动时会在下方提示。</div>
           <table id="nmTable" class="mat">
-            <thead><tr><th>编码</th><th>名称</th><th>规格型号</th><th>主要参数</th><th>小类</th><th>单位</th><th>仓库</th><th>时间</th><th></th></tr></thead>
+            <thead><tr><th>预分配编码</th><th>名称</th><th>规格型号</th><th>主要参数</th><th>小类</th><th>单位</th><th>仓库</th><th>时间</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>

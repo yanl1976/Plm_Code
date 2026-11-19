@@ -3068,7 +3068,7 @@ async function refreshNmCode() {
   if (r && r.code) {
     nm.cur.code = r.code
     $('#nmCode').textContent = r.code
-    $('#nmCodeMsg').textContent = '自动生成 · 流水 ' + r.seq
+    $('#nmCodeMsg').textContent = '预分配 · 流水 ' + r.seq + '（正式编号以 PLM 编码器为准）'
   } else {
     nm.cur.code = ''
     $('#nmCode').textContent = '-'
@@ -4189,7 +4189,7 @@ async function nmSave() {
     })
     if (r && r.error) { msg('保存失败：' + r.error); return }
     const tidy = r.specTidy
-    msg('已加入待新增清单，编码 ' + r.item.code)
+    msg('已加入待新增清单，预分配编码 ' + r.item.code + '（正式编号以 PLM 编码器为准）')
     $('#nmName').value = ''; $('#nmSpec').value = ''; $('#nmUnit').value = ''
     if ($('#nmParams')) { $('#nmParams').value = ''; $('#nmParams').dataset.auto = '1' }   // 重置标记，下一条仍可自动填
     $('#nmSuggest').innerHTML = ''; $('#nmSpecCheck').innerHTML = ''

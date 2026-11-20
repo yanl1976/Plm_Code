@@ -146,6 +146,109 @@ async function loadOverview() {
   renderPipeline(o.stages)
   renderMetrics(o.stats, o.report)
   renderFindings(o.stats, o.report)
+  loadNewMatStats()
+}
+
+// ---------- 新增物料（今天 / 本周）----------
+/** 本地日期 YYYY-MM-DD */
+function fmtDay(d) {
+  const p = (n) => String(n).padStart(2, '0')
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
+}
+
+/** 本周一（周一为一周起点） */
+function startOfWeek(d) {
+  const t = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+  const day = t.getDay() || 7          // 周日 = 7
+  t.setDate(t.getDate() - (day - 1))
+  return t
+}
+
+async function loadNewMatStats() {
+  const box = document.getElementById('newMatCards')
+  if (!box) return
+  const today = fmtDay(new Date())
+  const monday = fmtDay(startOfWeek(new Date()))
+  const [t, w] = await Promise.all([
+    api('/api/materials/new?from=' + today + '&to=' + today + '&limit=1').catch(() => null),
+    api('/api/materials/new?from=' + monday + '&to=' + today + '&limit=1').catch(() => null),
+  ])
+  const tv = t && t.ok ? t.total : '-'
+  const wv = w && w.ok ? w.total : '-'
+  box.innerHTML =
+    '<button class="card card-click" data-newmat="today">'
+    + '<div class="k">今天新增物料</div>'
+    + '<div class="v green">' + (tv === '-' ? '-' : fmt(tv)) + '</div>'
+    + '<div class="k-sub">' + today + ' · 点击查看明细</div>'
+    + '</button>'
+    + '<button class="card card-click" data-newmat="week">'
+    + '<div class="k">本周新增物料</div>'
+    + '<div class="v green">' + (wv === '-' ? '-' : fmt(wv)) + '</div>'
+    + '<div class="k-sub">' + monday + ' ~ ' + today + ' · 点击查看明细</div>'
+    + '</button>'
+  box.querySelectorAll('[data-newmat]').forEach((b) => {
+    b.onclick = () => openNewMatModal(b.dataset.newmat)
+  })
+}
+
+async function openNewMatModal(kind) {
+  const m = document.getElementById('newMatModal')
+  if (!m) return
+  const today = fmtDay(new Date())
+  const from = kind === 'week' ? fmtDay(startOfWeek(new Date())) : today
+  const title = document.getElementById('newMatTitle')
+  if (title) title.textContent = (kind === 'week' ? '本周新增物料' : '今天新增物料') + '（' + from + ' ~ ' + today + '）'
+  const body = document.getElementById('newMatBody')
+  if (body) body.innerHTML = '<div class="muted">加载中…</div>'
+  m.style.display = 'flex'
+  const r = await api('/api/materials/new?from=' + from + '&to=' + today + '&limit=500').catch(() => null)
+  if (!r || !r.ok) {
+    if (body) body.innerHTML = '<div class="muted">加载失败：' + escapeHtml((r && r.error) || '接口不可用或无权限') + '</div>'
+    return
+  }
+  renderNewMatTable(r)
+}
+
+function renderNewMatTable(r) {
+  const body = document.getElementById('newMatBody')
+  if (!body) return
+  const items = r.items || []
+  const total = Number(r.total || 0)
+  if (!items.length) {
+    body.innerHTML = '<div class="muted">该时间段内没有新增物料（数据源：' + escapeHtml(r.file || '') + '）</div>'
+    return
+  }
+  const more = total > items.length
+    ? '<div class="muted" style="margin-top:8px">共 ' + total + ' 条，当前显示前 ' + items.length + ' 条（按创建时间升序）</div>'
+    : '<div class="muted" style="margin-top:8px">共 ' + total + ' 条</div>'
+  body.innerHTML = '<table class="usage-table"><thead><tr>'
+    + '<th>创建时间</th><th>物料编码</th><th>名称</th><th>规格型号</th><th>单位</th><th>小类</th><th>来源</th>'
+    + '</tr></thead><tbody>'
+    + items.map((x) => '<tr>'
+      + '<td class="muted">' + escapeHtml(String(x.createdAt || '').replace('T', ' ').slice(0, 19)) + '</td>'
+      + '<td class="mono">' + escapeHtml(x.fnumber || '-') + '</td>'
+      + '<td>' + escapeHtml(x.name || '-') + '</td>'
+      + '<td class="usage-spec">' + escapeHtml(x.spec || '-') + '</td>'
+      + '<td>' + escapeHtml(x.unit || '') + '</td>'
+      + '<td class="muted">' + escapeHtml(x.sub || '') + '</td>'
+      + '<td class="muted">' + escapeHtml(x.source || '') + '</td>'
+      + '</tr>').join('')
+    + '</tbody></table>' + more
+}
+
+function closeNewMatModal() {
+  const m = document.getElementById('newMatModal')
+  if (m) m.style.display = 'none'
+}
+
+const newMatModalEl = document.getElementById('newMatModal')
+if (newMatModalEl) {
+  newMatModalEl.querySelectorAll('[data-nmclose]').forEach((el) => { el.onclick = closeNewMatModal })
+  const closeBtn = document.getElementById('newMatClose')
+  if (closeBtn) closeBtn.onclick = closeNewMatModal
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && newMatModalEl.style.display !== 'none') closeNewMatModal()
+  })
 }
 
 function renderPipeline(stages) {

@@ -40,6 +40,20 @@
     <!-- 概览 -->
     <section class="panel active" id="tab-overview">
       <div class="cards" id="metricCards"></div>
+
+      <!-- 新增物料（今天 / 本周）：点击卡片查看明细 -->
+      <div class="cards" id="newMatCards"></div>
+      <div class="set-modal" id="newMatModal" style="display:none">
+        <div class="set-modal-mask" data-nmclose="1"></div>
+        <div class="set-modal-panel">
+          <div class="set-modal-head">
+            <h3 id="newMatTitle">新增物料</h3>
+            <button class="ghost" id="newMatClose">关闭</button>
+          </div>
+          <div class="set-modal-body" id="newMatBody"></div>
+        </div>
+      </div>
+
       <div class="findings" id="findings"></div>
     </section>
 

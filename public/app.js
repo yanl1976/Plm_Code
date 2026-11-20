@@ -4849,6 +4849,27 @@ function renderUsagePager() {
 
 if ($('#usageQuery')) $('#usageQuery').onclick = () => { loadUsage(1); loadUsageStats() }
 
+// 清空使用日志（二次确认；接口走 /api/plugin/usage/clean，需 admin.usage）
+if ($('#usageClear')) $('#usageClear').onclick = async () => {
+  if (!window.confirm('确定清空全部插件使用日志？\n\n该操作不可恢复（清空后无法找回）。')) return
+  const btn = $('#usageClear')
+  if (btn) btn.disabled = true
+  const r = await api('/api/plugin/usage/clean', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode: 'all' }),
+  }).catch(() => null)
+  if (btn) btn.disabled = false
+  if (!r || !r.ok) {
+    window.alert('清空失败：' + ((r && r.error) || '无权限或网络异常（确认已部署最新 3130）'))
+    return
+  }
+  const msg = document.getElementById('usageMsg')
+  if (msg) msg.textContent = '已清空：删除 ' + (r.removed || 0) + ' 条'
+  loadUsage(1)
+  loadUsageStats()
+}
+
 // ======================= 系统操作日志（规则修改 / 导入 / 选型库变更） =======================
 const auditState = { page: 1, total: 0, limit: 50 }
 const AUDIT_ROLE_NAMES = { admin: '管理员', std: '标准化员', design: '设计', test: '测试' }

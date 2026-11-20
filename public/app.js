@@ -4709,6 +4709,17 @@ if ($('#usageQuery')) $('#usageQuery').onclick = () => { loadUsage(1); loadUsage
 const auditState = { page: 1, total: 0, limit: 50 }
 const AUDIT_ROLE_NAMES = { admin: '管理员', std: '标准化员', design: '设计', test: '测试' }
 
+/** 操作类型下拉：选项来自后端清单（固定映射 + 实际出现），保持当前选中项 */
+function fillAuditActions(list) {
+  const sel = document.getElementById('auditAction')
+  if (!sel) return
+  const cur = sel.value
+  const items = (list || []).filter((x) => x && String(x).trim())
+  sel.innerHTML = '<option value="">全部操作</option>'
+    + items.map((a) => '<option value="' + escapeHtml(a) + '">' + escapeHtml(a) + '</option>').join('')
+  if (cur && items.indexOf(cur) >= 0) sel.value = cur
+}
+
 async function loadAuditStats() {
   const box = $('#auditStats')
   if (!box) return
@@ -4717,6 +4728,7 @@ async function loadAuditStats() {
     box.innerHTML = '<div class="muted">统计加载失败：' + escapeHtml((r && r.error) || '无权限或网络异常') + '</div>'
     return
   }
+  fillAuditActions(r.actions || [])
   const acts = Object.entries(r.byAction || {}).sort((a, b) => b[1] - a[1]).slice(0, 3)
   box.innerHTML = usageCard('今日操作', r.today, '近 ' + r.days + ' 天共 ' + r.total + ' 条')
     + usageCard('今日失败', r.failed, '状态码 ≥ 400 的写操作')

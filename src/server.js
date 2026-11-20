@@ -1287,7 +1287,13 @@ const server = http.createServer(async (req, res) => {
         if (dk === today) todayCount++
         if (Number(x.status) >= 400) failed++
       }
-      return sendJson(res, 200, { ok: true, days, total: all.length, today: todayCount, failed, byAction, byUser, byDay })
+      // 操作类型清单（固定映射 + 实际出现过的类型），供前端下拉筛选
+      const actions = [...new Set(AUDIT_LABELS.map((x) => x[1])
+        .concat(['登录', '登录失败', '其他写操作',
+          // 3100 的细分操作（来源 plm-api，AUDIT_LABELS 里只归到「选型库」大类）
+          '选型库导入', '选型库删除', '选型库停用', '选型库启用', '重载索引', '快照合并', '快照重置'])
+        .concat(Object.keys(byAction)))]
+      return sendJson(res, 200, { ok: true, days, total: all.length, today: todayCount, failed, byAction, byUser, byDay, actions })
     }
 
     if (p === '/api/overview') {

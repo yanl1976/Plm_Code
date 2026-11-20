@@ -390,6 +390,7 @@ table.ptab td.brand { color:var(--accent); font-weight:700; }
 .syn-msg.err { color:var(--red); }
 .syn-list { max-height:400px; overflow:auto; }
 .syn-empty { font-size:12px; margin:6px 0; }
+.syn-scope-tip { font-size:12px; margin:4px 0 6px; line-height:1.6; }
 table.syn-table { width:100%; border-collapse:collapse; background:transparent; border:none; font-size:12px; }
 table.syn-table th { text-align:left; padding:3px 4px; color:var(--muted); font-weight:500; border-bottom:1px solid var(--line); }
 table.syn-table td { padding:2px 4px; border-bottom:1px solid rgba(44,58,79,.55); }

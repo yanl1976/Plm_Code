@@ -926,13 +926,18 @@ function renderSynList(items) {
   if (!el) return
   synState.items = items
   if (!items.length) { el.innerHTML = '<p class="muted syn-empty">暂无记录</p>'; return }
-  el.innerHTML = '<table class="syn-table"><thead><tr>'
-    + '<th>非标准叫法</th><th>标准名称</th><th class="syn-th-scope">适用范围</th><th class="syn-th-act"></th>'
+  // 作用域列前置：同一叫法在不同小类可有不同标准名（小类优先），
+  // 平铺展示时若不显眼，会看起来像"一个叫法对应多个标准名"（现场误解过）。
+  el.innerHTML = '<p class="muted syn-scope-tip">'
+    + '同一叫法可在不同小类有不同标准名（<b>小类优先于全局</b>）；「适用范围」就是该条生效的范围，实际录入时只按所在小类生效。'
+    + '</p>'
+    + '<table class="syn-table"><thead><tr>'
+    + '<th>非标准叫法</th><th class="syn-th-scope">适用范围</th><th>标准名称</th><th class="syn-th-act"></th>'
     + '</tr></thead><tbody>'
     + items.map((x, i) => `<tr data-i="${i}">
         <td><input class="syn-in" data-f="alias" value="${synAttr(x.alias)}" autocomplete="off" /></td>
-        <td><input class="syn-in" data-f="std" value="${synAttr(x.std)}" autocomplete="off" /></td>
         <td class="syn-td-scope"><select class="syn-sel" data-f="sub">${synSubOptsHtml(x.sub || '')}</select></td>
+        <td><input class="syn-in" data-f="std" value="${synAttr(x.std)}" autocomplete="off" /></td>
         <td class="syn-acts">
           <button class="syn-btn syn-save">保存</button>
           <button class="syn-btn syn-del">删除</button>

@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.41';
+  var PLUGIN_VERSION = '2.42';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -4510,8 +4510,24 @@
         }
         if (!el) return;
         var txt = String((el.textContent || el.value || '') + ' ' + (el.title || '')).trim();
-        if (!/确定|保存|完成|提交/.test(txt)) return;
-        // 延迟 1.5 秒：等平台完成字段回填/表单切换，避免抓到「只有编码、名称规格为空」的中间态
+        // ① 只认「保存 / 完成」：编码申请对话框的「确定」不是保存（现场重复记录的真因）
+        if (!/保存|完成/.test(txt)) return;
+        if (/回填|取消|关闭/.test(txt)) return;
+        // ② 助手弹窗内的「保存并回填」不是 PLM 保存
+        if (dlg && dlg.mask && dlg.mask.contains && dlg.mask.contains(el)) return;
+        // ③ 排除「编码申请 / 编号申请」等子对话框：向上找对话框容器，标题含编码/编号/申请即跳过
+        var box = el, hop2 = 0, dlgTitle = '';
+        while (box && hop2 < 10) {
+          var cls = String((box.className || '') + ' ' + ((box.getAttribute && box.getAttribute('role')) || ''));
+          if (/dialog|modal|window/i.test(cls)) {
+            var tEl = box.querySelector && box.querySelector('[class*=title],[class*=Title]');
+            dlgTitle = String((tEl && tEl.textContent) || box.textContent || '').slice(0, 120);
+            break;
+          }
+          box = box.parentNode; hop2++;
+        }
+        if (/编码申请|申请编号|编号申请|编码器/.test(dlgTitle)) { usageLog('编码申请对话框，非保存，跳过'); return; }
+        // 延迟 1.5 秒：等平台完成字段回填/表单切换，避免抓到中间态
         setTimeout(function () {
           var snap = captureUsage('submit');
           if (snap && snap.code && (snap.name || snap.spec)) sendUsage(snap);

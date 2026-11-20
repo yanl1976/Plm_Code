@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.38';
+  var PLUGIN_VERSION = '2.39';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -376,12 +376,13 @@
    *
    * 异步 XHR，超时/失败一律静默，绝不阻断保存。
    */
-  function reportUsage(phase) {
+  /**
+   * 同步抓取使用日志快照（必须在 OnOK 内、平台销毁页面前执行）。
+   * 若延迟到 setTimeout 里再读控件，保存成功后页面可能已关闭 → 三个字段都空 → 不上报。
+   */
+  function captureUsage(phase) {
     try {
-      if (!CFG.enabled || CFG.usageLog === false) return;
-      var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
-      if (!base) return;
-      var body = {
+      return {
         phase: phase || 'submit',
         code: readEcode(),
         name: readText(state.ename),
@@ -391,14 +392,48 @@
         ver: PLUGIN_VERSION,
         src: 'plm'
       };
-      if (!body.code && !body.name && !body.spec) return;
+    } catch (e) { return null; }
+  }
+
+  /** 安全日志：log/warn 定义在插件后部作用域，前部函数不能直接引用（会 ReferenceError） */
+  function usageLog(msg, isErr) {
+    var text = '[使用日志] ' + msg;
+    try {
+      if (isErr && typeof warn === 'function') { warn(text); return; }
+      if (!isErr && typeof log === 'function') { log(text); return; }
+    } catch (e) { }
+    try { (isErr ? console.warn : console.log)('[ItemSmartInput] ' + text); } catch (e) { }
+  }
+
+  /** 发送使用日志（异步 XHR；成功/失败都记日志，便于现场排查） */
+  function sendUsage(body) {
+    try {
+      if (!body) return;
+      if (!body.code && !body.name && !body.spec) { usageLog('字段为空，跳过上报'); return; }
+      var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
+      if (!base) { usageLog('inventoryBase 为空，跳过上报', true); return; }
       var xhr = new XMLHttpRequest();
       xhr.open('POST', base + '/api/plugin/usage', true);
       xhr.setRequestHeader('Content-Type', 'application/json');
       xhr.timeout = 5000;
+      xhr.onload = function () {
+        if (xhr.status >= 400) usageLog('上报失败：HTTP ' + xhr.status + '（' + base + '）', true);
+        else usageLog('已上报：' + (body.code || body.name || '-'));
+      };
+      xhr.onerror = function () { usageLog('上报失败：网络/CORS 异常（' + base + '）', true); };
+      xhr.ontimeout = function () { usageLog('上报超时（' + base + '）', true); };
       xhr.send(JSON.stringify(body));
-    } catch (e) { }
+      usageLog('发送中：' + (body.code || '-') + ' / ' + (body.name || '-'));
+    } catch (e) { usageLog('发送异常：' + (e && e.message), true); }
   }
+
+  /** 兼容旧调用：未传快照时现场抓取（同步） */
+  function reportUsage(snap) {
+    if (!CFG.enabled || CFG.usageLog === false) return;
+    sendUsage(snap || captureUsage('submit'));
+  }
+  // 调试入口（控制台可直接验证上报链路）
+  window.__plmUsage = { capture: captureUsage, send: sendUsage, report: reportUsage };
 
   // ============ 规格型号 → 主要参数(ZYCS) / 分类属性合并(FLSXHB) ============
   // 需求：不改变 PLM 物料生成逻辑，只把「规格型号(GGXH)」同步到这两个字段。
@@ -4426,8 +4461,14 @@
     var origOnOK = window.InforCenter_PSEITEM_CreatePage_OnOK;
     window.InforCenter_PSEITEM_CreatePage_OnOK = function (pageEvent) {
       var r = origOnOK.apply(this, arguments);
-      // false = 校验未通过（阻断保存），此时不上报；其余情况视为提交保存
-      if (r !== false) setTimeout(function () { reportUsage('submit'); }, 0);
+      // 关键：在 OnOK 内【同步】抓取字段快照 —— 保存成功后平台会销毁/跳转页面，
+      // 若延迟到 setTimeout 再读控件，code/name/spec 全为空 → 静默不上报。
+      var snap = captureUsage('submit');
+      if (r !== false) {
+        if (CFG.enabled && CFG.usageLog !== false) {
+          setTimeout(function () { sendUsage(snap); }, 0);
+        }
+      }
       return r;
     };
   })();

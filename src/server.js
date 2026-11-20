@@ -992,10 +992,16 @@ const usageRate = new Map()   // ip → { n, at }，简单防刷
 function clipText(s, n) {
   return String(s == null ? '' : s).replace(/\s+/g, ' ').trim().slice(0, n)
 }
+/**
+ * 北京时间日期键（YYYY-MM-DD）。
+ * 统一口径：日志/审计/新增物料统计按北京时间归档与计数，
+ * 不受服务器时区影响（Linux 常为 UTC，直接 getFullYear 会差 8 小时）。
+ */
 function dayKey(d) {
   const p = (x) => String(x).padStart(2, '0')
-  const t = d instanceof Date ? d : new Date(d)
-  return t.getFullYear() + '-' + p(t.getMonth() + 1) + '-' + p(t.getDate())
+  const base = d instanceof Date ? d.getTime() : new Date(d == null ? Date.now() : d).getTime()
+  const t = new Date(base + 8 * 3600 * 1000)
+  return t.getUTCFullYear() + '-' + p(t.getUTCMonth() + 1) + '-' + p(t.getUTCDate())
 }
 function usageLimited(ip) {
   const now = Date.now()
@@ -1010,10 +1016,13 @@ function appendUsage(rec) {
 }
 function usageDayRange(from, to) {
   const out = []
-  const start = from ? new Date(from + 'T00:00:00') : new Date(Date.now() - 30 * 86400000)
-  const end = to ? new Date(to + 'T00:00:00') : new Date()
-  if (isNaN(start.getTime()) || isNaN(end.getTime())) return []
-  for (let t = start.getTime(); t <= end.getTime(); t += 86400000) out.push(dayKey(new Date(t)))
+  // 按北京日界枚举日文件（+08:00），与 dayKey 的归档口径一致
+  const startDay = from || dayKey(Date.now() - 30 * 86400000)
+  const endDay = to || dayKey()
+  const start = new Date(startDay + 'T00:00:00+08:00').getTime()
+  const end = new Date(endDay + 'T00:00:00+08:00').getTime()
+  if (isNaN(start) || isNaN(end)) return []
+  for (let t = start; t <= end; t += 86400000) out.push(dayKey(t))
   return out.slice(0, 120)
 }
 function readUsage(from, to) {

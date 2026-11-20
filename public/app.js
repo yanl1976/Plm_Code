@@ -106,6 +106,49 @@ const api = (p, opts) => fetch(p, opts).then((r) => r.json())
 const $ = (s) => document.querySelector(s)
 const fmt = (n) => (n == null ? '-' : n.toLocaleString('zh-CN'))
 
+// ---------- 时间口径：统一按北京时间（UTC+8）展示与统计 ----------
+const BJ_MS = 8 * 3600 * 1000
+
+/** 北京时间各字段（输入：Date / ISO 字符串 / 毫秒） */
+function bjParts(v) {
+  const d = v instanceof Date ? v : new Date(v == null ? Date.now() : v)
+  if (isNaN(d.getTime())) return null
+  const t = new Date(d.getTime() + BJ_MS)
+  return { y: t.getUTCFullYear(), m: t.getUTCMonth(), d: t.getUTCDate(), h: t.getUTCHours(), mi: t.getUTCMinutes(), s: t.getUTCSeconds() }
+}
+
+/** 北京时间 "YYYY-MM-DD HH:mm:ss"（无法解析时原样返回） */
+function fmtBjTime(v) {
+  const p = bjParts(v)
+  if (!p) return v == null ? '' : String(v)
+  const z = (n) => String(n).padStart(2, '0')
+  return p.y + '-' + z(p.m + 1) + '-' + z(p.d) + ' ' + z(p.h) + ':' + z(p.mi) + ':' + z(p.s)
+}
+
+/** 北京时间日期 "YYYY-MM-DD" */
+function fmtDay(v) { return fmtBjTime(v).slice(0, 10) }
+
+/** 北京时间本周一 00:00 对应的真实时间戳（毫秒） */
+function startOfWeek(v) {
+  const p = bjParts(v)
+  if (!p) return Date.now()
+  const d = new Date(Date.UTC(p.y, p.m, p.d))
+  const day = d.getUTCDay() || 7
+  d.setUTCDate(d.getUTCDate() - (day - 1))
+  return d.getTime() - BJ_MS
+}
+
+/** 向前/后推 N 个自然月（北京时区、月末安全），返回真实时间戳（毫秒） */
+function shiftMonth(v, delta) {
+  const p = bjParts(v)
+  if (!p) return Date.now()
+  const d = new Date(Date.UTC(p.y, p.m, 1))
+  d.setUTCMonth(d.getUTCMonth() + delta)
+  const last = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate()
+  d.setUTCDate(Math.min(p.d, last))
+  return d.getTime() - BJ_MS
+}
+
 let matPage = 1, matFilters = {}
 let dedupPage = 1, dedupFilters = {}
 let unifiedPage = 1, unifiedFilters = {}
@@ -150,20 +193,6 @@ async function loadOverview() {
 }
 
 // ---------- 新增物料（今天 / 本周）----------
-/** 本地日期 YYYY-MM-DD */
-function fmtDay(d) {
-  const p = (n) => String(n).padStart(2, '0')
-  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
-}
-
-/** 本周一（周一为一周起点） */
-function startOfWeek(d) {
-  const t = new Date(d.getFullYear(), d.getMonth(), d.getDate())
-  const day = t.getDay() || 7          // 周日 = 7
-  t.setDate(t.getDate() - (day - 1))
-  return t
-}
-
 async function loadNewMatStats() {
   const box = document.getElementById('metricCards')
   if (!box) return
@@ -222,7 +251,7 @@ function renderNewMatTable(r) {
     + '<th>创建时间</th><th>物料编码</th><th>名称</th><th>规格型号</th><th>单位</th><th>小类</th><th>来源</th>'
     + '</tr></thead><tbody>'
     + items.map((x) => '<tr>'
-      + '<td class="muted">' + escapeHtml(String(x.createdAt || '').replace('T', ' ').slice(0, 19)) + '</td>'
+      + '<td class="muted">' + escapeHtml(fmtBjTime(x.createdAt)) + '</td>'
       + '<td class="mono">' + escapeHtml(x.fnumber || '-') + '</td>'
       + '<td>' + escapeHtml(x.name || '-') + '</td>'
       + '<td class="usage-spec">' + escapeHtml(x.spec || '-') + '</td>'
@@ -256,7 +285,7 @@ function renderPipeline(stages) {
     const done = s.exists
     const div = document.createElement('div')
     div.className = 'stage ' + (done ? 'done' : 'pending')
-    const at = s.exists ? new Date(s.at).toLocaleString('zh-CN') : '未生成'
+    const at = s.exists ? fmtBjTime(s.at) : '未生成'
     div.innerHTML = `<div class="name"><span class="dot"></span>${labels[k]}</div><div class="note">${s.note || ''}</div><div class="state">${done ? '✓ 已生成' : '○ 待运行'} · ${at}</div>`
     el.appendChild(div)
   }
@@ -674,7 +703,7 @@ async function loadCleanup() {
   const mt = $('#mapTable tbody'); mt.innerHTML = ''
   Object.entries(d.mapping).forEach(([oldNo, v]) => {
     const tr = document.createElement('tr')
-    tr.innerHTML = `<td>${oldNo}</td><td>${v.to}</td><td>${v.reason || ''}</td><td>${v.by || ''}</td><td>${(v.at || '').slice(0, 10)}</td>
+    tr.innerHTML = `<td>${oldNo}</td><td>${v.to}</td><td>${v.reason || ''}</td><td>${v.by || ''}</td><td>${fmtBjTime(v.at).slice(0, 10)}</td>
       <td><button data-delmap="${oldNo}">删</button></td>`
     mt.appendChild(tr)
   })
@@ -684,7 +713,7 @@ async function loadCleanup() {
   const ft = $('#freezeTable tbody'); ft.innerHTML = ''
   Object.entries(d.freeze).forEach(([no, v]) => {
     const tr = document.createElement('tr')
-    tr.innerHTML = `<td>${no}</td><td>${v.reason || ''}</td><td>${v.by || ''}</td><td>${(v.at || '').slice(0, 10)}</td>
+    tr.innerHTML = `<td>${no}</td><td>${v.reason || ''}</td><td>${v.by || ''}</td><td>${fmtBjTime(v.at).slice(0, 10)}</td>
       <td><button data-delfrz="${no}">解</button></td>`
     ft.appendChild(tr)
   })
@@ -823,12 +852,7 @@ function fmtBytes(n) {
 }
 
 function fmtTime(iso) {
-  if (!iso) return '—'
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return iso
-  const p = (x) => String(x).padStart(2, '0')
-  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
-    + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds())
+  return iso ? fmtBjTime(iso) : '—'
 }
 
 async function loadBackup() {
@@ -4463,7 +4487,7 @@ function renderNmList() {
     <td>${escapeHtml(d.sub)} ${escapeHtml(d.subName || '')}</td>
     <td>${escapeHtml(d.unit || '')}</td>
     <td>${escapeHtml(d.wh || '')}</td>
-    <td class="muted">${escapeHtml(String(d.createdAt || '').replace('T', ' ').slice(0, 19))}</td>
+    <td class="muted">${escapeHtml(fmtBjTime(d.createdAt))}</td>
     <td><button class="danger" data-del="${escapeHtml(d.id)}">删除</button></td>
   </tr>`).join('')
   tb.querySelectorAll('[data-del]').forEach((b) => b.onclick = async () => {
@@ -4691,29 +4715,14 @@ function bindPermsUI() {
 // ======================= 插件使用日志 =======================
 const usageState = { page: 1, total: 0, limit: 50 }
 
-/** 本地日期 YYYY-MM-DD（避免 toISOString 的 UTC 偏移导致差一天） */
-function fmtDate(d) {
-  const p = (n) => String(n).padStart(2, '0')
-  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
-}
-
-/** 向前/后推 N 个自然月（月末安全：3/31 -1 月 → 2/28 或 2/29） */
-function shiftMonth(base, delta) {
-  const d = new Date(base.getFullYear(), base.getMonth(), 1)
-  d.setMonth(d.getMonth() + delta)
-  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()
-  d.setDate(Math.min(base.getDate(), last))
-  return d
-}
-
 /**
  * 日志日期筛选默认值：截止 = 今天，开始 = 向前反推一个月。
  * 只在输入框为空时填充，不覆盖用户已选日期。
  */
 function initLogDateRange() {
-  const now = new Date()
-  const from = fmtDate(shiftMonth(now, -1))
-  const to = fmtDate(now)
+  const now = Date.now()
+  const from = fmtDay(shiftMonth(now, -1))
+  const to = fmtDay(now)
   for (const pair of [['usageFrom', 'usageTo'], ['auditFrom', 'auditTo']]) {
     const f = document.getElementById(pair[0])
     const t = document.getElementById(pair[1])
@@ -4779,7 +4788,7 @@ function renderUsageTable(items) {
     + '<th>时间</th><th>用户</th><th>物料号</th><th>名称</th><th>规格型号</th><th>主要参数</th><th>小类</th><th>状态</th><th>插件</th>'
     + '</tr></thead><tbody>'
     + items.map((x) => {
-      const t = String(x.at || '').replace('T', ' ').slice(0, 19)
+      const t = fmtBjTime(x.at)
       const params = String(x.params || '')
       const pShort = params.length > 70 ? params.slice(0, 70) + '…' : params
       return '<tr>'
@@ -4878,7 +4887,7 @@ function renderAuditTable(items) {
     + '<th>时间</th><th>用户</th><th>角色</th><th>来源</th><th>操作</th><th>对象</th><th>结果</th><th>耗时</th><th>IP</th>'
     + '</tr></thead><tbody>'
     + items.map((x) => {
-      const t = String(x.at || '').replace('T', ' ').slice(0, 19)
+      const t = fmtBjTime(x.at)
       const okStatus = Number(x.status) < 400
       return '<tr>'
         + '<td class="muted">' + escapeHtml(t) + '</td>'

@@ -269,7 +269,6 @@ export const PERM_DEFS = [
   { key: 'page.feature', group: '页面访问', name: '特征参数录入' },
   { key: 'page.newmat', group: '页面访问', name: '新增物料' },
   { key: 'page.selection', group: '页面访问', name: '选型库' },
-  { key: 'page.usage', group: '页面访问', name: '插件使用日志' },
   { key: 'page.settings', group: '页面访问', name: '系统设置' },
   // 数据操作
   { key: 'data.write', group: '数据操作', name: '编辑规则 / 参数库 / 选型库' },
@@ -281,25 +280,29 @@ export const PERM_DEFS = [
   { key: 'admin.backup', group: '管理', name: '备份与恢复' },
   { key: 'admin.users', group: '管理', name: '用户与角色管理' },
   { key: 'admin.roles', group: '管理', name: '角色权限配置' },
+  { key: 'admin.usage', group: '管理', name: '插件使用日志' },
 ]
 
 /** 默认权限（= 2026-11-19 之前写死的行为；用于首次生成 roles.json 与「恢复默认」） */
 export const DEFAULT_ROLE_PERMS = {
   admin: ['*'],
   std: ['page.overview', 'page.materials', 'page.dedup', 'page.classify', 'page.cleanup',
-    'page.rules', 'page.feature', 'page.newmat', 'page.selection', 'page.usage',
+    'page.rules', 'page.feature', 'page.newmat', 'page.selection', 'admin.usage',
     'data.write', 'data.import', 'data.run', 'biz.submit'],
   design: ['page.overview', 'page.materials', 'page.dedup', 'page.classify', 'page.newmat', 'biz.submit'],
   test: ['page.overview', 'page.materials', 'page.dedup', 'page.classify', 'page.cleanup',
-    'page.rules', 'page.feature', 'page.newmat', 'page.selection', 'page.usage'],
+    'page.rules', 'page.feature', 'page.newmat', 'page.selection', 'admin.usage'],
 }
 
-/** 权限配置版本：新增功能点时递增，并在 loadRolePerms 里给已有角色补默认权限 */
-const PERM_VERSION = 2
+/** 权限配置版本：新增/改名功能点时递增，并在 loadRolePerms 里迁移已有角色 */
+const PERM_VERSION = 3
 /** 各版本为已有角色追加的功能点（只增不删，不覆盖用户手动配置） */
 const PERM_ADDED = {
   2: { std: ['page.usage'], test: ['page.usage'] },
+  3: { std: ['admin.usage'], test: ['admin.usage'] },
 }
+/** 功能点重命名（旧 key → 新 key），迁移时按角色替换 */
+const PERM_RENAMED = { 'page.usage': 'admin.usage' }
 
 const ROLES_FILE = path.join(ROOT, 'src', 'config', 'roles.json')
 let rolesCache = { at: -1, data: null }
@@ -310,6 +313,18 @@ function migratePerms(j) {
   const ver = Math.max(1, Number(meta.permVersion) || 1)
   if (ver >= PERM_VERSION) return false
   const roles = j.roles || {}
+  // ① 功能点重命名（幂等）：page.usage → admin.usage（使用日志移入系统设置卡片）
+  for (const role of Object.keys(roles)) {
+    const r = roles[role]
+    if (!r || !Array.isArray(r.perms)) continue
+    const seen = {}
+    r.perms = r.perms.map((k) => PERM_RENAMED[k] || k).filter((k) => {
+      if (seen[k]) return false
+      seen[k] = 1
+      return true
+    })
+  }
+  // ② 按版本追加新增功能点
   for (const v of Object.keys(PERM_ADDED).map(Number).sort((a, b) => a - b)) {
     if (v <= ver) continue
     const add = PERM_ADDED[v] || {}
@@ -376,14 +391,28 @@ export function hasPerm(role, key) {
   return false
 }
 
-/** 该角色可见的页面 key 列表（按功能点计算） */
+/**
+ * 该角色可见的页面 key 列表（按功能点计算）。
+ * 「系统设置」是入口页：只要拥有任一设置类能力（提取范围 / 备份 / 用户 / 权限 / 使用日志）
+ * 就能进入，页内卡片再按各自权限显隐（避免给了使用日志却看不到入口）。
+ */
 export function pagesOf(role) {
   const out = []
   for (const d of PERM_DEFS) {
     if (d.key.indexOf('page.') !== 0) continue
     if (hasPerm(role, d.key)) out.push(d.key.slice(5))
   }
+  if (out.indexOf('settings') < 0) {
+    const settingCaps = ['page.settings', 'admin.backup', 'admin.users', 'admin.roles', 'admin.usage']
+    if (settingCaps.some((k) => hasPerm(role, k))) out.push('settings')
+  }
   return out
+}
+
+/** 角色的权限点列表（含通配符 *，供前端按权限显隐卡片） */
+export function permsOf(role) {
+  if (!ROLE_NAMES[role]) return []
+  return rolePerms(role).slice()
 }
 
 /** GET 接口 → 所需页面权限（未命中的只读接口：登录即可） */
@@ -396,7 +425,7 @@ const GET_PERM_RULES = [
   [/^\/api\/(name-synonyms|naming-guide|param-lib|std-watch)/, 'page.rules'],
   [/^\/api\/feature/, 'page.feature'],
   [/^\/api\/new-material/, 'page.newmat'],
-  [/^\/api\/plugin\/usage/, 'page.usage'],
+  [/^\/api\/plugin\/usage/, 'admin.usage'],
   [/^\/api\/settings/, 'page.settings'],
   [/^\/api\/(select|selection)/, 'page.selection'],
   [/^\/api\/(jobs|stats|health)/, 'page.overview'],

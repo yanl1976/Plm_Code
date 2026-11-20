@@ -3,11 +3,12 @@
 // 权限来源：/api/auth/me。index.html 已先鉴权并通过 window.__AUTH_BOOT 传入，避免重复请求；
 // 页面级权限由 pages 控制（隐藏无权限的 tab），删除类操作仅 admin（后端同样会 403）。
 const AUTH = (function () {
-  const boot = window.__AUTH_BOOT || { user: null, pages: [] }
+  const boot = window.__AUTH_BOOT || { user: null, pages: [], perms: [] }
   const u = boot.user || null
   return {
     user: u,
     pages: boot.pages || [],
+    perms: boot.perms || [],
     isAdmin: !!(u && u.role === 'admin'),
     isTest: !!(u && u.role === 'test'),
     roleName: u ? (u.roleName || u.role) : '',
@@ -15,6 +16,32 @@ const AUTH = (function () {
   }
 })()
 window.__AUTH = AUTH
+
+/** 前端权限判断（与后端 hasPerm 同口径：* / 直接包含 / 组通配 page.*） */
+function canPerm(key) {
+  if (!AUTH.user) return false
+  if (AUTH.isAdmin) return true
+  const list = AUTH.perms || []
+  if (list.indexOf('*') >= 0 || list.indexOf(key) >= 0) return true
+  const dot = String(key).indexOf('.')
+  return dot > 0 && list.indexOf(key.slice(0, dot) + '.*') >= 0
+}
+
+/** 系统设置的卡片 → 所需权限（无权限的卡片不显示） */
+const CARD_PERMS = {
+  range: 'page.settings',
+  backup: 'admin.backup',
+  users: 'admin.users',
+  roles: 'admin.roles',
+  usage: 'admin.usage',
+}
+
+function applySettingCards() {
+  document.querySelectorAll('.set-card-btn').forEach((b) => {
+    const need = CARD_PERMS[b.dataset.set]
+    b.style.display = (!need || canPerm(need)) ? '' : 'none'
+  })
+}
 
 function applyAuthUI() {
   const box = document.getElementById('authUser')
@@ -48,6 +75,8 @@ function applyAuthUI() {
   if (!AUTH.canDelete) document.body.classList.add('no-delete')
   // 测试角色：整站只读（隐藏主要写入口；所有写接口后端同样返回 403）
   if (AUTH.isTest) document.body.classList.add('readonly-mode')
+  // 系统设置卡片按权限显隐（如只给「使用日志」权限 → 只显示这一张卡）
+  applySettingCards()
 }
 
 async function logoutAuth() {
@@ -91,8 +120,8 @@ document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () 
   if (t.dataset.tab === 'classify') loadTree()
   if (t.dataset.tab === 'cleanup') loadCleanup()
   if (t.dataset.tab === 'rules') loadRules()
-  if (t.dataset.tab === 'usage') { loadUsage(1); loadUsageStats() }
-  if (t.dataset.tab === 'settings') loadSettings()
+  // 系统设置页：只有具备「提取范围」权限才加载设置（仅日志权限的用户进页不触发 /api/settings）
+  if (t.dataset.tab === 'settings' && canPerm('page.settings')) loadSettings()
   if (t.dataset.tab === 'feature') loadFeature()
   if (t.dataset.tab === 'newmat') loadNewMat()
   if (t.dataset.tab === 'selection') loadSelectionAdmin()
@@ -4464,7 +4493,8 @@ function bindUsersUI() {
   }
 }
 
-if (AUTH.isAdmin) { bindUsersUI(); loadUsers(); bindPermsUI(); loadPerms() }
+if (canPerm('admin.users')) { bindUsersUI(); loadUsers() }
+if (canPerm('admin.roles')) { bindPermsUI(); loadPerms() }
 
 // ======================= 角色权限矩阵（仅系统管理员） =======================
 function permMsg(r) {
@@ -4649,6 +4679,7 @@ const SET_PANE_TITLES = {
   backup: '系统数据备份与恢复',
   users: '用户与角色',
   roles: '角色权限配置',
+  usage: '插件使用日志',
 }
 
 function closeSetModal() {
@@ -4665,11 +4696,13 @@ function openSetPane(key) {
   const t = document.getElementById('setModalTitle')
   if (t) t.textContent = SET_PANE_TITLES[key] || '设置'
   m.style.display = 'flex'
-  // 打开时刷新（列表可能已被其他人修改）
+  // 打开时刷新（列表可能已被其他人修改）；按权限决定加载哪些数据
   try {
-    if (key === 'backup') loadBackupList()
-    if (key === 'users' && AUTH.isAdmin) loadUsers()
-    if (key === 'roles' && AUTH.isAdmin) loadPerms()
+    if (key === 'range' && canPerm('page.settings')) loadSettings()
+    if (key === 'backup' && canPerm('admin.backup')) loadBackupList()
+    if (key === 'users' && canPerm('admin.users')) loadUsers()
+    if (key === 'roles' && canPerm('admin.roles')) loadPerms()
+    if (key === 'usage' && canPerm('admin.usage')) { loadUsage(1); loadUsageStats() }
   } catch (e) { }
 }
 

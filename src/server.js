@@ -41,7 +41,7 @@ import { plmStock, plmProbe, plmConfigured } from './plm-inventory.js'
 import { pickAccessoryPool } from './accessory-dict.js'
 import {
   authEnabled, ensureUsers, login, changePassword, readSession,
-  cookieHeader, clearCookieHeader, can, pagesOf, ROLE_NAMES,
+  cookieHeader, clearCookieHeader, can, pagesOf, permsOf, ROLE_NAMES,
   listUsers, createUser, updateUser, resetPassword, deleteUser,
   getPermMatrix, savePermMatrix, resetPermMatrix,
 } from './auth.js'
@@ -919,7 +919,7 @@ async function authGate(req, res, p) {
   if (p === '/api/auth/me') {
     const u = readSession(req)
     if (!u) { sendJson(res, 401, { error: '未登录' }); return false }
-    sendJson(res, 200, { ok: true, user: u, pages: pagesOf(u.role) })
+    sendJson(res, 200, { ok: true, user: u, pages: pagesOf(u.role), perms: permsOf(u.role) })
     return false
   }
   if (p === '/api/auth/logout' && req.method === 'POST') {

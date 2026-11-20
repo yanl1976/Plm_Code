@@ -1,8 +1,8 @@
 {
   "meta": {
     "note": "角色 × 功能点权限（系统设置 → 角色权限）；admin 固定全权，防锁死。",
-    "permVersion": 2,
-    "updatedAt": "2026-11-20T01:19:52.399Z"
+    "permVersion": 3,
+    "updatedAt": "2026-11-20T01:23:30.176Z"
   },
   "roles": {
     "admin": {
@@ -23,7 +23,7 @@
         "page.feature",
         "page.newmat",
         "page.selection",
-        "page.usage",
+        "admin.usage",
         "data.write",
         "data.import",
         "data.run",
@@ -53,7 +53,7 @@
         "page.feature",
         "page.newmat",
         "page.selection",
-        "page.usage"
+        "admin.usage"
       ]
     }
   }

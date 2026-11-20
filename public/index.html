@@ -30,7 +30,6 @@
     <button class="tab" data-tab="classify">分类树</button>
     <button class="tab" data-tab="cleanup">存量清洗</button>
     <button class="tab" data-tab="rules">命名规范</button>
-    <button class="tab" data-tab="usage">使用日志</button>
     <button class="tab" data-tab="settings">系统设置</button>
     <button class="tab" data-tab="feature">特征参数录入</button>
     <button class="tab" data-tab="newmat">新增物料</button>
@@ -130,28 +129,7 @@
         </div>
       </div>
     </section>
-    <!-- 插件使用日志：新增物料提交记录与统计 -->
-    <section class="panel" id="tab-usage">
-      <div class="usage-stats" id="usageStats"></div>
-      <div class="usage-filters">
-        <input id="usageFrom" type="date" title="开始日期" />
-        <span class="muted">~</span>
-        <input id="usageTo" type="date" title="结束日期" />
-        <input id="usageSub" placeholder="小类编码（如 100105）" style="width:150px" />
-        <select id="usageStatus">
-          <option value="">全部状态</option>
-          <option value="in">已入库</option>
-          <option value="pending">待确认</option>
-        </select>
-        <input id="usageKw" placeholder="物料号 / 名称 / 规格" />
-        <button id="usageQuery" class="primary">查询</button>
-        <span id="usageMsg" class="muted"></span>
-      </div>
-      <div id="usageTable"></div>
-      <div class="pager" id="usagePager"></div>
-    </section>
-
-    <!-- 系统设置：三张正方形卡片 → 点击打开对应弹窗 -->
+    <!-- 系统设置：卡片 → 点击打开对应弹窗 -->
     <section class="panel" id="tab-settings">
       <div class="settings-cards">
         <button class="set-card-btn" data-set="range">
@@ -177,6 +155,12 @@
           <span class="scn-title">角色权限</span>
           <span class="scn-desc">角色 × 功能点矩阵<br />勾选保存，即时生效</span>
           <span class="scn-go">打开设置 →</span>
+        </button>
+        <button class="set-card-btn" data-set="usage">
+          <span class="scn-badge">05</span>
+          <span class="scn-title">使用日志</span>
+          <span class="scn-desc">插件新增物料提交记录<br />按小类 / 状态统计与筛选</span>
+          <span class="scn-go">打开查看 →</span>
         </button>
       </div>
 
@@ -267,6 +251,27 @@
                 <button id="btnResetPerms" class="ghost">恢复默认</button>
                 <span id="permsMsg" class="muted"></span>
               </div>
+            </div>
+
+            <!-- 05 插件使用日志（权限点 admin.usage） -->
+            <div class="set-pane" data-pane="usage">
+              <div class="usage-stats" id="usageStats"></div>
+              <div class="usage-filters">
+                <input id="usageFrom" type="date" title="开始日期" />
+                <span class="muted">~</span>
+                <input id="usageTo" type="date" title="结束日期" />
+                <input id="usageSub" placeholder="小类编码（如 100105）" style="width:150px" />
+                <select id="usageStatus">
+                  <option value="">全部状态</option>
+                  <option value="in">已入库</option>
+                  <option value="pending">待确认</option>
+                </select>
+                <input id="usageKw" placeholder="物料号 / 名称 / 规格" />
+                <button id="usageQuery" class="primary">查询</button>
+                <span id="usageMsg" class="muted"></span>
+              </div>
+              <div id="usageTable"></div>
+              <div class="pager" id="usagePager"></div>
             </div>
           </div>
         </div>
@@ -487,7 +492,7 @@
         var r = await fetch('/api/auth/me', { credentials: 'same-origin' })
         if (r.status === 401) { location.replace('/login.html'); return }
         var j = await r.json()
-        window.__AUTH_BOOT = { user: j.user, pages: j.pages || [] }
+        window.__AUTH_BOOT = { user: j.user, pages: j.pages || [], perms: j.perms || [] }
       } catch (e) {
         // 网络异常时继续加载（后端仍会拦截），避免白屏
         window.__AUTH_BOOT = { user: null, pages: [] }

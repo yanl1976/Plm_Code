@@ -345,9 +345,10 @@ function renderMetrics(stats, report) {
 function renderFindings(stats, report) {
   const items = [
     `当前提取范围：仅包含前缀 <b>${stats.prefixFilter?.include?.length ? stats.prefixFilter.include.join('/') : '全部'}</b>${stats.prefixFilter?.exclude?.length ? ` ，并排除 <b>${stats.prefixFilter.exclude.join('/')}</b>` : ''} 开头的物料${stats.screenOrg?.name ? `，筛查组织 <b>${stats.screenOrg.resolvedName || stats.screenOrg.name}</b>` : ''}（在「系统设置」可调整，需重新提取生效）。`,
+    `当前统计源：<b>${stats.sourceFile || 'materials.ndjson'}</b>${stats.sourceAt ? '（' + fmtBjTime(stats.sourceAt) + ' 更新）' : ''}，共 <b>${fmt(stats.total)}</b> 条 —— 与「物料特征 / 查重」使用的是同一份生效快照。`,
     `全库 <b>${fmt(stats.total)}</b> 条物料，唯一编码仅 <b>${fmt(stats.uniqueFNumber)}</b> 个 —— 平均每个编码有 <b>${(stats.total / Math.max(1, stats.uniqueFNumber)).toFixed(1)}</b> 个副本（跨组织分发）。`,
     `强制查重发现 <b>${fmt(report.exactClusterCount)}</b> 个「一物多号」候选簇，其中 <b>${fmt(report.exactHighConfidence)}</b> 个为高置信（归一化后规格完全相同，纯书写差异）。`,
-    `<b>${fmt(stats.emptySpec)}</b> 条（${((stats.emptySpec / stats.total) * 100).toFixed(1)}%）型号规格为空，是查重精度的主要瓶颈，建议补全。`,
+    `<b>${fmt(stats.emptySpec)}</b> 条（${((stats.emptySpec / Math.max(1, stats.total)) * 100).toFixed(1)}%）型号规格为空，是查重精度的主要瓶颈，建议补全。`,
     `已关联 PLM 物料ID 仅 <b>${fmt(stats.hasPlmLink)}</b> 条 —— PLM 联动字段几乎未填，建议从源头补全以实现「PLM 统一发码」根治一物多号。`,
     `在 <b>一物多号查重</b> 页可逐簇人工确认并「添加映射」归并；在 <b>存量清洗</b> 页查看统一物料视图。`,
   ]

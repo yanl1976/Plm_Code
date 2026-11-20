@@ -365,6 +365,44 @@ function allDocs() {
   return list
 }
 
+let _liveStatsCache = { mtime: 0, at: 0, data: null }
+/**
+ * 当前生效快照的数量统计（概览用）。
+ * 2026-11-20：概览此前读 data/stats.json（提取时生成的旧统计），
+ * PLM 同步后仍显示旧 ERP 条数（如 23,059），与实际快照（merged）不一致。
+ * 这里直接按活动数据源计算，5 秒 + mtime 缓存。
+ */
+function liveSnapshotStats() {
+  const file = activeMaterialsFile()
+  let mtime = 0
+  try { mtime = fs.statSync(file).mtimeMs } catch (e) { }
+  if (_liveStatsCache.data && _liveStatsCache.mtime === mtime && Date.now() - _liveStatsCache.at < 5000) {
+    return _liveStatsCache.data
+  }
+  let total = 0, emptySpec = 0, emptyName = 0, hasPlmLink = 0
+  const nums = new Set()
+  try {
+    for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
+      if (!line.trim()) continue
+      let o
+      try { o = JSON.parse(line) } catch (e) { continue }
+      const no = String(o.FNUMBER || '')
+      if (!no) continue
+      total++
+      nums.add(no)
+      if (!String(o.FSPECIFICATION || '').trim()) emptySpec++
+      if (!String(o.FNAME || '').trim()) emptyName++
+      if (o.FPLMMATERIALID != null && String(o.FPLMMATERIALID).trim() !== '') hasPlmLink++
+    }
+  } catch (e) { /* 文件缺失时给 0 */ }
+  const data = {
+    total, uniqueFNumber: nums.size, emptySpec, emptyName, hasPlmLink,
+    sourceFile: path.basename(file), sourceAt: mtime,
+  }
+  _liveStatsCache = { mtime, at: Date.now(), data }
+  return data
+}
+
 /**
  * 同小类查重（实时）—— 与 3100 的 queryDuplicates 同口径。
  *
@@ -1321,9 +1359,11 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (p === '/api/overview') {
+      // stats.json 是「提取时」的旧统计；概览的数量类指标改为实时取当前生效快照
+      // （materials-merged.ndjson 优先），避免 PLM 同步后仍显示旧 ERP 条数。
       const stats = readDataJson('stats.json') || {}
       const report = readDataJson('dedup-report.json') || {}
-      return sendJson(res, 200, { stages: stageStatus(), stats, report })
+      return sendJson(res, 200, { stages: stageStatus(), stats: { ...stats, ...liveSnapshotStats() }, report })
     }
 
     if (p === '/api/clusters') {

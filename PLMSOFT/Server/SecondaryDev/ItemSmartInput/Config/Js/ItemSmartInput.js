@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.36';
+  var PLUGIN_VERSION = '2.37';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -2162,6 +2162,13 @@
     try {
       if (dlg.idePanel && dlg.idePanel.parentNode) dlg.idePanel.parentNode.removeChild(dlg.idePanel);
     } catch (e) { }
+    // 外部点击监听随弹窗移除（每次打开重新注册，避免指向旧实例）
+    try {
+      if (dlg.__ideOutside && document.removeEventListener) {
+        document.removeEventListener('mousedown', dlg.__ideOutside, true);
+        document.removeEventListener('click', dlg.__ideOutside, true);
+      }
+    } catch (e) { }
     try { if (dlg.mask && dlg.mask.parentNode) dlg.mask.parentNode.removeChild(dlg.mask); } catch (e) { }
     dlg = null;
   }
@@ -3976,27 +3983,35 @@
       ideTimer = setTimeout(loadIde, 260);
     });
 
-    // 失焦 / 点击弹窗其它区域 → 收起候选浮层（此前不选用时会一直显示，无法关闭）
+    // 失焦：保留原 bindLive 的校验 + 收起候选浮层
     specIn.onblur = function () {
+      if (timer) clearTimeout(timer);
+      checkNow();
       setTimeout(function () { try { if (dlg) hideIde() } catch (e) { } }, 120);
     };
-    if (!window.__plmIdeOutsideBound && document.addEventListener) {
-      window.__plmIdeOutsideBound = true;
-      var closeIdeIfOutside = function (e) {
-        try {
-          if (!dlg || !idePanel || idePanel.style.display === 'none') return;
-          var t = e && e.target;
-          if (idePanel.contains(t)) return;
-          if (specIn === t || (specIn.contains && specIn.contains(t))) return;
-          hideIde();
-        } catch (e2) { }
-      };
-      document.addEventListener('mousedown', closeIdeIfOutside, true);
-      document.addEventListener('click', closeIdeIfOutside, true);
-    }
 
-    // 规格框键盘补全（捕获阶段不需要：弹窗内无平台按键拦截）
-    specIn.onkeydown = function (e) {
+    // 点击弹窗其它区域 → 收起候选浮层。
+    // 必须【每次 openEditor 重新注册】：监听闭包引用本实例的 dlg/idePanel/specIn，
+    // 若只全局注册一次，第二次打开弹窗后闭包仍指向旧（已销毁）实例，点哪都关不掉。
+    var closeIdeIfOutside = function (e) {
+      try {
+        if (!dlg || !idePanel || idePanel.style.display === 'none') return;
+        var t = e && e.target;
+        if (idePanel.contains(t)) return;
+        if (specIn === t || (specIn.contains && specIn.contains(t))) return;
+        hideIde();
+      } catch (e2) { }
+    };
+    try {
+      if (document.addEventListener) {
+        document.addEventListener('mousedown', closeIdeIfOutside, true);
+        document.addEventListener('click', closeIdeIfOutside, true);
+      }
+    } catch (e) { }
+
+    // 规格框键盘补全：用【捕获阶段】监听，先于平台处理。
+    // 若用 onkeydown（冒泡），平台的捕获监听先执行，ESC 会被当成「取消」→ 物料编码丢失。
+    var onSpecKey = function (e) {
       e = e || window.event;
       if (!e || e.isComposing) return;
       var vis = idePanel.style.display !== 'none' && !!(ideComp && (ideComp.options || []).length);
@@ -4006,7 +4021,7 @@
         hideIde();
         return;
       }
-      if (!vis) return;
+      if (!vis) return;      // 无候选：Tab/Enter/方向键一律放行，交给平台正常跳字段
       if (e.altKey && /^[1-8]$/.test(String(e.key || ''))) {
         if (e.preventDefault) e.preventDefault();
         applyIde(parseInt(e.key, 10) - 1);
@@ -4029,10 +4044,17 @@
       }
       if (e.key === 'Enter') {
         if (e.preventDefault) e.preventDefault();
+        if (e.stopPropagation) e.stopPropagation();
         applyIde(ideSel >= 0 ? ideSel : 0);
         return;
       }
     };
+    // 同时设置属性与捕获监听：真实环境由捕获监听先于平台执行（ESC 能拦住）；
+    // 简化环境（验证器 mock）只会触发 onkeydown。两次调用均幂等（第二次 hideIde 后无候选）。
+    specIn.onkeydown = onSpecKey;
+    try {
+      if (specIn.addEventListener) specIn.addEventListener('keydown', onSpecKey, true);
+    } catch (e) { }
     // 弹窗内容滚动时浮层位置会偏：收起即可（再次输入会重新弹出并定位）
     try { panel.onscroll = function () { hideIde(); }; } catch (e) { }
 
@@ -4097,7 +4119,8 @@
     dlg = {
       mask: mask, panel: panel, nameIn: nameIn, specIn: specIn, paramsIn: paramsIn,
       nameTip: nameTip, specTip: specTip, invWrap: invWrap, invBadge: invBadge, simBtn: simBtn,
-      idePanel: idePanel
+      idePanel: idePanel,
+      __ideOutside: closeIdeIfOutside,   // closeEditor 时移除（否则下次打开仍指向旧闭包）
     };
 
     renderInfo(null);

@@ -951,7 +951,17 @@ button:disabled { opacity:.45; cursor:not-allowed; }
   padding:5px 8px; border:1px solid var(--line); border-radius:4px;
   background:var(--panel); color:var(--text); font-size:12.5px;
 }
-.usage-filters input[type="date"] { width:145px; }
+/* 日期控件：深色主题适配
+   · color-scheme: dark → 原生日历面板（弹出层）与图标按深色主题渲染；
+   · ::-webkit-calendar-picker-indicator 的原生图标是黑色，深色底上看不清，
+     用 filter: invert(1) 反色成白色（即「反查色」）。 */
+.usage-filters input[type="date"] { width:145px; color-scheme: dark; }
+.usage-filters input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: .85;
+  cursor: pointer;
+}
+.usage-filters input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 #usageTable { overflow-x:auto; }
 .usage-table { width:100%; border-collapse:collapse; font-size:12.5px; }
 .usage-table th, .usage-table td { border-bottom:1px solid var(--line); padding:6px 8px; text-align:left; vertical-align:top; }

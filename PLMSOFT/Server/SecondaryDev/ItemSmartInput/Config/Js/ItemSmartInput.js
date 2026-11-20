@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.31';
+  var PLUGIN_VERSION = '2.32';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -4802,7 +4802,7 @@
     var TAG = '[PLM探测]'
     var SVC_FILTER = 'InforCenter.Common.ObjectService.CommonGetObjectDataByFilter'
     var SVC_STOCK = 'Hoteam.InforCenter.ERPService.GetStockSearchData'
-    var KEY_FIELDS = ['ECODE', 'ENAME', 'GGXH', 'ZYCS', 'UNIT', 'STATEID', 'WORKFLOWSTATE', 'EID', 'EUID', 'UPDATETIME', 'EVERSION']
+    var KEY_FIELDS = ['ECODE', 'ENAME', 'GGXH', 'ZYCS', 'UNIT', 'STATEID', 'WORKFLOWSTATE', 'EID', 'EUID', 'UPDATETIME', 'CREATETIME', 'EVERSION']
     // 超时从配置读（ItemSmartInput.config.js 的 plmQueryTimeout），默认 3 分钟
     // 依据：实测 1080 行要 19.5 秒，但个别小类会卡住超过 60 秒，需要放宽并允许现场调整
     var TIMEOUT = Number(CFG.plmQueryTimeout) || 180000
@@ -5334,7 +5334,7 @@
                 items.push({
                   ECODE: r2.ECODE, ENAME: r2.ENAME, GGXH: r2.GGXH, ZYCS: r2.ZYCS,
                   UNIT: r2.UNIT, STATEID: r2.STATEID, EID: r2.EID, EUID: r2.EUID,
-                  UPDATETIME: r2.UPDATETIME, ITEMTYPE: r2.ITEMTYPE,
+                  UPDATETIME: r2.UPDATETIME, CREATETIME: r2.CREATETIME || r2.CREATEDATE, ITEMTYPE: r2.ITEMTYPE,
                 })
               }
               syncState.batchNo++
@@ -5403,7 +5403,7 @@
               items.push({
                 ECODE: r.ECODE, ENAME: r.ENAME, GGXH: r.GGXH, ZYCS: r.ZYCS,
                 UNIT: r.UNIT, STATEID: r.STATEID, EID: r.EID, EUID: r.EUID,
-                UPDATETIME: r.UPDATETIME, ITEMTYPE: r.ITEMTYPE,
+                UPDATETIME: r.UPDATETIME, CREATETIME: r.CREATETIME || r.CREATEDATE, ITEMTYPE: r.ITEMTYPE,
               })
               var tk = Number(r.UPDATETIME || 0)
               if (tk > (syncState.lastTicks || 0)) syncState.lastTicks = tk

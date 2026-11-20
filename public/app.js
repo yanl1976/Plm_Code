@@ -165,7 +165,7 @@ function startOfWeek(d) {
 }
 
 async function loadNewMatStats() {
-  const box = document.getElementById('newMatCards')
+  const box = document.getElementById('metricCards')
   if (!box) return
   const today = fmtDay(new Date())
   const monday = fmtDay(startOfWeek(new Date()))
@@ -175,17 +175,14 @@ async function loadNewMatStats() {
   ])
   const tv = t && t.ok ? t.total : '-'
   const wv = w && w.ok ? w.total : '-'
-  box.innerHTML =
-    '<button class="card card-click" data-newmat="today">'
-    + '<div class="k">今天新增物料</div>'
-    + '<div class="v green">' + (tv === '-' ? '-' : fmt(tv)) + '</div>'
-    + '<div class="k-sub">' + today + ' · 点击查看明细</div>'
-    + '</button>'
-    + '<button class="card card-click" data-newmat="week">'
-    + '<div class="k">本周新增物料</div>'
-    + '<div class="v green">' + (wv === '-' ? '-' : fmt(wv)) + '</div>'
-    + '<div class="k-sub">' + monday + ' ~ ' + today + ' · 点击查看明细</div>'
-    + '</button>'
+  const tEl = document.getElementById('newMatToday')
+  if (tEl) tEl.textContent = tv === '-' ? '-' : fmt(tv)
+  const wEl = document.getElementById('newMatWeek')
+  if (wEl) wEl.textContent = wv === '-' ? '-' : fmt(wv)
+  const ts = document.getElementById('newMatTodaySub')
+  if (ts) ts.textContent = today + ' · 点击查看明细'
+  const ws = document.getElementById('newMatWeekSub')
+  if (ws) ws.textContent = monday + ' ~ ' + today + ' · 点击查看明细'
   box.querySelectorAll('[data-newmat]').forEach((b) => {
     b.onclick = () => openNewMatModal(b.dataset.newmat)
   })
@@ -278,8 +275,15 @@ function renderMetrics(stats, report) {
     { k: '名称为空', v: stats.emptyName, cls: 'red' },
     { k: '已关联 PLM 物料ID', v: stats.hasPlmLink, cls: stats.hasPlmLink ? '' : 'red' },
   ]
+  // 今天 / 本周新增：与其它指标卡同排（顺序接在最后），点击查看明细
   $('#metricCards').innerHTML = cards.map((c) =>
     `<div class="card"><div class="k">${c.k}</div><div class="v ${c.cls || ''}">${fmt(c.v)}</div></div>`).join('')
+    + '<button class="card card-click" data-newmat="today">'
+    + '<div class="k">今天新增物料</div><div class="v green" id="newMatToday">…</div>'
+    + '<div class="k-sub" id="newMatTodaySub"></div></button>'
+    + '<button class="card card-click" data-newmat="week">'
+    + '<div class="k">本周新增物料</div><div class="v green" id="newMatWeek">…</div>'
+    + '<div class="k-sub" id="newMatWeekSub"></div></button>'
 }
 
 function renderFindings(stats, report) {

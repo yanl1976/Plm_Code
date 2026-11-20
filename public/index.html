@@ -41,8 +41,7 @@
     <section class="panel active" id="tab-overview">
       <div class="cards" id="metricCards"></div>
 
-      <!-- 新增物料（今天 / 本周）：点击卡片查看明细 -->
-      <div class="cards" id="newMatCards"></div>
+      <!-- 新增物料明细弹窗（卡片由 renderMetrics 追加进 #metricCards，与其他指标同排） -->
       <div class="set-modal" id="newMatModal" style="display:none">
         <div class="set-modal-mask" data-nmclose="1"></div>
         <div class="set-modal-panel">

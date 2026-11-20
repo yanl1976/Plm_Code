@@ -330,6 +330,27 @@ const normStr = (s) => String(s == null ? '' : s).replace(/\s+/g, '').toUpperCas
  *
  * @param {{exportCsv?: boolean}} opt exportCsv=true 时才写 CSV（后期无需，省 IO）
  */
+/**
+ * PLM 时间字段 → ISO 字符串。
+ * PLM 的 UPDATETIME / CREATETIME 多为 .NET ticks（100ns，自 0001-01-01），
+ * 也可能直接是毫秒时间戳或 "YYYY-MM-DD HH:mm:ss" 字符串；统一转成可被
+ * `new Date(...)` 正常解析的值，供「按创建时间查物料」使用。
+ */
+function toIsoTime(v) {
+  if (v == null || v === '') return null
+  if (typeof v === 'string') {
+    const s = v.trim()
+    if (!s) return null
+    if (/^\d{4}-\d{2}-\d{2}[ T]/.test(s)) return s.replace(' ', 'T')
+  }
+  const n = Number(v)
+  if (!n || !isFinite(n)) return null
+  // .NET ticks（约 6.2e17）→ Unix 毫秒；否则按毫秒时间戳处理
+  const ms = n > 1e15 ? (n - 621355968000000000) / 10000 : n
+  const d = new Date(ms)
+  return isNaN(d.getTime()) ? null : d.toISOString()
+}
+
 export function mergeWithErp(opt) {
   const o = opt || {}
   const plmRows = readSnapshot()
@@ -365,7 +386,9 @@ export function mergeWithErp(opt) {
       SUBPREFIX: code.length >= 6 ? code.slice(0, 6) : null,
       FMATERIALID: p.EID || '',
       FMASTERID: p.EUID || '',
-      FMODIFYDATE: p.UPDATETIME || null,
+      // 创建时间：物料「今天/本周新增」统计依赖该字段（此前缺失 → 统计恒为 0）
+      FCREATEDATE: toIsoTime(p.CREATETIME || p.CREATEDATE),
+      FMODIFYDATE: toIsoTime(p.UPDATETIME),
       UNITNAME: '',
       FMATERIALGROUP: '',
       SOURCE: 'PLM',

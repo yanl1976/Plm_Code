@@ -1271,7 +1271,10 @@ const server = http.createServer(async (req, res) => {
         ver: clipText(b.ver, 20),
         src: clipText(b.src || 'plm', 20),
       }
-      if (!rec.code && !rec.name && !rec.spec) return sendJson(res, 400, { ok: false, error: '内容为空' })
+      // 空快照不入库：保存瞬间可能抓到「只有编码、名称/规格都为空」的脏记录
+      if (!rec.code || (!rec.name && !rec.spec)) {
+        return sendJson(res, 400, { ok: false, error: '缺少编码或名称/规格（空快照不入库）' })
+      }
       appendUsage(rec)
       return sendJson(res, 200, { ok: true })
     }

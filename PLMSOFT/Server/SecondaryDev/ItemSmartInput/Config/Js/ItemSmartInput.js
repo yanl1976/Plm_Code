@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.40';
+  var PLUGIN_VERSION = '2.41';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -382,12 +382,15 @@
    */
   function captureUsage(phase) {
     try {
+      var pv = readText(state.zycs);
+      // 占位文字不记录（二开在未填分类属性时写入的提示语）
+      if (pv && typeof ZYCS_PLACEHOLDER !== 'undefined' && pv === ZYCS_PLACEHOLDER) pv = '';
       return {
         phase: phase || 'submit',
         code: readEcode(),
         name: readText(state.ename),
         spec: readText(state.ggxh),
-        params: readText(state.zycs),
+        params: pv,
         sub: currentSub(),
         ver: PLUGIN_VERSION,
         src: 'plm'
@@ -407,6 +410,7 @@
 
   /** 5 秒内同一内容只上报一次（OnOK 与点击兜底可能同时触发） */
   var _usageLast = { key: '', at: 0 };
+  var _usageByCode = {};   // code → 上次上报时间（30 秒内同编码不重复记）
   function usageKey(b) { return (b.code || '') + '|' + (b.name || '') + '|' + (b.spec || ''); }
 
   /** 发送使用日志（异步 XHR；成功/失败都记日志，便于现场排查） */
@@ -417,6 +421,13 @@
       var k = usageKey(body);
       var now = Date.now();
       if (k && k === _usageLast.key && now - _usageLast.at < 5000) { usageLog('5 秒内重复提交，跳过'); return; }
+      // 同一编码 30 秒内只记一条（OnOK 与点击兜底、保存前后两次抓取会重复）
+      var ck = String(body.code || '');
+      if (ck && _usageByCode[ck] && now - _usageByCode[ck] < 30000) {
+        usageLog('同编码 30 秒内已上报，跳过：' + ck);
+        return;
+      }
+      if (ck) _usageByCode[ck] = now;
       _usageLast = { key: k, at: now };
       var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
       if (!base) { usageLog('inventoryBase 为空，跳过上报', true); return; }
@@ -4500,10 +4511,12 @@
         if (!el) return;
         var txt = String((el.textContent || el.value || '') + ' ' + (el.title || '')).trim();
         if (!/确定|保存|完成|提交/.test(txt)) return;
+        // 延迟 1.5 秒：等平台完成字段回填/表单切换，避免抓到「只有编码、名称规格为空」的中间态
         setTimeout(function () {
           var snap = captureUsage('submit');
-          if (snap) sendUsage(snap);
-        }, 800);
+          if (snap && snap.code && (snap.name || snap.spec)) sendUsage(snap);
+          else usageLog('保存快照字段不全，暂不上报（等待 OnOK 完整快照）');
+        }, 1500);
       } catch (e2) { }
     }
     try {

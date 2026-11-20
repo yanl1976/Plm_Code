@@ -51,6 +51,21 @@ const PUBLIC = path.join(ROOT, 'public')
 const DATA = path.join(ROOT, 'data')
 const CONFIG = path.join(ROOT, 'src', 'config')
 
+/**
+ * 当前生效的物料数据文件（与 3100 `plm-index.activeSource` 同口径）：
+ *   · PLM 合并快照 `materials-merged.ndjson`（同步产物）优先；
+ *   · 不存在/为空时回退旧 ERP 抽取 `materials.ndjson`。
+ *
+ * 2026-11-20 修复：此前 3130 的物料索引 / allDocs / 名称频次全部硬读
+ * `materials.ndjson`，导致「PLM 同步成功了，但看板条数与新增迟迟不变」——
+ * 生产实测 3100 已 23442 条，而看板仍停在 23059 条（旧 ERP 数据）。
+ */
+function activeMaterialsFile() {
+  const merged = path.join(DATA, 'materials-merged.ndjson')
+  try { if (fs.statSync(merged).size > 0) return merged } catch (e) { /* 不存在 */ }
+  return path.join(DATA, 'materials.ndjson')
+}
+
 // ---- 库存/项目号本地缓存 ----
 // 页面上的「现有库存 / 类似型号」直查 ERP 大表（T_STK_INVENTORY / T_HS_BALANCE 维度解码）会慢到分钟级，
 // 用户只看到"卡死"。这里改为【缓存优先】：命中缓存零查询秒开；缺失项才补查，且单条查询强制超时，
@@ -159,7 +174,7 @@ function invalidate(name) { cache.delete(name) }
 // 否则前端会一直显示构建索引那一刻的旧规则结果（用户看不到规则改动）。
 let matIndex = null
 function getMaterialIndex() {
-  const file = path.join(DATA, 'materials.ndjson')
+  const file = activeMaterialsFile()
   if (!fs.existsSync(file)) return null
   const mtime = fs.statSync(file).mtimeMs
   const ruleFile = path.join(CONFIG, 'model-semantics.json')
@@ -294,7 +309,7 @@ function stageStatus() {
   const checkData = (f) => fs.existsSync(path.join(DATA, f)) ? { exists: true, at: fs.statSync(path.join(DATA, f)).mtimeMs } : { exists: false }
   const checkConfig = (f) => fs.existsSync(path.join(CONFIG, f)) ? { exists: true, at: fs.statSync(path.join(CONFIG, f)).mtimeMs } : { exists: false }
   return {
-    extract: { ...checkData('materials.ndjson'), note: '全量提取物料' },
+    extract: { ...checkData(path.basename(activeMaterialsFile())), note: '全量提取物料（活动数据源）' },
     classify: { ...checkConfig('classification.json'), note: 'FNUMBER→小类 分类' },
     dedup: { ...checkData('dedup-exact.json'), note: '强制查重（一物多号）' },
     cleanup: { ...checkData('unified-materials.json'), note: '存量清洗（映射/冻结/统一视图）' },
@@ -329,7 +344,7 @@ function cachedModel(spec) {
 // 物料原文轻量索引（仅编码/名称/规格/小类/单位），供流水分配与规格联想/查重
 let _docsCache = null
 function allDocs() {
-  const file = path.join(DATA, 'materials.ndjson')
+  const file = activeMaterialsFile()
   if (!fs.existsSync(file)) return []
   const mtime = fs.statSync(file).mtimeMs
   if (_docsCache && _docsCache.mtime === mtime) return _docsCache.list
@@ -400,7 +415,7 @@ function findDuplicatesLocal(sub, name, spec, limit) {
 // 用途二：判断输入的短名是否已是「在用完整名称」，避免把「端子」误判成「端子标记」还没打完
 let _nameFreqCache = null
 function nameFreqTable() {
-  const file = path.join(DATA, 'materials.ndjson')
+  const file = activeMaterialsFile()
   if (!fs.existsSync(file)) return new Map()
   const mtime = fs.statSync(file).mtimeMs
   if (_nameFreqCache && _nameFreqCache.mtime === mtime) return _nameFreqCache.bySub
@@ -1338,6 +1353,42 @@ const server = http.createServer(async (req, res) => {
         c.members = c.members.map((m) => ({ ...m, sem: semByNo[m.fNumber] || null }))
       }
       return sendJson(res, 200, c)
+    }
+
+    // 按创建时间查询物料（同步核对 / 新增统计）：
+    // GET /api/materials/new?from=2026-11-16&to=2026-11-20[&limit=500]
+    // 直接读活动数据源（merged 优先），按 FCREATEDATE 过滤；默认按创建时间升序返回前 limit 条。
+    if (p === '/api/materials/new') {
+      const from = String(url.searchParams.get('from') || '').slice(0, 10)
+      const to = String(url.searchParams.get('to') || '').slice(0, 10)
+      const limit = Math.min(2000, Math.max(10, parseInt(url.searchParams.get('limit') || '500', 10) || 500))
+      const file = activeMaterialsFile()
+      if (!fs.existsSync(file)) return sendJson(res, 404, { ok: false, error: '物料数据文件不存在' })
+      const fromTs = from ? new Date(from + 'T00:00:00+08:00').getTime() : 0
+      const toTs = to ? new Date(to + 'T23:59:59.999+08:00').getTime() : Date.now()
+      const items = []
+      let total = 0
+      for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
+        if (!line.trim()) continue
+        let r
+        try { r = JSON.parse(line) } catch (e) { continue }
+        const c = r.FCREATEDATE ? new Date(r.FCREATEDATE).getTime() : 0
+        if (!c || c < fromTs || c > toTs) continue
+        total++
+        if (items.length < limit) {
+          items.push({
+            fnumber: r.FNUMBER,
+            name: r.FNAME,
+            spec: r.FSPECIFICATION,
+            unit: r.UNITNAME || '',
+            sub: String(r.FNUMBER || '').slice(0, 6),
+            createdAt: r.FCREATEDATE,
+            source: r.SOURCE || '',
+          })
+        }
+      }
+      items.sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)))
+      return sendJson(res, 200, { ok: true, from, to, file: path.basename(file), total, items })
     }
 
     if (p === '/api/materials') {

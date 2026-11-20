@@ -24,7 +24,7 @@ import path from 'path'
 import XLSX from 'xlsx'
 import { fileURLToPath } from 'url'
 import { loadIndex, indexStatus, queryDuplicates, suggestNames, suggestSpecs, categoryOf, tokensOf, bucketItems } from './plm-index.js'
-import { buildAccessoryDict } from './accessory-dict.js'
+import { buildAccessoryDict, pickAccessoryPool } from './accessory-dict.js'
 import { complete as specComplete } from './spec-complete.js'
 import { checkMaterial, suggestSpec } from './material-rules.js'
 import { cableSpecHints } from './cable-spec.js'
@@ -57,7 +57,7 @@ const HOST = env('PLM_API_HOST', '0.0.0.0')
 // 版本号必须随「影响接口返回结构/判定逻辑」的改动递增 ——
 // 否则现场无法从返回里判断进程跑的是新代码还是旧代码（曾因此排查了半天：
 // 生产 3100 缺 subMismatch 字段，但 version 一直是 1.4.0，看不出差异）。
-const VERSION = '1.6.3'
+const VERSION = '1.6.4'
 // 构建指纹：现场用它判断「跑的是不是新代码」。
 // VERSION 只在接口结构 / 判定逻辑变化时递增，日常修 bug 不一定升；
 // codeMtime 取关键源文件的最新修改时间，每次部署同步都会变，可据此确认已生效。
@@ -709,7 +709,21 @@ function loadAccDict() {
 function accessoryText(sub, model) {
   const d = loadAccDict()
   const s6 = String(sub || '').slice(0, 6)
-  const M = String(model || '').trim().split(/\s+/)[0].toUpperCase()
+  const rawModel = String(model || '').trim()
+  const M = rawModel.split(/\s+/)[0].toUpperCase()
+
+  // ① 优先「型号行」精确取值（与 3130 /api/new-material/accessory-complete 同口径）。
+  //    此前这里只走「小类+系列」汇总：型号非空时空 series（通用）也会命中，
+  //    于是 100105 里正泰 NB8-40J 选型会带出 3WT 系列的附件（现场已复现）。
+  const pool = pickAccessoryPool(d, s6, rawModel)
+  if (pool && pool.raw) {
+    const parts = []
+    if (pool.raw.wiring) parts.push(String(pool.raw.wiring).trim())
+    if (pool.raw.accessories) parts.push(String(pool.raw.accessories).trim())
+    const raw = parts.filter(Boolean).join('、')
+    if (raw) return raw
+  }
+
   const wiring = (d.wiring || []).filter((w) => String(w.sub || '') === s6)
   const acc = (d.accessories || []).filter((a) => String(a.sub || '') === s6)
   if (!wiring.length && !acc.length) return ''
@@ -720,7 +734,8 @@ function accessoryText(sub, model) {
   ])
   const hit = (se) => {
     const S = String(se || '').toUpperCase()
-    if (!S) return true
+    // 空 series = 通用：只在没有型号时使用，否则会跨系列串配件
+    if (!S) return !M
     if (!M) return false
     return M.includes(S) || S.includes(M)
   }

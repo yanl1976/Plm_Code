@@ -60,7 +60,7 @@ window.ItemSmartInputConfig = {
   },
 
   // ---------- 总开关 ----------
-  enabled: true,              // false = 插件完全静默（最快的止血手段），并自动解除字段锁定
+  enabled: false,              // false = 插件完全静默（最快的止血手段），并自动解除字段锁定
   showCheckButton: true,      // false = 不注入「智能录入」按钮（此时不锁字段，避免无法录入）
   lockFields: 'auto',         // 名称/规格锁定：'auto'=服务可用才锁；true=始终锁；false=不锁
 

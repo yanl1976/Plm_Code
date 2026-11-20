@@ -91,7 +91,8 @@ document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () 
   if (t.dataset.tab === 'classify') loadTree()
   if (t.dataset.tab === 'cleanup') loadCleanup()
   if (t.dataset.tab === 'rules') loadRules()
-if (t.dataset.tab === 'settings') loadSettings()
+  if (t.dataset.tab === 'usage') { loadUsage(1); loadUsageStats() }
+  if (t.dataset.tab === 'settings') loadSettings()
   if (t.dataset.tab === 'feature') loadFeature()
   if (t.dataset.tab === 'newmat') loadNewMat()
   if (t.dataset.tab === 'selection') loadSelectionAdmin()
@@ -4548,6 +4549,99 @@ function bindPermsUI() {
     }
   }
 }
+
+// ======================= 插件使用日志 =======================
+const usageState = { page: 1, total: 0, limit: 50 }
+
+function usageCard(label, value, sub) {
+  return '<div class="usage-card"><div class="uc-label">' + escapeHtml(label) + '</div>'
+    + '<div class="uc-value">' + escapeHtml(String(value == null ? '-' : value)) + '</div>'
+    + (sub ? '<div class="uc-sub">' + escapeHtml(sub) + '</div>' : '') + '</div>'
+}
+
+async function loadUsageStats() {
+  const box = $('#usageStats')
+  if (!box) return
+  const r = await api('/api/plugin/usage/stats?days=14').catch(() => null)
+  if (!r || !r.ok) { box.innerHTML = '<div class="muted">统计加载失败：' + escapeHtml((r && r.error) || '无权限或网络异常') + '</div>'; return }
+  const subs = Object.entries(r.bySub || {}).sort((a, b) => b[1] - a[1]).slice(0, 3)
+  box.innerHTML = usageCard('今日提交', r.today, '近 ' + r.days + ' 天共 ' + r.total + ' 条')
+    + usageCard('今日已入库', r.todayIn, '按物料库编码比对')
+    + usageCard('待确认', r.pending, '物料库中暂无该编码')
+    + subs.map(([k, n]) => usageCard('小类 ' + k, n, '近 ' + r.days + ' 天')).join('')
+}
+
+async function loadUsage(page = 1) {
+  usageState.page = page
+  const box = $('#usageTable')
+  if (box) box.innerHTML = '<div class="muted">加载中…</div>'
+  const q = new URLSearchParams()
+  const val = (id) => { const el = document.getElementById(id); return el ? String(el.value || '').trim() : '' }
+  const from = val('usageFrom')
+  const to = val('usageTo')
+  const sub = val('usageSub')
+  const status = val('usageStatus')
+  const kw = val('usageKw')
+  if (from) q.set('from', from)
+  if (to) q.set('to', to)
+  if (sub) q.set('sub', sub)
+  if (status) q.set('status', status)
+  if (kw) q.set('kw', kw)
+  q.set('page', String(page))
+  q.set('limit', String(usageState.limit))
+  const r = await api('/api/plugin/usage?' + q.toString()).catch(() => null)
+  if (!r || !r.ok) {
+    if (box) box.innerHTML = '<div class="muted">加载失败：' + escapeHtml((r && r.error) || '无权限或网络异常') + '</div>'
+    return
+  }
+  usageState.total = r.total || 0
+  renderUsageTable(r.items || [])
+  renderUsagePager()
+}
+
+function renderUsageTable(items) {
+  const box = $('#usageTable')
+  if (!box) return
+  if (!items.length) {
+    box.innerHTML = '<div class="muted">暂无记录（插件在保存新建零组件时会自动上报）</div>'
+    return
+  }
+  box.innerHTML = '<table class="usage-table"><thead><tr>'
+    + '<th>时间</th><th>用户</th><th>物料号</th><th>名称</th><th>规格型号</th><th>主要参数</th><th>小类</th><th>状态</th><th>插件</th>'
+    + '</tr></thead><tbody>'
+    + items.map((x) => {
+      const t = String(x.at || '').replace('T', ' ').slice(0, 19)
+      const params = String(x.params || '')
+      const pShort = params.length > 70 ? params.slice(0, 70) + '…' : params
+      return '<tr>'
+        + '<td class="muted">' + escapeHtml(t) + '</td>'
+        + '<td>' + escapeHtml(x.u || '-') + '</td>'
+        + '<td class="mono">' + escapeHtml(x.code || '-') + '</td>'
+        + '<td>' + escapeHtml(x.name || '-') + '</td>'
+        + '<td class="usage-spec">' + escapeHtml(x.spec || '-') + '</td>'
+        + '<td class="usage-params" title="' + escapeHtml(params) + '">' + escapeHtml(pShort || '-') + '</td>'
+        + '<td class="muted">' + escapeHtml(x.sub || '') + ' ' + escapeHtml(x.subName || '') + '</td>'
+        + '<td>' + (x.inLib ? '<span class="usage-ok">已入库</span>' : '<span class="usage-pending">待确认</span>') + '</td>'
+        + '<td class="muted">' + escapeHtml(x.ver || '') + '</td>'
+        + '</tr>'
+    }).join('')
+    + '</tbody></table>'
+}
+
+function renderUsagePager() {
+  const box = $('#usagePager')
+  if (!box) return
+  const pages = Math.max(1, Math.ceil(usageState.total / usageState.limit))
+  box.innerHTML = '<button class="ghost" id="usagePrev"' + (usageState.page <= 1 ? ' disabled' : '') + '>上一页</button>'
+    + '<span class="muted">第 ' + usageState.page + ' / ' + pages + ' 页 · 共 ' + usageState.total + ' 条</span>'
+    + '<button class="ghost" id="usageNext"' + (usageState.page >= pages ? ' disabled' : '') + '>下一页</button>'
+  const prev = $('#usagePrev')
+  if (prev) prev.onclick = () => loadUsage(Math.max(1, usageState.page - 1))
+  const next = $('#usageNext')
+  if (next) next.onclick = () => loadUsage(Math.min(pages, usageState.page + 1))
+}
+
+if ($('#usageQuery')) $('#usageQuery').onclick = () => { loadUsage(1); loadUsageStats() }
 
 // ======================= 系统设置：卡片 → 弹窗 =======================
 const SET_PANE_TITLES = {

@@ -885,7 +885,10 @@ async function similarModels(sub, spec, excludeCode, opts = {}) {
  */
 const PLUGIN_READ_RE = /^\/api\/(new-material\/(spec-complete|spec-suggest|spec-check|similar-models|inventory)|name-synonyms\/suggest)$/
 function isPluginRead(method, p) {
-  return String(method).toUpperCase() === 'GET' && PLUGIN_READ_RE.test(p)
+  const m = String(method).toUpperCase()
+  // 插件使用日志上报（跨站、无 Cookie，匿名写入；只写不读）
+  if (m === 'POST' && p === '/api/plugin/usage') return true
+  return m === 'GET' && PLUGIN_READ_RE.test(p)
 }
 
 const STATIC_RE = /\.(?:css|js|mjs|png|jpe?g|gif|svg|ico|webp|woff2?|ttf|map)$/i
@@ -955,10 +958,78 @@ async function authGate(req, res, p) {
   return user
 }
 
+// ---------- 插件使用日志（PLM 插件上报 → 看板统计） ----------
+const USAGE_DIR = path.join(DATA, 'plugin-usage')
+const usageRate = new Map()   // ip → { n, at }，简单防刷
+
+function clipText(s, n) {
+  return String(s == null ? '' : s).replace(/\s+/g, ' ').trim().slice(0, n)
+}
+function dayKey(d) {
+  const p = (x) => String(x).padStart(2, '0')
+  const t = d instanceof Date ? d : new Date(d)
+  return t.getFullYear() + '-' + p(t.getMonth() + 1) + '-' + p(t.getDate())
+}
+function usageLimited(ip) {
+  const now = Date.now()
+  const rec = usageRate.get(ip)
+  if (!rec || now - rec.at > 60 * 1000) { usageRate.set(ip, { n: 1, at: now }); return false }
+  rec.n += 1
+  return rec.n > 120
+}
+function appendUsage(rec) {
+  fs.mkdirSync(USAGE_DIR, { recursive: true })
+  fs.appendFileSync(path.join(USAGE_DIR, dayKey(rec.at) + '.ndjson'), JSON.stringify(rec) + '\n', 'utf8')
+}
+function usageDayRange(from, to) {
+  const out = []
+  const start = from ? new Date(from + 'T00:00:00') : new Date(Date.now() - 30 * 86400000)
+  const end = to ? new Date(to + 'T00:00:00') : new Date()
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return []
+  for (let t = start.getTime(); t <= end.getTime(); t += 86400000) out.push(dayKey(new Date(t)))
+  return out.slice(0, 120)
+}
+function readUsage(from, to) {
+  const out = []
+  for (const day of usageDayRange(from, to)) {
+    let txt = ''
+    try { txt = fs.readFileSync(path.join(USAGE_DIR, day + '.ndjson'), 'utf8') } catch (e) { continue }
+    for (const line of txt.split('\n')) {
+      const s = line.trim()
+      if (!s) continue
+      try { out.push(JSON.parse(s)) } catch (e) { }
+    }
+  }
+  out.sort((a, b) => String(b.at).localeCompare(String(a.at)))
+  return out
+}
+let libCodeCache = { at: 0, set: new Set() }
+/** 物料库现有编码集合（用于判定插件提交的物料是否已入库；5 秒缓存） */
+function libCodeSet() {
+  if (Date.now() - libCodeCache.at < 5000) return libCodeCache.set
+  const set = new Set()
+  try {
+    for (const d of allDocs()) if (d && d.fnumber) set.add(String(d.fnumber))
+  } catch (e) { }
+  libCodeCache = { at: Date.now(), set }
+  return set
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`)
   const p = url.pathname
   try {
+    // CORS 预检：插件跨端口上报使用日志（POST JSON）会先发 OPTIONS
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Max-Age': '86400',
+      })
+      return res.end()
+    }
+
     // ---------- 鉴权：页面 + 接口（关闭鉴权时视为管理员）----------
     const gate = await authGate(req, res, p)
     if (gate === false) return
@@ -1014,6 +1085,69 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/perms/reset' && req.method === 'POST') {
       const r = resetPermMatrix(req.__user && req.__user.u)
       return sendJson(res, r.ok ? 200 : 400, r)
+    }
+
+    // ---------- 插件使用日志 ----------
+    if (p === '/api/plugin/usage' && req.method === 'POST') {
+      const ip = String(req.headers['x-forwarded-for'] || (req.socket && req.socket.remoteAddress) || '')
+      if (usageLimited(ip)) return sendJson(res, 429, { ok: false, error: '上报过于频繁' })
+      const b = await readBody(req, 64 * 1024)
+      const rec = {
+        at: new Date().toISOString(),
+        phase: clipText(b.phase || 'submit', 20),
+        code: clipText(b.code, 64),
+        name: clipText(b.name, 200),
+        spec: clipText(b.spec, 500),
+        params: clipText(b.params, 1000),
+        sub: clipText(b.sub, 6),
+        subName: clipText(b.subName, 50),
+        itype: clipText(b.itype, 60),
+        u: clipText(b.u, 60),
+        ver: clipText(b.ver, 20),
+        src: clipText(b.src || 'plm', 20),
+      }
+      if (!rec.code && !rec.name && !rec.spec) return sendJson(res, 400, { ok: false, error: '内容为空' })
+      appendUsage(rec)
+      return sendJson(res, 200, { ok: true })
+    }
+    if (p === '/api/plugin/usage/stats') {
+      const days = Math.min(90, Math.max(1, parseInt(url.searchParams.get('days') || '14', 10) || 14))
+      const all = readUsage('', '')
+      const lib = libCodeSet()
+      const today = dayKey(new Date())
+      const byDay = {}, bySub = {}, byUser = {}
+      let todayCount = 0, todayIn = 0, pending = 0
+      const cutoff = Date.now() - days * 86400000
+      for (const x of all) {
+        const t = new Date(x.at).getTime()
+        if (!(t >= cutoff)) continue
+        const dk = String(x.at).slice(0, 10)
+        byDay[dk] = (byDay[dk] || 0) + 1
+        const sk = x.sub || '未分类'
+        bySub[sk] = (bySub[sk] || 0) + 1
+        const uk = x.u || '未知'
+        byUser[uk] = (byUser[uk] || 0) + 1
+        const inLib = !!(x.code && lib.has(x.code))
+        if (dk === today) { todayCount++; if (inLib) todayIn++ }
+        if (!inLib) pending++
+      }
+      return sendJson(res, 200, { ok: true, days, total: all.length, today: todayCount, todayIn, pending, byDay, bySub, byUser })
+    }
+    if (p === '/api/plugin/usage' && req.method === 'GET') {
+      const from = String(url.searchParams.get('from') || '').slice(0, 10)
+      const to = String(url.searchParams.get('to') || '').slice(0, 10)
+      const sub = String(url.searchParams.get('sub') || '').slice(0, 6)
+      const kw = String(url.searchParams.get('kw') || '').trim().toLowerCase()
+      const status = String(url.searchParams.get('status') || '')
+      const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10) || 1)
+      const limit = Math.min(200, Math.max(10, parseInt(url.searchParams.get('limit') || '50', 10) || 50))
+      const lib = libCodeSet()
+      let rows = readUsage(from, to).map((x) => ({ ...x, inLib: !!(x.code && lib.has(x.code)) }))
+      if (sub) rows = rows.filter((x) => x.sub === sub)
+      if (status === 'in') rows = rows.filter((x) => x.inLib)
+      else if (status === 'pending') rows = rows.filter((x) => !x.inLib)
+      if (kw) rows = rows.filter((x) => (String(x.code) + ' ' + String(x.name) + ' ' + String(x.spec)).toLowerCase().indexOf(kw) >= 0)
+      return sendJson(res, 200, { ok: true, total: rows.length, page, limit, items: rows.slice((page - 1) * limit, page * limit) })
     }
 
     if (p === '/api/overview') {

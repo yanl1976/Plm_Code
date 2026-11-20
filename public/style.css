@@ -940,6 +940,27 @@ button:disabled { opacity:.45; cursor:not-allowed; }
 .perm-table input[type="checkbox"] { width:15px; height:15px; cursor:pointer; }
 .perm-actions { margin-top:12px; display:flex; gap:8px; align-items:center; }
 
+/* 插件使用日志 */
+.usage-stats { display:flex; flex-wrap:wrap; gap:12px; margin:4px 0 6px; }
+.usage-card { min-width:150px; padding:12px 14px; background:var(--panel); border:1px solid var(--line); border-radius:10px; }
+.usage-card .uc-label { font-size:12px; color:var(--muted); }
+.usage-card .uc-value { font-size:22px; font-weight:700; margin-top:4px; }
+.usage-card .uc-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+.usage-filters { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:12px 0; }
+.usage-filters input, .usage-filters select {
+  padding:5px 8px; border:1px solid var(--line); border-radius:4px;
+  background:var(--panel); color:var(--text); font-size:12.5px;
+}
+.usage-filters input[type="date"] { width:145px; }
+#usageTable { overflow-x:auto; }
+.usage-table { width:100%; border-collapse:collapse; font-size:12.5px; }
+.usage-table th, .usage-table td { border-bottom:1px solid var(--line); padding:6px 8px; text-align:left; vertical-align:top; }
+.usage-table th { color:var(--muted); font-weight:normal; white-space:nowrap; }
+.usage-table .usage-spec { max-width:280px; word-break:break-all; }
+.usage-table .usage-params { max-width:320px; word-break:break-all; }
+.usage-ok { color:#4cd08a; }
+.usage-pending { color:#ffb454; }
+
 /* 只读抽屉不显示「+ 参数」 */
 .pl-drawer-foot.readonly #plAddParam { display:none; }
 

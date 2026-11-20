@@ -30,6 +30,7 @@
     <button class="tab" data-tab="classify">分类树</button>
     <button class="tab" data-tab="cleanup">存量清洗</button>
     <button class="tab" data-tab="rules">命名规范</button>
+    <button class="tab" data-tab="usage">使用日志</button>
     <button class="tab" data-tab="settings">系统设置</button>
     <button class="tab" data-tab="feature">特征参数录入</button>
     <button class="tab" data-tab="newmat">新增物料</button>
@@ -129,6 +130,27 @@
         </div>
       </div>
     </section>
+    <!-- 插件使用日志：新增物料提交记录与统计 -->
+    <section class="panel" id="tab-usage">
+      <div class="usage-stats" id="usageStats"></div>
+      <div class="usage-filters">
+        <input id="usageFrom" type="date" title="开始日期" />
+        <span class="muted">~</span>
+        <input id="usageTo" type="date" title="结束日期" />
+        <input id="usageSub" placeholder="小类编码（如 100105）" style="width:150px" />
+        <select id="usageStatus">
+          <option value="">全部状态</option>
+          <option value="in">已入库</option>
+          <option value="pending">待确认</option>
+        </select>
+        <input id="usageKw" placeholder="物料号 / 名称 / 规格" />
+        <button id="usageQuery" class="primary">查询</button>
+        <span id="usageMsg" class="muted"></span>
+      </div>
+      <div id="usageTable"></div>
+      <div class="pager" id="usagePager"></div>
+    </section>
+
     <!-- 系统设置：三张正方形卡片 → 点击打开对应弹窗 -->
     <section class="panel" id="tab-settings">
       <div class="settings-cards">

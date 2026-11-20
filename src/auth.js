@@ -269,6 +269,7 @@ export const PERM_DEFS = [
   { key: 'page.feature', group: '页面访问', name: '特征参数录入' },
   { key: 'page.newmat', group: '页面访问', name: '新增物料' },
   { key: 'page.selection', group: '页面访问', name: '选型库' },
+  { key: 'page.usage', group: '页面访问', name: '插件使用日志' },
   { key: 'page.settings', group: '页面访问', name: '系统设置' },
   // 数据操作
   { key: 'data.write', group: '数据操作', name: '编辑规则 / 参数库 / 选型库' },
@@ -286,23 +287,56 @@ export const PERM_DEFS = [
 export const DEFAULT_ROLE_PERMS = {
   admin: ['*'],
   std: ['page.overview', 'page.materials', 'page.dedup', 'page.classify', 'page.cleanup',
-    'page.rules', 'page.feature', 'page.newmat', 'page.selection',
+    'page.rules', 'page.feature', 'page.newmat', 'page.selection', 'page.usage',
     'data.write', 'data.import', 'data.run', 'biz.submit'],
   design: ['page.overview', 'page.materials', 'page.dedup', 'page.classify', 'page.newmat', 'biz.submit'],
   test: ['page.overview', 'page.materials', 'page.dedup', 'page.classify', 'page.cleanup',
-    'page.rules', 'page.feature', 'page.newmat', 'page.selection'],
+    'page.rules', 'page.feature', 'page.newmat', 'page.selection', 'page.usage'],
+}
+
+/** 权限配置版本：新增功能点时递增，并在 loadRolePerms 里给已有角色补默认权限 */
+const PERM_VERSION = 2
+/** 各版本为已有角色追加的功能点（只增不删，不覆盖用户手动配置） */
+const PERM_ADDED = {
+  2: { std: ['page.usage'], test: ['page.usage'] },
 }
 
 const ROLES_FILE = path.join(ROOT, 'src', 'config', 'roles.json')
 let rolesCache = { at: -1, data: null }
 
-/** 读取角色权限配置（mtime 缓存；缺文件时写默认值） */
+/** 把旧版权限配置补齐到当前版本（只新增功能点，不覆盖用户已有配置） */
+function migratePerms(j) {
+  const meta = j.meta || {}
+  const ver = Math.max(1, Number(meta.permVersion) || 1)
+  if (ver >= PERM_VERSION) return false
+  const roles = j.roles || {}
+  for (const v of Object.keys(PERM_ADDED).map(Number).sort((a, b) => a - b)) {
+    if (v <= ver) continue
+    const add = PERM_ADDED[v] || {}
+    for (const role of Object.keys(add)) {
+      const r = roles[role]
+      if (!r || !Array.isArray(r.perms)) continue
+      for (const k of add[role]) if (r.perms.indexOf(k) < 0) r.perms.push(k)
+    }
+  }
+  j.meta = Object.assign({}, meta, { permVersion: PERM_VERSION, updatedAt: new Date().toISOString() })
+  return true
+}
+
+/** 读取角色权限配置（mtime 缓存；缺文件时写默认值；旧版本自动补齐新增功能点） */
 export function loadRolePerms() {
   try {
     const st = fs.statSync(ROLES_FILE)
     if (rolesCache.data && rolesCache.at === st.mtimeMs) return rolesCache.data
     const j = JSON.parse(fs.readFileSync(ROLES_FILE, 'utf8'))
-    rolesCache = { at: st.mtimeMs, data: (j && j.roles) || {} }
+    if (migratePerms(j)) {
+      try {
+        fs.writeFileSync(ROLES_FILE, JSON.stringify({ meta: j.meta, roles: j.roles || {} }, null, 2) + '\n', 'utf8')
+      } catch (e2) { /* 写失败不阻断：本次用内存对象 */ }
+    }
+    let at = st.mtimeMs
+    try { at = fs.statSync(ROLES_FILE).mtimeMs } catch (e3) { }
+    rolesCache = { at, data: (j && j.roles) || {} }
     return rolesCache.data
   } catch (e) {
     const init = {}
@@ -310,7 +344,11 @@ export function loadRolePerms() {
     try {
       fs.mkdirSync(path.dirname(ROLES_FILE), { recursive: true })
       fs.writeFileSync(ROLES_FILE, JSON.stringify({
-        meta: { note: '角色 × 功能点权限（系统设置 → 角色权限）；admin 固定全权，防锁死。', updatedAt: new Date().toISOString() },
+        meta: {
+          note: '角色 × 功能点权限（系统设置 → 角色权限）；admin 固定全权，防锁死。',
+          permVersion: PERM_VERSION,
+          updatedAt: new Date().toISOString(),
+        },
         roles: init,
       }, null, 2) + '\n', 'utf8')
     } catch (e2) { /* 写失败用内存默认 */ }
@@ -358,6 +396,7 @@ const GET_PERM_RULES = [
   [/^\/api\/(name-synonyms|naming-guide|param-lib|std-watch)/, 'page.rules'],
   [/^\/api\/feature/, 'page.feature'],
   [/^\/api\/new-material/, 'page.newmat'],
+  [/^\/api\/plugin\/usage/, 'page.usage'],
   [/^\/api\/settings/, 'page.settings'],
   [/^\/api\/(select|selection)/, 'page.selection'],
   [/^\/api\/(jobs|stats|health)/, 'page.overview'],
@@ -455,7 +494,11 @@ export function savePermMatrix(roles, by) {
   try {
     fs.mkdirSync(path.dirname(ROLES_FILE), { recursive: true })
     fs.writeFileSync(ROLES_FILE, JSON.stringify({
-      meta: { note: '角色 × 功能点权限（系统设置 → 角色权限）；admin 固定全权，防锁死。', updatedAt: new Date().toISOString() },
+      meta: {
+        note: '角色 × 功能点权限（系统设置 → 角色权限）；admin 固定全权，防锁死。',
+        permVersion: PERM_VERSION,
+        updatedAt: new Date().toISOString(),
+      },
       roles: next,
     }, null, 2) + '\n', 'utf8')
   } catch (e) { return { ok: false, error: '写入失败：' + ((e && e.message) || e) } }

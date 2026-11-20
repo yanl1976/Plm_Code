@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.30';
+  var PLUGIN_VERSION = '2.31';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -111,6 +111,9 @@
     inventorySource: 'plm',      // 'plm'=直接用 PLM 的 ERPService（与 BOM 库存查询同源）；'dashboard'=走 inventoryBase
     // allowDirectErp 已移除：全面切换 PLM，不再回落 ERP 直连
     inventoryBase: '',           // 治理看板地址（规格联想/同义词建议走这里更快），如 http://192.168.20.31:3130
+    // 插件使用日志：保存新建零组件时上报「物料号/名称/规格/主要参数」到看板（见 reportUsage）
+    // 平台没有保存成功回调，看板用「编码是否已进物料库」区分已入库/待确认
+    usageLog: true,
     // 按钮只对下列「类型(ITEMTYPE)」生效，其余类型置灰不可用
     restrictItemType: true,
     itemTypeAllowText: ['电气元件', '原材料', '外购标准件'],
@@ -361,6 +364,40 @@
   function currentSub() {
     var code = readEcode();
     return code.length >= 6 ? code.slice(0, 6) : '';
+  }
+
+  /**
+   * 插件使用日志上报（保存新建零组件时）。
+   *
+   * 为什么记录「提交」而不是「保存成功」：PLM 的 PSEITEM-CREATE.page 只暴露
+   * OnCreate / OnGetDataFromPage / OnSaveCheck（保存校验），**没有保存成功回调**。
+   * 因此这里记录保存提交时的完整内容；看板侧用「物料号是否已进入物料库」判定
+   * 已入库 / 待确认（见 /api/plugin/usage 的 inLib），满足新增物料统计分析。
+   *
+   * 异步 XHR，超时/失败一律静默，绝不阻断保存。
+   */
+  function reportUsage(phase) {
+    try {
+      if (!CFG.enabled || CFG.usageLog === false) return;
+      var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
+      if (!base) return;
+      var body = {
+        phase: phase || 'submit',
+        code: readEcode(),
+        name: readText(state.ename),
+        spec: readText(state.ggxh),
+        params: readText(state.zycs),
+        sub: currentSub(),
+        ver: PLUGIN_VERSION,
+        src: 'plm'
+      };
+      if (!body.code && !body.name && !body.spec) return;
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', base + '/api/plugin/usage', true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.timeout = 5000;
+      xhr.send(JSON.stringify(body));
+    } catch (e) { }
   }
 
   // ============ 规格型号 → 主要参数(ZYCS) / 分类属性合并(FLSXHB) ============
@@ -4242,6 +4279,17 @@
       return true;
     }
   };
+
+  // ---- 使用日志：保存校验放行后上报（异步，不影响保存；平台无保存成功回调）----
+  (function () {
+    var origOnOK = window.InforCenter_PSEITEM_CreatePage_OnOK;
+    window.InforCenter_PSEITEM_CreatePage_OnOK = function (pageEvent) {
+      var r = origOnOK.apply(this, arguments);
+      // false = 校验未通过（阻断保存），此时不上报；其余情况视为提交保存
+      if (r !== false) setTimeout(function () { reportUsage('submit'); }, 0);
+      return r;
+    };
+  })();
 
   // ---- 兼容 PSEITEM$ ----
   // PLM 里存在两个同名的「新建零组件」对象类型，页面与控件 ID 完全一致，只是钩子名不同：

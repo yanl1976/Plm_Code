@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.43';
+  var PLUGIN_VERSION = '2.44';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -4825,16 +4825,43 @@
    * 高级查询页也有 名称/编号/规格型号/类型 四个字段，DOM 兜底若只看字段
    * 会把查询条件当成新建表单：注入「智能录入」按钮并锁字段（现场已复现）。
    */
+  /** 页面根节点是否为「新建」页（pagepagename 含 CREATE） */
+  function isCreateRoot(el) {
+    try { return /CREATE/i.test(String((el.getAttribute && el.getAttribute('pagepagename')) || '')); } catch (e) { return false; }
+  }
+
+  /**
+   * 可见的「新建」页根节点。
+   * 顶部工作标签（个人门户 / 工作空间 / 高级查询）会同时保留多个页面根节点，
+   * 必须取**当前可见**的那个，否则会把查询页的字段当成新建表单。
+   */
+  function visibleCreateRoot() {
+    try {
+      var roots = document.querySelectorAll ? document.querySelectorAll('[pagepagename]') : [];
+      var first = null;
+      for (var i = 0; i < roots.length; i++) {
+        if (!isCreateRoot(roots[i])) continue;
+        if (!first) first = roots[i];
+        if (inputVisible(roots[i])) return roots[i];
+      }
+      return first;
+    } catch (e) { return null; }
+  }
+
   function isCreatePageDom() {
     try {
-      var roots = (document.querySelectorAll ? document.querySelectorAll('[pagepagename]') : []);
-      var vals = [];
-      for (var i = 0; i < roots.length; i++) vals.push(String(roots[i].getAttribute('pagepagename') || ''));
-      if (vals.length) {
-        for (var j = 0; j < vals.length; j++) if (/QUERY|SEARCH/i.test(vals[j])) return false;
-        for (var k = 0; k < vals.length; k++) if (/CREATE/i.test(vals[k])) return true;
-        return false;
+      var roots = document.querySelectorAll ? document.querySelectorAll('[pagepagename]') : [];
+      var hasCreate = false, hasQuery = false, visCreate = null;
+      for (var i = 0; i < roots.length; i++) {
+        var pn = String(roots[i].getAttribute('pagepagename') || '');
+        if (/CREATE/i.test(pn)) { hasCreate = true; if (!visCreate && inputVisible(roots[i])) visCreate = roots[i]; }
+        if (/QUERY|SEARCH/i.test(pn)) hasQuery = true;
       }
+      // CREATE 优先：同时打开「工作空间（新建）」与「高级查询」时，不能被并存的查询页否决，
+      // 否则新建页的智能录入按钮会"失效"（现场：单独开工作空间正常，开了高级查询就不行）。
+      if (visCreate) return true;
+      if (hasCreate) return true;
+      if (hasQuery) return false;
       // 没有 pagepagename：按页面可见文案判断（查询页有「高级查询/通用查询」，新建页有「新建零组件」）
       var txt = String((document.body && document.body.textContent) || '').slice(0, 4000);
       if (/高级查询|通用查询|分类查询|零组件查询/.test(txt) && !/新建零组件|新建物料/.test(txt)) return false;
@@ -4843,22 +4870,51 @@
     } catch (e) { return false; }
   }
 
+  /** 在指定根节点内按标签找输入框（多标签时只认当前页面内的字段） */
+  function findInRoot(root, labels) {
+    try {
+      var els = root.querySelectorAll ? root.querySelectorAll('input,textarea') : [];
+      for (var i = 0; i < els.length; i++) {
+        var el = els[i];
+        if (!inputVisible(el) || looksLikeDropdown(el)) continue;
+        var lb = nearLabel(el);
+        for (var j = 0; j < labels.length; j++) if (labelHit(lb, labels[j])) return el;
+      }
+    } catch (e) { }
+    return null;
+  }
+
   function takeOverByDom() {
     // 页面判定优先：高级查询页字段结构相同，必须排除，否则会误注入按钮并锁字段
     if (!isCreatePageDom()) return false;
+    var allRoots = document.querySelectorAll ? document.querySelectorAll('[pagepagename]') : [];
+    var root = visibleCreateRoot();
+    // 有页面根节点但没有可见的新建页（例如当前切到高级查询标签）→ 不接管，
+    // 避免把查询条件当成新建表单并锁字段
+    if (allRoots.length && !root) return false;
     // 优先按稳定 id（*_Value）；本平台实际渲染的是 id2044_TextBox 这类自动 id，
     // 找不到就按标签文字（规格型号 / 名称 / 编号 / 类型）定位。
     var hasId = function (el) { return !!(el && el.id); };
-    var specEl = findInput('GGXH_Value') || findInputByLabel(['规格型号'], { noDropdown: true });
+    var specEl = (root ? findInRoot(root, ['规格型号']) : null)
+      || findInput('GGXH_Value') || findInputByLabel(['规格型号'], { noDropdown: true });
+    if (root && specEl && !root.contains(specEl)) specEl = null;
     if (!hasId(specEl) || !inputVisible(specEl)) return false;
     if (looksLikeDropdown(specEl)) {           // 下拉框绝不是规格型号
       log('规格型号定位到了下拉控件（' + specEl.id + '），跳过本次接管');
       return false;
     }
 
-    var enameEl = findInput('ENAME_Value') || findInputByLabel(['名称'], { noDropdown: true });
-    var ecodeEl = findEcodeHost();             // 编号是 EditButton，可能是 div 而非 input
-    var typeEl = findInput('ITEMTYPE_Value') || findInputByLabel(['类型']);
+    var enameEl = (root ? findInRoot(root, ['名称']) : null)
+      || findInput('ENAME_Value') || findInputByLabel(['名称'], { noDropdown: true });
+    var ecodeEl = (root && root.querySelector ? root.querySelector('[cid="ECODE_Value"]') : null)
+      || findEcodeHost();                      // 编号是 EditButton，可能是 div 而非 input
+    var typeEl = (root ? findInRoot(root, ['类型']) : null)
+      || findInput('ITEMTYPE_Value') || findInputByLabel(['类型']);
+    if (root) {
+      if (enameEl && !root.contains(enameEl)) enameEl = null;
+      if (ecodeEl && !root.contains(ecodeEl)) ecodeEl = null;
+      if (typeEl && !root.contains(typeEl)) typeEl = null;
+    }
     // 只认带 id 的控件，且至少要有编号或类型，避免在首页/查询页误挂
     if (!hasId(enameEl)) enameEl = null;
     if (!hasId(ecodeEl)) ecodeEl = null;

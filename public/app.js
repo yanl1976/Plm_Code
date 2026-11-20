@@ -192,48 +192,78 @@ async function loadOverview() {
   loadNewMatStats()
 }
 
-// ---------- 新增物料（今天 / 本周）----------
+// ---------- 新增物料（一张卡片；弹窗内按 当天 / 本周 / 本月 查询）----------
+const NEWMAT_LABELS = { today: '当天', week: '本周', month: '本月' }
+const newMatState = { range: 'week' }
+
+/** 查询区间（北京时间）：当天 / 本周（周一至今）/ 本月（1 日至今） */
+function newMatRange(kind) {
+  const today = fmtDay(Date.now())
+  if (kind === 'today') return { from: today, to: today }
+  if (kind === 'month') {
+    const p = bjParts(Date.now())
+    // 北京本月 1 日 00:00 对应的真实时间戳
+    const from = fmtDay(new Date(Date.UTC(p.y, p.m, 1)).getTime() - BJ_MS)
+    return { from, to: today }
+  }
+  return { from: fmtDay(startOfWeek(Date.now())), to: today }
+}
+
 async function loadNewMatStats() {
   const box = document.getElementById('metricCards')
   if (!box) return
-  const today = fmtDay(new Date())
-  const monday = fmtDay(startOfWeek(new Date()))
-  const [t, w] = await Promise.all([
-    api('/api/materials/new?from=' + today + '&to=' + today + '&limit=1').catch(() => null),
-    api('/api/materials/new?from=' + monday + '&to=' + today + '&limit=1').catch(() => null),
-  ])
-  const tv = t && t.ok ? t.total : '-'
-  const wv = w && w.ok ? w.total : '-'
-  const tEl = document.getElementById('newMatToday')
-  if (tEl) tEl.textContent = tv === '-' ? '-' : fmt(tv)
-  const wEl = document.getElementById('newMatWeek')
-  if (wEl) wEl.textContent = wv === '-' ? '-' : fmt(wv)
-  const ts = document.getElementById('newMatTodaySub')
-  if (ts) ts.textContent = today + ' · 点击查看明细'
-  const ws = document.getElementById('newMatWeekSub')
-  if (ws) ws.textContent = monday + ' ~ ' + today + ' · 点击查看明细'
+  const r = newMatRange('week')
+  const j = await api('/api/materials/new?from=' + r.from + '&to=' + r.to + '&limit=1').catch(() => null)
+  const v = j && j.ok ? j.total : '-'
+  const vEl = document.getElementById('newMatWeek')
+  if (vEl) vEl.textContent = v === '-' ? '-' : fmt(v)
+  const sub = document.getElementById('newMatWeekSub')
+  if (sub) sub.textContent = r.from + ' ~ ' + r.to + ' · 点击查看当天/本周/本月'
   box.querySelectorAll('[data-newmat]').forEach((b) => {
-    b.onclick = () => openNewMatModal(b.dataset.newmat)
+    b.onclick = () => openNewMatModal('week')
   })
 }
 
-async function openNewMatModal(kind) {
-  const m = document.getElementById('newMatModal')
-  if (!m) return
-  const today = fmtDay(new Date())
-  const from = kind === 'week' ? fmtDay(startOfWeek(new Date())) : today
-  const title = document.getElementById('newMatTitle')
-  if (title) title.textContent = (kind === 'week' ? '本周新增物料' : '今天新增物料') + '（' + from + ' ~ ' + today + '）'
+function renderNewMatTabs() {
+  const box = document.getElementById('newMatTabs')
+  if (!box) return
+  box.querySelectorAll('[data-nmrange]').forEach((b) => {
+    b.classList.toggle('active', b.dataset.nmrange === newMatState.range)
+  })
+}
+
+async function loadNewMatDetail() {
   const body = document.getElementById('newMatBody')
   if (body) body.innerHTML = '<div class="muted">加载中…</div>'
-  m.style.display = 'flex'
-  const r = await api('/api/materials/new?from=' + from + '&to=' + today + '&limit=500').catch(() => null)
-  if (!r || !r.ok) {
-    if (body) body.innerHTML = '<div class="muted">加载失败：' + escapeHtml((r && r.error) || '接口不可用或无权限') + '</div>'
+  const r = newMatRange(newMatState.range)
+  const title = document.getElementById('newMatTitle')
+  if (title) {
+    title.textContent = '新增物料 · ' + (NEWMAT_LABELS[newMatState.range] || '')
+      + '（' + r.from + ' ~ ' + r.to + '）'
+  }
+  renderNewMatTabs()
+  const j = await api('/api/materials/new?from=' + r.from + '&to=' + r.to + '&limit=500').catch(() => null)
+  if (!j || !j.ok) {
+    if (body) body.innerHTML = '<div class="muted">加载失败：' + escapeHtml((j && j.error) || '接口不可用或无权限') + '</div>'
     return
   }
-  renderNewMatTable(r)
+  renderNewMatTable(j)
 }
+
+function openNewMatModal(kind) {
+  const m = document.getElementById('newMatModal')
+  if (!m) return
+  newMatState.range = kind || 'week'
+  m.style.display = 'flex'
+  loadNewMatDetail()
+}
+
+document.querySelectorAll('#newMatTabs [data-nmrange]').forEach((b) => {
+  b.onclick = () => {
+    newMatState.range = b.dataset.nmrange
+    loadNewMatDetail()
+  }
+})
 
 function renderNewMatTable(r) {
   const body = document.getElementById('newMatBody')
@@ -307,11 +337,8 @@ function renderMetrics(stats, report) {
   // 今天 / 本周新增：与其它指标卡同排（顺序接在最后），点击查看明细
   $('#metricCards').innerHTML = cards.map((c) =>
     `<div class="card"><div class="k">${c.k}</div><div class="v ${c.cls || ''}">${fmt(c.v)}</div></div>`).join('')
-    + '<button class="card card-click" data-newmat="today">'
-    + '<div class="k">今天新增物料</div><div class="v green" id="newMatToday">…</div>'
-    + '<div class="k-sub" id="newMatTodaySub"></div></button>'
     + '<button class="card card-click" data-newmat="week">'
-    + '<div class="k">本周新增物料</div><div class="v green" id="newMatWeek">…</div>'
+    + '<div class="k">新增物料</div><div class="v green" id="newMatWeek">…</div>'
     + '<div class="k-sub" id="newMatWeekSub"></div></button>'
 }
 

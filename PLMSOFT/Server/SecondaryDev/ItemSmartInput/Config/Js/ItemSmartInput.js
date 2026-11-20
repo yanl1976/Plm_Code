@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.32';
+  var PLUGIN_VERSION = '2.33';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -4955,6 +4955,29 @@
       }
     }
 
+    /**
+     * 分页拉取某小类的全部物料（PLM 单次返回有行数上限，不分页会静默截断）。
+     * 每页 1000，返回不足一页即认为结束；increment 场景用 afterTicks 过滤。
+     */
+    function fetchAllRows(sub, afterTicks, cb) {
+      var PAGE = 1000
+      var all = []
+      var page = 1
+      var guard = 0
+      function step() {
+        if (++guard > 200) { cb({ step: 'paging', message: '分页超过 200 页，已中止' }, all); return }
+        var fsStr = "ECODE LIKE '" + sub + "%'"
+        if (afterTicks > 0) fsStr += ' AND UPDATETIME > ' + afterTicks
+        callPlm(fsStr, function (e, rows) {
+          if (e) { cb(e, all); return }
+          for (var i = 0; i < rows.length; i++) all.push(rows[i])
+          if (rows.length >= PAGE) { page++; step(); return }
+          cb(null, all)
+        }, 'ECODE', { CurrentPager: page, RowNumber: PAGE })
+      }
+      step()
+    }
+
     function summarize(rows) {
       if (!rows.length) { warn('没有返回行'); return }
       var keys = Object.keys(rows[0] || {})
@@ -5363,6 +5386,11 @@
           postJson(apiUrl('/api/plm/snapshot/done'), {
             mode: syncState.mode, client: 'PLM页面', elapsedMs: elapsed,
             batches: syncState.batchNo, lastTicks: syncState.lastTicks || 0,
+            // 供 3100 判断「全量是否完整」：失败小类 / 未跑完时拒绝覆盖旧快照
+            failed: syncState.failed,
+            failedSubs: (syncState.failedSubs || []).slice(0, 50),
+            total: syncState.total,
+            done: syncState.done,
           }, function (e2, r2) {
             if (e2) { err('收尾失败：' + (e2.msg || e2.status)); return }
             syncLog('=== 同步完成 ===')
@@ -5382,11 +5410,8 @@
             return
           }
           var sub = plan.subs[idx++]
-          // 增量模式：加 UPDATETIME 条件（ticks 比较，不加 STATEID 过滤，才能发现被停用的）
-          var fsStr = "ECODE LIKE '" + sub + "%'"
-          if (afterTicks > 0) fsStr += ' AND UPDATETIME > ' + afterTicks
-
-          callPlm(fsStr, function (e2, rows) {
+          // 分页拉全（每页 1000）；增量模式由 fetchAllRows 追加 UPDATETIME 条件
+          fetchAllRows(sub, afterTicks, function (e2, rows) {
             syncState.done++
             if (e2) {
               syncState.failed++
@@ -5423,7 +5448,7 @@
               }
               next()
             })
-          }, 'ECODE')
+          })
         }
 
         for (var c = 0; c < concurrency; c++) next()
@@ -5465,7 +5490,7 @@
           return
         }
         var sub = list[i++]
-        callPlm("ECODE LIKE '" + sub + "%'", function (e2, rows) {
+        fetchAllRows(sub, 0, function (e2, rows) {
           if (e2) {
             syncState.failedSubs.push(sub)
             saveFailedSubs(syncState.failedSubs)
@@ -5491,7 +5516,7 @@
             else rowsTotal += (r3 && r3.received) || 0
             step()
           })
-        }, 'ECODE')
+        })
       }
       step()
     }

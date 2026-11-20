@@ -171,6 +171,26 @@ export function finishUpload(body) {
   const files = fs.readdirSync(UPLOAD_DIR).filter((f) => f.startsWith('part-')).sort()
   if (!files.length) return { ok: false, error: '没有收到任何分片数据' }
 
+  // 全量同步保护（2026-11-20）：失败小类 / 未跑完时**拒绝覆盖**旧快照。
+  // 原实现无论成败都用本次分片覆盖 sources，实测一次不完整全量把 23,442 条
+  // 覆盖成了 4,443 条（大量小类失败但收尾仍执行）。失败时保留旧快照与分片，
+  // 待 __plmSync.retry() 补齐后再次收尾。
+  const fMode = String(b.mode || 'full')
+  const failedSubs = Number(b.failed || 0)
+  const totalSubs = Number(b.total || 0)
+  const doneSubs = Number(b.done || 0)
+  if (fMode === 'full' && (failedSubs > 0 || (totalSubs > 0 && doneSubs < totalSubs))) {
+    return {
+      ok: false,
+      rejected: true,
+      error: '全量同步未完成（失败 ' + failedSubs + ' 个小类，完成 ' + doneSubs + '/' + totalSubs
+        + '），已拒绝覆盖旧快照；请执行 __plmSync.retry() 补跑后再收尾',
+      failed: failedSubs,
+      total: totalSubs,
+      done: doneSubs,
+    }
+  }
+
   // 按 ECODE 去重，保留最后出现的一条（增量场景下新数据覆盖旧数据）
   const byCode = new Map()
   for (const f of files) {

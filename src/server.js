@@ -1102,6 +1102,7 @@ const AUDIT_LABELS = [
   [/^\/api\/mapping/, '编码归并'],
   [/^\/api\/freeze/, '冻结/解冻'],
   [/^\/api\/selection|^\/api\/select/, '选型库'],
+  [/^\/api\/plugin\/usage\/clean/, '清理使用日志'],
   [/^\/api\/auth\/password/, '修改密码'],
 ]
 function auditAction(p) {
@@ -1277,6 +1278,41 @@ const server = http.createServer(async (req, res) => {
       }
       appendUsage(rec)
       return sendJson(res, 200, { ok: true })
+    }
+    // 使用日志清理（admin.usage）：mode=all 清空 / empty 删空快照 / dup 同编码去重
+    if (p === '/api/plugin/usage/clean' && req.method === 'POST') {
+      const b = await readBody(req, 16 * 1024)
+      const mode = String(b.mode || 'empty')
+      const onlyCode = String(b.code || '').trim()
+      let removed = 0, kept = 0
+      for (const day of usageDayRange('', '')) {
+        const file = path.join(USAGE_DIR, day + '.ndjson')
+        let txt = ''
+        try { txt = fs.readFileSync(file, 'utf8') } catch (e) { continue }
+        const lines = txt.split('\n').filter((l) => l.trim())
+        const out = []
+        const seen = new Set()
+        const list = mode === 'dup' ? lines.slice().reverse() : lines
+        for (const line of list) {
+          let rec
+          try { rec = JSON.parse(line) } catch (e) { continue }
+          if (onlyCode && String(rec.code || '') !== onlyCode) { out.push(line); continue }
+          let drop = false
+          if (mode === 'all') drop = true
+          else if (mode === 'empty') drop = (!rec.name && !rec.spec)
+          else if (mode === 'dup') {
+            const k = String(rec.code || '') || ('_' + String(rec.at || ''))
+            if (seen.has(k)) drop = true
+            else seen.add(k)
+          }
+          if (drop) removed++
+          else out.push(line)
+        }
+        if (mode === 'dup') out.reverse()
+        fs.writeFileSync(file, out.join('\n') + (out.length ? '\n' : ''), 'utf8')
+        kept += out.length
+      }
+      return sendJson(res, 200, { ok: true, mode, code: onlyCode, removed, kept })
     }
     if (p === '/api/plugin/usage/stats') {
       const days = Math.min(90, Math.max(1, parseInt(url.searchParams.get('days') || '14', 10) || 14))

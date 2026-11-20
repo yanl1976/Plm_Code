@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.37';
+  var PLUGIN_VERSION = '2.38';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1196,6 +1196,8 @@
   }
 
   function hideComp() {
+    // 取消排队中的防抖加载：否则关闭后挂起的 loadComp 仍会执行，浮层"闪一下又出现"
+    if (compTimer) { clearTimeout(compTimer); compTimer = null; }
     if (state.compPanel) state.compPanel.style.display = 'none';
     state.comp = null;
   }
@@ -1342,6 +1344,23 @@
       // 失焦 / 点击输入框以外 → 收起候选浮层（此前只有 Esc / 选中才关，输入完不选用会一直挡着）
       el.addEventListener('blur', function () { setTimeout(function () { try { hideComp() } catch (e) { } }, 120); }, false);
       el.addEventListener('focusout', function () { setTimeout(function () { try { hideComp() } catch (e) { } }, 120); }, false);
+      // ESC：页面输入框的浮层同样要在 window 捕获阶段拦截，否则平台先当「取消」处理
+      if (!window.__plmCompEscBound && window.addEventListener) {
+        window.__plmCompEscBound = true;
+        window.addEventListener('keydown', function (e) {
+          try {
+            if (!state.compPanel || state.compPanel.style.display === 'none') return;
+            if (String(e.key || '') !== 'Escape' && e.keyCode !== 27) return;
+            var gg = domOf(state.ggxh);
+            var ae = document.activeElement;
+            if (!gg || !(ae === gg || e.target === gg)) return;
+            if (e.preventDefault) e.preventDefault();
+            if (e.stopPropagation) e.stopPropagation();
+            if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+            hideComp();
+          } catch (e2) { }
+        }, true);
+      }
       if (!window.__plmCompOutsideBound && document.addEventListener) {
         window.__plmCompOutsideBound = true;
         var closeCompIfOutside = function (e) {
@@ -2167,6 +2186,9 @@
       if (dlg.__ideOutside && document.removeEventListener) {
         document.removeEventListener('mousedown', dlg.__ideOutside, true);
         document.removeEventListener('click', dlg.__ideOutside, true);
+      }
+      if (dlg.__escGuard && window.removeEventListener) {
+        window.removeEventListener('keydown', dlg.__escGuard, true);
       }
     } catch (e) { }
     try { if (dlg.mask && dlg.mask.parentNode) dlg.mask.parentNode.removeChild(dlg.mask); } catch (e) { }
@@ -3857,6 +3879,10 @@
     function hideIde() {
       ideComp = null;
       ideSel = -1;
+      // 取消排队中的 260ms 防抖加载 + 让在途响应失效：
+      // 否则点一次外部收起后，挂起的 loadIde 仍会执行 → 浮层"闪一下又出现"（要再点一次才消失）。
+      if (ideTimer) { clearTimeout(ideTimer); ideTimer = null; }
+      ideSeq++;
       if (idePanel) { idePanel.style.display = 'none'; idePanel.innerHTML = ''; }
       if (ghost) ghost.innerHTML = '';
     }
@@ -4009,6 +4035,23 @@
       }
     } catch (e) { }
 
+    // ESC：平台在【window 捕获阶段】就把 ESC 当「取消/关闭向导」，
+    // 元素级监听（specIn 捕获/冒泡）都晚于它 —— 必须在 window 捕获阶段拦截，
+    // 否则表现为「点 ESC 屏幕闪一下、新建组件自动关闭、编码丢失」。
+    var escGuard = function (e) {
+      try {
+        if (!dlg || !idePanel || idePanel.style.display === 'none') return;
+        if (String(e.key || '') !== 'Escape' && e.keyCode !== 27) return;
+        var ae = document.activeElement;
+        if (!(ae === specIn || e.target === specIn)) return;
+        if (e.preventDefault) e.preventDefault();
+        if (e.stopPropagation) e.stopPropagation();
+        if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+        hideIde();
+      } catch (e2) { }
+    };
+    try { if (window.addEventListener) window.addEventListener('keydown', escGuard, true); } catch (e) { }
+
     // 规格框键盘补全：用【捕获阶段】监听，先于平台处理。
     // 若用 onkeydown（冒泡），平台的捕获监听先执行，ESC 会被当成「取消」→ 物料编码丢失。
     var onSpecKey = function (e) {
@@ -4121,6 +4164,7 @@
       nameTip: nameTip, specTip: specTip, invWrap: invWrap, invBadge: invBadge, simBtn: simBtn,
       idePanel: idePanel,
       __ideOutside: closeIdeIfOutside,   // closeEditor 时移除（否则下次打开仍指向旧闭包）
+      __escGuard: escGuard,              // 同上
     };
 
     renderInfo(null);

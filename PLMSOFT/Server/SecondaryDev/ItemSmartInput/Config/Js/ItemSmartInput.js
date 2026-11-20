@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.33';
+  var PLUGIN_VERSION = '2.34';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -4956,24 +4956,53 @@
     }
 
     /**
-     * 分页拉取某小类的全部物料（PLM 单次返回有行数上限，不分页会静默截断）。
-     * 每页 1000，返回不足一页即认为结束；increment 场景用 afterTicks 过滤。
+     * 拉取某小类的全部物料。
+     *
+     * 2026-11-20 现场实测：PLM 的 CommonGetObjectDataByFilter **不认 para.para.Pager**
+     * （每页设 1000，实际每次返回 1275/2256/3149 全部行），若按「满页即继续」判断
+     * 会反复请求同一批数据（200 页上限、每页 25~60 秒）。
+     *
+     * 因此改为「ECODE 游标分页」：ECODE > 上一页最大编码，配合 OrderbyString=ECODE；
+     * 三重结束条件，即使 PLM 不支持任何分页也能正确收敛：
+     *   ① 本页没有新增编码（重复返回 / 分页被忽略）→ 结束
+     *   ② 游标未前进 → 结束（防死循环）
+     *   ③ 本页不足 PAGE 条 → 结束（正常最后一页）
      */
     function fetchAllRows(sub, afterTicks, cb) {
       var PAGE = 1000
       var all = []
-      var page = 1
+      var seen = {}
+      var last = ''
       var guard = 0
       function step() {
-        if (++guard > 200) { cb({ step: 'paging', message: '分页超过 200 页，已中止' }, all); return }
+        if (++guard > 500) { cb({ step: 'paging', message: '分页超过 500 页，已中止' }, all); return }
         var fsStr = "ECODE LIKE '" + sub + "%'"
         if (afterTicks > 0) fsStr += ' AND UPDATETIME > ' + afterTicks
+        if (last) fsStr += " AND ECODE > '" + last + "'"
         callPlm(fsStr, function (e, rows) {
           if (e) { cb(e, all); return }
-          for (var i = 0; i < rows.length; i++) all.push(rows[i])
-          if (rows.length >= PAGE) { page++; step(); return }
-          cb(null, all)
-        }, 'ECODE', { CurrentPager: page, RowNumber: PAGE })
+          var added = 0
+          for (var i = 0; i < rows.length; i++) {
+            var o = rows[i]
+            var code = String((o && o.ECODE) || '')
+            if (!code || seen[code]) continue
+            seen[code] = 1
+            all.push(o)
+            added++
+          }
+          // ③ 正常最后一页 / ① 没有新增（分页被忽略或重复返回）
+          if (!added || rows.length < PAGE) { cb(null, all); return }
+          // 游标推进：取本页最大 ECODE
+          var maxCode = last
+          for (var k = 0; k < rows.length; k++) {
+            var c = String((rows[k] && rows[k].ECODE) || '')
+            if (c > maxCode) maxCode = c
+          }
+          // ② 游标不前进 → 结束，避免同一页被无限重复请求
+          if (maxCode === last) { cb(null, all); return }
+          last = maxCode
+          step()
+        }, 'ECODE')
       }
       step()
     }

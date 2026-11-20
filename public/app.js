@@ -34,6 +34,7 @@ const CARD_PERMS = {
   users: 'admin.users',
   roles: 'admin.roles',
   usage: 'admin.usage',
+  audit: 'admin.audit',
 }
 
 function applySettingCards() {
@@ -4673,6 +4674,92 @@ function renderUsagePager() {
 
 if ($('#usageQuery')) $('#usageQuery').onclick = () => { loadUsage(1); loadUsageStats() }
 
+// ======================= 系统操作日志（规则修改 / 导入 / 选型库变更） =======================
+const auditState = { page: 1, total: 0, limit: 50 }
+const AUDIT_ROLE_NAMES = { admin: '管理员', std: '标准化员', design: '设计', test: '测试' }
+
+async function loadAuditStats() {
+  const box = $('#auditStats')
+  if (!box) return
+  const r = await api('/api/audit/stats?days=14').catch(() => null)
+  if (!r || !r.ok) {
+    box.innerHTML = '<div class="muted">统计加载失败：' + escapeHtml((r && r.error) || '无权限或网络异常') + '</div>'
+    return
+  }
+  const acts = Object.entries(r.byAction || {}).sort((a, b) => b[1] - a[1]).slice(0, 3)
+  box.innerHTML = usageCard('今日操作', r.today, '近 ' + r.days + ' 天共 ' + r.total + ' 条')
+    + usageCard('今日失败', r.failed, '状态码 ≥ 400 的写操作')
+    + acts.map(([k, n]) => usageCard(k, n, '近 ' + r.days + ' 天')).join('')
+}
+
+async function loadAudit(page = 1) {
+  auditState.page = page
+  const box = $('#auditTable')
+  if (box) box.innerHTML = '<div class="muted">加载中…</div>'
+  const q = new URLSearchParams()
+  const val = (id) => { const el = document.getElementById(id); return el ? String(el.value || '').trim() : '' }
+  const from = val('auditFrom'), to = val('auditTo')
+  const u = val('auditUser'), action = val('auditAction'), kw = val('auditKw')
+  if (from) q.set('from', from)
+  if (to) q.set('to', to)
+  if (u) q.set('u', u)
+  if (action) q.set('action', action)
+  if (kw) q.set('kw', kw)
+  q.set('page', String(page))
+  q.set('limit', String(auditState.limit))
+  const r = await api('/api/audit?' + q.toString()).catch(() => null)
+  if (!r || !r.ok) {
+    if (box) box.innerHTML = '<div class="muted">加载失败：' + escapeHtml((r && r.error) || '无权限或网络异常') + '</div>'
+    return
+  }
+  auditState.total = r.total || 0
+  renderAuditTable(r.items || [])
+  renderAuditPager()
+}
+
+function renderAuditTable(items) {
+  const box = $('#auditTable')
+  if (!box) return
+  if (!items.length) {
+    box.innerHTML = '<div class="muted">暂无记录（规则修改、导入、选型库变更等写操作会自动记录）</div>'
+    return
+  }
+  box.innerHTML = '<table class="usage-table"><thead><tr>'
+    + '<th>时间</th><th>用户</th><th>角色</th><th>来源</th><th>操作</th><th>对象</th><th>结果</th><th>耗时</th><th>IP</th>'
+    + '</tr></thead><tbody>'
+    + items.map((x) => {
+      const t = String(x.at || '').replace('T', ' ').slice(0, 19)
+      const okStatus = Number(x.status) < 400
+      return '<tr>'
+        + '<td class="muted">' + escapeHtml(t) + '</td>'
+        + '<td>' + escapeHtml(x.u || '-') + '</td>'
+        + '<td class="muted">' + escapeHtml(AUDIT_ROLE_NAMES[x.role] || x.role || '') + '</td>'
+        + '<td class="muted">' + escapeHtml(x.src === 'plm-api' ? 'PLM 管理' : '看板') + '</td>'
+        + '<td>' + escapeHtml(x.action || '') + '</td>'
+        + '<td class="usage-spec" title="' + escapeHtml(String(x.path || '')) + '">' + escapeHtml(x.target || x.path || '-') + '</td>'
+        + '<td>' + (okStatus ? '<span class="usage-ok">成功</span>' : '<span class="usage-pending">失败 ' + Number(x.status) + '</span>') + '</td>'
+        + '<td class="muted">' + (x.ms != null ? Number(x.ms) + 'ms' : '') + '</td>'
+        + '<td class="muted">' + escapeHtml(String(x.ip || '').replace('::ffff:', '')) + '</td>'
+        + '</tr>'
+    }).join('')
+    + '</tbody></table>'
+}
+
+function renderAuditPager() {
+  const box = $('#auditPager')
+  if (!box) return
+  const pages = Math.max(1, Math.ceil(auditState.total / auditState.limit))
+  box.innerHTML = '<button class="ghost" id="auditPrev"' + (auditState.page <= 1 ? ' disabled' : '') + '>上一页</button>'
+    + '<span class="muted">第 ' + auditState.page + ' / ' + pages + ' 页 · 共 ' + auditState.total + ' 条</span>'
+    + '<button class="ghost" id="auditNext"' + (auditState.page >= pages ? ' disabled' : '') + '>下一页</button>'
+  const prev = $('#auditPrev')
+  if (prev) prev.onclick = () => loadAudit(Math.max(1, auditState.page - 1))
+  const next = $('#auditNext')
+  if (next) next.onclick = () => loadAudit(Math.min(pages, auditState.page + 1))
+}
+
+if ($('#auditQuery')) $('#auditQuery').onclick = () => { loadAudit(1); loadAuditStats() }
+
 // ======================= 系统设置：卡片 → 弹窗 =======================
 const SET_PANE_TITLES = {
   range: '提取物料范围与筛查组织',
@@ -4680,6 +4767,7 @@ const SET_PANE_TITLES = {
   users: '用户与角色',
   roles: '角色权限配置',
   usage: '插件使用日志',
+  audit: '系统操作日志',
 }
 
 function closeSetModal() {
@@ -4703,6 +4791,7 @@ function openSetPane(key) {
     if (key === 'users' && canPerm('admin.users')) loadUsers()
     if (key === 'roles' && canPerm('admin.roles')) loadPerms()
     if (key === 'usage' && canPerm('admin.usage')) { loadUsage(1); loadUsageStats() }
+    if (key === 'audit' && canPerm('admin.audit')) { loadAudit(1); loadAuditStats() }
   } catch (e) { }
 }
 

@@ -906,8 +906,20 @@ async function authGate(req, res, p) {
   // ---- 会话相关接口（不要求已登录）----
   if (p === '/api/auth/login' && req.method === 'POST') {
     const b = await readBody(req)
-    const r = login(b.u || b.username, b.p || b.password)
-    if (!r.ok) { sendJson(res, 401, { error: r.error }); return false }
+    const uname = String(b.u || b.username || '')
+    const r = login(uname, b.p || b.password)
+    const loginIp = String(req.headers['x-forwarded-for'] || (req.socket && req.socket.remoteAddress) || '')
+    if (!r.ok) {
+      appendAudit({
+        at: new Date().toISOString(), u: uname, role: '', src: 'web', method: 'POST',
+        path: p, action: '登录失败', target: '', status: 401, ms: 0, ip: loginIp,
+      })
+      sendJson(res, 401, { error: r.error }); return false
+    }
+    appendAudit({
+      at: new Date().toISOString(), u: r.user.u, role: r.user.role, src: 'web', method: 'POST',
+      path: p, action: '登录', target: '', status: 200, ms: 0, ip: loginIp,
+    })
     res.writeHead(200, {
       'Content-Type': 'application/json; charset=utf-8',
       'Set-Cookie': cookieHeader(r.token),
@@ -1003,6 +1015,93 @@ function readUsage(from, to) {
   out.sort((a, b) => String(b.at).localeCompare(String(a.at)))
   return out
 }
+// ---------- 系统操作日志（所有写操作自动记录） ----------
+const AUDIT_DIR = path.join(DATA, 'audit')
+const AUDIT_LABELS = [
+  [/^\/api\/name-synonyms\/import/, '同义词导入'],
+  [/^\/api\/name-synonyms/, '同义词维护'],
+  [/^\/api\/naming-guide\/import/, '命名范式导入'],
+  [/^\/api\/naming-guide/, '命名范式维护'],
+  [/^\/api\/param-lib\/import/, '参数库导入'],
+  [/^\/api\/param-lib\/batch/, '参数库批量保存'],
+  [/^\/api\/param-lib\/config/, '参数库开关'],
+  [/^\/api\/param-lib/, '参数库维护'],
+  [/^\/api\/classification\/import/, '分类导入'],
+  [/^\/api\/classification/, '分类维护'],
+  [/^\/api\/rules/, '规则维护'],
+  [/^\/api\/feature/, '特征参数维护'],
+  [/^\/api\/settings/, '系统设置'],
+  [/^\/api\/backup\/create/, '创建备份'],
+  [/^\/api\/backup\/restore/, '恢复备份'],
+  [/^\/api\/backup\/delete/, '删除备份'],
+  [/^\/api\/backup/, '备份管理'],
+  [/^\/api\/users/, '用户管理'],
+  [/^\/api\/perms/, '角色权限'],
+  [/^\/api\/mapping/, '编码归并'],
+  [/^\/api\/freeze/, '冻结/解冻'],
+  [/^\/api\/selection|^\/api\/select/, '选型库'],
+  [/^\/api\/auth\/password/, '修改密码'],
+]
+function auditAction(p) {
+  for (const [re, name] of AUDIT_LABELS) if (re.test(p)) return name
+  return '其他写操作'
+}
+function auditTarget(p, q) {
+  const bits = []
+  for (const k of ['sub', 'alias', 'oldAlias', 'std', 'id', 'file', 'code']) {
+    const v = q && q.get ? q.get(k) : null
+    if (v) bits.push(k + '=' + String(v).slice(0, 60))
+  }
+  return bits.length ? bits.join(' ') : p
+}
+function appendAudit(rec) {
+  try {
+    fs.mkdirSync(AUDIT_DIR, { recursive: true })
+    fs.appendFileSync(path.join(AUDIT_DIR, dayKey(rec.at) + '.ndjson'), JSON.stringify(rec) + '\n', 'utf8')
+  } catch (e) { }
+}
+function readAudit(from, to) {
+  const out = []
+  for (const day of usageDayRange(from, to)) {
+    let txt = ''
+    try { txt = fs.readFileSync(path.join(AUDIT_DIR, day + '.ndjson'), 'utf8') } catch (e) { continue }
+    for (const line of txt.split('\n')) {
+      const s = line.trim()
+      if (!s) continue
+      try { out.push(JSON.parse(s)) } catch (e) { }
+    }
+  }
+  out.sort((a, b) => String(b.at).localeCompare(String(a.at)))
+  return out
+}
+/** 写操作响应完成时记录（自动覆盖所有 POST/PUT/DELETE，无需逐条改路由） */
+function maybeAudit(req, res, startedAt) {
+  try {
+    const m = String(req.method || '').toUpperCase()
+    if (m !== 'POST' && m !== 'PUT' && m !== 'DELETE' && m !== 'PATCH') return
+    let u
+    try { u = new URL(req.url, 'http://x') } catch (e) { return }
+    const p = u.pathname
+    if (!p.startsWith('/api/')) return
+    if (p === '/api/plugin/usage') return            // 插件提交日志单独在「使用日志」查看
+    if (/^\/api\/auth\/(login|logout)$/.test(p)) return // 登录在 authGate 内单独记录
+    const user = req.__user
+    appendAudit({
+      at: new Date().toISOString(),
+      u: user && user.u ? user.u : 'anonymous',
+      role: user && user.role ? user.role : '',
+      src: 'web',
+      method: m,
+      path: p,
+      action: auditAction(p),
+      target: auditTarget(p, u.searchParams),
+      status: res.statusCode || 0,
+      ms: Date.now() - startedAt,
+      ip: String(req.headers['x-forwarded-for'] || (req.socket && req.socket.remoteAddress) || ''),
+    })
+  } catch (e) { }
+}
+
 let libCodeCache = { at: 0, set: new Set() }
 /** 物料库现有编码集合（用于判定插件提交的物料是否已入库；5 秒缓存） */
 function libCodeSet() {
@@ -1016,6 +1115,10 @@ function libCodeSet() {
 }
 
 const server = http.createServer(async (req, res) => {
+  const auditStarted = Date.now()
+  // 所有写操作（POST/PUT/DELETE）在响应完成时自动落一条操作日志
+  res.on('finish', () => maybeAudit(req, res, auditStarted))
+
   const url = new URL(req.url, `http://localhost:${PORT}`)
   const p = url.pathname
   try {
@@ -1148,6 +1251,43 @@ const server = http.createServer(async (req, res) => {
       else if (status === 'pending') rows = rows.filter((x) => !x.inLib)
       if (kw) rows = rows.filter((x) => (String(x.code) + ' ' + String(x.name) + ' ' + String(x.spec)).toLowerCase().indexOf(kw) >= 0)
       return sendJson(res, 200, { ok: true, total: rows.length, page, limit, items: rows.slice((page - 1) * limit, page * limit) })
+    }
+
+    // ---------- 系统操作日志 ----------
+    if (p === '/api/audit' && req.method === 'GET') {
+      const from = String(url.searchParams.get('from') || '').slice(0, 10)
+      const to = String(url.searchParams.get('to') || '').slice(0, 10)
+      const u = String(url.searchParams.get('u') || '').trim()
+      const action = String(url.searchParams.get('action') || '').trim()
+      const kw = String(url.searchParams.get('kw') || '').trim().toLowerCase()
+      const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10) || 1)
+      const limit = Math.min(200, Math.max(10, parseInt(url.searchParams.get('limit') || '50', 10) || 50))
+      let rows = readAudit(from, to)
+      if (u) rows = rows.filter((x) => x.u === u)
+      if (action) rows = rows.filter((x) => x.action === action)
+      if (kw) rows = rows.filter((x) => (String(x.path) + ' ' + String(x.target) + ' ' + String(x.action)).toLowerCase().indexOf(kw) >= 0)
+      return sendJson(res, 200, { ok: true, total: rows.length, page, limit, items: rows.slice((page - 1) * limit, page * limit) })
+    }
+    if (p === '/api/audit/stats') {
+      const days = Math.min(90, Math.max(1, parseInt(url.searchParams.get('days') || '14', 10) || 14))
+      const all = readAudit('', '')
+      const today = dayKey(new Date())
+      const byAction = {}, byUser = {}, byDay = {}
+      let todayCount = 0, failed = 0
+      const cutoff = Date.now() - days * 86400000
+      for (const x of all) {
+        const t = new Date(x.at).getTime()
+        if (!(t >= cutoff)) continue
+        const dk = String(x.at).slice(0, 10)
+        byDay[dk] = (byDay[dk] || 0) + 1
+        const ak = x.action || '其他'
+        byAction[ak] = (byAction[ak] || 0) + 1
+        const uk = x.u || '未知'
+        byUser[uk] = (byUser[uk] || 0) + 1
+        if (dk === today) todayCount++
+        if (Number(x.status) >= 400) failed++
+      }
+      return sendJson(res, 200, { ok: true, days, total: all.length, today: todayCount, failed, byAction, byUser, byDay })
     }
 
     if (p === '/api/overview') {

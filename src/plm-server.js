@@ -57,7 +57,7 @@ const HOST = env('PLM_API_HOST', '0.0.0.0')
 // 版本号必须随「影响接口返回结构/判定逻辑」的改动递增 ——
 // 否则现场无法从返回里判断进程跑的是新代码还是旧代码（曾因此排查了半天：
 // 生产 3100 缺 subMismatch 字段，但 version 一直是 1.4.0，看不出差异）。
-const VERSION = '1.6.0'
+const VERSION = '1.6.1'
 // 构建指纹：现场用它判断「跑的是不是新代码」。
 // VERSION 只在接口结构 / 判定逻辑变化时递增，日常修 bug 不一定升；
 // codeMtime 取关键源文件的最新修改时间，每次部署同步都会变，可据此确认已生效。
@@ -199,6 +199,40 @@ function subOf(body) {
 
 function log(...args) {
   console.log(new Date().toISOString(), ...args)
+}
+
+// ---------- 操作日志（与 3130 共用 data/audit/，在「系统设置 → 操作日志」查看） ----------
+function auditDay(d) {
+  const p = (x) => String(x).padStart(2, '0')
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
+}
+/**
+ * 记录 3100 的管理类操作（选型库导入/删除/停用、重载、快照合并重置）。
+ * 匿名插件请求记 u='plugin'；管理页登录用户从会话取。
+ * 失败静默，绝不影响业务。
+ */
+function auditPlm(action, req, target, detail) {
+  try {
+    const user = req ? readSession(req) : null
+    const at = new Date()
+    const rec = {
+      at: at.toISOString(),
+      u: user ? user.u : 'plugin',
+      role: user ? user.role : '',
+      src: 'plm-api',
+      method: req ? String(req.method || '') : '',
+      path: req ? String(req.url || '').split('?')[0] : '',
+      action,
+      target: String(target || '').slice(0, 200),
+      detail: String(detail || '').slice(0, 300),
+      status: 200,
+      ms: 0,
+      ip: req ? String(req.headers['x-forwarded-for'] || (req.socket && req.socket.remoteAddress) || '') : '',
+    }
+    const dir = path.join(ROOT, 'data', 'audit')
+    fs.mkdirSync(dir, { recursive: true })
+    fs.appendFileSync(path.join(dir, auditDay(at) + '.ndjson'), JSON.stringify(rec) + '\n', 'utf8')
+  } catch (e) { /* 日志失败不影响业务 */ }
 }
 
 // ---------- 业务 ----------
@@ -1419,6 +1453,7 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/plm/reload' && req.method === 'POST') {
       const st = await loadIndex({ force: true })
       log('[reload]', JSON.stringify(st))
+      auditPlm('重载索引', req, '', 'count=' + ((st && st.count) || ''))
       return send(res, 200, { ok: true, ...st })
     }
     // ---------- 选型库管理（原型） ----------
@@ -1447,7 +1482,11 @@ const server = http.createServer(async (req, res) => {
       log('[select-import]', out.ok ? 'ok' : out.error, out.file || '')
       // 选型库更新后，附加参数字典必须跟着重建，
       // 否则录入页的主要参数还是导入前的旧配件。
-      if (out.ok) rebuildAccessoryDictSafe('select-import')
+      if (out.ok) {
+        rebuildAccessoryDictSafe('select-import')
+        auditPlm('选型库导入', req, out.file || String(body.id || ''),
+          'sub=' + String(body.sub || '') + ' 系列=' + String(body.id || body.name || ''))
+      }
       return send(res, 200, out)
     }
     if (p === '/api/plm/select/list' && req.method === 'GET') {
@@ -1489,7 +1528,10 @@ const server = http.createServer(async (req, res) => {
       const out = toggleSeries(body.file, body.enabled)
       // 停用/启用会改变该系列是否参与附加参数（buildAccessoryDict 跳过 enabled=false）
       // → 切换成功后重建字典，保证主要参数与选型助手的可用范围一致。
-      if (out && out.ok) rebuildAccessoryDictSafe('select-toggle')
+      if (out && out.ok) {
+        rebuildAccessoryDictSafe('select-toggle')
+        auditPlm(body.enabled ? '选型库启用' : '选型库停用', req, String(body.file || ''), '')
+      }
       return send(res, 200, out)
     }
     if (p === '/api/plm/select/delete' && req.method === 'POST') {
@@ -1497,7 +1539,10 @@ const server = http.createServer(async (req, res) => {
       const out = deleteSelectionFile(body.file, body.id)
       // 删除后必须重建字典：否则已删除系列的接线能力 / 可配附件仍会填进主要参数
       // （2026-11-19 补：此前只有导入会重建，删除后字典保留旧内容）
-      if (out && out.ok) rebuildAccessoryDictSafe('select-delete')
+      if (out && out.ok) {
+        rebuildAccessoryDictSafe('select-delete')
+        auditPlm('选型库删除', req, String(body.file || ''), String(body.id || ''))
+      }
       return send(res, 200, out)
     }
     if (p === '/api/plm/select/series' && req.method === 'GET') {
@@ -1591,6 +1636,7 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/plm/snapshot/reset' && req.method === 'POST') {
       try {
         plmSnapshotReset()
+        auditPlm('快照重置', req, '', '')
         return send(res, 200, { ok: true })
       } catch (e) {
         return send(res, 500, { ok: false, error: String((e && e.message) || e) })
@@ -1604,6 +1650,7 @@ const server = http.createServer(async (req, res) => {
         const r = plmSnapshotMerge({ exportCsv: url.searchParams.get('csv') === '1' })
         if (r.ok) {
           try { await loadIndex({ force: true }) } catch (e) { /* 索引重建失败不影响落盘 */ }
+          auditPlm('快照合并', req, '', '新增=' + ((r.added != null ? r.added : r.count) || 0))
         }
         return send(res, 200, r)
       } catch (e) {

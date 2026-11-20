@@ -281,13 +281,14 @@ export const PERM_DEFS = [
   { key: 'admin.users', group: '管理', name: '用户与角色管理' },
   { key: 'admin.roles', group: '管理', name: '角色权限配置' },
   { key: 'admin.usage', group: '管理', name: '插件使用日志' },
+  { key: 'admin.audit', group: '管理', name: '系统操作日志' },
 ]
 
 /** 默认权限（= 2026-11-19 之前写死的行为；用于首次生成 roles.json 与「恢复默认」） */
 export const DEFAULT_ROLE_PERMS = {
   admin: ['*'],
   std: ['page.overview', 'page.materials', 'page.dedup', 'page.classify', 'page.cleanup',
-    'page.rules', 'page.feature', 'page.newmat', 'page.selection', 'admin.usage',
+    'page.rules', 'page.feature', 'page.newmat', 'page.selection', 'admin.usage', 'admin.audit',
     'data.write', 'data.import', 'data.run', 'biz.submit'],
   design: ['page.overview', 'page.materials', 'page.dedup', 'page.classify', 'page.newmat', 'biz.submit'],
   test: ['page.overview', 'page.materials', 'page.dedup', 'page.classify', 'page.cleanup',
@@ -295,11 +296,12 @@ export const DEFAULT_ROLE_PERMS = {
 }
 
 /** 权限配置版本：新增/改名功能点时递增，并在 loadRolePerms 里迁移已有角色 */
-const PERM_VERSION = 3
+const PERM_VERSION = 4
 /** 各版本为已有角色追加的功能点（只增不删，不覆盖用户手动配置） */
 const PERM_ADDED = {
   2: { std: ['page.usage'], test: ['page.usage'] },
   3: { std: ['admin.usage'], test: ['admin.usage'] },
+  4: { std: ['admin.audit'] },
 }
 /** 功能点重命名（旧 key → 新 key），迁移时按角色替换 */
 const PERM_RENAMED = { 'page.usage': 'admin.usage' }
@@ -317,12 +319,12 @@ function migratePerms(j) {
   for (const role of Object.keys(roles)) {
     const r = roles[role]
     if (!r || !Array.isArray(r.perms)) continue
-    const seen = {}
-    r.perms = r.perms.map((k) => PERM_RENAMED[k] || k).filter((k) => {
-      if (seen[k]) return false
-      seen[k] = 1
-      return true
-    })
+    const next = []
+    for (const k of r.perms) {
+      const key = PERM_RENAMED[k] || k
+      if (next.indexOf(key) < 0) next.push(key)
+    }
+    r.perms = next
   }
   // ② 按版本追加新增功能点
   for (const v of Object.keys(PERM_ADDED).map(Number).sort((a, b) => a - b)) {
@@ -426,6 +428,7 @@ const GET_PERM_RULES = [
   [/^\/api\/feature/, 'page.feature'],
   [/^\/api\/new-material/, 'page.newmat'],
   [/^\/api\/plugin\/usage/, 'admin.usage'],
+  [/^\/api\/audit/, 'admin.audit'],
   [/^\/api\/settings/, 'page.settings'],
   [/^\/api\/(select|selection)/, 'page.selection'],
   [/^\/api\/(jobs|stats|health)/, 'page.overview'],

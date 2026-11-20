@@ -162,6 +162,12 @@
           <span class="scn-desc">插件新增物料提交记录<br />按小类 / 状态统计与筛选</span>
           <span class="scn-go">打开查看 →</span>
         </button>
+        <button class="set-card-btn" data-set="audit">
+          <span class="scn-badge">06</span>
+          <span class="scn-title">操作日志</span>
+          <span class="scn-desc">规则修改 / 导入 / 选型库<br />全部写操作记录与查询</span>
+          <span class="scn-go">打开查看 →</span>
+        </button>
       </div>
 
       <!-- 设置弹窗：三个面板共用，切换时只改显示 -->
@@ -272,6 +278,23 @@
               </div>
               <div id="usageTable"></div>
               <div class="pager" id="usagePager"></div>
+            </div>
+
+            <!-- 06 系统操作日志（权限点 admin.audit） -->
+            <div class="set-pane" data-pane="audit">
+              <div class="usage-stats" id="auditStats"></div>
+              <div class="usage-filters">
+                <input id="auditFrom" type="date" title="开始日期" />
+                <span class="muted">~</span>
+                <input id="auditTo" type="date" title="结束日期" />
+                <input id="auditUser" placeholder="用户（如 std）" style="width:130px" />
+                <input id="auditAction" placeholder="操作（如 同义词维护）" style="width:170px" />
+                <input id="auditKw" placeholder="路径 / 对象关键字" />
+                <button id="auditQuery" class="primary">查询</button>
+                <span id="auditMsg" class="muted"></span>
+              </div>
+              <div id="auditTable"></div>
+              <div class="pager" id="auditPager"></div>
             </div>
           </div>
         </div>

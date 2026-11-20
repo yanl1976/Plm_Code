@@ -1,8 +1,8 @@
 {
   "meta": {
     "note": "角色 × 功能点权限（系统设置 → 角色权限）；admin 固定全权，防锁死。",
-    "permVersion": 3,
-    "updatedAt": "2026-11-20T01:23:30.176Z"
+    "permVersion": 4,
+    "updatedAt": "2026-11-20T01:32:54.764Z"
   },
   "roles": {
     "admin": {
@@ -27,7 +27,8 @@
         "data.write",
         "data.import",
         "data.run",
-        "biz.submit"
+        "biz.submit",
+        "admin.audit"
       ]
     },
     "design": {

@@ -4584,6 +4584,37 @@ function bindPermsUI() {
 // ======================= 插件使用日志 =======================
 const usageState = { page: 1, total: 0, limit: 50 }
 
+/** 本地日期 YYYY-MM-DD（避免 toISOString 的 UTC 偏移导致差一天） */
+function fmtDate(d) {
+  const p = (n) => String(n).padStart(2, '0')
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
+}
+
+/** 向前/后推 N 个自然月（月末安全：3/31 -1 月 → 2/28 或 2/29） */
+function shiftMonth(base, delta) {
+  const d = new Date(base.getFullYear(), base.getMonth(), 1)
+  d.setMonth(d.getMonth() + delta)
+  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()
+  d.setDate(Math.min(base.getDate(), last))
+  return d
+}
+
+/**
+ * 日志日期筛选默认值：截止 = 今天，开始 = 向前反推一个月。
+ * 只在输入框为空时填充，不覆盖用户已选日期。
+ */
+function initLogDateRange() {
+  const now = new Date()
+  const from = fmtDate(shiftMonth(now, -1))
+  const to = fmtDate(now)
+  for (const pair of [['usageFrom', 'usageTo'], ['auditFrom', 'auditTo']]) {
+    const f = document.getElementById(pair[0])
+    const t = document.getElementById(pair[1])
+    if (f && !f.value) f.value = from
+    if (t && !t.value) t.value = to
+  }
+}
+
 function usageCard(label, value, sub) {
   return '<div class="usage-card"><div class="uc-label">' + escapeHtml(label) + '</div>'
     + '<div class="uc-value">' + escapeHtml(String(value == null ? '-' : value)) + '</div>'
@@ -4760,6 +4791,9 @@ function renderAuditPager() {
 
 if ($('#auditQuery')) $('#auditQuery').onclick = () => { loadAudit(1); loadAuditStats() }
 
+// 页面加载即给出默认查询范围（打开弹窗时还会再补一次，均不覆盖用户已选日期）
+initLogDateRange()
+
 // ======================= 系统设置：卡片 → 弹窗 =======================
 const SET_PANE_TITLES = {
   range: '提取物料范围与筛查组织',
@@ -4786,6 +4820,7 @@ function openSetPane(key) {
   m.style.display = 'flex'
   // 打开时刷新（列表可能已被其他人修改）；按权限决定加载哪些数据
   try {
+    if (key === 'usage' || key === 'audit') initLogDateRange()
     if (key === 'range' && canPerm('page.settings')) loadSettings()
     if (key === 'backup' && canPerm('admin.backup')) loadBackupList()
     if (key === 'users' && canPerm('admin.users')) loadUsers()

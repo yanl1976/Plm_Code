@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.39';
+  var PLUGIN_VERSION = '2.40';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -405,11 +405,19 @@
     try { (isErr ? console.warn : console.log)('[ItemSmartInput] ' + text); } catch (e) { }
   }
 
+  /** 5 秒内同一内容只上报一次（OnOK 与点击兜底可能同时触发） */
+  var _usageLast = { key: '', at: 0 };
+  function usageKey(b) { return (b.code || '') + '|' + (b.name || '') + '|' + (b.spec || ''); }
+
   /** 发送使用日志（异步 XHR；成功/失败都记日志，便于现场排查） */
   function sendUsage(body) {
     try {
       if (!body) return;
       if (!body.code && !body.name && !body.spec) { usageLog('字段为空，跳过上报'); return; }
+      var k = usageKey(body);
+      var now = Date.now();
+      if (k && k === _usageLast.key && now - _usageLast.at < 5000) { usageLog('5 秒内重复提交，跳过'); return; }
+      _usageLast = { key: k, at: now };
       var base = String(CFG.inventoryBase || '').replace(/\/+$/, '');
       if (!base) { usageLog('inventoryBase 为空，跳过上报', true); return; }
       var xhr = new XMLHttpRequest();
@@ -4471,6 +4479,36 @@
       }
       return r;
     };
+  })();
+
+  // ---- 兜底：点击「确定 / 保存 / 完成 / 提交」按钮时也上报 ----
+  // 现场发现：某些入口的保存按钮并不调用 InforCenter_PSEITEM_CreatePage_OnOK，
+  // 只挂 OnOK 会导致使用日志一条都没有。这里按按钮文本捕获点击，延迟 800ms 抓取快照上报；
+  // 与 OnOK 路径由 sendUsage 的 5 秒去重兜住，不会重复记两条。
+  (function () {
+    function onSaveClick(e) {
+      try {
+        if (!CFG.enabled || CFG.usageLog === false) return;
+        var el = e && e.target;
+        var hop = 0;
+        while (el && hop < 5) {
+          var tag = String((el.tagName || '')).toUpperCase();
+          var role = el.getAttribute ? String(el.getAttribute('role') || '') : '';
+          if (tag === 'BUTTON' || tag === 'A' || tag === 'INPUT' || role === 'button') break;
+          el = el.parentNode; hop++;
+        }
+        if (!el) return;
+        var txt = String((el.textContent || el.value || '') + ' ' + (el.title || '')).trim();
+        if (!/确定|保存|完成|提交/.test(txt)) return;
+        setTimeout(function () {
+          var snap = captureUsage('submit');
+          if (snap) sendUsage(snap);
+        }, 800);
+      } catch (e2) { }
+    }
+    try {
+      if (document.addEventListener) document.addEventListener('click', onSaveClick, true);
+    } catch (e) { }
   })();
 
   // ---- 兼容 PSEITEM$ ----

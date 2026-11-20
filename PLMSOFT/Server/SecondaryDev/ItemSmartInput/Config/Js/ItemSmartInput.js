@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.35';
+  var PLUGIN_VERSION = '2.36';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -1301,14 +1301,25 @@
 
   function onCompInput() {
     clearTimeout(compTimer);
+    hideComp();                     // 输入变化先收起旧浮层，避免旧候选停留（挡在下方无法关闭）
     compTimer = setTimeout(loadComp, 180);
   }
 
   function onCompKey(e) {
     if (e.isComposing) return;
     var vis = state.compPanel && state.compPanel.style.display !== 'none';
-    if (e.key === 'Escape' && vis) { hideComp(); return; }
-    if (!vis) return;
+    var hasOpt = vis && !!(state.comp && state.comp.options && state.comp.options.length);
+    // ESC：必须同时阻止默认行为与冒泡 —— 否则平台把 ESC 当「取消/关闭向导」，
+    // 现场表现为「按 ESC 想关浮层，结果物料编码丢了、页面被重置」。
+    if (e.key === 'Escape' && vis) {
+      if (e.preventDefault) e.preventDefault();
+      if (e.stopPropagation) e.stopPropagation();
+      hideComp();
+      return;
+    }
+    // 浮层存在但没有可应用候选时，Tab/Alt 一律不拦截：交给平台正常跳字段，
+    // 否则会出现「Tab 失效」（被吞掉但 applyComp 无事可做）。
+    if (!hasOpt) return;
     if (e.key === 'Tab' && !e.shiftKey) {
       e.preventDefault(); e.stopPropagation();
       applyComp(0);
@@ -1330,9 +1341,10 @@
       el.addEventListener('keydown', onCompKey, true);   // 捕获阶段，先于平台
       // 失焦 / 点击输入框以外 → 收起候选浮层（此前只有 Esc / 选中才关，输入完不选用会一直挡着）
       el.addEventListener('blur', function () { setTimeout(function () { try { hideComp() } catch (e) { } }, 120); }, false);
+      el.addEventListener('focusout', function () { setTimeout(function () { try { hideComp() } catch (e) { } }, 120); }, false);
       if (!window.__plmCompOutsideBound && document.addEventListener) {
         window.__plmCompOutsideBound = true;
-        document.addEventListener('mousedown', function (e) {
+        var closeCompIfOutside = function (e) {
           try {
             if (!state.compPanel || state.compPanel.style.display === 'none') return;
             var t = e && e.target;
@@ -1341,7 +1353,10 @@
             if (gg && (gg === t || (gg.contains && gg.contains(t)))) return;
             hideComp();
           } catch (e2) { }
-        }, true);
+        };
+        document.addEventListener('mousedown', closeCompIfOutside, true);
+        // 部分环境 mousedown 被平台吞掉，click 兜底
+        document.addEventListener('click', closeCompIfOutside, true);
       }
       log('规格补全已绑定：' + (el.id || el.tagName));
     } catch (e) { }
@@ -3967,7 +3982,7 @@
     };
     if (!window.__plmIdeOutsideBound && document.addEventListener) {
       window.__plmIdeOutsideBound = true;
-      document.addEventListener('mousedown', function (e) {
+      var closeIdeIfOutside = function (e) {
         try {
           if (!dlg || !idePanel || idePanel.style.display === 'none') return;
           var t = e && e.target;
@@ -3975,7 +3990,9 @@
           if (specIn === t || (specIn.contains && specIn.contains(t))) return;
           hideIde();
         } catch (e2) { }
-      }, true);
+      };
+      document.addEventListener('mousedown', closeIdeIfOutside, true);
+      document.addEventListener('click', closeIdeIfOutside, true);
     }
 
     // 规格框键盘补全（捕获阶段不需要：弹窗内无平台按键拦截）
@@ -3985,6 +4002,7 @@
       var vis = idePanel.style.display !== 'none' && !!(ideComp && (ideComp.options || []).length);
       if (e.key === 'Escape' && vis) {
         if (e.preventDefault) e.preventDefault();
+        if (e.stopPropagation) e.stopPropagation();
         hideIde();
         return;
       }

@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.42';
+  var PLUGIN_VERSION = '2.43';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -4613,6 +4613,8 @@
   function shouldLock() {
     if (!CFG.enabled) return false;
     if (!CFG.showCheckButton) return false;   // 没有录入入口时不锁，避免无法录入
+    // 只锁新建页：查询页的字段绝不能被置灰（否则无法检索）
+    if (!isCreatePageDom()) return false;
     // 只锁「电气元件 / 原材料 / 外购标准件」，其它类型保持 PLM 原生可编辑
     if (!isTypeAllowed()) return false;
     return lockMode();
@@ -4818,7 +4820,32 @@
     return findInputByLabel(['编号']);
   }
 
+  /**
+   * 是否「新建零组件」页面/向导。
+   * 高级查询页也有 名称/编号/规格型号/类型 四个字段，DOM 兜底若只看字段
+   * 会把查询条件当成新建表单：注入「智能录入」按钮并锁字段（现场已复现）。
+   */
+  function isCreatePageDom() {
+    try {
+      var roots = (document.querySelectorAll ? document.querySelectorAll('[pagepagename]') : []);
+      var vals = [];
+      for (var i = 0; i < roots.length; i++) vals.push(String(roots[i].getAttribute('pagepagename') || ''));
+      if (vals.length) {
+        for (var j = 0; j < vals.length; j++) if (/QUERY|SEARCH/i.test(vals[j])) return false;
+        for (var k = 0; k < vals.length; k++) if (/CREATE/i.test(vals[k])) return true;
+        return false;
+      }
+      // 没有 pagepagename：按页面可见文案判断（查询页有「高级查询/通用查询」，新建页有「新建零组件」）
+      var txt = String((document.body && document.body.textContent) || '').slice(0, 4000);
+      if (/高级查询|通用查询|分类查询|零组件查询/.test(txt) && !/新建零组件|新建物料/.test(txt)) return false;
+      // 两者都没有（验证器 mock / 老版本平台）：无法判断，放行按字段接管，避免误伤正常录入
+      return true;
+    } catch (e) { return false; }
+  }
+
   function takeOverByDom() {
+    // 页面判定优先：高级查询页字段结构相同，必须排除，否则会误注入按钮并锁字段
+    if (!isCreatePageDom()) return false;
     // 优先按稳定 id（*_Value）；本平台实际渲染的是 id2044_TextBox 这类自动 id，
     // 找不到就按标签文字（规格型号 / 名称 / 编号 / 类型）定位。
     var hasId = function (el) { return !!(el && el.id); };

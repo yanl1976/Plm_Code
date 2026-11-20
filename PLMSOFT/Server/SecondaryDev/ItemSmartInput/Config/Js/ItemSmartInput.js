@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.34';
+  var PLUGIN_VERSION = '2.35';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -428,6 +428,8 @@
     v = String(v == null ? '' : v).replace(/^\s+|\s+$/g, '');
     if (!max || v.length <= max) return v;
     var cut = v.slice(0, max);
+    // 截断点可能落在 UTF-16 代理对中间（emoji / 特殊符号），会产生 � 乱码，去掉末尾孤立高代理
+    if (/[\uD800-\uDBFF]$/.test(cut)) cut = cut.slice(0, -1);
     var seps = ['/', ';', '；', '、', ',', '，', ' '];
     var best = -1;
     for (var i = 0; i < seps.length; i++) {
@@ -1326,6 +1328,21 @@
     try {
       el.addEventListener('input', onCompInput, false);
       el.addEventListener('keydown', onCompKey, true);   // 捕获阶段，先于平台
+      // 失焦 / 点击输入框以外 → 收起候选浮层（此前只有 Esc / 选中才关，输入完不选用会一直挡着）
+      el.addEventListener('blur', function () { setTimeout(function () { try { hideComp() } catch (e) { } }, 120); }, false);
+      if (!window.__plmCompOutsideBound && document.addEventListener) {
+        window.__plmCompOutsideBound = true;
+        document.addEventListener('mousedown', function (e) {
+          try {
+            if (!state.compPanel || state.compPanel.style.display === 'none') return;
+            var t = e && e.target;
+            if (state.compPanel.contains(t)) return;
+            var gg = domOf(state.ggxh);
+            if (gg && (gg === t || (gg.contains && gg.contains(t)))) return;
+            hideComp();
+          } catch (e2) { }
+        }, true);
+      }
       log('规格补全已绑定：' + (el.id || el.tagName));
     } catch (e) { }
   }
@@ -2099,8 +2116,30 @@
     return { bg: bg, fg: fg, accent: accent };
   }
 
-  function closeEditor() {
+  function closeEditor(keepParams) {
     if (!dlg) return;
+    // 取消（keepParams 非真）：回滚助手写入的主要参数，并清掉作用域记忆。
+    // 否则取消后再次打开新建弹窗，主要参数仍是上次选型助手的内容（现场已复现）。
+    if (!keepParams) {
+      try {
+        var cz = zycsCtl();
+        if (cz && fillMark.zycs && readText(cz) === fillMark.zycs) {
+          writeText(cz, '');
+          try {
+            var ez = cz.__el || domOf(cz);
+            if (ez) { ez.readOnly = false; ez.style.background = ''; }
+          } catch (e3) { }
+        }
+        var cf = flsxhbCtl();
+        if (cf && fillMark.flsxhb && readText(cf) === fillMark.flsxhb) writeText(cf, '');
+      } catch (e) { }
+      fillMark.zycs = '';
+      fillMark.flsxhb = '';
+      fillMark.flsxhbFromParams = false;
+      try { writeZycsMemory(''); writeFlsxhbMemory(''); } catch (e) { }
+      window.__PLM_SMART_SPEC = '';
+      log('已取消：助手写入的主要参数已回滚');
+    }
     try {
       if (dlg.similarMask && dlg.similarMask.parentNode) dlg.similarMask.parentNode.removeChild(dlg.similarMask);
     } catch (e) { }
@@ -2454,7 +2493,7 @@
     var foot = dlgEl('div', 'padding:10px 16px;border-top:' + C_LINE + ';text-align:right;background:' + C_HEAD_BG + ';');
     var cancelBtn = dlgEl('button', 'padding:4px 14px;margin-left:8px;border:' + C_LINE + ';background:transparent;'
       + 'color:inherit;border-radius:3px;cursor:pointer;', '取消');
-    cancelBtn.onclick = closeEditor;
+    cancelBtn.onclick = function () { closeEditor(false); };
     var saveBtn = dlgEl('button', 'padding:4px 14px;margin-left:8px;border:1px solid ' + th.accent
       + ';background:' + th.accent + ';color:#fff;border-radius:3px;cursor:pointer;', '保存并回填');
     saveBtn.className = 'plm-smart-dlg-save';
@@ -3436,12 +3475,12 @@
             specIn.value = it2.spec || it2.model || '';
             // 主要参数：选型结果里带出的接线能力 + 可选配件。
             // paramsIn 属于 openEditor 的局部变量，这里（openSelectModal）只能通过 dlg 访问。
-            if (it2.params && dlg && dlg.paramsIn) {
-              dlg.paramsIn.value = it2.params;
-              syncParamsToZycs(it2.params);
-            }
+            // 只填弹窗内的「主要参数」，不直接写页面 ZYCS：
+            // 取消时才能干净回滚（此前选完即写，取消后再次打开仍有残留）。
+            if (it2.params && dlg && dlg.paramsIn) dlg.paramsIn.value = it2.params;
             closeSelectModal();
-            checkNow();
+            // 直接赋值不会触发 input 事件：手动刷新校验 + 底部「同型号系列」提示
+            onChange();
           };
         }
       }
@@ -3862,7 +3901,7 @@
       if (!v) return;
       specIn.value = compNextValue(String(specIn.value || ''), ideComp, v);
       hideIde();
-      checkNow();
+      onChange();   // 刷新校验 + 同型号系列提示
     }
 
     /**
@@ -3921,6 +3960,23 @@
       if (ideTimer) clearTimeout(ideTimer);
       ideTimer = setTimeout(loadIde, 260);
     });
+
+    // 失焦 / 点击弹窗其它区域 → 收起候选浮层（此前不选用时会一直显示，无法关闭）
+    specIn.onblur = function () {
+      setTimeout(function () { try { if (dlg) hideIde() } catch (e) { } }, 120);
+    };
+    if (!window.__plmIdeOutsideBound && document.addEventListener) {
+      window.__plmIdeOutsideBound = true;
+      document.addEventListener('mousedown', function (e) {
+        try {
+          if (!dlg || !idePanel || idePanel.style.display === 'none') return;
+          var t = e && e.target;
+          if (idePanel.contains(t)) return;
+          if (specIn === t || (specIn.contains && specIn.contains(t))) return;
+          hideIde();
+        } catch (e2) { }
+      }, true);
+    }
 
     // 规格框键盘补全（捕获阶段不需要：弹窗内无平台按键拦截）
     specIn.onkeydown = function (e) {
@@ -3999,7 +4055,7 @@
       // 主要参数 → ZYCS：写入后由 syncParamsToZycs 置灰只读
       var pv = paramsIn ? String(paramsIn.value || '') : '';
       if (pv.trim() && syncParamsToZycs(pv)) applied.push('主要参数');
-      closeEditor();
+      closeEditor(true);   // 保存：保留已回填的主要参数
       // 记住回填后的内容：之后 PLM 输入框不再弹联想/重复提示，除非用户再改
       state.quietKey = fieldKey();
       // 回填成功不再显示绿色提示，保持界面干净；只有什么都没填时才给一句说明

@@ -57,7 +57,7 @@ const HOST = env('PLM_API_HOST', '0.0.0.0')
 // 版本号必须随「影响接口返回结构/判定逻辑」的改动递增 ——
 // 否则现场无法从返回里判断进程跑的是新代码还是旧代码（曾因此排查了半天：
 // 生产 3100 缺 subMismatch 字段，但 version 一直是 1.4.0，看不出差异）。
-const VERSION = '1.6.5'
+const VERSION = '1.6.6'
 // 构建指纹：现场用它判断「跑的是不是新代码」。
 // VERSION 只在接口结构 / 判定逻辑变化时递增，日常修 bug 不一定升；
 // codeMtime 取关键源文件的最新修改时间，每次部署同步都会变，可据此确认已生效。
@@ -764,6 +764,25 @@ function accessoryText(sub, model) {
   return out.join('、')
 }
 
+/**
+ * 附加参数分项：接线能力 / 可配附件（按型号池取原文，各自独立）。
+ * 之前 accessoryText 把两者拼成一个字符串，前端无法单独控制"接线能力"，
+ * 现场表现为「接线能力漏掉了」（实际被并进可配附件）。
+ */
+function accessoryParts(sub, model) {
+  const d = loadAccDict()
+  const s6 = String(sub || '').slice(0, 6)
+  const rawModel = String(model || '').trim()
+  const pool = pickAccessoryPool(d, s6, rawModel)
+  if (pool && pool.raw) {
+    return {
+      wiring: String(pool.raw.wiring || '').trim(),
+      accessories: String(pool.raw.accessories || '').trim(),
+    }
+  }
+  return { wiring: '', accessories: '' }
+}
+
 // 命名范式（国标命名与规格写法）：按 mtime 缓存，改文件即生效
 let namingGuideCache = null
 let namingGuideMtime = 0
@@ -876,15 +895,15 @@ function handleSelect(body) {
       //   二者都不参与规格拼装，因此天然属于「主要参数」；前端可按开关选择是否回填。
       const noteKey = ((s.columns || []).find((c) => /中文说明|附加说明|备注|说明/.test(String(c.key || ''))
         && !/规格/.test(String(c.key || ''))) || {}).key || ''
-      const accText = accessoryText(seriesSub, rawModel)
+      const parts = accessoryParts(seriesSub, rawModel)
       const noteText = noteKey ? String(row[noteKey] || '').trim() : ''
       items.push({
         series: s.id, brand: s.brand || '', name: s.name || '',
         model,                                   // 纯型号，表格首列显示
         spec: fullSpec,                          // 回填进「规格型号」的完整文本
-        // 主要参数：接线能力 + 可选配件 + 中文说明（前端按开关取用 extras）
-        params: [accText, noteText].filter(Boolean).join('；'),
-        extras: { accessories: accText, note: noteText },
+        // 主要参数：接线能力 + 可配附件 + 中文说明（前端按开关取用 extras 分项）
+        params: [parts.wiring, parts.accessories, noteText].filter(Boolean).join('、'),
+        extras: { wiring: parts.wiring, accessories: parts.accessories, note: noteText },
         guided: !!guided,                        // 是否按范式拼装（前端可标注）
         cells: row,
         poles: row['极数'] || '', current: row['额定电流'] || '',

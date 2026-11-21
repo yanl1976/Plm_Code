@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.47';
+  var PLUGIN_VERSION = '2.48';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -3615,6 +3615,8 @@
         // 开关栏：可选择是否把「可配附件」「中文说明」带进主要参数
         var extBar = '<div style="display:flex;gap:16px;align-items:center;font-size:12px;margin:0 0 6px;flex-wrap:wrap;">'
           + '<label style="display:inline-flex;gap:4px;align-items:center;cursor:pointer;">'
+          + '<input type="checkbox" data-ext="wiring"' + (extOn('wiring') ? ' checked' : '') + ' /> 回填接线能力</label>'
+          + '<label style="display:inline-flex;gap:4px;align-items:center;cursor:pointer;">'
           + '<input type="checkbox" data-ext="acc"' + (extOn('acc') ? ' checked' : '') + ' /> 回填可配附件</label>'
           + '<label style="display:inline-flex;gap:4px;align-items:center;cursor:pointer;">'
           + '<input type="checkbox" data-ext="note"' + (extOn('note') ? ' checked' : '') + ' /> 回填中文说明</label>'
@@ -3639,12 +3641,13 @@
             // 只填弹窗内的「主要参数」，不直接写页面 ZYCS：取消时才能干净回滚。
             var pvParts = [];
             if (it2.extras) {
+              if (extOn('wiring') && it2.extras.wiring) pvParts.push(it2.extras.wiring);
               if (extOn('acc') && it2.extras.accessories) pvParts.push(it2.extras.accessories);
               if (extOn('note') && it2.extras.note) pvParts.push(it2.extras.note);
             } else if (it2.params) {
               pvParts.push(it2.params);   // 旧接口回退
             }
-            var pv = pvParts.filter(Boolean).join('；');
+            var pv = pvParts.filter(Boolean).join('、');
             if (pv && dlg && dlg.paramsIn) dlg.paramsIn.value = pv;
             closeSelectModal();
             // 直接赋值不会触发 input 事件：手动刷新校验 + 底部「同型号系列」提示

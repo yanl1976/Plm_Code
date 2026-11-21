@@ -57,7 +57,7 @@ const HOST = env('PLM_API_HOST', '0.0.0.0')
 // 版本号必须随「影响接口返回结构/判定逻辑」的改动递增 ——
 // 否则现场无法从返回里判断进程跑的是新代码还是旧代码（曾因此排查了半天：
 // 生产 3100 缺 subMismatch 字段，但 version 一直是 1.4.0，看不出差异）。
-const VERSION = '1.6.7'
+const VERSION = '1.6.8'
 // 构建指纹：现场用它判断「跑的是不是新代码」。
 // VERSION 只在接口结构 / 判定逻辑变化时递增，日常修 bug 不一定升；
 // codeMtime 取关键源文件的最新修改时间，每次部署同步都会变，可据此确认已生效。
@@ -440,22 +440,17 @@ function parseExcelBase64(base64) {
     return o
   })
 
-  // 「进规格」默认值：判断型号列是否已经包含该列的值
-  //   已包含（如型号里已有 M6、12、8.8）→ 不重复拼
-  //   中文描述类 / 长文本 → 不拼
-  //   剩下短参数（3P、400、LSI）→ 拼进去
+  // 「进规格」采用**人工勾选约束**（2026-11-21 标准）：
+  //   · 导入时不再自动推断 —— 自动推断会因列名/样本变化把无关列拼进规格，留下隐患；
+  //   · 新导入的列一律 specPart = false（默认进主要参数，数据不丢、规格不被污染）；
+  //   · 需要进规格的列，由管理员在「选型库管理页」逐列勾选后保存，作为该系列的约束。
   const modelColTmp = columns.find((c) => c.role === 'model')
   const modelText = modelColTmp
     ? rows.slice(0, 30).map((r) => String(r[modelColTmp.key] == null ? '' : r[modelColTmp.key])).join(' ')
     : ''
   for (const c of columns) {
-    if (c === modelColTmp) { c.specPart = true; continue }
-    if (c.key === '小类号') { c.specPart = false; continue }
-    if (SECONDARY_KEYS.test(String(c.key || ''))) { c.specPart = false; continue }
-    const s0 = (c.samples || [])[0]
-    const covered = !!(modelText && s0 && modelText.indexOf(String(s0)) >= 0)
-    const short = !!(s0 && String(s0).length <= 8 && !/[\u4e00-\u9fa5]/.test(String(s0)))
-    c.specPart = !covered && short
+    if (c === modelColTmp) { c.specPart = false; continue }   // 型号列单独展示，不重复拼
+    c.specPart = false                                        // 默认不进规格，等人工勾选
   }
 
   // 回填示例：让导入时就能看到规格会长什么样
@@ -471,6 +466,9 @@ function parseExcelBase64(base64) {
     halfWidthConverted,     // 本次自动转换的全角字符数
     sampleSpec,             // 第一行按当前「进规格」勾选回填后的样子
     sampleParams,           // 同一行里「不进规格」的列拼成的主要参数
+    // 提示前端：进规格必须人工勾选（默认全部不进规格）
+    needSpecReview: true,
+    specReviewNote: '列默认不进规格（全部进主要参数）；请在管理页勾选需要进规格型号的列后保存，作为本系列的约束。',
   }
 }
 
@@ -655,7 +653,7 @@ function buildRowParams(row, cols) {
     const k = String(c.key || '')
     if (c.role === 'model') continue
     if (k === '小类号') continue
-    if (c.specPart !== false) continue            // 进规格的列不再重复
+    if (c.specPart === true) continue             // 只有显式勾选进规格的列才跳过
     const v = String(row[c.key] == null ? '' : row[c.key]).trim()
     if (!v || v === '—' || v === '-') continue    // 纯占位符跳过
     parts.push(k + ' ' + (c.unit && /^-?\d+(\.\d+)?$/.test(v) ? v + c.unit : v))
@@ -682,14 +680,12 @@ function extraParts(row, cols, specText) {
     const v = String(row[c.key] == null ? '' : row[c.key]).trim()
     if (!v || v === '—' || v === '-') continue
     // 已经出现在最终规格里的值（范式拼装 / 按列拼装都会包含）→ 不再重复写进主要参数
-    if (specText && v.length > 1 && String(specText).indexOf(v) >= 0) continue
-    // 进规格的列不重复；兼容旧选型库（无 specPart 字段）：按「次要列名单 / 短参数」回退推断，
-    // 与导入时的自动判断保持一致（中文长文本、附件/说明类 → 附加参数）。
+    // 用带单位后的文本比对（如 "6"+"kA" → "6kA"），避免单字符值被跳过比对而重复
+    const text0 = c.unit && /^-?\d+(\.\d+)?$/.test(v) ? v + c.unit : v
+    if (specText && text0.length > 1 && String(specText).indexOf(text0) >= 0) continue
+    // 只有**显式勾选「进规格」（specPart === true）**的列才跳过；
+    // false / 未标记（旧库）一律作为附加参数（默认不进规格，符合「人工勾选约束」标准）。
     if (c.specPart === true) continue
-    if (c.specPart !== false) {
-      const short = v.length <= 8 && !/[\u4e00-\u9fa5]/.test(v)
-      if (!SECONDARY_KEYS.test(k) && short) continue
-    }
     const text = c.unit && /^-?\d+(\.\d+)?$/.test(v) ? v + c.unit : v
     if (/接线能力|接线方式|接线范围|适用线径|线径/.test(k)) out.wiring = add(out.wiring, text)
     else if (/可配附件|附件|配件/.test(k)) out.accessories = add(out.accessories, text)
@@ -710,8 +706,8 @@ function buildRowSpec(row, cols, modelCol) {
     if (k === '小类号') continue                    // 每行都一样，无意义
     const v = String(row[c.key] == null ? '' : row[c.key]).trim()
     if (!v || v === '—' || v === '-') continue      // 纯占位符跳过
-    // 显式标了「不进规格」的列（如说明、附件、已被型号覆盖的参数）
-    if (c.specPart === false) continue
+    // 只有显式勾选「进规格」的列才拼进规格；false / 未标记（默认）不进规格
+    if (c.specPart !== true) continue
     // 型号里已包含则不重复；单字符数字（如电流 1）容易误判，不参与比对
     const skipCmp = v.length === 1 && /\d/.test(v)
     if (base && !skipCmp && base.indexOf(v) >= 0) continue

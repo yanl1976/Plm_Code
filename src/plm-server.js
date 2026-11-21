@@ -57,7 +57,7 @@ const HOST = env('PLM_API_HOST', '0.0.0.0')
 // 版本号必须随「影响接口返回结构/判定逻辑」的改动递增 ——
 // 否则现场无法从返回里判断进程跑的是新代码还是旧代码（曾因此排查了半天：
 // 生产 3100 缺 subMismatch 字段，但 version 一直是 1.4.0，看不出差异）。
-const VERSION = '1.6.8'
+const VERSION = '1.6.9'
 // 构建指纹：现场用它判断「跑的是不是新代码」。
 // VERSION 只在接口结构 / 判定逻辑变化时递增，日常修 bug 不一定升；
 // codeMtime 取关键源文件的最新修改时间，每次部署同步都会变，可据此确认已生效。
@@ -653,7 +653,8 @@ function buildRowParams(row, cols) {
     const k = String(c.key || '')
     if (c.role === 'model') continue
     if (k === '小类号') continue
-    if (c.specPart === true) continue             // 只有显式勾选进规格的列才跳过
+    // 兼容旧库：未标记（undefined）按原有行为视为「进规格」，只有显式 false 才进主要参数
+    if (c.specPart !== false) continue
     const v = String(row[c.key] == null ? '' : row[c.key]).trim()
     if (!v || v === '—' || v === '-') continue    // 纯占位符跳过
     parts.push(k + ' ' + (c.unit && /^-?\d+(\.\d+)?$/.test(v) ? v + c.unit : v))
@@ -683,9 +684,13 @@ function extraParts(row, cols, specText) {
     // 用带单位后的文本比对（如 "6"+"kA" → "6kA"），避免单字符值被跳过比对而重复
     const text0 = c.unit && /^-?\d+(\.\d+)?$/.test(v) ? v + c.unit : v
     if (specText && text0.length > 1 && String(specText).indexOf(text0) >= 0) continue
-    // 只有**显式勾选「进规格」（specPart === true）**的列才跳过；
-    // false / 未标记（旧库）一律作为附加参数（默认不进规格，符合「人工勾选约束」标准）。
+    // 判定：
+    //   specPart === true  → 已进规格，跳过；
+    //   specPart === false → 附加参数；
+    //   未标记（旧库）      → 按列名回退：附件/接线/说明类 → 附加，其余视为已进规格（保持旧行为）。
     if (c.specPart === true) continue
+    if (c.specPart !== false
+      && !/接线能力|接线方式|接线范围|适用线径|线径|可配附件|附件|配件|中文说明|附加说明|备注|说明/.test(k)) continue
     const text = c.unit && /^-?\d+(\.\d+)?$/.test(v) ? v + c.unit : v
     if (/接线能力|接线方式|接线范围|适用线径|线径/.test(k)) out.wiring = add(out.wiring, text)
     else if (/可配附件|附件|配件/.test(k)) out.accessories = add(out.accessories, text)
@@ -706,8 +711,9 @@ function buildRowSpec(row, cols, modelCol) {
     if (k === '小类号') continue                    // 每行都一样，无意义
     const v = String(row[c.key] == null ? '' : row[c.key]).trim()
     if (!v || v === '—' || v === '-') continue      // 纯占位符跳过
-    // 只有显式勾选「进规格」的列才拼进规格；false / 未标记（默认）不进规格
-    if (c.specPart !== true) continue
+    // 只有显式标了「不进规格」（specPart === false）才跳过；
+    // 未标记（旧库）保持原有行为（进规格），避免改变已有数据规则。
+    if (c.specPart === false) continue
     // 型号里已包含则不重复；单字符数字（如电流 1）容易误判，不参与比对
     const skipCmp = v.length === 1 && /\d/.test(v)
     if (base && !skipCmp && base.indexOf(v) >= 0) continue

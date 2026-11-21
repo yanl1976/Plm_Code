@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.44';
+  var PLUGIN_VERSION = '2.45';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -2543,7 +2543,12 @@
       + 'border-radius:3px;font-size:13px;background:' + C_INPUT_BG + ';color:inherit;resize:vertical;height:54px;'
       + 'font-family:inherit;line-height:1.5;');
     paramsIn.className = 'plm-smart-dlg-params';
-    paramsIn.value = readZycsValue();
+    // 弹窗打开时只预填「用户手填」的主要参数；选型助手回填的附件不预填。
+    // 否则：上次点过选型助手「保存并回填」后，页面 ZYCS 留着附件文本，
+    // 本次只是手动输入规格、没填主要参数，弹窗一打开就又带出上次的选型数据（现场已复现）。
+    var preZ = readZycsValue();
+    if (/标配\s*[:：]|选配\s*[:：]|母排连接|电动操作机构|分励脱扣|合闸线圈/.test(String(preZ || ''))) preZ = '';
+    paramsIn.value = preZ;
     paramsIn.placeholder = '支持自动填入可选配件或手工输入，可按实际删减增补。';
     paramsWrap.appendChild(paramsIn);
     paramsRow.appendChild(paramsWrap);
@@ -3683,12 +3688,10 @@
           pjCells.push(c4);
           tr.onclick = function () {
             specIn.value = it.spec;
-            if (it.params && dlg && dlg.paramsIn) {
-              dlg.paramsIn.value = it.params;
-              syncParamsToZycs(it.params);
-            }
+            // 只填弹窗内「主要参数」，不直接写页面 ZYCS（取消时才能干净回滚）
+            if (it.params && dlg && dlg.paramsIn) dlg.paramsIn.value = it.params;
             closeSimilarModal();
-            checkNow();
+            onChange();
           };
           tb.appendChild(tr);
         })(items[i]);

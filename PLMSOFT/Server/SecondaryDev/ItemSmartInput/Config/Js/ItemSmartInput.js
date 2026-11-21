@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.46';
+  var PLUGIN_VERSION = '2.47';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -3370,6 +3370,24 @@
       try { localStorage.setItem(selColKey(sub, id), JSON.stringify(keys)); } catch (e) { }
     }
 
+    // 选型助手：回填附加参数的开关（可配附件 / 中文说明），记忆到 localStorage。
+    // 「是否进规格」由后端按列判断：附件/说明列天然不进规格，因此这里只控制回填。
+    var SEL_EXT_KEY = 'plmSelExt';
+    function extOn(kind) {
+      try {
+        var o = JSON.parse(localStorage.getItem(SEL_EXT_KEY) || '{}');
+        return o[kind] !== false;
+      } catch (e) { return true; }
+    }
+    function setExt(kind, on) {
+      try {
+        var o = {};
+        try { o = JSON.parse(localStorage.getItem(SEL_EXT_KEY) || '{}'); } catch (e) { }
+        o[kind] = !!on;
+        localStorage.setItem(SEL_EXT_KEY, JSON.stringify(o));
+      } catch (e) { }
+    }
+
     function openSelectModal() {
       if (selMask) return;
       // 双保险：按钮已禁用时不允许打开（部分 UI 库会忽略 disabled 属性）
@@ -3594,7 +3612,19 @@
           h += '</tr>';
         }
         h += '</tbody></table></div>';
-        resultBox.innerHTML = h;
+        // 开关栏：可选择是否把「可配附件」「中文说明」带进主要参数
+        var extBar = '<div style="display:flex;gap:16px;align-items:center;font-size:12px;margin:0 0 6px;flex-wrap:wrap;">'
+          + '<label style="display:inline-flex;gap:4px;align-items:center;cursor:pointer;">'
+          + '<input type="checkbox" data-ext="acc"' + (extOn('acc') ? ' checked' : '') + ' /> 回填可配附件</label>'
+          + '<label style="display:inline-flex;gap:4px;align-items:center;cursor:pointer;">'
+          + '<input type="checkbox" data-ext="note"' + (extOn('note') ? ' checked' : '') + ' /> 回填中文说明</label>'
+          + '<span style="opacity:.6">（不进规格的列才作为附加参数，按选型库列自动判断）</span>'
+          + '</div>';
+        resultBox.innerHTML = extBar + h;
+        var extEls = resultBox.querySelectorAll('[data-ext]');
+        for (var ei = 0; ei < extEls.length; ei++) {
+          extEls[ei].onchange = function () { setExt(this.getAttribute('data-ext'), !!this.checked); };
+        }
         bindSelTips(resultBox);
 
         var rows = resultBox.querySelectorAll('tr[data-k]');
@@ -3605,11 +3635,17 @@
             // 名称由使用者手工输入（配合同义词点选）；只在为空且系列带名称时补全
             if (!String(nameIn.value || '').trim() && it2.name) nameIn.value = it2.name;
             specIn.value = it2.spec || it2.model || '';
-            // 主要参数：选型结果里带出的接线能力 + 可选配件。
-            // paramsIn 属于 openEditor 的局部变量，这里（openSelectModal）只能通过 dlg 访问。
-            // 只填弹窗内的「主要参数」，不直接写页面 ZYCS：
-            // 取消时才能干净回滚（此前选完即写，取消后再次打开仍有残留）。
-            if (it2.params && dlg && dlg.paramsIn) dlg.paramsIn.value = it2.params;
+            // 主要参数：按开关取「可配附件 / 中文说明」（后端 extras 分项）。
+            // 只填弹窗内的「主要参数」，不直接写页面 ZYCS：取消时才能干净回滚。
+            var pvParts = [];
+            if (it2.extras) {
+              if (extOn('acc') && it2.extras.accessories) pvParts.push(it2.extras.accessories);
+              if (extOn('note') && it2.extras.note) pvParts.push(it2.extras.note);
+            } else if (it2.params) {
+              pvParts.push(it2.params);   // 旧接口回退
+            }
+            var pv = pvParts.filter(Boolean).join('；');
+            if (pv && dlg && dlg.paramsIn) dlg.paramsIn.value = pv;
             closeSelectModal();
             // 直接赋值不会触发 input 事件：手动刷新校验 + 底部「同型号系列」提示
             onChange();

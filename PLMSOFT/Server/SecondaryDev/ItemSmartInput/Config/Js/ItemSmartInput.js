@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.45';
+  var PLUGIN_VERSION = '2.46';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -618,6 +618,31 @@
       }
       return true;
     } catch (e) { return false; }
+  }
+
+  /**
+   * 清空助手写入的主要参数（ZYCS 展示镜像 + FLSXHB 真实载体 + 作用域记忆）。
+   * 仅当当前值仍等于插件写入值时清，避免误删用户手填内容。
+   */
+  function clearParamsFields() {
+    try {
+      var cz = zycsCtl();
+      if (cz && fillMark.zycs && readText(cz) === fillMark.zycs) {
+        writeText(cz, '');
+        try {
+          var ez = cz.__el || domOf(cz);
+          if (ez) { ez.readOnly = false; ez.style.background = ''; }
+        } catch (e3) { }
+      }
+      var cf = flsxhbCtl();
+      if (cf && fillMark.flsxhb && readText(cf) === fillMark.flsxhb) writeText(cf, '');
+    } catch (e) { }
+    fillMark.zycs = '';
+    fillMark.flsxhb = '';
+    fillMark.flsxhbFromParams = false;
+    try { writeZycsMemory(''); writeFlsxhbMemory(''); } catch (e) { }
+    window.__PLM_SMART_SPEC = '';
+    log('主要参数已清空（本次留空且原值是上次助手写入）');
   }
 
   /** 统一入口：缓存规格 + 同步两个字段（幂等，可重复调用） */
@@ -2546,7 +2571,11 @@
     // 弹窗打开时只预填「用户手填」的主要参数；选型助手回填的附件不预填。
     // 否则：上次点过选型助手「保存并回填」后，页面 ZYCS 留着附件文本，
     // 本次只是手动输入规格、没填主要参数，弹窗一打开就又带出上次的选型数据（现场已复现）。
-    var preZ = readZycsValue();
+    var paramsInit = readZycsValue();
+    // 页面当前值是否就是插件上次写入的（选型助手/规格桥接）：保存留空时应清掉，
+    // 否则新物料沿用上一条的选型参数（现场：第一次选型回填，第二次手工输规格留空，旧参数仍在）。
+    var paramsMine = !!(fillMark.zycs && paramsInit === fillMark.zycs);
+    var preZ = paramsInit;
     if (/标配\s*[:：]|选配\s*[:：]|母排连接|电动操作机构|分励脱扣|合闸线圈/.test(String(preZ || ''))) preZ = '';
     paramsIn.value = preZ;
     paramsIn.placeholder = '支持自动填入可选配件或手工输入，可按实际删减增补。';
@@ -4195,6 +4224,11 @@
       // 主要参数 → ZYCS：写入后由 syncParamsToZycs 置灰只读
       var pv = paramsIn ? String(paramsIn.value || '') : '';
       if (pv.trim() && syncParamsToZycs(pv)) applied.push('主要参数');
+      // 本次留空，且页面值仍是插件上次写入的 → 清空（新物料不应沿用上一条的选型参数）
+      else if (!pv.trim() && paramsMine) {
+        clearParamsFields();
+        applied.push('主要参数（已清空）');
+      }
       closeEditor(true);   // 保存：保留已回填的主要参数
       // 记住回填后的内容：之后 PLM 输入框不再弹联想/重复提示，除非用户再改
       state.quietKey = fieldKey();

@@ -78,7 +78,10 @@ window.ItemSmartInputConfig = {
 
   // ---------- 校验与回填 ----------
   tidySpecSpace: true,        // 失焦/保存前整理规格空格（首尾 / 连续 / 全角）
-  fillSpecToParams: true,     // 规格同步到 主要参数(ZYCS) / 分类属性合并(FLSXHB)
+  // 规格 → 主要参数/分类属性合并 的桥接：**关闭**
+  // 现场要求（2026-11-21）：主要参数为空时，分类属性合并(FLSXHB)不应带入规格型号，
+  // 否则保存时平台把 FLSXHB 反写成主要参数。主要参数只由选型助手或人工填写。
+  fillSpecToParams: false,
   blockOnDuplicate: true,     // 保存时命中强重复二次确认
   notifyDuplicateOnBlur: true,// 失焦时浮层提示重复（不弹框）
   strictWidth: true,          // 超宽拦截（不做静默截断）

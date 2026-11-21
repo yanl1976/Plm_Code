@@ -41,7 +41,7 @@
 
   // 插件版本：弹窗标题、控制台日志都读它，升级只改这一处
   // 如需现场临时改显示值，可在 ItemSmartInput.config.js 里写 version: 'x.y'
-  var PLUGIN_VERSION = '2.48';
+  var PLUGIN_VERSION = '2.49';
   function pluginVersion() {
     try {
       var c = extCfg();
@@ -3620,6 +3620,8 @@
           + '<input type="checkbox" data-ext="acc"' + (extOn('acc') ? ' checked' : '') + ' /> 回填可配附件</label>'
           + '<label style="display:inline-flex;gap:4px;align-items:center;cursor:pointer;">'
           + '<input type="checkbox" data-ext="note"' + (extOn('note') ? ' checked' : '') + ' /> 回填中文说明</label>'
+          + '<label style="display:inline-flex;gap:4px;align-items:center;cursor:pointer;">'
+          + '<input type="checkbox" data-ext="others"' + (extOn('others') ? ' checked' : '') + ' /> 回填其它参数</label>'
           + '<span style="opacity:.6">（不进规格的列才作为附加参数，按选型库列自动判断）</span>'
           + '</div>';
         resultBox.innerHTML = extBar + h;
@@ -3644,6 +3646,7 @@
               if (extOn('wiring') && it2.extras.wiring) pvParts.push(it2.extras.wiring);
               if (extOn('acc') && it2.extras.accessories) pvParts.push(it2.extras.accessories);
               if (extOn('note') && it2.extras.note) pvParts.push(it2.extras.note);
+              if (extOn('others') && it2.extras.others) pvParts.push(it2.extras.others);
             } else if (it2.params) {
               pvParts.push(it2.params);   // 旧接口回退
             }

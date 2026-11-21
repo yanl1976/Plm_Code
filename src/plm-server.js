@@ -57,7 +57,7 @@ const HOST = env('PLM_API_HOST', '0.0.0.0')
 // 版本号必须随「影响接口返回结构/判定逻辑」的改动递增 ——
 // 否则现场无法从返回里判断进程跑的是新代码还是旧代码（曾因此排查了半天：
 // 生产 3100 缺 subMismatch 字段，但 version 一直是 1.4.0，看不出差异）。
-const VERSION = '1.6.6'
+const VERSION = '1.6.7'
 // 构建指纹：现场用它判断「跑的是不是新代码」。
 // VERSION 只在接口结构 / 判定逻辑变化时递增，日常修 bug 不一定升；
 // codeMtime 取关键源文件的最新修改时间，每次部署同步都会变，可据此确认已生效。
@@ -663,6 +663,42 @@ function buildRowParams(row, cols) {
   return parts.join('；')
 }
 
+/**
+ * 附加参数分项（通用，按「列是否进规格」判断，不做小类特配）。
+ *
+ * 依据是列本身的 specPart 标记：导入时已按「型号是否已包含 / 中文长文本 / 短参数」
+ * 自动推断（见 importSeries 的 sampleParams 段），因此**任何新增选型库都会自动生效**。
+ *   · specPart === false 的列 → 不进规格 → 归入附加参数；
+ *   · 在附加参数内再按列名细分为 接线能力 / 可配附件 / 中文说明，
+ *     其余列进 others（「列名 值」），避免未命中的列被漏掉。
+ */
+function extraParts(row, cols, specText) {
+  const out = { wiring: '', accessories: '', note: '', others: [] }
+  const add = (cur, text) => (cur ? cur + '；' + text : text)
+  for (const c of cols || []) {
+    if (!c || c.role === 'model') continue
+    const k = String(c.key || '')
+    if (k === '小类号') continue
+    const v = String(row[c.key] == null ? '' : row[c.key]).trim()
+    if (!v || v === '—' || v === '-') continue
+    // 已经出现在最终规格里的值（范式拼装 / 按列拼装都会包含）→ 不再重复写进主要参数
+    if (specText && v.length > 1 && String(specText).indexOf(v) >= 0) continue
+    // 进规格的列不重复；兼容旧选型库（无 specPart 字段）：按「次要列名单 / 短参数」回退推断，
+    // 与导入时的自动判断保持一致（中文长文本、附件/说明类 → 附加参数）。
+    if (c.specPart === true) continue
+    if (c.specPart !== false) {
+      const short = v.length <= 8 && !/[\u4e00-\u9fa5]/.test(v)
+      if (!SECONDARY_KEYS.test(k) && short) continue
+    }
+    const text = c.unit && /^-?\d+(\.\d+)?$/.test(v) ? v + c.unit : v
+    if (/接线能力|接线方式|接线范围|适用线径|线径/.test(k)) out.wiring = add(out.wiring, text)
+    else if (/可配附件|附件|配件/.test(k)) out.accessories = add(out.accessories, text)
+    else if (/中文说明|附加说明|备注|说明/.test(k) && !/规格/.test(k)) out.note = add(out.note, text)
+    else out.others.push(k + ' ' + text)
+  }
+  return out
+}
+
 function buildRowSpec(row, cols, modelCol) {
   // modelCol 可能为 undefined（列定义里未标 role='model'，也没匹配到常见列名）
   const base = modelCol ? String((row[modelCol.key] == null ? '' : row[modelCol.key])).trim() : ''
@@ -889,21 +925,18 @@ function handleSelect(body) {
       const byCols = buildRowSpec(row, cols, modelCol)
       const fullSpec = guided || byCols || model
 
-      // 附加参数分项（按「列是否进规格」自动判断，不需要按小类单独配置）：
-      //   · 可配附件 / 附件 列 → accessories（accessoryText 按型号池取原文）；
-      //   · 中文说明 / 附加说明 / 备注 列 → note（该行原文）；
-      //   二者都不参与规格拼装，因此天然属于「主要参数」；前端可按开关选择是否回填。
-      const noteKey = ((s.columns || []).find((c) => /中文说明|附加说明|备注|说明/.test(String(c.key || ''))
-        && !/规格/.test(String(c.key || ''))) || {}).key || ''
-      const parts = accessoryParts(seriesSub, rawModel)
-      const noteText = noteKey ? String(row[noteKey] || '').trim() : ''
+      // 附加参数分项：按列的 specPart（导入时自动推断的「进规格」标记）判定，
+      // 所有未进规格的列都会进入主要参数，再细分为 接线能力/可配附件/中文说明/其它。
+      // 新增选型库只要导入即自动生效，不需要按小类配置，也不会因列名不常见而漏掉。
+      const parts = extraParts(row, cols, fullSpec)
+      const othersText = parts.others.join('；')
       items.push({
         series: s.id, brand: s.brand || '', name: s.name || '',
         model,                                   // 纯型号，表格首列显示
         spec: fullSpec,                          // 回填进「规格型号」的完整文本
-        // 主要参数：接线能力 + 可配附件 + 中文说明（前端按开关取用 extras 分项）
-        params: [parts.wiring, parts.accessories, noteText].filter(Boolean).join('、'),
-        extras: { wiring: parts.wiring, accessories: parts.accessories, note: noteText },
+        // 主要参数：接线能力 + 可配附件 + 中文说明 + 其它未进规格列（前端按开关取用 extras）
+        params: [parts.wiring, parts.accessories, parts.note, othersText].filter(Boolean).join('、'),
+        extras: { wiring: parts.wiring, accessories: parts.accessories, note: parts.note, others: othersText },
         guided: !!guided,                        // 是否按范式拼装（前端可标注）
         cells: row,
         poles: row['极数'] || '', current: row['额定电流'] || '',
